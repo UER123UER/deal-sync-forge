@@ -29,7 +29,6 @@ const MOCK_AGENTS = [
 export default function NewDeal() {
   const navigate = useNavigate();
   const createDealMutation = useCreateDeal();
-  const { suggestions: addressSuggestions, isLoading: addressLoading } = useAddressAutocomplete(addressSearch);
 
   const [step, setStep] = useState(1);
   const [propertyType, setPropertyType] = useState('');
@@ -42,6 +41,8 @@ export default function NewDeal() {
   const [addressSearch, setAddressSearch] = useState('');
   const [agentSearch, setAgentSearch] = useState('');
   const [showAddresses, setShowAddresses] = useState(false);
+
+  const { suggestions: addressSuggestions, isLoading: addressLoading } = useAddressAutocomplete(addressSearch);
   const [createdDealId, setCreatedDealId] = useState<string | null>(null);
 
   const [sellerForm, setSellerForm] = useState({ role: 'Seller', firstName: '', lastName: '', email: '', phone: '', company: '', currentAddress: '' });
