@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, Plus, FileText, Paperclip } from 'lucide-react';
+import { X, Plus, FileText, Paperclip, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -16,7 +16,7 @@ interface SignaturePanelProps {
 
 export function SignaturePanel({ open, onClose, documentName, contacts }: SignaturePanelProps) {
   const [to, setTo] = useState<string[]>([]);
-  const [subject, setSubject] = useState(`Signature Required: ${documentName}`);
+  const [subject, setSubject] = useState('Please DocuSign');
   const [message, setMessage] = useState('Please review and sign the attached document.');
 
   return (
@@ -39,7 +39,7 @@ export function SignaturePanel({ open, onClose, documentName, contacts }: Signat
           >
             {/* Header */}
             <div className="h-14 border-b flex items-center px-4 justify-between flex-shrink-0">
-              <h2 className="text-sm font-semibold text-foreground">Send for Signature</h2>
+              <h2 className="text-sm font-semibold text-foreground">Send for Signatures</h2>
               <button onClick={onClose} className="p-1.5 rounded-md hover:bg-muted transition-colors">
                 <X className="w-4 h-4 text-muted-foreground" />
               </button>
@@ -48,12 +48,19 @@ export function SignaturePanel({ open, onClose, documentName, contacts }: Signat
             {/* Body */}
             <div className="flex-1 overflow-auto p-4 space-y-4">
               <div>
-                <Label className="text-xs">From</Label>
-                <Input value="Current User" readOnly className="mt-1 bg-muted" />
+                <Label className="text-xs">
+                  From <span className="text-destructive">*</span>
+                </Label>
+                <div className="mt-1 flex items-center border rounded-md px-3 py-2 bg-muted">
+                  <span className="text-sm text-foreground flex-1">Karl Brisard &lt;karl.brisard@elliman.com&gt;</span>
+                  <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                </div>
               </div>
 
               <div>
-                <Label className="text-xs">To</Label>
+                <Label className="text-xs">
+                  To <span className="text-destructive">*</span>
+                </Label>
                 <div className="mt-1 space-y-2">
                   {contacts.map((c) => (
                     <label key={c.id} className="flex items-center gap-2 text-sm">
@@ -73,12 +80,16 @@ export function SignaturePanel({ open, onClose, documentName, contacts }: Signat
               </div>
 
               <div>
-                <Label className="text-xs">Subject</Label>
+                <Label className="text-xs">
+                  Subject <span className="text-destructive">*</span>
+                </Label>
                 <Input value={subject} onChange={(e) => setSubject(e.target.value)} className="mt-1" />
               </div>
 
               <div>
-                <Label className="text-xs">Message</Label>
+                <Label className="text-xs">
+                  Message <span className="text-destructive">*</span>
+                </Label>
                 <Textarea value={message} onChange={(e) => setMessage(e.target.value)} className="mt-1" rows={4} />
               </div>
 
@@ -91,7 +102,7 @@ export function SignaturePanel({ open, onClose, documentName, contacts }: Signat
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm text-foreground truncate">{documentName}</p>
-                    <p className="text-xs text-muted-foreground">Digital Form</p>
+                    <p className="text-xs text-muted-foreground">Uploaded Jan 21, 7:42 AM</p>
                   </div>
                   <button className="text-muted-foreground hover:text-foreground">
                     <X className="w-4 h-4" />
@@ -104,9 +115,9 @@ export function SignaturePanel({ open, onClose, documentName, contacts }: Signat
             </div>
 
             {/* Footer */}
-            <div className="border-t p-4 flex-shrink-0">
-              <Button className="w-full" disabled={to.length === 0}>
-                Send for Signature
+            <div className="border-t p-4 flex justify-end flex-shrink-0">
+              <Button variant="outline" disabled={to.length === 0}>
+                Next: View in Docusign
               </Button>
             </div>
           </motion.div>
