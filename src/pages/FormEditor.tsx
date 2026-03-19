@@ -2,24 +2,35 @@ import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { X, AlertTriangle, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useDealStore } from '@/store/deals';
+import { useDeal } from '@/hooks/useDeals';
 
 export default function FormEditor() {
   const { id, formId } = useParams<{ id: string; formId: string }>();
   const navigate = useNavigate();
-  const deal = useDealStore((s) => s.deals.find((d) => d.id === id));
-  const checklistItem = deal?.checklistItems.find((ci) => ci.id === formId);
+  const { data: deal, isLoading } = useDeal(id);
+
+  const contacts = (deal?.deal_contacts || []).map((dc) => ({
+    role: dc.role || '',
+    firstName: dc.contact?.first_name || '',
+    lastName: dc.contact?.last_name || '',
+    company: dc.contact?.company || '',
+    commission: dc.contact?.commission || '',
+  }));
+
+  const checklistItem = (deal?.checklist_items || []).find((ci) => ci.id === formId);
+  const seller = contacts.find((c) => c.role === 'Seller');
+  const agent = contacts.find((c) => c.role.includes('Agent'));
 
   const [fields, setFields] = useState({
-    sellerName: deal?.contacts.find((c) => c.role === 'Seller')?.firstName + ' ' + (deal?.contacts.find((c) => c.role === 'Seller')?.lastName || ''),
-    brokerName: deal?.contacts.find((c) => c.role.includes('Agent'))?.firstName + ' ' + (deal?.contacts.find((c) => c.role.includes('Agent'))?.lastName || ''),
-    brokerCompany: deal?.contacts.find((c) => c.role.includes('Agent'))?.company || '',
+    sellerName: seller ? `${seller.firstName} ${seller.lastName}` : '',
+    brokerName: agent ? `${agent.firstName} ${agent.lastName}` : '',
+    brokerCompany: agent?.company || '',
     propertyAddress: deal ? `${deal.address}, ${deal.city}, ${deal.state} ${deal.zip}` : '',
-    listingStartDate: deal?.listingStartDate || '',
-    listingExpiration: deal?.listingExpiration || '',
+    listingStartDate: deal?.listing_start_date || '',
+    listingExpiration: deal?.listing_expiration || '',
     listPrice: deal?.price || '',
-    commissionRate: deal?.contacts.find((c) => c.role.includes('Agent'))?.commission || '',
-    mlsNumber: deal?.mlsNumber || '',
+    commissionRate: agent?.commission || '',
+    mlsNumber: deal?.mls_number || '',
   });
 
   const updateField = (key: string, value: string) => {
@@ -36,6 +47,14 @@ export default function FormEditor() {
       style={{ width, fontFamily: 'inherit', fontSize: 'inherit' }}
     />
   );
+
+  if (isLoading) {
+    return (
+      <div className="flex-1 flex items-center justify-center">
+        <p className="text-muted-foreground">Loading...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 flex flex-col bg-muted/30">

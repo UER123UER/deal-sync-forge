@@ -4,7 +4,15 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Contact } from '@/store/deals';
+interface Contact {
+  id: string;
+  role: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  company: string;
+}
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface SignaturePanelProps {
