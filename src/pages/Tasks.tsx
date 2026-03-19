@@ -5,17 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
-
-interface Task {
-  id: string;
-  title: string;
-  description: string;
-  type: 'todo' | 'call' | 'meeting' | 'note';
-  contacts: string[];
-  dueDate: string;
-  endDate: string;
-  assignee: string;
-}
+import { useTasks, useCreateTask, TaskRow } from '@/hooks/useTasks';
+import { format } from 'date-fns';
 
 const TASK_TYPES = [
   { key: 'todo' as const, label: 'Todo', icon: CheckSquare },
@@ -25,11 +16,32 @@ const TASK_TYPES = [
 ];
 
 export default function Tasks() {
-  const [tasks] = useState<Task[]>([]);
+  const { data: tasks = [], isLoading } = useTasks();
+  const createTask = useCreateTask();
   const [search, setSearch] = useState('');
   const [panelOpen, setPanelOpen] = useState(false);
-  const [newTaskType, setNewTaskType] = useState<Task['type']>('todo');
+  const [newTaskType, setNewTaskType] = useState<string>('todo');
   const [newTaskTitle, setNewTaskTitle] = useState('');
+  const [newTaskDescription, setNewTaskDescription] = useState('');
+
+  const filtered = tasks.filter((t) => {
+    if (!search) return true;
+    const term = search.toLowerCase();
+    return t.title.toLowerCase().includes(term) || (t.description || '').toLowerCase().includes(term);
+  });
+
+  const handleSave = async () => {
+    if (!newTaskTitle.trim()) return;
+    await createTask.mutateAsync({
+      title: newTaskTitle.trim(),
+      description: newTaskDescription.trim() || undefined,
+      type: newTaskType,
+    });
+    setNewTaskTitle('');
+    setNewTaskDescription('');
+    setNewTaskType('todo');
+    setPanelOpen(false);
+  };
 
   return (
     <div className="flex-1 flex flex-col">
@@ -72,14 +84,18 @@ export default function Tasks() {
       <div className="border-b">
         <div className="flex px-6 py-3">
           <span className="text-xs font-medium text-muted-foreground flex-1">Task</span>
-          <span className="text-xs font-medium text-muted-foreground w-48">Contacts</span>
+          <span className="text-xs font-medium text-muted-foreground w-48">Assignee</span>
           <span className="text-xs font-medium text-muted-foreground w-32">Due Date</span>
-          <span className="text-xs font-medium text-muted-foreground w-32">End Date</span>
+          <span className="text-xs font-medium text-muted-foreground w-32">Type</span>
         </div>
       </div>
 
       {/* Content */}
-      {tasks.length === 0 ? (
+      {isLoading ? (
+        <div className="flex-1 flex items-center justify-center">
+          <p className="text-sm text-muted-foreground">Loading tasks...</p>
+        </div>
+      ) : filtered.length === 0 ? (
         <div className="flex-1 flex flex-col items-center justify-center">
           <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
             <CheckSquare className="w-8 h-8 text-muted-foreground" />
@@ -88,15 +104,19 @@ export default function Tasks() {
         </div>
       ) : (
         <div className="flex-1 overflow-auto">
-          {tasks.map((task) => (
+          {filtered.map((task) => (
             <div key={task.id} className="flex items-center px-6 py-3 border-b hover:bg-muted/50">
               <div className="flex-1">
                 <p className="text-sm text-foreground">{task.title}</p>
                 {task.description && <p className="text-xs text-muted-foreground">{task.description}</p>}
               </div>
-              <div className="w-48 text-sm text-muted-foreground">{task.contacts.join(', ')}</div>
-              <div className="w-32 text-sm text-muted-foreground">{task.dueDate}</div>
-              <div className="w-32 text-sm text-muted-foreground">{task.endDate}</div>
+              <div className="w-48 text-sm text-muted-foreground">{task.assignee || '—'}</div>
+              <div className="w-32 text-sm text-muted-foreground">
+                {task.due_date ? format(new Date(task.due_date), 'MMM d, yyyy') : '—'}
+              </div>
+              <div className="w-32">
+                <span className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full capitalize">{task.type}</span>
+              </div>
             </div>
           ))}
         </div>
@@ -162,7 +182,14 @@ export default function Tasks() {
                   />
                 </div>
 
-                <button className="text-sm text-primary hover:underline">+ Add Description</button>
+                <div>
+                  <Input
+                    placeholder="Add description (optional)"
+                    value={newTaskDescription}
+                    onChange={(e) => setNewTaskDescription(e.target.value)}
+                    className="text-sm"
+                  />
+                </div>
 
                 <div>
                   <Label className="text-xs">Due Date</Label>
@@ -193,7 +220,9 @@ export default function Tasks() {
                   </div>
                   Add Assignee
                 </button>
-                <Button size="sm" disabled={!newTaskTitle.trim()}>Save</Button>
+                <Button size="sm" disabled={!newTaskTitle.trim() || createTask.isPending} onClick={handleSave}>
+                  {createTask.isPending ? 'Saving...' : 'Save'}
+                </Button>
               </div>
             </motion.div>
           </>

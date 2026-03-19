@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ChevronDown, ChevronRight, Edit, Eye, Mail, Plus, FileText, MoreVertical, GripVertical, Download, Printer, Send, Trash2, MessageSquare, Bell, UserPlus } from 'lucide-react';
+import { ChevronDown, ChevronRight, Edit, Eye, Mail, Plus, FileText, GripVertical, Download, Printer, Send, Trash2, MessageSquare, Bell, UserPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useDealStore } from '@/store/deals';
+import { useDeal } from '@/hooks/useDeals';
 import { cn } from '@/lib/utils';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { SignaturePanel } from '@/components/deal/SignaturePanel';
@@ -12,11 +12,28 @@ const TABS = ['Checklists', 'Photos', 'Tasks', 'Notes', 'Marketing'] as const;
 export default function DealDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const deal = useDealStore((s) => s.deals.find((d) => d.id === id));
-  const toggleChecklistExpand = useDealStore((s) => s.toggleChecklistExpand);
+  const { data: deal, isLoading } = useDeal(id);
   const [activeTab, setActiveTab] = useState<typeof TABS[number]>('Checklists');
   const [signatureOpen, setSignatureOpen] = useState(false);
   const [signatureDocName, setSignatureDocName] = useState('');
+  const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
+
+  const toggleExpand = (itemId: string) => {
+    setExpandedItems((prev) => {
+      const next = new Set(prev);
+      if (next.has(itemId)) next.delete(itemId);
+      else next.add(itemId);
+      return next;
+    });
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex-1 flex items-center justify-center">
+        <p className="text-muted-foreground">Loading deal...</p>
+      </div>
+    );
+  }
 
   if (!deal) {
     return (
@@ -25,6 +42,22 @@ export default function DealDetail() {
       </div>
     );
   }
+
+  const contacts = (deal.deal_contacts || []).map((dc) => ({
+    id: dc.contact?.id || dc.contact_id,
+    firstName: dc.contact?.first_name || '',
+    lastName: dc.contact?.last_name || '',
+    email: dc.contact?.email || '',
+    phone: dc.contact?.phone || '',
+    company: dc.contact?.company || '',
+    role: dc.role || '',
+    mlsId: dc.contact?.mls_id || '',
+    mls: dc.contact?.mls || '',
+    commission: dc.contact?.commission || '',
+    commissionType: (dc.contact?.commission_type as 'percentage' | 'dollars') || 'percentage',
+  }));
+
+  const checklistItems = (deal.checklist_items || []).sort((a, b) => a.sort_order - b.sort_order);
 
   return (
     <div className="flex-1 flex flex-col">
@@ -41,7 +74,7 @@ export default function DealDetail() {
             <p className="text-sm text-muted-foreground">{deal.city}, {deal.state} {deal.zip}</p>
           </div>
           <div className="flex items-center gap-2">
-            {deal.contacts.slice(0, 3).map((c) => (
+            {contacts.slice(0, 3).map((c) => (
               <div key={c.id} className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-medium" title={`${c.firstName} ${c.lastName}`}>
                 {c.firstName[0]}{c.lastName[0]}
               </div>
@@ -122,14 +155,14 @@ export default function DealDetail() {
                   <div className="w-[11px] h-[11px] rounded-full border-2 border-muted-foreground bg-background flex-shrink-0 mt-0.5 z-10" />
                   <div className="flex justify-between flex-1 text-sm">
                     <span className="text-muted-foreground">Listing Expiration</span>
-                    <span className="text-foreground">{deal.listingExpiration || '—'}</span>
+                    <span className="text-foreground">{deal.listing_expiration || '—'}</span>
                   </div>
                 </div>
                 <div className="flex items-start gap-3 relative">
                   <div className="w-[11px] h-[11px] rounded-full border-2 border-muted-foreground bg-background flex-shrink-0 mt-0.5 z-10" />
                   <div className="flex justify-between flex-1 text-sm">
                     <span className="text-muted-foreground">Listing Start Date</span>
-                    <span className="text-foreground">{deal.listingStartDate || '—'}</span>
+                    <span className="text-foreground">{deal.listing_start_date || '—'}</span>
                   </div>
                 </div>
               </div>
@@ -141,19 +174,19 @@ export default function DealDetail() {
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">MLS#</span>
-                  {deal.mlsNumber ? (
-                    <span className="text-foreground">{deal.mlsNumber}</span>
+                  {deal.mls_number ? (
+                    <span className="text-foreground">{deal.mls_number}</span>
                   ) : (
                     <button className="text-primary text-sm hover:underline">Add MLS# Number</button>
                   )}
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Side</span>
-                  <span className="text-foreground capitalize">{deal.representationSide}</span>
+                  <span className="text-foreground capitalize">{deal.representation_side}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Type</span>
-                  <span className="text-foreground">{deal.propertyType}</span>
+                  <span className="text-foreground">{deal.property_type}</span>
                 </div>
               </div>
             </div>
@@ -162,7 +195,7 @@ export default function DealDetail() {
             <div>
               <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Contacts</h3>
               <div className="space-y-3">
-                {deal.contacts.map((c) => (
+                {contacts.map((c) => (
                   <div key={c.id} className="flex items-center gap-2">
                     <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-medium flex-shrink-0">
                       {c.firstName[0]}{c.lastName[0]}
@@ -208,113 +241,116 @@ export default function DealDetail() {
               <h3 className="text-sm font-semibold text-foreground">Listing</h3>
             </div>
             <div className="border rounded-md overflow-hidden">
-              {deal.checklistItems.map((item) => (
-                <div key={item.id}>
-                  <div
-                    className={cn(
-                      'flex items-center px-3 py-3 border-b last:border-b-0 group transition-colors',
-                      item.expanded && 'bg-info-light'
-                    )}
-                  >
-                    <GripVertical className="w-4 h-4 text-muted-foreground/40 mr-2 flex-shrink-0 cursor-grab" />
-                    <button
-                      onClick={() => toggleChecklistExpand(deal.id, item.id)}
-                      className="mr-2 flex-shrink-0"
+              {checklistItems.map((item) => {
+                const isExpanded = expandedItems.has(item.id);
+                return (
+                  <div key={item.id}>
+                    <div
+                      className={cn(
+                        'flex items-center px-3 py-3 border-b last:border-b-0 group transition-colors',
+                        isExpanded && 'bg-info-light'
+                      )}
                     >
-                      {item.hasDigitalForm ? (
-                        item.expanded ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                      ) : (
-                        <div className="w-4 h-4" />
-                      )}
-                    </button>
-                    <span className="text-sm text-foreground flex-1">{item.name}</span>
+                      <GripVertical className="w-4 h-4 text-muted-foreground/40 mr-2 flex-shrink-0 cursor-grab" />
+                      <button
+                        onClick={() => toggleExpand(item.id)}
+                        className="mr-2 flex-shrink-0"
+                      >
+                        {item.has_digital_form ? (
+                          isExpanded ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                        ) : (
+                          <div className="w-4 h-4" />
+                        )}
+                      </button>
+                      <span className="text-sm text-foreground flex-1">{item.name}</span>
 
-                    {/* Always-visible split button */}
-                    <div className="flex items-center">
-                      {item.hasDigitalForm && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="h-7 text-xs rounded-r-none border-r-0"
-                          onClick={() => navigate(`/transactions/${deal.id}/form/${item.id}`)}
-                        >
-                          Edit Form
-                        </Button>
-                      )}
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
+                      {/* Always-visible split button */}
+                      <div className="flex items-center">
+                        {item.has_digital_form && (
                           <Button
                             variant="outline"
-                            size="icon"
-                            className={cn("h-7 w-7", item.hasDigitalForm ? "rounded-l-none" : "")}
+                            size="sm"
+                            className="h-7 text-xs rounded-r-none border-r-0"
+                            onClick={() => navigate(`/transactions/${deal.id}/form/${item.id}`)}
                           >
-                            <ChevronDown className="w-3.5 h-3.5" />
+                            Edit Form
                           </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => navigate(`/transactions/${deal.id}/form/${item.id}`)}>
-                            <Printer className="w-3.5 h-3.5 mr-2" /> View/Print
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => { setSignatureDocName(item.name); setSignatureOpen(true); }}>
-                            <Send className="w-3.5 h-3.5 mr-2" /> Docusign
-                          </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <Mail className="w-3.5 h-3.5 mr-2" /> Email
-                          </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <FileText className="w-3.5 h-3.5 mr-2" /> Upload
-                          </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <MessageSquare className="w-3.5 h-3.5 mr-2" /> Message Office
-                          </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <Bell className="w-3.5 h-3.5 mr-2" /> Notify Office to Review
-                          </DropdownMenuItem>
-                          <DropdownMenuItem className="text-destructive">
-                            <Trash2 className="w-3.5 h-3.5 mr-2" /> Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </div>
-
-                  {/* Nested Digital Form */}
-                  {item.expanded && item.hasDigitalForm && (
-                    <div className="flex items-center px-3 py-2.5 pl-14 border-b bg-info-light/50">
-                      <FileText className="w-4 h-4 text-primary mr-2 flex-shrink-0" />
-                      <span className="text-sm text-foreground flex-1">Digital Form</span>
-                      <div className="flex items-center">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="h-7 text-xs rounded-r-none border-r-0"
-                          onClick={() => navigate(`/transactions/${deal.id}/form/${item.id}`)}
-                        >
-                          Edit Form
-                        </Button>
+                        )}
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="outline" size="icon" className="h-7 w-7 rounded-l-none">
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className={cn("h-7 w-7", item.has_digital_form ? "rounded-l-none" : "")}
+                            >
                               <ChevronDown className="w-3.5 h-3.5" />
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => { setSignatureDocName(item.name); setSignatureOpen(true); }}>
-                              <Send className="w-3.5 h-3.5 mr-2" /> Docusign
-                            </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => navigate(`/transactions/${deal.id}/form/${item.id}`)}>
                               <Printer className="w-3.5 h-3.5 mr-2" /> View/Print
                             </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => { setSignatureDocName(item.name); setSignatureOpen(true); }}>
+                              <Send className="w-3.5 h-3.5 mr-2" /> Docusign
+                            </DropdownMenuItem>
                             <DropdownMenuItem>
                               <Mail className="w-3.5 h-3.5 mr-2" /> Email
+                            </DropdownMenuItem>
+                            <DropdownMenuItem>
+                              <FileText className="w-3.5 h-3.5 mr-2" /> Upload
+                            </DropdownMenuItem>
+                            <DropdownMenuItem>
+                              <MessageSquare className="w-3.5 h-3.5 mr-2" /> Message Office
+                            </DropdownMenuItem>
+                            <DropdownMenuItem>
+                              <Bell className="w-3.5 h-3.5 mr-2" /> Notify Office to Review
+                            </DropdownMenuItem>
+                            <DropdownMenuItem className="text-destructive">
+                              <Trash2 className="w-3.5 h-3.5 mr-2" /> Delete
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </div>
                     </div>
-                  )}
-                </div>
-              ))}
+
+                    {/* Nested Digital Form */}
+                    {isExpanded && item.has_digital_form && (
+                      <div className="flex items-center px-3 py-2.5 pl-14 border-b bg-info-light/50">
+                        <FileText className="w-4 h-4 text-primary mr-2 flex-shrink-0" />
+                        <span className="text-sm text-foreground flex-1">Digital Form</span>
+                        <div className="flex items-center">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-7 text-xs rounded-r-none border-r-0"
+                            onClick={() => navigate(`/transactions/${deal.id}/form/${item.id}`)}
+                          >
+                            Edit Form
+                          </Button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="outline" size="icon" className="h-7 w-7 rounded-l-none">
+                                <ChevronDown className="w-3.5 h-3.5" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => { setSignatureDocName(item.name); setSignatureOpen(true); }}>
+                                <Send className="w-3.5 h-3.5 mr-2" /> Docusign
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => navigate(`/transactions/${deal.id}/form/${item.id}`)}>
+                                <Printer className="w-3.5 h-3.5 mr-2" /> View/Print
+                              </DropdownMenuItem>
+                              <DropdownMenuItem>
+                                <Mail className="w-3.5 h-3.5 mr-2" /> Email
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
@@ -331,7 +367,7 @@ export default function DealDetail() {
         open={signatureOpen}
         onClose={() => setSignatureOpen(false)}
         documentName={signatureDocName}
-        contacts={deal.contacts}
+        contacts={contacts.map((c) => ({ id: c.id, role: c.role, firstName: c.firstName, lastName: c.lastName, email: c.email || '', phone: c.phone || '', company: c.company || '' }))}
       />
     </div>
   );

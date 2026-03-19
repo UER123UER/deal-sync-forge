@@ -1,15 +1,15 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Download, FileDown, Plus, ChevronDown } from 'lucide-react';
+import { Search, Download, FileDown, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useDealStore, Deal } from '@/store/deals';
+import { useDeals, DealRow } from '@/hooks/useDeals';
 import { cn } from '@/lib/utils';
 
 const TABS = ['All Deals', 'Draft', 'Active', 'Pending', 'Archive'] as const;
 type TabType = typeof TABS[number];
 
-const statusMap: Record<TabType, Deal['status'] | 'all'> = {
+const statusMap: Record<TabType, string> = {
   'All Deals': 'all',
   Draft: 'draft',
   Active: 'active',
@@ -17,7 +17,7 @@ const statusMap: Record<TabType, Deal['status'] | 'all'> = {
   Archive: 'archive',
 };
 
-const statusColors: Record<Deal['status'], string> = {
+const statusColors: Record<string, string> = {
   draft: 'bg-muted text-muted-foreground',
   active: 'bg-success/10 text-success',
   pending: 'bg-warning/10 text-warning',
@@ -28,11 +28,11 @@ export default function Transactions() {
   const [activeTab, setActiveTab] = useState<TabType>('All Deals');
   const [search, setSearch] = useState('');
   const navigate = useNavigate();
-  const deals = useDealStore((s) => s.deals);
+  const { data: deals = [], isLoading } = useDeals();
 
   const filtered = deals.filter((d) => {
     const matchesTab = statusMap[activeTab] === 'all' || d.status === statusMap[activeTab];
-    const matchesSearch = !search || d.address.toLowerCase().includes(search.toLowerCase()) || d.mlsNumber.toLowerCase().includes(search.toLowerCase()) || d.primaryAgent.toLowerCase().includes(search.toLowerCase());
+    const matchesSearch = !search || d.address.toLowerCase().includes(search.toLowerCase()) || (d.mls_number || '').toLowerCase().includes(search.toLowerCase()) || (d.primary_agent || '').toLowerCase().includes(search.toLowerCase());
     return matchesTab && matchesSearch;
   });
 
@@ -56,17 +56,14 @@ export default function Transactions() {
       {/* Action Bar */}
       <div className="px-6 pt-4 pb-2 flex items-center gap-2">
         <Button variant="outline" size="sm" className="gap-1.5 text-xs">
-          <Download className="w-3.5 h-3.5" />
-          Export Deals
+          <Download className="w-3.5 h-3.5" /> Export Deals
         </Button>
         <Button variant="outline" size="sm" className="gap-1.5 text-xs">
-          <FileDown className="w-3.5 h-3.5" />
-          Download Forms
+          <FileDown className="w-3.5 h-3.5" /> Download Forms
         </Button>
         <div className="flex-1" />
         <Button size="sm" className="gap-1.5 text-xs" onClick={() => navigate('/transactions/new')}>
-          <Plus className="w-3.5 h-3.5" />
-          New Deal
+          <Plus className="w-3.5 h-3.5" /> New Deal
         </Button>
       </div>
 
@@ -92,53 +89,59 @@ export default function Transactions() {
 
       {/* Table */}
       <div className="flex-1 overflow-auto">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b">
-              <th className="text-left text-xs font-medium text-muted-foreground px-6 py-3">Address</th>
-              <th className="text-left text-xs font-medium text-muted-foreground px-4 py-3">Status</th>
-              <th className="text-left text-xs font-medium text-muted-foreground px-4 py-3">Price</th>
-              <th className="text-left text-xs font-medium text-muted-foreground px-4 py-3">Critical Dates</th>
-              <th className="text-left text-xs font-medium text-muted-foreground px-4 py-3">Primary Agent</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map((deal) => (
-              <tr
-                key={deal.id}
-                className="border-b hover:bg-muted/50 cursor-pointer transition-colors"
-                onClick={() => navigate(`/transactions/${deal.id}`)}
-              >
-                <td className="px-6 py-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded bg-muted flex items-center justify-center flex-shrink-0">
-                      <Building2Icon />
-                    </div>
-                    <div>
-                      <div className="text-sm font-medium text-foreground">{deal.address}</div>
-                      <div className="text-xs text-muted-foreground">{deal.city}, {deal.state} {deal.zip}</div>
-                    </div>
-                  </div>
-                </td>
-                <td className="px-4 py-3">
-                  <span className={cn('text-xs font-medium px-2 py-1 rounded-full capitalize', statusColors[deal.status])}>
-                    {deal.status}
-                  </span>
-                </td>
-                <td className="px-4 py-3 text-sm text-foreground">{deal.price}</td>
-                <td className="px-4 py-3 text-sm text-muted-foreground">{deal.listingExpiration || '—'}</td>
-                <td className="px-4 py-3 text-sm text-foreground">{deal.primaryAgent}</td>
+        {isLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <p className="text-muted-foreground text-sm">Loading deals...</p>
+          </div>
+        ) : (
+          <table className="w-full">
+            <thead>
+              <tr className="border-b">
+                <th className="text-left text-xs font-medium text-muted-foreground px-6 py-3">Address</th>
+                <th className="text-left text-xs font-medium text-muted-foreground px-4 py-3">Status</th>
+                <th className="text-left text-xs font-medium text-muted-foreground px-4 py-3">Price</th>
+                <th className="text-left text-xs font-medium text-muted-foreground px-4 py-3">Critical Dates</th>
+                <th className="text-left text-xs font-medium text-muted-foreground px-4 py-3">Primary Agent</th>
               </tr>
-            ))}
-            {filtered.length === 0 && (
-              <tr>
-                <td colSpan={5} className="text-center py-12 text-muted-foreground text-sm">
-                  No deals found
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {filtered.map((deal) => (
+                <tr
+                  key={deal.id}
+                  className="border-b hover:bg-muted/50 cursor-pointer transition-colors"
+                  onClick={() => navigate(`/transactions/${deal.id}`)}
+                >
+                  <td className="px-6 py-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded bg-muted flex items-center justify-center flex-shrink-0">
+                        <Building2Icon />
+                      </div>
+                      <div>
+                        <div className="text-sm font-medium text-foreground">{deal.address}</div>
+                        <div className="text-xs text-muted-foreground">{deal.city}, {deal.state} {deal.zip}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className={cn('text-xs font-medium px-2 py-1 rounded-full capitalize', statusColors[deal.status] || 'bg-muted text-muted-foreground')}>
+                      {deal.status}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-sm text-foreground">{deal.price}</td>
+                  <td className="px-4 py-3 text-sm text-muted-foreground">{deal.listing_expiration || '—'}</td>
+                  <td className="px-4 py-3 text-sm text-foreground">{deal.primary_agent}</td>
+                </tr>
+              ))}
+              {filtered.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="text-center py-12 text-muted-foreground text-sm">
+                    No deals found
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   );
