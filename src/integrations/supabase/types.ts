@@ -14,7 +14,221 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      checklist_items: {
+        Row: {
+          completed: boolean | null
+          created_at: string | null
+          deal_id: string
+          has_digital_form: boolean | null
+          id: string
+          name: string
+          sort_order: number | null
+        }
+        Insert: {
+          completed?: boolean | null
+          created_at?: string | null
+          deal_id: string
+          has_digital_form?: boolean | null
+          id?: string
+          name: string
+          sort_order?: number | null
+        }
+        Update: {
+          completed?: boolean | null
+          created_at?: string | null
+          deal_id?: string
+          has_digital_form?: boolean | null
+          id?: string
+          name?: string
+          sort_order?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checklist_items_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contacts: {
+        Row: {
+          commission: string | null
+          commission_type: string | null
+          company: string | null
+          created_at: string | null
+          current_address: string | null
+          email: string | null
+          first_name: string
+          id: string
+          last_name: string
+          last_touch: string | null
+          mls: string | null
+          mls_id: string | null
+          next_touch: string | null
+          phone: string | null
+          role: string | null
+          tags: string[] | null
+        }
+        Insert: {
+          commission?: string | null
+          commission_type?: string | null
+          company?: string | null
+          created_at?: string | null
+          current_address?: string | null
+          email?: string | null
+          first_name: string
+          id?: string
+          last_name: string
+          last_touch?: string | null
+          mls?: string | null
+          mls_id?: string | null
+          next_touch?: string | null
+          phone?: string | null
+          role?: string | null
+          tags?: string[] | null
+        }
+        Update: {
+          commission?: string | null
+          commission_type?: string | null
+          company?: string | null
+          created_at?: string | null
+          current_address?: string | null
+          email?: string | null
+          first_name?: string
+          id?: string
+          last_name?: string
+          last_touch?: string | null
+          mls?: string | null
+          mls_id?: string | null
+          next_touch?: string | null
+          phone?: string | null
+          role?: string | null
+          tags?: string[] | null
+        }
+        Relationships: []
+      }
+      deal_contacts: {
+        Row: {
+          contact_id: string
+          deal_id: string
+          id: string
+          role: string | null
+        }
+        Insert: {
+          contact_id: string
+          deal_id: string
+          id?: string
+          role?: string | null
+        }
+        Update: {
+          contact_id?: string
+          deal_id?: string
+          id?: string
+          role?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deal_contacts_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deal_contacts_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      deals: {
+        Row: {
+          address: string
+          city: string
+          created_at: string | null
+          id: string
+          listing_expiration: string | null
+          listing_start_date: string | null
+          mls_number: string | null
+          price: string | null
+          primary_agent: string | null
+          property_type: string
+          representation_side: string
+          state: string
+          status: string
+          zip: string
+        }
+        Insert: {
+          address: string
+          city: string
+          created_at?: string | null
+          id?: string
+          listing_expiration?: string | null
+          listing_start_date?: string | null
+          mls_number?: string | null
+          price?: string | null
+          primary_agent?: string | null
+          property_type: string
+          representation_side?: string
+          state: string
+          status?: string
+          zip: string
+        }
+        Update: {
+          address?: string
+          city?: string
+          created_at?: string | null
+          id?: string
+          listing_expiration?: string | null
+          listing_start_date?: string | null
+          mls_number?: string | null
+          price?: string | null
+          primary_agent?: string | null
+          property_type?: string
+          representation_side?: string
+          state?: string
+          status?: string
+          zip?: string
+        }
+        Relationships: []
+      }
+      tasks: {
+        Row: {
+          assignee: string | null
+          created_at: string | null
+          description: string | null
+          due_date: string | null
+          end_date: string | null
+          id: string
+          title: string
+          type: string
+        }
+        Insert: {
+          assignee?: string | null
+          created_at?: string | null
+          description?: string | null
+          due_date?: string | null
+          end_date?: string | null
+          id?: string
+          title: string
+          type?: string
+        }
+        Update: {
+          assignee?: string | null
+          created_at?: string | null
+          description?: string | null
+          due_date?: string | null
+          end_date?: string | null
+          id?: string
+          title?: string
+          type?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
