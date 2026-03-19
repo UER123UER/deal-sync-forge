@@ -55,11 +55,12 @@ export default function NewDeal() {
     setStep(2);
   };
 
-  const handleAddress = (addr: typeof MOCK_ADDRESSES[0]) => {
+  const handleAddress = (addr: { address: string; city: string; state: string; zip: string }) => {
     setAddress(addr.address);
     setCity(addr.city);
     setState(addr.state);
     setZip(addr.zip);
+    setAddressSearch('');
     setShowAddresses(false);
     setStep(3);
   };
