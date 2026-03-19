@@ -4,7 +4,7 @@ import { X, MapPin, Check, ChevronRight, User, Users, Search } from 'lucide-reac
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useDealStore } from '@/store/deals';
+import { useCreateDeal } from '@/hooks/useDeals';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -32,57 +32,54 @@ const MOCK_AGENTS = [
 
 export default function NewDeal() {
   const navigate = useNavigate();
-  const { newDeal, setNewDealStep, updateNewDeal, resetNewDeal, createDeal } = useDealStore();
+  const createDealMutation = useCreateDeal();
+
+  const [step, setStep] = useState(1);
+  const [propertyType, setPropertyType] = useState('');
+  const [address, setAddress] = useState('');
+  const [city, setCity] = useState('');
+  const [state, setState] = useState('');
+  const [zip, setZip] = useState('');
+  const [representationSide, setRepresentationSide] = useState<'buyer' | 'seller' | 'both' | ''>('');
+
   const [addressSearch, setAddressSearch] = useState('');
   const [agentSearch, setAgentSearch] = useState('');
   const [showAddresses, setShowAddresses] = useState(false);
   const [createdDealId, setCreatedDealId] = useState<string | null>(null);
 
-  // Seller form state
   const [sellerForm, setSellerForm] = useState({ role: 'Seller', firstName: '', lastName: '', email: '', phone: '', company: '', currentAddress: '' });
-  // Agent form state
   const [agentForm, setAgentForm] = useState({ role: 'Seller Agent', firstName: '', lastName: '', email: '', phone: '', company: '', mlsId: '', mls: '', commission: '', commissionType: 'percentage' as 'percentage' | 'dollars' });
   const [agentErrors, setAgentErrors] = useState<Record<string, boolean>>({});
 
-  const step = newDeal.step;
-
-  const handleClose = () => {
-    resetNewDeal();
-    navigate('/transactions');
-  };
+  const handleClose = () => navigate('/transactions');
 
   const handlePropertyType = (type: string) => {
-    updateNewDeal({ propertyType: type });
-    setNewDealStep(2);
+    setPropertyType(type);
+    setStep(2);
   };
 
   const handleAddress = (addr: typeof MOCK_ADDRESSES[0]) => {
-    updateNewDeal({ address: addr.address, city: addr.city, state: addr.state, zip: addr.zip });
+    setAddress(addr.address);
+    setCity(addr.city);
+    setState(addr.state);
+    setZip(addr.zip);
     setShowAddresses(false);
-    setNewDealStep(3);
+    setStep(3);
   };
 
   const handleRepSide = (side: 'buyer' | 'seller' | 'both') => {
-    updateNewDeal({ representationSide: side });
-    setNewDealStep(4);
+    setRepresentationSide(side);
+    setStep(4);
   };
 
   const handleSelectAgent = (agent: { firstName: string; lastName: string }) => {
     setAgentForm((f) => ({ ...f, firstName: agent.firstName, lastName: agent.lastName }));
-    setNewDealStep(5);
+    setStep(5);
   };
 
-  const handleSaveSeller = () => {
-    updateNewDeal({
-      seller: {
-        id: crypto.randomUUID(),
-        ...sellerForm,
-      },
-    });
-    setNewDealStep(6);
-  };
+  const handleSaveSeller = () => setStep(6);
 
-  const handleSaveAgent = () => {
+  const handleSaveAgent = async () => {
     const errors: Record<string, boolean> = {};
     if (!agentForm.mls) errors.mls = true;
     if (!agentForm.firstName) errors.firstName = true;
@@ -91,15 +88,50 @@ export default function NewDeal() {
       setAgentErrors(errors);
       return;
     }
-    updateNewDeal({
-      sellerAgent: {
-        id: crypto.randomUUID(),
-        ...agentForm,
-      },
-    });
-    const dealId = createDeal();
-    setCreatedDealId(dealId);
-    setNewDealStep(7);
+
+    const contacts = [];
+    if (agentForm.firstName) {
+      contacts.push({
+        first_name: agentForm.firstName,
+        last_name: agentForm.lastName,
+        email: agentForm.email || undefined,
+        phone: agentForm.phone || undefined,
+        company: agentForm.company || undefined,
+        role: agentForm.role,
+        mls_id: agentForm.mlsId || undefined,
+        mls: agentForm.mls || undefined,
+        commission: agentForm.commission || undefined,
+        commission_type: agentForm.commissionType || undefined,
+      });
+    }
+    if (sellerForm.firstName) {
+      contacts.push({
+        first_name: sellerForm.firstName,
+        last_name: sellerForm.lastName,
+        email: sellerForm.email || undefined,
+        phone: sellerForm.phone || undefined,
+        company: sellerForm.company || undefined,
+        role: sellerForm.role,
+        current_address: sellerForm.currentAddress || undefined,
+      });
+    }
+
+    try {
+      const newDeal = await createDealMutation.mutateAsync({
+        property_type: propertyType,
+        address: address || 'TBD',
+        city: city || '',
+        state: state || '',
+        zip: zip || '',
+        representation_side: representationSide || 'seller',
+        primary_agent: agentForm.firstName ? `${agentForm.firstName} ${agentForm.lastName}` : 'Unassigned',
+        contacts,
+      });
+      setCreatedDealId(newDeal.id);
+      setStep(7);
+    } catch (err) {
+      console.error('Failed to create deal:', err);
+    }
   };
 
   return (
@@ -136,7 +168,7 @@ export default function NewDeal() {
                         onClick={() => handlePropertyType(type)}
                         className={cn(
                           'w-full text-left px-4 py-3 rounded-md border text-sm transition-colors flex items-center justify-between group',
-                          newDeal.propertyType === type
+                          propertyType === type
                             ? 'border-primary bg-primary/5 text-primary'
                             : 'border-border hover:border-primary/30 text-foreground'
                         )}
@@ -185,7 +217,7 @@ export default function NewDeal() {
                     )}
                   </div>
                   <div className="mt-4 flex justify-end">
-                    <Button variant="ghost" size="sm" onClick={() => { updateNewDeal({ address: 'TBD', city: '', state: '', zip: '' }); setNewDealStep(3); }}>
+                    <Button variant="ghost" size="sm" onClick={() => { setAddress('TBD'); setCity(''); setState(''); setZip(''); setStep(3); }}>
                       Skip
                     </Button>
                   </div>
@@ -204,7 +236,7 @@ export default function NewDeal() {
                         onClick={() => handleRepSide(value)}
                         className={cn(
                           'w-full text-left px-4 py-4 rounded-md border text-sm transition-colors flex items-center gap-3',
-                          newDeal.representationSide === value
+                          representationSide === value
                             ? 'border-primary bg-primary/5'
                             : 'border-border hover:border-primary/30'
                         )}
@@ -297,7 +329,7 @@ export default function NewDeal() {
                       <Input value={sellerForm.currentAddress} onChange={(e) => setSellerForm((f) => ({ ...f, currentAddress: e.target.value }))} className="mt-1" />
                     </div>
                     <div className="flex gap-2 pt-2">
-                      <Button variant="outline" onClick={() => setNewDealStep(4)}>Back</Button>
+                      <Button variant="outline" onClick={() => setStep(4)}>Back</Button>
                       <Button onClick={handleSaveSeller}>Continue</Button>
                     </div>
                   </div>
@@ -368,8 +400,10 @@ export default function NewDeal() {
                       </div>
                     </div>
                     <div className="flex gap-2 pt-2">
-                      <Button variant="outline" onClick={() => setNewDealStep(5)}>Cancel</Button>
-                      <Button onClick={handleSaveAgent}>Save</Button>
+                      <Button variant="outline" onClick={() => setStep(5)}>Cancel</Button>
+                      <Button onClick={handleSaveAgent} disabled={createDealMutation.isPending}>
+                        {createDealMutation.isPending ? 'Creating...' : 'Save'}
+                      </Button>
                     </div>
                   </div>
                 </div>
@@ -383,7 +417,7 @@ export default function NewDeal() {
                   </div>
                   <h2 className="text-2xl font-semibold text-foreground mb-2">Congratulations!</h2>
                   <p className="text-muted-foreground mb-8">Your deal has been created successfully.</p>
-                  <Button onClick={() => { resetNewDeal(); navigate(`/transactions/${createdDealId}`); }}>
+                  <Button onClick={() => navigate(`/transactions/${createdDealId}`)}>
                     View Deal
                   </Button>
                 </div>
