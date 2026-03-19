@@ -29,6 +29,7 @@ const MOCK_AGENTS = [
 export default function NewDeal() {
   const navigate = useNavigate();
   const createDealMutation = useCreateDeal();
+  const { suggestions: addressSuggestions, isLoading: addressLoading } = useAddressAutocomplete(addressSearch);
 
   const [step, setStep] = useState(1);
   const [propertyType, setPropertyType] = useState('');
