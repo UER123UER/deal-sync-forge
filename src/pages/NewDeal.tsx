@@ -186,28 +186,29 @@ export default function NewDeal() {
                   <p className="text-sm text-muted-foreground mb-6">Enter the MLS# or property address.</p>
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    {addressLoading && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground animate-spin" />}
                     <Input
-                      placeholder="Enter MLS# or Address"
+                      placeholder="Start typing an address..."
                       className="pl-9"
                       value={addressSearch}
                       onChange={(e) => {
                         setAddressSearch(e.target.value);
-                        setShowAddresses(e.target.value.length > 0);
+                        setShowAddresses(true);
                       }}
-                      onFocus={() => addressSearch.length > 0 && setShowAddresses(true)}
+                      onFocus={() => addressSearch.length >= 3 && setShowAddresses(true)}
                     />
-                    {showAddresses && (
-                      <div className="absolute top-full left-0 right-0 mt-1 bg-popover border rounded-md shadow-lg z-10">
-                        {MOCK_ADDRESSES.filter((a) => a.address.toLowerCase().includes(addressSearch.toLowerCase()) || addressSearch.length < 2).map((addr) => (
+                    {showAddresses && addressSuggestions.length > 0 && (
+                      <div className="absolute top-full left-0 right-0 mt-1 bg-popover border rounded-md shadow-lg z-10 max-h-64 overflow-auto">
+                        {addressSuggestions.map((addr, i) => (
                           <button
-                            key={addr.address}
+                            key={`${addr.label}-${i}`}
                             onClick={() => handleAddress(addr)}
                             className="w-full text-left px-4 py-3 hover:bg-muted flex items-center gap-3 text-sm transition-colors"
                           >
                             <MapPin className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                             <div>
                               <div className="text-foreground">{addr.address}</div>
-                              <div className="text-xs text-muted-foreground">{addr.city}, {addr.state} {addr.zip}</div>
+                              <div className="text-xs text-muted-foreground">{addr.city}{addr.state ? `, ${addr.state}` : ''} {addr.zip}</div>
                             </div>
                           </button>
                         ))}
