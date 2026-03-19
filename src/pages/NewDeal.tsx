@@ -14,12 +14,7 @@ const PROPERTY_TYPES = [
   'Sale-Commercial', 'Lease-Commercial', 'Lease-Condo', 'Lease-Single Family Home', 'Referral',
 ];
 
-const MOCK_ADDRESSES = [
-  { address: '123 Main Street', city: 'Orlando', state: 'FL', zip: '32801' },
-  { address: '456 Oak Avenue', city: 'Tampa', state: 'FL', zip: '33601' },
-  { address: '789 Palm Drive', city: 'Miami', state: 'FL', zip: '33101' },
-  { address: '321 Beach Road', city: 'Fort Lauderdale', state: 'FL', zip: '33301' },
-];
+
 
 const MOCK_AGENTS = [
   { id: 'a1', teamName: 'Premier Realty Group', location: 'Orlando, FL', agents: [
