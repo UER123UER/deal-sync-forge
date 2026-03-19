@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { X, MapPin, Check, ChevronRight, ChevronUp, User, Users, Search, Loader2 } from 'lucide-react';
+import { X, MapPin, Search, Loader2, User, Users, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -15,12 +15,12 @@ const PROPERTY_TYPES = [
 ];
 
 const MOCK_AGENTS = [
-  { id: 'a1', teamName: 'Premier Realty Group', location: 'Orlando, FL', agents: [
-    { id: 'ag1', firstName: 'Michael', lastName: 'Rivera', avatar: 'MR' },
-    { id: 'ag2', firstName: 'Lisa', lastName: 'Chen', avatar: 'LC' },
+  { id: 'a1', teamName: 'Thomas Verdiglione', location: 'Florida > Boca Raton', agents: [
+    { id: 'ag1', firstName: 'Thomas', lastName: 'Verdiglione', email: 'thomas.verdiglione@elliman.com', avatar: 'TV' },
+    { id: 'ag2', firstName: 'Karl', lastName: 'Brisard', email: 'karl.brisard@elliman.com', avatar: 'KB' },
   ]},
   { id: 'a2', teamName: 'Coastal Properties', location: 'Miami, FL', agents: [
-    { id: 'ag3', firstName: 'David', lastName: 'Park', avatar: 'DP' },
+    { id: 'ag3', firstName: 'David', lastName: 'Park', email: 'david.park@coastal.com', avatar: 'DP' },
   ]},
 ];
 
@@ -48,25 +48,19 @@ export default function NewDeal() {
   const [agentErrors, setAgentErrors] = useState<Record<string, boolean>>({});
 
   const stepRefs = useRef<(HTMLDivElement | null)[]>([]);
-  const containerRef = useRef<HTMLDivElement>(null);
 
   const handleClose = () => navigate('/transactions');
 
-  // Auto-scroll to current step
   useEffect(() => {
     const el = stepRefs.current[step - 1];
     if (el) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   }, [step]);
 
-  const goToStep = (targetStep: number) => {
-    if (targetStep < step) setStep(targetStep);
-  };
-
   const handlePropertyType = (type: string) => {
     setPropertyType(type);
-    setStep(2);
+    setTimeout(() => setStep(2), 200);
   };
 
   const handleAddress = (addr: { address: string; city: string; state: string; zip: string }) => {
@@ -76,17 +70,17 @@ export default function NewDeal() {
     setZip(addr.zip);
     setAddressSearch('');
     setShowAddresses(false);
-    setStep(3);
+    setTimeout(() => setStep(3), 200);
   };
 
   const handleRepSide = (side: 'buyer' | 'seller' | 'both') => {
     setRepresentationSide(side);
-    setStep(4);
+    setTimeout(() => setStep(4), 200);
   };
 
   const handleSelectAgent = (agent: { firstName: string; lastName: string }) => {
     setAgentForm((f) => ({ ...f, firstName: agent.firstName, lastName: agent.lastName }));
-    setStep(5);
+    setTimeout(() => setStep(5), 200);
   };
 
   const handleSaveSeller = () => setStep(6);
@@ -135,124 +129,82 @@ export default function NewDeal() {
     }
   };
 
-  const stepSummary = (s: number) => {
-    switch (s) {
-      case 1: return propertyType;
-      case 2: return address === 'TBD' ? 'TBD' : `${address}${city ? `, ${city}` : ''}${state ? `, ${state}` : ''} ${zip}`.trim();
-      case 3: return representationSide ? representationSide.charAt(0).toUpperCase() + representationSide.slice(1) : '';
-      case 4: return agentForm.firstName ? `${agentForm.firstName} ${agentForm.lastName}` : '';
-      case 5: return sellerForm.firstName ? `${sellerForm.firstName} ${sellerForm.lastName}` : '';
-      case 6: return 'Completed';
-      default: return '';
-    }
-  };
-
-  const CompletedStep = ({ stepNum, title }: { stepNum: number; title: string }) => (
-    <div
-      ref={(el) => { stepRefs.current[stepNum - 1] = el; }}
-      onClick={() => goToStep(stepNum)}
-      className="cursor-pointer group"
-    >
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="flex items-center gap-3 px-4 py-4 rounded-lg border border-border bg-muted/30 hover:bg-muted/60 transition-colors"
-      >
-        <div className="w-7 h-7 rounded-full bg-primary/10 text-primary flex items-center justify-center flex-shrink-0">
-          <Check className="w-4 h-4" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="text-xs text-muted-foreground">{title}</div>
-          <div className="text-sm font-medium text-foreground truncate">{stepSummary(stepNum)}</div>
-        </div>
-        <ChevronUp className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-      </motion.div>
+  const SectionHeader = ({ children, highlighted }: { children: React.ReactNode; highlighted?: string }) => (
+    <div className="flex items-start gap-2 mb-8">
+      <div className="w-1 h-8 rounded-full bg-border mt-0.5" />
+      <h2 className="text-lg font-semibold text-foreground">
+        {children}
+        {highlighted && <span className="text-primary"> {highlighted}</span>}
+      </h2>
     </div>
+  );
+
+  const RadioOption = ({ selected, label, onClick, icon: Icon }: { selected: boolean; label: string; onClick: () => void; icon?: React.ElementType }) => (
+    <button
+      onClick={onClick}
+      className={cn(
+        'w-full max-w-md mx-auto text-left px-5 py-4 rounded-lg border text-sm transition-all flex items-center gap-3',
+        selected
+          ? 'border-primary bg-primary/5 text-primary'
+          : 'border-border hover:border-primary/30 text-foreground'
+      )}
+    >
+      <div className={cn(
+        'w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors',
+        selected ? 'border-primary' : 'border-muted-foreground/40'
+      )}>
+        {selected && <div className="w-2.5 h-2.5 rounded-full bg-primary" />}
+      </div>
+      {Icon && <Icon className="w-4 h-4 text-muted-foreground" />}
+      <span className="font-medium">{label}</span>
+    </button>
   );
 
   return (
     <div className="flex-1 flex flex-col bg-background">
-      {/* Header */}
+      {/* Minimal header */}
       <div className="h-14 border-b flex items-center px-6 sticky top-0 bg-background z-20">
         <h1 className="text-lg font-semibold text-foreground">Create New Deal</h1>
         <div className="flex-1" />
-        {step > 1 && step < 7 && (
-          <Button variant="ghost" size="sm" onClick={() => setStep(step - 1)} className="mr-2 text-muted-foreground">
-            <ChevronUp className="w-4 h-4 mr-1" /> Back
-          </Button>
-        )}
         <button onClick={handleClose} className="p-2 rounded-md hover:bg-muted transition-colors">
           <X className="w-5 h-5 text-muted-foreground" />
         </button>
       </div>
 
-      {/* Progress bar */}
-      <div className="h-1 bg-muted">
-        <div className="h-full bg-primary transition-all duration-500 ease-out" style={{ width: `${((step) / 7) * 100}%` }} />
-      </div>
+      {/* Scrolling content - all sections visible */}
+      <div className="flex-1 overflow-auto">
+        <div className="max-w-2xl mx-auto py-16 px-6">
 
-      {/* Scrolling content */}
-      <div ref={containerRef} className="flex-1 overflow-auto">
-        <div className="max-w-2xl mx-auto py-10 px-6 space-y-6">
-
-          {/* Completed steps shown as compact summaries */}
-          {step > 1 && (
-            <CompletedStep stepNum={1} title="Property Type" />
-          )}
-          {step > 2 && (
-            <CompletedStep stepNum={2} title="Property Address" />
-          )}
-          {step > 3 && (
-            <CompletedStep stepNum={3} title="Representation Side" />
-          )}
-          {step > 4 && (
-            <CompletedStep stepNum={4} title="Seller's Agent" />
-          )}
-          {step > 5 && (
-            <CompletedStep stepNum={5} title="Seller Info" />
-          )}
-          {step > 6 && (
-            <CompletedStep stepNum={6} title="Agent Details" />
-          )}
-
-          {/* Active step */}
+          {/* Step 1: Property Type */}
           <motion.div
-            key={step}
-            ref={(el) => { stepRefs.current[step - 1] = el; }}
-            initial={{ opacity: 0, y: 30 }}
+            ref={(el) => { stepRefs.current[0] = el; }}
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.35, ease: 'easeOut' }}
+            className="mb-24"
           >
-            {/* Step 1: Property Type */}
-            {step === 1 && (
-              <div>
-                <h2 className="text-xl font-semibold mb-1 text-foreground">What type of property is this?</h2>
-                <p className="text-sm text-muted-foreground mb-6">Select the property type to get started.</p>
-                <div className="space-y-1">
-                  {PROPERTY_TYPES.map((type) => (
-                    <button
-                      key={type}
-                      onClick={() => handlePropertyType(type)}
-                      className={cn(
-                        'w-full text-left px-4 py-3 rounded-md border text-sm transition-colors flex items-center justify-between group',
-                        propertyType === type
-                          ? 'border-primary bg-primary/5 text-primary'
-                          : 'border-border hover:border-primary/30 text-foreground'
-                      )}
-                    >
-                      {type}
-                      <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
+            <SectionHeader>What type of deal is this?</SectionHeader>
+            <div className="space-y-2 max-w-md mx-auto">
+              {PROPERTY_TYPES.map((type) => (
+                <RadioOption
+                  key={type}
+                  label={type}
+                  selected={propertyType === type}
+                  onClick={() => handlePropertyType(type)}
+                />
+              ))}
+            </div>
+          </motion.div>
 
-            {/* Step 2: Address */}
-            {step === 2 && (
-              <div>
-                <h2 className="text-xl font-semibold mb-1 text-foreground">Property Address</h2>
-                <p className="text-sm text-muted-foreground mb-6">Enter the MLS# or property address.</p>
+          {/* Step 2: Address */}
+          {step >= 2 && (
+            <motion.div
+              ref={(el) => { stepRefs.current[1] = el; }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-24"
+            >
+              <SectionHeader>What is the <span className="text-primary">Property Address</span>?</SectionHeader>
+              <div className="max-w-md mx-auto">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   {addressLoading && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground animate-spin" />}
@@ -281,161 +233,196 @@ export default function NewDeal() {
                     </div>
                   )}
                 </div>
-                <div className="mt-4 flex justify-end">
+                {address && (
+                  <div className="mt-3 text-sm text-muted-foreground flex items-center gap-2">
+                    <MapPin className="w-3.5 h-3.5" />
+                    {address === 'TBD' ? 'TBD' : `${address}, ${city}, ${state} ${zip}`}
+                  </div>
+                )}
+                <div className="mt-3 flex justify-end">
                   <Button variant="ghost" size="sm" onClick={() => { setAddress('TBD'); setCity(''); setState(''); setZip(''); setStep(3); }}>
                     Skip
                   </Button>
                 </div>
               </div>
-            )}
+            </motion.div>
+          )}
 
-            {/* Step 3: Representation Side */}
-            {step === 3 && (
-              <div>
-                <h2 className="text-xl font-semibold mb-1 text-foreground">Which side do you represent?</h2>
-                <p className="text-sm text-muted-foreground mb-6">Select your representation in this deal.</p>
-                <div className="space-y-2">
-                  {([['buyer', 'Buyer', User], ['seller', 'Seller', User], ['both', 'Both', Users]] as const).map(([value, label, Icon]) => (
-                    <button
-                      key={value}
-                      onClick={() => handleRepSide(value)}
-                      className={cn(
-                        'w-full text-left px-4 py-4 rounded-md border text-sm transition-colors flex items-center gap-3',
-                        representationSide === value
-                          ? 'border-primary bg-primary/5'
-                          : 'border-border hover:border-primary/30'
-                      )}
-                    >
-                      <Icon className="w-5 h-5 text-muted-foreground" />
-                      <span className="text-foreground font-medium">{label}</span>
-                    </button>
-                  ))}
-                </div>
+          {/* Step 3: Representation Side */}
+          {step >= 3 && (
+            <motion.div
+              ref={(el) => { stepRefs.current[2] = el; }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-24"
+            >
+              <SectionHeader>Which side are you representing?</SectionHeader>
+              <div className="space-y-2 max-w-md mx-auto">
+                {([['buyer', 'Buyer'], ['seller', 'Seller'], ['both', 'Both']] as const).map(([value, label]) => (
+                  <RadioOption
+                    key={value}
+                    label={label}
+                    selected={representationSide === value}
+                    onClick={() => handleRepSide(value)}
+                  />
+                ))}
               </div>
-            )}
+            </motion.div>
+          )}
 
-            {/* Step 4: Agent Search */}
-            {step === 4 && (
-              <div>
-                <h2 className="text-xl font-semibold mb-1 text-foreground">Seller's Agent</h2>
-                <p className="text-sm text-muted-foreground mb-6">Search for teams or agents.</p>
+          {/* Step 4: Agent Search */}
+          {step >= 4 && (
+            <motion.div
+              ref={(el) => { stepRefs.current[3] = el; }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-24"
+            >
+              <SectionHeader>
+                Who is the <span className="text-primary">Seller's Agent</span>?
+              </SectionHeader>
+              <div className="max-w-md mx-auto">
                 <div className="relative mb-4">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input placeholder="Search for teams or agents" className="pl-9" value={agentSearch} onChange={(e) => setAgentSearch(e.target.value)} />
                 </div>
-                <div className="space-y-4">
+                <div className="space-y-3">
                   {MOCK_AGENTS.map((team) => (
-                    <div key={team.id} className="border rounded-md overflow-hidden">
+                    <div key={team.id} className="border rounded-lg overflow-hidden">
                       <div className="px-4 py-2.5 bg-muted/50 border-b">
-                        <div className="text-sm font-medium text-foreground">{team.teamName}</div>
+                        <div className="text-sm font-semibold text-foreground">{team.teamName}</div>
                         <div className="text-xs text-muted-foreground">{team.location}</div>
                       </div>
                       {team.agents.map((agent) => (
-                        <button key={agent.id} onClick={() => handleSelectAgent(agent)} className="w-full text-left px-4 py-3 hover:bg-muted/50 flex items-center gap-3 text-sm transition-colors">
-                          <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-medium">{agent.avatar}</div>
-                          <span className="text-foreground">{agent.firstName} {agent.lastName}</span>
+                        <button
+                          key={agent.id}
+                          onClick={() => handleSelectAgent(agent)}
+                          className={cn(
+                            'w-full text-left px-4 py-3 hover:bg-muted/50 flex items-center gap-3 text-sm transition-colors',
+                            agentForm.firstName === agent.firstName && agentForm.lastName === agent.lastName && 'bg-primary/5'
+                          )}
+                        >
+                          <div className="w-9 h-9 rounded-full bg-muted flex items-center justify-center text-xs font-medium text-muted-foreground">{agent.avatar}</div>
+                          <div>
+                            <div className="font-medium text-foreground">{agent.firstName} {agent.lastName}</div>
+                            <div className="text-xs text-muted-foreground">{agent.email}</div>
+                          </div>
                         </button>
                       ))}
                     </div>
                   ))}
                 </div>
               </div>
-            )}
+            </motion.div>
+          )}
 
-            {/* Step 5: Seller Info */}
-            {step === 5 && (
-              <div>
-                <h2 className="text-xl font-semibold mb-1 text-foreground">Seller Legal Name</h2>
-                <p className="text-sm text-muted-foreground mb-6">Enter the seller's name or add a new seller.</p>
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div><Label className="text-xs">Role</Label><Input value={sellerForm.role} onChange={(e) => setSellerForm((f) => ({ ...f, role: e.target.value }))} className="mt-1" /></div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div><Label className="text-xs">First Name</Label><Input value={sellerForm.firstName} onChange={(e) => setSellerForm((f) => ({ ...f, firstName: e.target.value }))} className="mt-1" /></div>
-                    <div><Label className="text-xs">Last Name</Label><Input value={sellerForm.lastName} onChange={(e) => setSellerForm((f) => ({ ...f, lastName: e.target.value }))} className="mt-1" /></div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div><Label className="text-xs">Email</Label><Input type="email" value={sellerForm.email} onChange={(e) => setSellerForm((f) => ({ ...f, email: e.target.value }))} className="mt-1" /></div>
-                    <div><Label className="text-xs">Phone</Label><Input value={sellerForm.phone} onChange={(e) => setSellerForm((f) => ({ ...f, phone: e.target.value }))} className="mt-1" /></div>
-                  </div>
-                  <div><Label className="text-xs">Company / Trust</Label><Input value={sellerForm.company} onChange={(e) => setSellerForm((f) => ({ ...f, company: e.target.value }))} className="mt-1" /></div>
-                  <div><Label className="text-xs">Current Address</Label><Input value={sellerForm.currentAddress} onChange={(e) => setSellerForm((f) => ({ ...f, currentAddress: e.target.value }))} className="mt-1" /></div>
-                  <div className="flex gap-2 pt-2">
-                    <Button variant="outline" onClick={() => setStep(4)}>Back</Button>
-                    <Button onClick={handleSaveSeller}>Continue</Button>
-                  </div>
+          {/* Step 5: Seller Info */}
+          {step >= 5 && (
+            <motion.div
+              ref={(el) => { stepRefs.current[4] = el; }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-24"
+            >
+              <SectionHeader>
+                Who is the <span className="text-primary">Seller</span>?
+              </SectionHeader>
+              <div className="max-w-md mx-auto space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div><Label className="text-xs">Role</Label><Input value={sellerForm.role} onChange={(e) => setSellerForm((f) => ({ ...f, role: e.target.value }))} className="mt-1" /></div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div><Label className="text-xs">First Name</Label><Input value={sellerForm.firstName} onChange={(e) => setSellerForm((f) => ({ ...f, firstName: e.target.value }))} className="mt-1" /></div>
+                  <div><Label className="text-xs">Last Name</Label><Input value={sellerForm.lastName} onChange={(e) => setSellerForm((f) => ({ ...f, lastName: e.target.value }))} className="mt-1" /></div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div><Label className="text-xs">Email</Label><Input type="email" value={sellerForm.email} onChange={(e) => setSellerForm((f) => ({ ...f, email: e.target.value }))} className="mt-1" /></div>
+                  <div><Label className="text-xs">Phone</Label><Input value={sellerForm.phone} onChange={(e) => setSellerForm((f) => ({ ...f, phone: e.target.value }))} className="mt-1" /></div>
+                </div>
+                <div><Label className="text-xs">Company / Trust</Label><Input value={sellerForm.company} onChange={(e) => setSellerForm((f) => ({ ...f, company: e.target.value }))} className="mt-1" /></div>
+                <div><Label className="text-xs">Current Address</Label><Input value={sellerForm.currentAddress} onChange={(e) => setSellerForm((f) => ({ ...f, currentAddress: e.target.value }))} className="mt-1" /></div>
+                <div className="pt-2">
+                  <Button onClick={handleSaveSeller}>Continue</Button>
                 </div>
               </div>
-            )}
+            </motion.div>
+          )}
 
-            {/* Step 6: Agent Details */}
-            {step === 6 && (
-              <div>
-                <h2 className="text-xl font-semibold mb-1 text-foreground">Seller Agent Details</h2>
-                <p className="text-sm text-muted-foreground mb-6">Complete the agent information.</p>
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div><Label className="text-xs">Role</Label><Input value={agentForm.role} onChange={(e) => setAgentForm((f) => ({ ...f, role: e.target.value }))} className="mt-1" /></div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label className="text-xs">First Name <span className="text-destructive">*</span></Label>
-                      <Input value={agentForm.firstName} onChange={(e) => { setAgentForm((f) => ({ ...f, firstName: e.target.value })); setAgentErrors((e2) => ({ ...e2, firstName: false })); }} className={cn('mt-1', agentErrors.firstName && 'border-destructive')} />
-                    </div>
-                    <div>
-                      <Label className="text-xs">Last Name <span className="text-destructive">*</span></Label>
-                      <Input value={agentForm.lastName} onChange={(e) => { setAgentForm((f) => ({ ...f, lastName: e.target.value })); setAgentErrors((e2) => ({ ...e2, lastName: false })); }} className={cn('mt-1', agentErrors.lastName && 'border-destructive')} />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div><Label className="text-xs">Email</Label><Input type="email" value={agentForm.email} onChange={(e) => setAgentForm((f) => ({ ...f, email: e.target.value }))} className="mt-1" /></div>
-                    <div><Label className="text-xs">Phone</Label><Input value={agentForm.phone} onChange={(e) => setAgentForm((f) => ({ ...f, phone: e.target.value }))} className="mt-1" /></div>
-                  </div>
-                  <div><Label className="text-xs">Company / Trust</Label><Input value={agentForm.company} onChange={(e) => setAgentForm((f) => ({ ...f, company: e.target.value }))} className="mt-1" /></div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div><Label className="text-xs">MLS ID</Label><Input value={agentForm.mlsId} onChange={(e) => setAgentForm((f) => ({ ...f, mlsId: e.target.value }))} className="mt-1" /></div>
-                    <div>
-                      <Label className="text-xs">MLS <span className="text-destructive">*</span></Label>
-                      <Input value={agentForm.mls} onChange={(e) => { setAgentForm((f) => ({ ...f, mls: e.target.value })); setAgentErrors((e2) => ({ ...e2, mls: false })); }} className={cn('mt-1', agentErrors.mls && 'border-destructive')} />
-                      {agentErrors.mls && <p className="text-xs text-destructive mt-1">MLS is required</p>}
-                    </div>
+          {/* Step 6: Agent Details */}
+          {step >= 6 && (
+            <motion.div
+              ref={(el) => { stepRefs.current[5] = el; }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-24"
+            >
+              <SectionHeader>
+                <span className="text-primary">Agent</span> Details
+              </SectionHeader>
+              <div className="max-w-md mx-auto space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div><Label className="text-xs">Role</Label><Input value={agentForm.role} onChange={(e) => setAgentForm((f) => ({ ...f, role: e.target.value }))} className="mt-1" /></div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-xs">First Name <span className="text-destructive">*</span></Label>
+                    <Input value={agentForm.firstName} onChange={(e) => { setAgentForm((f) => ({ ...f, firstName: e.target.value })); setAgentErrors((e2) => ({ ...e2, firstName: false })); }} className={cn('mt-1', agentErrors.firstName && 'border-destructive')} />
                   </div>
                   <div>
-                    <Label className="text-xs">Commission</Label>
-                    <div className="flex gap-2 mt-1">
-                      <Input value={agentForm.commission} onChange={(e) => setAgentForm((f) => ({ ...f, commission: e.target.value }))} className="flex-1" placeholder="0" />
-                      <div className="flex border rounded-md overflow-hidden">
-                        <button onClick={() => setAgentForm((f) => ({ ...f, commissionType: 'percentage' }))} className={cn('px-3 py-2 text-xs font-medium transition-colors', agentForm.commissionType === 'percentage' ? 'bg-primary text-primary-foreground' : 'bg-background text-muted-foreground hover:bg-muted')}>%</button>
-                        <button onClick={() => setAgentForm((f) => ({ ...f, commissionType: 'dollars' }))} className={cn('px-3 py-2 text-xs font-medium transition-colors', agentForm.commissionType === 'dollars' ? 'bg-primary text-primary-foreground' : 'bg-background text-muted-foreground hover:bg-muted')}>$</button>
-                      </div>
+                    <Label className="text-xs">Last Name <span className="text-destructive">*</span></Label>
+                    <Input value={agentForm.lastName} onChange={(e) => { setAgentForm((f) => ({ ...f, lastName: e.target.value })); setAgentErrors((e2) => ({ ...e2, lastName: false })); }} className={cn('mt-1', agentErrors.lastName && 'border-destructive')} />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div><Label className="text-xs">Email</Label><Input type="email" value={agentForm.email} onChange={(e) => setAgentForm((f) => ({ ...f, email: e.target.value }))} className="mt-1" /></div>
+                  <div><Label className="text-xs">Phone</Label><Input value={agentForm.phone} onChange={(e) => setAgentForm((f) => ({ ...f, phone: e.target.value }))} className="mt-1" /></div>
+                </div>
+                <div><Label className="text-xs">Company / Trust</Label><Input value={agentForm.company} onChange={(e) => setAgentForm((f) => ({ ...f, company: e.target.value }))} className="mt-1" /></div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div><Label className="text-xs">MLS ID</Label><Input value={agentForm.mlsId} onChange={(e) => setAgentForm((f) => ({ ...f, mlsId: e.target.value }))} className="mt-1" /></div>
+                  <div>
+                    <Label className="text-xs">MLS <span className="text-destructive">*</span></Label>
+                    <Input value={agentForm.mls} onChange={(e) => { setAgentForm((f) => ({ ...f, mls: e.target.value })); setAgentErrors((e2) => ({ ...e2, mls: false })); }} className={cn('mt-1', agentErrors.mls && 'border-destructive')} />
+                    {agentErrors.mls && <p className="text-xs text-destructive mt-1">MLS is required</p>}
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-xs">Commission</Label>
+                  <div className="flex gap-2 mt-1">
+                    <Input value={agentForm.commission} onChange={(e) => setAgentForm((f) => ({ ...f, commission: e.target.value }))} className="flex-1" placeholder="0" />
+                    <div className="flex border rounded-md overflow-hidden">
+                      <button onClick={() => setAgentForm((f) => ({ ...f, commissionType: 'percentage' }))} className={cn('px-3 py-2 text-xs font-medium transition-colors', agentForm.commissionType === 'percentage' ? 'bg-primary text-primary-foreground' : 'bg-background text-muted-foreground hover:bg-muted')}>%</button>
+                      <button onClick={() => setAgentForm((f) => ({ ...f, commissionType: 'dollars' }))} className={cn('px-3 py-2 text-xs font-medium transition-colors', agentForm.commissionType === 'dollars' ? 'bg-primary text-primary-foreground' : 'bg-background text-muted-foreground hover:bg-muted')}>$</button>
                     </div>
                   </div>
-                  <div className="flex gap-2 pt-2">
-                    <Button variant="outline" onClick={() => setStep(5)}>Back</Button>
-                    <Button onClick={handleSaveAgent} disabled={createDealMutation.isPending}>
-                      {createDealMutation.isPending ? 'Creating...' : 'Save'}
-                    </Button>
-                  </div>
+                </div>
+                <div className="pt-2">
+                  <Button onClick={handleSaveAgent} disabled={createDealMutation.isPending}>
+                    {createDealMutation.isPending ? 'Creating...' : 'Save Deal'}
+                  </Button>
                 </div>
               </div>
-            )}
+            </motion.div>
+          )}
 
-            {/* Step 7: Success */}
-            {step === 7 && (
-              <div className="text-center py-16">
-                <div className="w-16 h-16 rounded-full bg-success/10 flex items-center justify-center mx-auto mb-6">
-                  <Check className="w-8 h-8 text-success" />
-                </div>
-                <h2 className="text-2xl font-semibold text-foreground mb-2">Congratulations!</h2>
-                <p className="text-muted-foreground mb-8">Your deal has been created successfully.</p>
-                <Button onClick={() => navigate(`/transactions/${createdDealId}`)}>View Deal</Button>
+          {/* Step 7: Success */}
+          {step === 7 && (
+            <motion.div
+              ref={(el) => { stepRefs.current[6] = el; }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-center py-16"
+            >
+              <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-6">
+                <Check className="w-8 h-8 text-primary" />
               </div>
-            )}
-          </motion.div>
+              <h2 className="text-2xl font-semibold text-foreground mb-2">Congratulations!</h2>
+              <p className="text-muted-foreground mb-8">Your deal has been created successfully.</p>
+              <Button onClick={() => navigate(`/transactions/${createdDealId}`)}>View Deal</Button>
+            </motion.div>
+          )}
 
-          {/* Bottom spacer for scroll comfort */}
-          <div className="h-32" />
+          <div className="h-[50vh]" />
         </div>
       </div>
     </div>
