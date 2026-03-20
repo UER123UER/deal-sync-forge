@@ -24,7 +24,20 @@ import JSZip from 'jszip';
 
 const TABS = ['Checklists', 'Photos', 'Tasks', 'Notes', 'Marketing'] as const;
 
-const MARKETING_ITEMS = [
+const CONTACT_ROLES = [
+  'Buyer', 'Buyer Agent', 'Seller', 'Seller Broker', 'Title',
+  'Buyer Broker', 'Co Buyer Agent', 'Buyer Power Of Attorney',
+  'Buyer Lawyer', 'Buyer Referral', 'Co Seller Agent',
+  'Seller Power Of Attorney', 'Seller Lawyer', 'Seller Referral', 'Lender',
+];
+
+const formatPriceWithCommas = (value: string): string => {
+  const num = value.replace(/[^0-9.]/g, '');
+  if (!num) return '';
+  const parts = num.split('.');
+  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  return '$' + parts.join('.');
+};
   'Yard Sign Installed',
   'Professional Photos Taken',
   'Flyer Created & Printed',
