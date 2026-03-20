@@ -470,7 +470,7 @@ export default function DealDetail() {
                     <button onClick={() => setEditingPrice(false)} className="text-muted-foreground"><X className="w-3.5 h-3.5" /></button>
                   </div>
                 ) : (
-                  <button onClick={() => { setPriceValue(deal.price || ''); setEditingPrice(true); }} className="text-foreground hover:text-primary">{deal.price}</button>
+                  <button onClick={() => { setPriceValue(deal.price || ''); setEditingPrice(true); }} className="text-foreground hover:text-primary">{formatPriceWithCommas(deal.price || '')}</button>
                 )}
               </div>
             </div>
