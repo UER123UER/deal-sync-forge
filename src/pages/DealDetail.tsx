@@ -73,6 +73,7 @@ export default function DealDetail() {
 
   // Marketing local state
   const [marketingChecked, setMarketingChecked] = useState<Set<string>>(new Set());
+  const [marketingCategory, setMarketingCategory] = useState<TemplateCategory | null>(null);
 
   // Hooks for tabs
   const { data: dealNotes = [] } = useDealNotes(id);
