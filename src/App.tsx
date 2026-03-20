@@ -8,6 +8,7 @@ import Transactions from "@/pages/Transactions";
 import NewDeal from "@/pages/NewDeal";
 import DealDetail from "@/pages/DealDetail";
 import FormEditor from "@/pages/FormEditor";
+import MarketingEditor from "@/pages/MarketingEditor";
 import People from "@/pages/People";
 import Tasks from "@/pages/Tasks";
 import Inbox from "@/pages/Inbox";
