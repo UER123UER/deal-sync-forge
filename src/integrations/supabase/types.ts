@@ -145,6 +145,35 @@ export type Database = {
           },
         ]
       }
+      deal_notes: {
+        Row: {
+          content: string
+          created_at: string | null
+          deal_id: string
+          id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          deal_id: string
+          id?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          deal_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deal_notes_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       deals: {
         Row: {
           address: string
@@ -160,6 +189,7 @@ export type Database = {
           representation_side: string
           state: string
           status: string
+          visible_to_office: boolean
           zip: string
         }
         Insert: {
@@ -176,6 +206,7 @@ export type Database = {
           representation_side?: string
           state: string
           status?: string
+          visible_to_office?: boolean
           zip: string
         }
         Update: {
@@ -192,14 +223,92 @@ export type Database = {
           representation_side?: string
           state?: string
           status?: string
+          visible_to_office?: boolean
           zip?: string
         }
         Relationships: []
+      }
+      offers: {
+        Row: {
+          amount: string
+          buyer_name: string
+          created_at: string | null
+          deal_id: string
+          id: string
+          notes: string | null
+          status: string
+        }
+        Insert: {
+          amount: string
+          buyer_name: string
+          created_at?: string | null
+          deal_id: string
+          id?: string
+          notes?: string | null
+          status?: string
+        }
+        Update: {
+          amount?: string
+          buyer_name?: string
+          created_at?: string | null
+          deal_id?: string
+          id?: string
+          notes?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "offers_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      open_houses: {
+        Row: {
+          created_at: string | null
+          deal_id: string
+          end_time: string
+          id: string
+          notes: string | null
+          scheduled_date: string
+          start_time: string
+        }
+        Insert: {
+          created_at?: string | null
+          deal_id: string
+          end_time?: string
+          id?: string
+          notes?: string | null
+          scheduled_date: string
+          start_time?: string
+        }
+        Update: {
+          created_at?: string | null
+          deal_id?: string
+          end_time?: string
+          id?: string
+          notes?: string | null
+          scheduled_date?: string
+          start_time?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "open_houses_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       tasks: {
         Row: {
           assignee: string | null
           created_at: string | null
+          deal_id: string | null
           description: string | null
           due_date: string | null
           end_date: string | null
@@ -210,6 +319,7 @@ export type Database = {
         Insert: {
           assignee?: string | null
           created_at?: string | null
+          deal_id?: string | null
           description?: string | null
           due_date?: string | null
           end_date?: string | null
@@ -220,6 +330,7 @@ export type Database = {
         Update: {
           assignee?: string | null
           created_at?: string | null
+          deal_id?: string | null
           description?: string | null
           due_date?: string | null
           end_date?: string | null
@@ -227,7 +338,15 @@ export type Database = {
           title?: string
           type?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "tasks_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
