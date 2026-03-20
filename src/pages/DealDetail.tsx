@@ -614,23 +614,61 @@ export default function DealDetail() {
         </div>
       )}
 
-      {/* Marketing Tab */}
+      {/* Marketing Tab — Template Gallery */}
       {activeTab === 'Marketing' && (
         <div className="flex-1 overflow-auto p-6">
-          <h3 className="text-sm font-semibold text-foreground mb-4">Marketing Checklist</h3>
-          <div className="border rounded-md divide-y">
-            {MARKETING_ITEMS.map((item) => (
-              <div key={item} className="flex items-center gap-3 px-4 py-3">
-                <Checkbox checked={marketingChecked.has(item)} onCheckedChange={() => setMarketingChecked((prev) => {
-                  const next = new Set(prev);
-                  if (next.has(item)) next.delete(item); else next.add(item);
-                  return next;
-                })} />
-                <span className={cn('text-sm text-foreground', marketingChecked.has(item) && 'line-through opacity-60')}>{item}</span>
-              </div>
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-lg font-semibold text-foreground">Marketing Studio</h3>
+          </div>
+          {/* Category filter chips */}
+          <div className="flex flex-wrap gap-2 mb-6">
+            <button
+              onClick={() => setMarketingCategory(null)}
+              className={cn('px-3 py-1.5 rounded-full text-xs font-medium border transition-colors', !marketingCategory ? 'bg-primary text-primary-foreground border-primary' : 'bg-background text-muted-foreground border-border hover:border-foreground/30')}
+            >
+              All Templates
+            </button>
+            {TEMPLATE_CATEGORIES.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setMarketingCategory(marketingCategory === cat ? null : cat)}
+                className={cn('px-3 py-1.5 rounded-full text-xs font-medium border transition-colors', marketingCategory === cat ? 'bg-primary text-primary-foreground border-primary' : 'bg-background text-muted-foreground border-border hover:border-foreground/30')}
+              >
+                {cat}
+              </button>
             ))}
           </div>
-          <p className="text-xs text-muted-foreground mt-3">Checklist progress is local to this session.</p>
+          {/* Template grid */}
+          <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {TEMPLATES.filter((t) => !marketingCategory || t.category === marketingCategory).map((template) => (
+              <button
+                key={template.id}
+                onClick={() => navigate(`/transactions/${id}/marketing?template=${template.id}`)}
+                className="group border rounded-lg overflow-hidden bg-background hover:shadow-lg transition-all hover:border-primary/50 text-left"
+              >
+                <div className="aspect-[3/4] bg-muted relative overflow-hidden">
+                  <div style={{ transform: 'scale(0.15)', transformOrigin: 'top left', width: template.width, height: template.height, pointerEvents: 'none' }}>
+                    {template.render({
+                      address: deal?.address || '123 Main St',
+                      city: deal?.city || 'City',
+                      state: deal?.state || 'ST',
+                      zip: deal?.zip || '00000',
+                      price: deal?.price || '$0',
+                      beds: '4', baths: '3', sqft: '2,500', lotSize: '',
+                      photos: [], agentName: deal?.primary_agent || 'Agent', agentTitle: 'Real Estate Agent',
+                      agentPhone: '(555) 123-4567', agentEmail: 'agent@email.com',
+                      headline: template.category, subheadline: '', description: 'Beautiful property with modern finishes.',
+                      openHouseDate: 'Saturday, March 22', openHouseTime: '1:00 PM - 4:00 PM',
+                    }, false)}
+                  </div>
+                </div>
+                <div className="p-3">
+                  <div className="text-sm font-medium">{template.name}</div>
+                  <div className="text-xs text-muted-foreground mt-0.5">{template.category} • {template.type}</div>
+                </div>
+              </button>
+            ))}
+          </div>
         </div>
       )}
 
