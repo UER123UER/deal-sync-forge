@@ -77,6 +77,8 @@ export default function DealDetail() {
   const [addContactDialogOpen, setAddContactDialogOpen] = useState(false);
   const [selectedContactId, setSelectedContactId] = useState('');
   const [contactRole, setContactRole] = useState('');
+  const [contactSearch, setContactSearch] = useState('');
+  const [contactDropdownOpen, setContactDropdownOpen] = useState(false);
 
   // Marketing local state
   const [marketingChecked, setMarketingChecked] = useState<Set<string>>(new Set());
