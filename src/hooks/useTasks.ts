@@ -30,7 +30,7 @@ export function useTasks() {
 export function useCreateTask() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (task: { title: string; description?: string; type: string; due_date?: string; end_date?: string; assignee?: string }) => {
+    mutationFn: async (task: { title: string; description?: string; type: string; due_date?: string; end_date?: string; assignee?: string; deal_id?: string }) => {
       const { data, error } = await supabase.from('tasks').insert(task).select().single();
       if (error) throw error;
       return data;
