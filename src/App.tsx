@@ -8,6 +8,7 @@ import Transactions from "@/pages/Transactions";
 import NewDeal from "@/pages/NewDeal";
 import DealDetail from "@/pages/DealDetail";
 import FormEditor from "@/pages/FormEditor";
+import MarketingEditor from "@/pages/MarketingEditor";
 import People from "@/pages/People";
 import Tasks from "@/pages/Tasks";
 import Inbox from "@/pages/Inbox";
@@ -32,6 +33,7 @@ const App = () => (
             <Route path="/transactions/new" element={<NewDeal />} />
             <Route path="/transactions/:id" element={<DealDetail />} />
             <Route path="/transactions/:id/form/:formId" element={<FormEditor />} />
+            <Route path="/transactions/:id/marketing" element={<MarketingEditor />} />
             <Route path="/people" element={<People />} />
             <Route path="/tasks" element={<Tasks />} />
             <Route path="/inbox" element={<Inbox />} />
