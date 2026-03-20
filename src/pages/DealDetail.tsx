@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback } from 'react';
+import { TEMPLATES, TEMPLATE_CATEGORIES, type TemplateCategory } from '@/data/marketingTemplates';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ChevronDown, ChevronRight, Edit, Eye, Mail, Plus, FileText, GripVertical, Download, Printer, Send, Trash2, MessageSquare, Bell, UserPlus, Check, X, Upload, Image, StickyNote, Megaphone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
