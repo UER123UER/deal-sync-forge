@@ -37,7 +37,8 @@ const formatPriceWithCommas = (value: string): string => {
   const parts = num.split('.');
   parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
   return '$' + parts.join('.');
-};
+
+const MARKETING_ITEMS = [
   'Yard Sign Installed',
   'Professional Photos Taken',
   'Flyer Created & Printed',
