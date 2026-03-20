@@ -1,12 +1,16 @@
 import { useState } from 'react';
-import { Search, Plus, ChevronDown, X, CheckSquare, Phone, Users, StickyNote, MoreHorizontal, Calendar } from 'lucide-react';
+import { Search, Plus, ChevronDown, X, CheckSquare, Phone, Users, StickyNote, MoreHorizontal, Calendar, Trash2, Edit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useTasks, useCreateTask, TaskRow } from '@/hooks/useTasks';
+import { useTasks, useCreateTask, useUpdateTask, useDeleteTask, TaskRow } from '@/hooks/useTasks';
 import { format } from 'date-fns';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar as CalendarComponent } from '@/components/ui/calendar';
+import { toast } from 'sonner';
 
 const TASK_TYPES = [
   { key: 'todo' as const, label: 'Todo', icon: CheckSquare },
@@ -18,29 +22,88 @@ const TASK_TYPES = [
 export default function Tasks() {
   const { data: tasks = [], isLoading } = useTasks();
   const createTask = useCreateTask();
+  const updateTask = useUpdateTask();
+  const deleteTask = useDeleteTask();
   const [search, setSearch] = useState('');
   const [panelOpen, setPanelOpen] = useState(false);
+  const [editingTask, setEditingTask] = useState<TaskRow | null>(null);
   const [newTaskType, setNewTaskType] = useState<string>('todo');
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [newTaskDescription, setNewTaskDescription] = useState('');
+  const [newTaskDueDate, setNewTaskDueDate] = useState<Date | undefined>();
+  const [completedTasks, setCompletedTasks] = useState<Set<string>>(new Set());
+
+  // Filters
+  const [filterType, setFilterType] = useState<string>('all');
 
   const filtered = tasks.filter((t) => {
+    if (filterType !== 'all' && t.type !== filterType) return false;
     if (!search) return true;
     const term = search.toLowerCase();
     return t.title.toLowerCase().includes(term) || (t.description || '').toLowerCase().includes(term);
   });
 
-  const handleSave = async () => {
-    if (!newTaskTitle.trim()) return;
-    await createTask.mutateAsync({
-      title: newTaskTitle.trim(),
-      description: newTaskDescription.trim() || undefined,
-      type: newTaskType,
-    });
+  const openCreate = () => {
+    setEditingTask(null);
     setNewTaskTitle('');
     setNewTaskDescription('');
     setNewTaskType('todo');
-    setPanelOpen(false);
+    setNewTaskDueDate(undefined);
+    setPanelOpen(true);
+  };
+
+  const openEdit = (task: TaskRow) => {
+    setEditingTask(task);
+    setNewTaskTitle(task.title);
+    setNewTaskDescription(task.description || '');
+    setNewTaskType(task.type);
+    setNewTaskDueDate(task.due_date ? new Date(task.due_date) : undefined);
+    setPanelOpen(true);
+  };
+
+  const handleSave = async () => {
+    if (!newTaskTitle.trim()) return;
+    try {
+      if (editingTask) {
+        await updateTask.mutateAsync({
+          id: editingTask.id,
+          title: newTaskTitle.trim(),
+          description: newTaskDescription.trim() || undefined,
+          type: newTaskType,
+          due_date: newTaskDueDate ? newTaskDueDate.toISOString() : null,
+        });
+        toast.success('Task updated');
+      } else {
+        await createTask.mutateAsync({
+          title: newTaskTitle.trim(),
+          description: newTaskDescription.trim() || undefined,
+          type: newTaskType,
+          due_date: newTaskDueDate ? newTaskDueDate.toISOString() : undefined,
+        });
+        toast.success('Task created');
+      }
+      setPanelOpen(false);
+    } catch {
+      toast.error('Failed to save task');
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteTask.mutateAsync(id);
+      toast.success('Task deleted');
+    } catch {
+      toast.error('Failed to delete task');
+    }
+  };
+
+  const toggleComplete = (taskId: string) => {
+    setCompletedTasks((prev) => {
+      const next = new Set(prev);
+      if (next.has(taskId)) next.delete(taskId);
+      else next.add(taskId);
+      return next;
+    });
   };
 
   return (
@@ -62,20 +125,16 @@ export default function Tasks() {
 
       {/* Filters & Actions */}
       <div className="px-6 pt-4 pb-2 flex items-center gap-2">
-        <Button variant="outline" size="sm" className="text-xs gap-1">
-          Assignee <ChevronDown className="w-3 h-3" />
+        <Button variant={filterType === 'all' ? 'default' : 'outline'} size="sm" className="text-xs" onClick={() => setFilterType('all')}>
+          All
         </Button>
-        <Button variant="outline" size="sm" className="text-xs gap-1">
-          Status <ChevronDown className="w-3 h-3" />
-        </Button>
-        <Button variant="outline" size="sm" className="text-xs gap-1">
-          Type <ChevronDown className="w-3 h-3" />
-        </Button>
-        <Button variant="outline" size="sm" className="text-xs gap-1">
-          Date Range <ChevronDown className="w-3 h-3" />
-        </Button>
+        {TASK_TYPES.map((t) => (
+          <Button key={t.key} variant={filterType === t.key ? 'default' : 'outline'} size="sm" className="text-xs gap-1" onClick={() => setFilterType(t.key)}>
+            <t.icon className="w-3 h-3" /> {t.label}
+          </Button>
+        ))}
         <div className="flex-1" />
-        <Button size="sm" className="text-xs gap-1.5" onClick={() => setPanelOpen(true)}>
+        <Button size="sm" className="text-xs gap-1.5" onClick={openCreate}>
           <Plus className="w-3.5 h-3.5" /> New Task
         </Button>
       </div>
@@ -83,10 +142,12 @@ export default function Tasks() {
       {/* Table header */}
       <div className="border-b">
         <div className="flex px-6 py-3">
+          <span className="w-8" />
           <span className="text-xs font-medium text-muted-foreground flex-1">Task</span>
           <span className="text-xs font-medium text-muted-foreground w-48">Assignee</span>
           <span className="text-xs font-medium text-muted-foreground w-32">Due Date</span>
           <span className="text-xs font-medium text-muted-foreground w-32">Type</span>
+          <span className="text-xs font-medium text-muted-foreground w-20">Actions</span>
         </div>
       </div>
 
@@ -104,25 +165,35 @@ export default function Tasks() {
         </div>
       ) : (
         <div className="flex-1 overflow-auto">
-          {filtered.map((task) => (
-            <div key={task.id} className="flex items-center px-6 py-3 border-b hover:bg-muted/50">
-              <div className="flex-1">
-                <p className="text-sm text-foreground">{task.title}</p>
-                {task.description && <p className="text-xs text-muted-foreground">{task.description}</p>}
+          {filtered.map((task) => {
+            const isComplete = completedTasks.has(task.id);
+            return (
+              <div key={task.id} className={cn('flex items-center px-6 py-3 border-b hover:bg-muted/50', isComplete && 'opacity-50')}>
+                <div className="w-8">
+                  <Checkbox checked={isComplete} onCheckedChange={() => toggleComplete(task.id)} />
+                </div>
+                <div className="flex-1">
+                  <p className={cn('text-sm text-foreground', isComplete && 'line-through')}>{task.title}</p>
+                  {task.description && <p className="text-xs text-muted-foreground">{task.description}</p>}
+                </div>
+                <div className="w-48 text-sm text-muted-foreground">{task.assignee || '—'}</div>
+                <div className="w-32 text-sm text-muted-foreground">
+                  {task.due_date ? format(new Date(task.due_date), 'MMM d, yyyy') : '—'}
+                </div>
+                <div className="w-32">
+                  <span className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full capitalize">{task.type}</span>
+                </div>
+                <div className="w-20 flex items-center gap-1">
+                  <button onClick={() => openEdit(task)} className="p-1 hover:bg-muted rounded"><Edit className="w-3.5 h-3.5 text-muted-foreground" /></button>
+                  <button onClick={() => handleDelete(task.id)} className="p-1 hover:bg-muted rounded"><Trash2 className="w-3.5 h-3.5 text-destructive" /></button>
+                </div>
               </div>
-              <div className="w-48 text-sm text-muted-foreground">{task.assignee || '—'}</div>
-              <div className="w-32 text-sm text-muted-foreground">
-                {task.due_date ? format(new Date(task.due_date), 'MMM d, yyyy') : '—'}
-              </div>
-              <div className="w-32">
-                <span className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full capitalize">{task.type}</span>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
-      {/* New Task Slide-over */}
+      {/* New/Edit Task Slide-over */}
       <AnimatePresence>
         {panelOpen && (
           <>
@@ -140,9 +211,8 @@ export default function Tasks() {
               transition={{ type: 'spring', damping: 30, stiffness: 300 }}
               className="fixed right-0 top-0 bottom-0 w-[420px] bg-background border-l shadow-xl z-50 flex flex-col"
             >
-              {/* Header */}
               <div className="h-14 border-b flex items-center px-4 justify-between flex-shrink-0">
-                <h2 className="text-sm font-semibold text-foreground">New Task</h2>
+                <h2 className="text-sm font-semibold text-foreground">{editingTask ? 'Edit Task' : 'New Task'}</h2>
                 <button onClick={() => setPanelOpen(false)} className="p-1.5 rounded-md hover:bg-muted transition-colors">
                   <X className="w-4 h-4 text-muted-foreground" />
                 </button>
@@ -165,10 +235,6 @@ export default function Tasks() {
                     {t.label}
                   </button>
                 ))}
-                <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border border-border text-muted-foreground hover:bg-muted transition-colors">
-                  <MoreHorizontal className="w-3.5 h-3.5" />
-                  More
-                </button>
               </div>
 
               {/* Body */}
@@ -193,35 +259,31 @@ export default function Tasks() {
 
                 <div>
                   <Label className="text-xs">Due Date</Label>
-                  <div className="mt-1 flex items-center gap-2 border rounded-md px-3 py-2 text-sm text-muted-foreground cursor-pointer hover:bg-muted/50">
-                    <Calendar className="w-4 h-4" />
-                    Select date
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <button className="text-sm text-primary hover:underline flex items-center gap-1">
-                    <Plus className="w-3 h-3" /> Attach Client
-                  </button>
-                  <button className="text-sm text-primary hover:underline flex items-center gap-1">
-                    <Plus className="w-3 h-3" /> Attach Property
-                  </button>
-                  <button className="text-sm text-primary hover:underline flex items-center gap-1">
-                    <Plus className="w-3 h-3" /> Attach Deal
-                  </button>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <div className="mt-1 flex items-center gap-2 border rounded-md px-3 py-2 text-sm cursor-pointer hover:bg-muted/50">
+                        <Calendar className="w-4 h-4 text-muted-foreground" />
+                        <span className={newTaskDueDate ? 'text-foreground' : 'text-muted-foreground'}>
+                          {newTaskDueDate ? format(newTaskDueDate, 'MMM d, yyyy') : 'Select date'}
+                        </span>
+                      </div>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <CalendarComponent
+                        mode="single"
+                        selected={newTaskDueDate}
+                        onSelect={setNewTaskDueDate}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
                 </div>
               </div>
 
               {/* Footer */}
-              <div className="border-t p-4 flex items-center justify-between flex-shrink-0">
-                <button className="text-sm text-primary hover:underline flex items-center gap-1.5">
-                  <div className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-medium">
-                    KB
-                  </div>
-                  Add Assignee
-                </button>
-                <Button size="sm" disabled={!newTaskTitle.trim() || createTask.isPending} onClick={handleSave}>
-                  {createTask.isPending ? 'Saving...' : 'Save'}
+              <div className="border-t p-4 flex items-center justify-end flex-shrink-0">
+                <Button size="sm" disabled={!newTaskTitle.trim() || createTask.isPending || updateTask.isPending} onClick={handleSave}>
+                  {createTask.isPending || updateTask.isPending ? 'Saving...' : 'Save'}
                 </Button>
               </div>
             </motion.div>

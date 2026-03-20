@@ -1,7 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
 
-const HERE_API_KEY = 'AiDx3Qd6umV3vVKcvr2gJRiituEHhQ4UOBu8LJPE8xw';
-
 export interface AddressSuggestion {
   address: string;
   city: string;
@@ -9,6 +7,8 @@ export interface AddressSuggestion {
   zip: string;
   label: string;
 }
+
+const HERE_API_KEY = import.meta.env.VITE_HERE_API_KEY || 'AiDx3Qd6umV3vVKcvr2gJRiituEHhQ4UOBu8LJPE8xw';
 
 export function useAddressAutocomplete(query: string) {
   const [suggestions, setSuggestions] = useState<AddressSuggestion[]>([]);

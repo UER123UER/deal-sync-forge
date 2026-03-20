@@ -5,28 +5,21 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useCreateDeal } from '@/hooks/useDeals';
+import { useContacts } from '@/hooks/useContacts';
 import { useAddressAutocomplete } from '@/hooks/useAddressAutocomplete';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
+import { toast } from 'sonner';
 
 const PROPERTY_TYPES = [
   'Sale-Condo', 'Sale-Single Family Home', 'Sale-Land', 'Sale-New Construction',
   'Sale-Commercial', 'Lease-Commercial', 'Lease-Condo', 'Lease-Single Family Home', 'Referral',
 ];
 
-const MOCK_AGENTS = [
-  { id: 'a1', teamName: 'Premier Realty Group', location: 'Orlando, FL', agents: [
-    { id: 'ag1', firstName: 'Michael', lastName: 'Rivera', avatar: 'MR' },
-    { id: 'ag2', firstName: 'Lisa', lastName: 'Chen', avatar: 'LC' },
-  ]},
-  { id: 'a2', teamName: 'Coastal Properties', location: 'Miami, FL', agents: [
-    { id: 'ag3', firstName: 'David', lastName: 'Park', avatar: 'DP' },
-  ]},
-];
-
 export default function NewDeal() {
   const navigate = useNavigate();
   const createDealMutation = useCreateDeal();
+  const { data: allContacts = [] } = useContacts();
 
   const [step, setStep] = useState(1);
   const [propertyType, setPropertyType] = useState('');
@@ -44,11 +37,18 @@ export default function NewDeal() {
   const [createdDealId, setCreatedDealId] = useState<string | null>(null);
 
   const [sellerForm, setSellerForm] = useState({ role: 'Seller', firstName: '', lastName: '', email: '', phone: '', company: '', currentAddress: '' });
+  const [sellerErrors, setSellerErrors] = useState<Record<string, boolean>>({});
   const [agentForm, setAgentForm] = useState({ role: 'Seller Agent', firstName: '', lastName: '', email: '', phone: '', company: '', mlsId: '', mls: '', commission: '', commissionType: 'percentage' as 'percentage' | 'dollars' });
   const [agentErrors, setAgentErrors] = useState<Record<string, boolean>>({});
 
+  // Seller address autocomplete
+  const [sellerAddressSearch, setSellerAddressSearch] = useState('');
+  const [showSellerAddresses, setShowSellerAddresses] = useState(false);
+  const { suggestions: sellerAddressSuggestions, isLoading: sellerAddressLoading } = useAddressAutocomplete(sellerAddressSearch);
+
   const stepRefs = useRef<(HTMLDivElement | null)[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
+  const addressDropdownRef = useRef<HTMLDivElement>(null);
 
   const handleClose = () => navigate('/transactions');
 
@@ -59,6 +59,18 @@ export default function NewDeal() {
       el.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
   }, [step]);
+
+  // Click outside to close address dropdown
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (addressDropdownRef.current && !addressDropdownRef.current.contains(e.target as Node)) {
+        setShowAddresses(false);
+        setShowSellerAddresses(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
 
   const goToStep = (targetStep: number) => {
     if (targetStep < step) setStep(targetStep);
@@ -89,7 +101,17 @@ export default function NewDeal() {
     setStep(5);
   };
 
-  const handleSaveSeller = () => setStep(6);
+  const handleSaveSeller = () => {
+    const errors: Record<string, boolean> = {};
+    if (!sellerForm.firstName.trim()) errors.firstName = true;
+    if (!sellerForm.lastName.trim()) errors.lastName = true;
+    if (Object.keys(errors).length) {
+      setSellerErrors(errors);
+      toast.error('First and last name are required');
+      return;
+    }
+    setStep(6);
+  };
 
   const handleSaveAgent = async () => {
     const errors: Record<string, boolean> = {};
@@ -130,10 +152,25 @@ export default function NewDeal() {
       });
       setCreatedDealId(newDeal.id);
       setStep(7);
+      toast.success('Deal created successfully!');
     } catch (err) {
       console.error('Failed to create deal:', err);
+      toast.error('Failed to create deal. Please try again.');
     }
   };
+
+  // Filter agents from contacts
+  const agentContacts = allContacts.filter((c) => {
+    const role = (c.role || '').toLowerCase();
+    const matchesRole = role.includes('agent') || role.includes('broker') || c.mls_id || c.mls;
+    if (!agentSearch) return matchesRole;
+    const term = agentSearch.toLowerCase();
+    return matchesRole && (
+      c.first_name.toLowerCase().includes(term) ||
+      c.last_name.toLowerCase().includes(term) ||
+      (c.company || '').toLowerCase().includes(term)
+    );
+  });
 
   const stepSummary = (s: number) => {
     switch (s) {
@@ -196,24 +233,12 @@ export default function NewDeal() {
         <div className="max-w-2xl mx-auto py-10 px-6 space-y-6">
 
           {/* Completed steps shown as compact summaries */}
-          {step > 1 && (
-            <CompletedStep stepNum={1} title="Property Type" />
-          )}
-          {step > 2 && (
-            <CompletedStep stepNum={2} title="Property Address" />
-          )}
-          {step > 3 && (
-            <CompletedStep stepNum={3} title="Representation Side" />
-          )}
-          {step > 4 && (
-            <CompletedStep stepNum={4} title="Seller's Agent" />
-          )}
-          {step > 5 && (
-            <CompletedStep stepNum={5} title="Seller Info" />
-          )}
-          {step > 6 && (
-            <CompletedStep stepNum={6} title="Agent Details" />
-          )}
+          {step > 1 && <CompletedStep stepNum={1} title="Property Type" />}
+          {step > 2 && <CompletedStep stepNum={2} title="Property Address" />}
+          {step > 3 && <CompletedStep stepNum={3} title="Representation Side" />}
+          {step > 4 && <CompletedStep stepNum={4} title="Seller's Agent" />}
+          {step > 5 && <CompletedStep stepNum={5} title="Seller Info" />}
+          {step > 6 && <CompletedStep stepNum={6} title="Agent Details" />}
 
           {/* Active step */}
           <motion.div
@@ -253,7 +278,7 @@ export default function NewDeal() {
               <div>
                 <h2 className="text-xl font-semibold mb-1 text-foreground">Property Address</h2>
                 <p className="text-sm text-muted-foreground mb-6">Enter the MLS# or property address.</p>
-                <div className="relative">
+                <div className="relative" ref={addressDropdownRef}>
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   {addressLoading && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground animate-spin" />}
                   <Input
@@ -314,30 +339,32 @@ export default function NewDeal() {
               </div>
             )}
 
-            {/* Step 4: Agent Search */}
+            {/* Step 4: Agent Search — uses real contacts */}
             {step === 4 && (
               <div>
                 <h2 className="text-xl font-semibold mb-1 text-foreground">Seller's Agent</h2>
-                <p className="text-sm text-muted-foreground mb-6">Search for teams or agents.</p>
+                <p className="text-sm text-muted-foreground mb-6">Search for agents from your contacts or enter manually.</p>
                 <div className="relative mb-4">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <Input placeholder="Search for teams or agents" className="pl-9" value={agentSearch} onChange={(e) => setAgentSearch(e.target.value)} />
+                  <Input placeholder="Search agents by name or company" className="pl-9" value={agentSearch} onChange={(e) => setAgentSearch(e.target.value)} />
                 </div>
-                <div className="space-y-4">
-                  {MOCK_AGENTS.map((team) => (
-                    <div key={team.id} className="border rounded-md overflow-hidden">
-                      <div className="px-4 py-2.5 bg-muted/50 border-b">
-                        <div className="text-sm font-medium text-foreground">{team.teamName}</div>
-                        <div className="text-xs text-muted-foreground">{team.location}</div>
+                <div className="space-y-1 max-h-64 overflow-auto">
+                  {agentContacts.length > 0 ? agentContacts.map((c) => (
+                    <button key={c.id} onClick={() => handleSelectAgent({ firstName: c.first_name, lastName: c.last_name })} className="w-full text-left px-4 py-3 hover:bg-muted/50 rounded-md flex items-center gap-3 text-sm transition-colors border border-border">
+                      <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-medium">{c.first_name[0]}{c.last_name[0]}</div>
+                      <div className="flex-1">
+                        <span className="text-foreground">{c.first_name} {c.last_name}</span>
+                        {c.company && <span className="text-xs text-muted-foreground ml-2">• {c.company}</span>}
                       </div>
-                      {team.agents.map((agent) => (
-                        <button key={agent.id} onClick={() => handleSelectAgent(agent)} className="w-full text-left px-4 py-3 hover:bg-muted/50 flex items-center gap-3 text-sm transition-colors">
-                          <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-medium">{agent.avatar}</div>
-                          <span className="text-foreground">{agent.firstName} {agent.lastName}</span>
-                        </button>
-                      ))}
-                    </div>
-                  ))}
+                    </button>
+                  )) : (
+                    <p className="text-sm text-muted-foreground py-4 text-center">No agents found in your contacts.</p>
+                  )}
+                </div>
+                <div className="mt-4 pt-4 border-t">
+                  <Button variant="outline" size="sm" onClick={() => { setAgentForm((f) => ({ ...f, firstName: '', lastName: '' })); setStep(5); }}>
+                    Enter agent manually instead
+                  </Button>
                 </div>
               </div>
             )}
@@ -352,15 +379,56 @@ export default function NewDeal() {
                     <div><Label className="text-xs">Role</Label><Input value={sellerForm.role} onChange={(e) => setSellerForm((f) => ({ ...f, role: e.target.value }))} className="mt-1" /></div>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
-                    <div><Label className="text-xs">First Name</Label><Input value={sellerForm.firstName} onChange={(e) => setSellerForm((f) => ({ ...f, firstName: e.target.value }))} className="mt-1" /></div>
-                    <div><Label className="text-xs">Last Name</Label><Input value={sellerForm.lastName} onChange={(e) => setSellerForm((f) => ({ ...f, lastName: e.target.value }))} className="mt-1" /></div>
+                    <div>
+                      <Label className="text-xs">First Name <span className="text-destructive">*</span></Label>
+                      <Input value={sellerForm.firstName} onChange={(e) => { setSellerForm((f) => ({ ...f, firstName: e.target.value })); setSellerErrors((e2) => ({ ...e2, firstName: false })); }} className={cn('mt-1', sellerErrors.firstName && 'border-destructive')} />
+                      {sellerErrors.firstName && <p className="text-xs text-destructive mt-1">Required</p>}
+                    </div>
+                    <div>
+                      <Label className="text-xs">Last Name <span className="text-destructive">*</span></Label>
+                      <Input value={sellerForm.lastName} onChange={(e) => { setSellerForm((f) => ({ ...f, lastName: e.target.value })); setSellerErrors((e2) => ({ ...e2, lastName: false })); }} className={cn('mt-1', sellerErrors.lastName && 'border-destructive')} />
+                      {sellerErrors.lastName && <p className="text-xs text-destructive mt-1">Required</p>}
+                    </div>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div><Label className="text-xs">Email</Label><Input type="email" value={sellerForm.email} onChange={(e) => setSellerForm((f) => ({ ...f, email: e.target.value }))} className="mt-1" /></div>
                     <div><Label className="text-xs">Phone</Label><Input value={sellerForm.phone} onChange={(e) => setSellerForm((f) => ({ ...f, phone: e.target.value }))} className="mt-1" /></div>
                   </div>
                   <div><Label className="text-xs">Company / Trust</Label><Input value={sellerForm.company} onChange={(e) => setSellerForm((f) => ({ ...f, company: e.target.value }))} className="mt-1" /></div>
-                  <div><Label className="text-xs">Current Address</Label><Input value={sellerForm.currentAddress} onChange={(e) => setSellerForm((f) => ({ ...f, currentAddress: e.target.value }))} className="mt-1" /></div>
+                  <div className="relative">
+                    <Label className="text-xs">Current Address</Label>
+                    <div className="relative mt-1">
+                      <Input
+                        value={sellerForm.currentAddress || sellerAddressSearch}
+                        onChange={(e) => {
+                          setSellerAddressSearch(e.target.value);
+                          setSellerForm((f) => ({ ...f, currentAddress: e.target.value }));
+                          setShowSellerAddresses(true);
+                        }}
+                        onFocus={() => sellerAddressSearch.length >= 3 && setShowSellerAddresses(true)}
+                      />
+                      {sellerAddressLoading && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground animate-spin" />}
+                    </div>
+                    {showSellerAddresses && sellerAddressSuggestions.length > 0 && (
+                      <div className="absolute top-full left-0 right-0 mt-1 bg-popover border rounded-md shadow-lg z-10 max-h-48 overflow-auto">
+                        {sellerAddressSuggestions.map((addr, i) => (
+                          <button
+                            key={`seller-${addr.label}-${i}`}
+                            onClick={() => {
+                              const fullAddr = `${addr.address}, ${addr.city}, ${addr.state} ${addr.zip}`;
+                              setSellerForm((f) => ({ ...f, currentAddress: fullAddr }));
+                              setSellerAddressSearch('');
+                              setShowSellerAddresses(false);
+                            }}
+                            className="w-full text-left px-3 py-2 hover:bg-muted text-sm"
+                          >
+                            <div className="text-foreground">{addr.address}</div>
+                            <div className="text-xs text-muted-foreground">{addr.city}, {addr.state} {addr.zip}</div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                   <div className="flex gap-2 pt-2">
                     <Button variant="outline" onClick={() => setStep(4)}>Back</Button>
                     <Button onClick={handleSaveSeller}>Continue</Button>

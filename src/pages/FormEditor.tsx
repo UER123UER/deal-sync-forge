@@ -1,13 +1,15 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { X, AlertTriangle, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useDeal } from '@/hooks/useDeals';
+import { useDeal, useUpdateDeal } from '@/hooks/useDeals';
+import { toast } from 'sonner';
 
 export default function FormEditor() {
   const { id, formId } = useParams<{ id: string; formId: string }>();
   const navigate = useNavigate();
   const { data: deal, isLoading } = useDeal(id);
+  const updateDeal = useUpdateDeal();
 
   const contacts = (deal?.deal_contacts || []).map((dc) => ({
     role: dc.role || '',
@@ -22,22 +24,59 @@ export default function FormEditor() {
   const agent = contacts.find((c) => c.role.includes('Agent'));
 
   const [fields, setFields] = useState({
-    sellerName: seller ? `${seller.firstName} ${seller.lastName}` : '',
-    brokerName: agent ? `${agent.firstName} ${agent.lastName}` : '',
-    brokerCompany: agent?.company || '',
-    propertyAddress: deal ? `${deal.address}, ${deal.city}, ${deal.state} ${deal.zip}` : '',
-    listingStartDate: deal?.listing_start_date || '',
-    listingExpiration: deal?.listing_expiration || '',
-    listPrice: deal?.price || '',
-    commissionRate: agent?.commission || '',
-    mlsNumber: deal?.mls_number || '',
+    sellerName: '',
+    brokerName: '',
+    brokerCompany: '',
+    propertyAddress: '',
+    listingStartDate: '',
+    listingExpiration: '',
+    listPrice: '',
+    commissionRate: '',
+    mlsNumber: '',
   });
+  const [initialized, setInitialized] = useState(false);
+
+  // Properly initialize fields when deal data loads
+  useEffect(() => {
+    if (deal && !initialized) {
+      const s = contacts.find((c) => c.role === 'Seller');
+      const a = contacts.find((c) => c.role.includes('Agent'));
+      setFields({
+        sellerName: s ? `${s.firstName} ${s.lastName}` : '',
+        brokerName: a ? `${a.firstName} ${a.lastName}` : '',
+        brokerCompany: a?.company || '',
+        propertyAddress: `${deal.address}, ${deal.city}, ${deal.state} ${deal.zip}`,
+        listingStartDate: deal.listing_start_date || '',
+        listingExpiration: deal.listing_expiration || '',
+        listPrice: deal.price || '',
+        commissionRate: a?.commission || '',
+        mlsNumber: deal.mls_number || '',
+      });
+      setInitialized(true);
+    }
+  }, [deal, initialized]);
 
   const updateField = (key: string, value: string) => {
     setFields((f) => ({ ...f, [key]: value }));
   };
 
   const handleClose = () => navigate(`/transactions/${id}`);
+
+  const handleSave = async () => {
+    if (!deal) return;
+    try {
+      await updateDeal.mutateAsync({
+        id: deal.id,
+        price: fields.listPrice || undefined,
+        mls_number: fields.mlsNumber || undefined,
+        listing_start_date: fields.listingStartDate || undefined,
+        listing_expiration: fields.listingExpiration || undefined,
+      });
+      toast.success('Form saved successfully');
+    } catch {
+      toast.error('Failed to save form');
+    }
+  };
 
   const InlineField = ({ fieldKey, width = 200 }: { fieldKey: keyof typeof fields; width?: number }) => (
     <input
@@ -64,11 +103,11 @@ export default function FormEditor() {
           {checklistItem?.name || 'Document'}
         </h1>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" className="text-xs gap-1.5">
+          <Button variant="outline" size="sm" className="text-xs gap-1.5" onClick={() => toast.info('Issue reported. Thank you!')}>
             <AlertTriangle className="w-3.5 h-3.5" /> Report an Issue
           </Button>
-          <Button size="sm" className="text-xs gap-1.5">
-            <Save className="w-3.5 h-3.5" /> Save
+          <Button size="sm" className="text-xs gap-1.5" onClick={handleSave} disabled={updateDeal.isPending}>
+            <Save className="w-3.5 h-3.5" /> {updateDeal.isPending ? 'Saving...' : 'Save'}
           </Button>
           <button onClick={handleClose} className="p-2 rounded-md hover:bg-muted transition-colors ml-2">
             <X className="w-4 h-4 text-muted-foreground" />

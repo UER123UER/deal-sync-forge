@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Download, FileDown, Plus } from 'lucide-react';
+import { Search, Download, FileDown, Plus, Trash2, ArrowUpDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useDeals, DealRow } from '@/hooks/useDeals';
+import { useDeals, useDeleteDeal, DealRow } from '@/hooks/useDeals';
 import { cn } from '@/lib/utils';
+import { Checkbox } from '@/components/ui/checkbox';
+import { toast } from 'sonner';
 
 const TABS = ['All Deals', 'Draft', 'Active', 'Pending', 'Archive'] as const;
 type TabType = typeof TABS[number];
@@ -24,17 +26,80 @@ const statusColors: Record<string, string> = {
   archive: 'bg-muted text-muted-foreground',
 };
 
+type SortKey = 'address' | 'status' | 'price' | 'listing_expiration' | 'primary_agent';
+
 export default function Transactions() {
   const [activeTab, setActiveTab] = useState<TabType>('All Deals');
   const [search, setSearch] = useState('');
+  const [selectedDeals, setSelectedDeals] = useState<string[]>([]);
+  const [sortKey, setSortKey] = useState<SortKey>('address');
+  const [sortAsc, setSortAsc] = useState(true);
   const navigate = useNavigate();
   const { data: deals = [], isLoading } = useDeals();
+  const deleteDeal = useDeleteDeal();
 
-  const filtered = deals.filter((d) => {
-    const matchesTab = statusMap[activeTab] === 'all' || d.status === statusMap[activeTab];
-    const matchesSearch = !search || d.address.toLowerCase().includes(search.toLowerCase()) || (d.mls_number || '').toLowerCase().includes(search.toLowerCase()) || (d.primary_agent || '').toLowerCase().includes(search.toLowerCase());
-    return matchesTab && matchesSearch;
-  });
+  const filtered = deals
+    .filter((d) => {
+      const matchesTab = statusMap[activeTab] === 'all' || d.status === statusMap[activeTab];
+      const matchesSearch = !search || d.address.toLowerCase().includes(search.toLowerCase()) || (d.mls_number || '').toLowerCase().includes(search.toLowerCase()) || (d.primary_agent || '').toLowerCase().includes(search.toLowerCase());
+      return matchesTab && matchesSearch;
+    })
+    .sort((a, b) => {
+      const valA = (a[sortKey] || '').toLowerCase();
+      const valB = (b[sortKey] || '').toLowerCase();
+      return sortAsc ? valA.localeCompare(valB) : valB.localeCompare(valA);
+    });
+
+  const toggleSort = (key: SortKey) => {
+    if (sortKey === key) setSortAsc(!sortAsc);
+    else { setSortKey(key); setSortAsc(true); }
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelectedDeals((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]);
+  };
+
+  const toggleAll = () => {
+    if (selectedDeals.length === filtered.length) setSelectedDeals([]);
+    else setSelectedDeals(filtered.map((d) => d.id));
+  };
+
+  const handleExport = () => {
+    const headers = ['Address', 'City', 'State', 'Zip', 'Status', 'Price', 'MLS#', 'Primary Agent', 'Created'];
+    const rows = filtered.map((d) => [d.address, d.city, d.state, d.zip, d.status, d.price || '', d.mls_number || '', d.primary_agent || '', d.created_at || '']);
+    const csv = [headers.join(','), ...rows.map((r) => r.map((c) => `"${c}"`).join(','))].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'deals-export.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success('Deals exported as CSV');
+  };
+
+  const handleBulkDelete = async () => {
+    if (!selectedDeals.length) return;
+    const count = selectedDeals.length;
+    try {
+      for (const id of selectedDeals) {
+        await deleteDeal.mutateAsync(id);
+      }
+      setSelectedDeals([]);
+      toast.success(`${count} deal(s) deleted`);
+    } catch {
+      toast.error('Failed to delete deals');
+    }
+  };
+
+  const SortHeader = ({ label, sortKeyName }: { label: string; sortKeyName: SortKey }) => (
+    <th className="text-left text-xs font-medium text-muted-foreground px-4 py-3 cursor-pointer select-none hover:text-foreground" onClick={() => toggleSort(sortKeyName)}>
+      <span className="flex items-center gap-1">
+        {label}
+        <ArrowUpDown className={cn('w-3 h-3', sortKey === sortKeyName ? 'text-foreground' : 'text-muted-foreground/50')} />
+      </span>
+    </th>
+  );
 
   return (
     <div className="flex-1 flex flex-col">
@@ -55,12 +120,17 @@ export default function Transactions() {
 
       {/* Action Bar */}
       <div className="px-6 pt-4 pb-2 flex items-center gap-2">
-        <Button variant="outline" size="sm" className="gap-1.5 text-xs">
+        <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={handleExport}>
           <Download className="w-3.5 h-3.5" /> Export Deals
         </Button>
-        <Button variant="outline" size="sm" className="gap-1.5 text-xs">
+        <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={() => toast.info('Download Forms coming soon')}>
           <FileDown className="w-3.5 h-3.5" /> Download Forms
         </Button>
+        {selectedDeals.length > 0 && (
+          <Button variant="outline" size="sm" className="gap-1.5 text-xs text-destructive" onClick={handleBulkDelete}>
+            <Trash2 className="w-3.5 h-3.5" /> Delete ({selectedDeals.length})
+          </Button>
+        )}
         <div className="flex-1" />
         <Button size="sm" className="gap-1.5 text-xs" onClick={() => navigate('/transactions/new')}>
           <Plus className="w-3.5 h-3.5" /> New Deal
@@ -97,11 +167,17 @@ export default function Transactions() {
           <table className="w-full">
             <thead>
               <tr className="border-b">
-                <th className="text-left text-xs font-medium text-muted-foreground px-6 py-3">Address</th>
-                <th className="text-left text-xs font-medium text-muted-foreground px-4 py-3">Status</th>
-                <th className="text-left text-xs font-medium text-muted-foreground px-4 py-3">Price</th>
-                <th className="text-left text-xs font-medium text-muted-foreground px-4 py-3">Critical Dates</th>
-                <th className="text-left text-xs font-medium text-muted-foreground px-4 py-3">Primary Agent</th>
+                <th className="text-left px-6 py-3 w-8">
+                  <Checkbox
+                    checked={selectedDeals.length === filtered.length && filtered.length > 0}
+                    onCheckedChange={toggleAll}
+                  />
+                </th>
+                <SortHeader label="Address" sortKeyName="address" />
+                <SortHeader label="Status" sortKeyName="status" />
+                <SortHeader label="Price" sortKeyName="price" />
+                <SortHeader label="Critical Dates" sortKeyName="listing_expiration" />
+                <SortHeader label="Primary Agent" sortKeyName="primary_agent" />
               </tr>
             </thead>
             <tbody>
@@ -111,7 +187,13 @@ export default function Transactions() {
                   className="border-b hover:bg-muted/50 cursor-pointer transition-colors"
                   onClick={() => navigate(`/transactions/${deal.id}`)}
                 >
-                  <td className="px-6 py-3">
+                  <td className="px-6 py-3" onClick={(e) => e.stopPropagation()}>
+                    <Checkbox
+                      checked={selectedDeals.includes(deal.id)}
+                      onCheckedChange={() => toggleSelect(deal.id)}
+                    />
+                  </td>
+                  <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded bg-muted flex items-center justify-center flex-shrink-0">
                         <Building2Icon />
@@ -134,7 +216,7 @@ export default function Transactions() {
               ))}
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="text-center py-12 text-muted-foreground text-sm">
+                  <td colSpan={6} className="text-center py-12 text-muted-foreground text-sm">
                     No deals found
                   </td>
                 </tr>

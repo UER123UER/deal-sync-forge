@@ -1,11 +1,14 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ChevronDown, ChevronRight, Edit, Eye, Mail, Plus, FileText, GripVertical, Download, Printer, Send, Trash2, MessageSquare, Bell, UserPlus } from 'lucide-react';
+import { ChevronDown, ChevronRight, Edit, Eye, Mail, Plus, FileText, GripVertical, Download, Printer, Send, Trash2, MessageSquare, Bell, UserPlus, Check, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useDeal } from '@/hooks/useDeals';
+import { Input } from '@/components/ui/input';
+import { useDeal, useUpdateDeal, useToggleChecklistItem, useDeleteChecklistItem } from '@/hooks/useDeals';
 import { cn } from '@/lib/utils';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { SignaturePanel } from '@/components/deal/SignaturePanel';
+import { Checkbox } from '@/components/ui/checkbox';
+import { toast } from 'sonner';
 
 const TABS = ['Checklists', 'Photos', 'Tasks', 'Notes', 'Marketing'] as const;
 
@@ -13,10 +16,20 @@ export default function DealDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { data: deal, isLoading } = useDeal(id);
+  const updateDeal = useUpdateDeal();
+  const toggleChecklist = useToggleChecklistItem();
+  const deleteChecklist = useDeleteChecklistItem();
   const [activeTab, setActiveTab] = useState<typeof TABS[number]>('Checklists');
   const [signatureOpen, setSignatureOpen] = useState(false);
   const [signatureDocName, setSignatureDocName] = useState('');
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
+
+  // Inline editing states
+  const [editingMls, setEditingMls] = useState(false);
+  const [mlsValue, setMlsValue] = useState('');
+  const [editingPrice, setEditingPrice] = useState(false);
+  const [priceValue, setPriceValue] = useState('');
+  const [editingAddress, setEditingAddress] = useState(false);
 
   const toggleExpand = (itemId: string) => {
     setExpandedItems((prev) => {
@@ -25,6 +38,55 @@ export default function DealDetail() {
       else next.add(itemId);
       return next;
     });
+  };
+
+  const handleChangeStatus = async (status: string) => {
+    if (!deal) return;
+    try {
+      await updateDeal.mutateAsync({ id: deal.id, status });
+      toast.success(`Status changed to ${status}`);
+    } catch {
+      toast.error('Failed to update status');
+    }
+  };
+
+  const handleSaveMls = async () => {
+    if (!deal) return;
+    try {
+      await updateDeal.mutateAsync({ id: deal.id, mls_number: mlsValue });
+      setEditingMls(false);
+      toast.success('MLS# updated');
+    } catch {
+      toast.error('Failed to update MLS#');
+    }
+  };
+
+  const handleSavePrice = async () => {
+    if (!deal) return;
+    try {
+      await updateDeal.mutateAsync({ id: deal.id, price: priceValue });
+      setEditingPrice(false);
+      toast.success('Price updated');
+    } catch {
+      toast.error('Failed to update price');
+    }
+  };
+
+  const handleToggleChecklist = async (itemId: string, currentCompleted: boolean) => {
+    try {
+      await toggleChecklist.mutateAsync({ itemId, completed: !currentCompleted });
+    } catch {
+      toast.error('Failed to update checklist item');
+    }
+  };
+
+  const handleDeleteChecklist = async (itemId: string) => {
+    try {
+      await deleteChecklist.mutateAsync(itemId);
+      toast.success('Checklist item deleted');
+    } catch {
+      toast.error('Failed to delete checklist item');
+    }
   };
 
   if (isLoading) {
@@ -67,9 +129,11 @@ export default function DealDetail() {
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-xl font-semibold text-foreground">{deal.address}</h1>
-              <button className="text-primary text-sm hover:underline flex items-center gap-1">
-                <Edit className="w-3 h-3" /> Edit
-              </button>
+              <span className={cn('text-xs font-medium px-2 py-0.5 rounded-full capitalize',
+                deal.status === 'active' ? 'bg-success/10 text-success' :
+                deal.status === 'pending' ? 'bg-warning/10 text-warning' :
+                'bg-muted text-muted-foreground'
+              )}>{deal.status}</span>
             </div>
             <p className="text-sm text-muted-foreground">{deal.city}, {deal.state} {deal.zip}</p>
           </div>
@@ -84,7 +148,7 @@ export default function DealDetail() {
 
         {/* Action Bar */}
         <div className="flex items-center gap-2 mt-4">
-          <Button variant="outline" size="sm" className="text-xs gap-1.5">
+          <Button variant="outline" size="sm" className="text-xs gap-1.5" onClick={() => toast.info('Feature coming soon')}>
             <Eye className="w-3.5 h-3.5" /> Make Visible To Office
           </Button>
           <DropdownMenu>
@@ -94,14 +158,14 @@ export default function DealDetail() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
-              <DropdownMenuItem>Schedule Open House</DropdownMenuItem>
-              <DropdownMenuItem>View Open Houses</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => toast.info('Open House scheduling coming soon')}>Schedule Open House</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => toast.info('Open House list coming soon')}>View Open Houses</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          <Button variant="outline" size="sm" className="text-xs gap-1.5">
+          <Button variant="outline" size="sm" className="text-xs gap-1.5" onClick={() => toast.info('Offers feature coming soon')}>
             <Plus className="w-3.5 h-3.5" /> Add Offer
           </Button>
-          <Button variant="outline" size="sm" className="text-xs gap-1.5">
+          <Button variant="outline" size="sm" className="text-xs gap-1.5" onClick={() => toast.info('Email integration coming soon')}>
             <Mail className="w-3.5 h-3.5" /> Email
           </Button>
           <DropdownMenu>
@@ -111,10 +175,12 @@ export default function DealDetail() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
-              <DropdownMenuItem>Draft</DropdownMenuItem>
-              <DropdownMenuItem>Active</DropdownMenuItem>
-              <DropdownMenuItem>Pending</DropdownMenuItem>
-              <DropdownMenuItem>Archive</DropdownMenuItem>
+              {['draft', 'active', 'pending', 'archive'].map((s) => (
+                <DropdownMenuItem key={s} onClick={() => handleChangeStatus(s)} className="capitalize">
+                  {deal.status === s && <Check className="w-3.5 h-3.5 mr-1.5" />}
+                  {s}
+                </DropdownMenuItem>
+              ))}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -174,10 +240,16 @@ export default function DealDetail() {
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">MLS#</span>
-                  {deal.mls_number ? (
-                    <span className="text-foreground">{deal.mls_number}</span>
+                  {editingMls ? (
+                    <div className="flex items-center gap-1">
+                      <Input value={mlsValue} onChange={(e) => setMlsValue(e.target.value)} className="h-7 w-28 text-xs" autoFocus onKeyDown={(e) => e.key === 'Enter' && handleSaveMls()} />
+                      <button onClick={handleSaveMls} className="text-success"><Check className="w-3.5 h-3.5" /></button>
+                      <button onClick={() => setEditingMls(false)} className="text-muted-foreground"><X className="w-3.5 h-3.5" /></button>
+                    </div>
+                  ) : deal.mls_number ? (
+                    <button onClick={() => { setMlsValue(deal.mls_number || ''); setEditingMls(true); }} className="text-foreground hover:text-primary">{deal.mls_number}</button>
                   ) : (
-                    <button className="text-primary text-sm hover:underline">Add MLS# Number</button>
+                    <button onClick={() => { setMlsValue(''); setEditingMls(true); }} className="text-primary text-sm hover:underline">Add MLS# Number</button>
                   )}
                 </div>
                 <div className="flex justify-between text-sm">
@@ -206,7 +278,7 @@ export default function DealDetail() {
                     <span className="text-xs text-muted-foreground">{c.role}</span>
                   </div>
                 ))}
-                <button className="text-sm text-primary hover:underline flex items-center gap-1">
+                <button onClick={() => toast.info('Add contact form coming soon')} className="text-sm text-primary hover:underline flex items-center gap-1">
                   <UserPlus className="w-3 h-3" /> Add a New Contact
                 </button>
               </div>
@@ -226,11 +298,19 @@ export default function DealDetail() {
               <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Listing Information</h3>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">List Price</span>
-                <span className="text-foreground">{deal.price}</span>
+                {editingPrice ? (
+                  <div className="flex items-center gap-1">
+                    <Input value={priceValue} onChange={(e) => setPriceValue(e.target.value)} className="h-7 w-28 text-xs" autoFocus onKeyDown={(e) => e.key === 'Enter' && handleSavePrice()} />
+                    <button onClick={handleSavePrice} className="text-success"><Check className="w-3.5 h-3.5" /></button>
+                    <button onClick={() => setEditingPrice(false)} className="text-muted-foreground"><X className="w-3.5 h-3.5" /></button>
+                  </div>
+                ) : (
+                  <button onClick={() => { setPriceValue(deal.price || ''); setEditingPrice(true); }} className="text-foreground hover:text-primary">{deal.price}</button>
+                )}
               </div>
             </div>
 
-            <Button variant="outline" size="sm" className="w-full text-xs gap-1.5">
+            <Button variant="outline" size="sm" className="w-full text-xs gap-1.5" onClick={() => toast.info('Download archive coming soon')}>
               <Download className="w-3.5 h-3.5" /> Download Archive
             </Button>
           </div>
@@ -248,10 +328,16 @@ export default function DealDetail() {
                     <div
                       className={cn(
                         'flex items-center px-3 py-3 border-b last:border-b-0 group transition-colors',
-                        isExpanded && 'bg-info-light'
+                        isExpanded && 'bg-info-light',
+                        item.completed && 'opacity-60'
                       )}
                     >
                       <GripVertical className="w-4 h-4 text-muted-foreground/40 mr-2 flex-shrink-0 cursor-grab" />
+                      <Checkbox
+                        checked={!!item.completed}
+                        onCheckedChange={() => handleToggleChecklist(item.id, !!item.completed)}
+                        className="mr-2 flex-shrink-0"
+                      />
                       <button
                         onClick={() => toggleExpand(item.id)}
                         className="mr-2 flex-shrink-0"
@@ -262,7 +348,7 @@ export default function DealDetail() {
                           <div className="w-4 h-4" />
                         )}
                       </button>
-                      <span className="text-sm text-foreground flex-1">{item.name}</span>
+                      <span className={cn('text-sm text-foreground flex-1', item.completed && 'line-through')}>{item.name}</span>
 
                       {/* Always-visible split button */}
                       <div className="flex items-center">
@@ -293,19 +379,19 @@ export default function DealDetail() {
                             <DropdownMenuItem onClick={() => { setSignatureDocName(item.name); setSignatureOpen(true); }}>
                               <Send className="w-3.5 h-3.5 mr-2" /> Docusign
                             </DropdownMenuItem>
-                            <DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => toast.info('Email feature coming soon')}>
                               <Mail className="w-3.5 h-3.5 mr-2" /> Email
                             </DropdownMenuItem>
-                            <DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => toast.info('Upload feature coming soon')}>
                               <FileText className="w-3.5 h-3.5 mr-2" /> Upload
                             </DropdownMenuItem>
-                            <DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => toast.info('Message Office coming soon')}>
                               <MessageSquare className="w-3.5 h-3.5 mr-2" /> Message Office
                             </DropdownMenuItem>
-                            <DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => toast.info('Notification sent (coming soon)')}>
                               <Bell className="w-3.5 h-3.5 mr-2" /> Notify Office to Review
                             </DropdownMenuItem>
-                            <DropdownMenuItem className="text-destructive">
+                            <DropdownMenuItem className="text-destructive" onClick={() => handleDeleteChecklist(item.id)}>
                               <Trash2 className="w-3.5 h-3.5 mr-2" /> Delete
                             </DropdownMenuItem>
                           </DropdownMenuContent>
@@ -340,7 +426,7 @@ export default function DealDetail() {
                               <DropdownMenuItem onClick={() => navigate(`/transactions/${deal.id}/form/${item.id}`)}>
                                 <Printer className="w-3.5 h-3.5 mr-2" /> View/Print
                               </DropdownMenuItem>
-                              <DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => toast.info('Email feature coming soon')}>
                                 <Mail className="w-3.5 h-3.5 mr-2" /> Email
                               </DropdownMenuItem>
                             </DropdownMenuContent>
