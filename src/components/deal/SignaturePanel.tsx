@@ -4,6 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { motion, AnimatePresence } from 'framer-motion';
+import { toast } from 'sonner';
+
 interface Contact {
   id: string;
   role: string;
@@ -13,7 +16,6 @@ interface Contact {
   phone: string;
   company: string;
 }
-import { motion, AnimatePresence } from 'framer-motion';
 
 interface SignaturePanelProps {
   open: boolean;
@@ -26,6 +28,24 @@ export function SignaturePanel({ open, onClose, documentName, contacts }: Signat
   const [to, setTo] = useState<string[]>([]);
   const [subject, setSubject] = useState('Please DocuSign');
   const [message, setMessage] = useState('Please review and sign the attached document.');
+  const [attachments, setAttachments] = useState([documentName]);
+
+  const handleSend = () => {
+    if (to.length === 0) {
+      toast.error('Please select at least one recipient');
+      return;
+    }
+    const recipientNames = to.map((id) => {
+      const c = contacts.find((x) => x.id === id);
+      return c ? `${c.firstName} ${c.lastName}` : id;
+    });
+    toast.success(`Signature request sent to ${recipientNames.join(', ')}`);
+    onClose();
+  };
+
+  const removeAttachment = (index: number) => {
+    setAttachments((prev) => prev.filter((_, i) => i !== index));
+  };
 
   return (
     <AnimatePresence>
@@ -60,8 +80,7 @@ export function SignaturePanel({ open, onClose, documentName, contacts }: Signat
                   From <span className="text-destructive">*</span>
                 </Label>
                 <div className="mt-1 flex items-center border rounded-md px-3 py-2 bg-muted">
-                  <span className="text-sm text-foreground flex-1">Karl Brisard &lt;karl.brisard@elliman.com&gt;</span>
-                  <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-sm text-foreground flex-1">You</span>
                 </div>
               </div>
 
@@ -79,9 +98,10 @@ export function SignaturePanel({ open, onClose, documentName, contacts }: Signat
                         className="rounded border-input"
                       />
                       {c.firstName} {c.lastName} ({c.role})
+                      {c.email && <span className="text-xs text-muted-foreground">— {c.email}</span>}
                     </label>
                   ))}
-                  <button className="text-sm text-primary hover:underline flex items-center gap-1">
+                  <button onClick={() => toast.info('Add recipient coming soon')} className="text-sm text-primary hover:underline flex items-center gap-1">
                     <Plus className="w-3 h-3" /> Add New Recipient
                   </button>
                 </div>
@@ -101,22 +121,24 @@ export function SignaturePanel({ open, onClose, documentName, contacts }: Signat
                 <Textarea value={message} onChange={(e) => setMessage(e.target.value)} className="mt-1" rows={4} />
               </div>
 
-              {/* Attachment */}
+              {/* Attachments */}
               <div>
                 <Label className="text-xs mb-2 block">Attachments</Label>
-                <div className="border rounded-md p-3 flex items-center gap-3">
-                  <div className="w-10 h-12 bg-muted rounded flex items-center justify-center flex-shrink-0">
-                    <FileText className="w-5 h-5 text-muted-foreground" />
+                {attachments.map((att, i) => (
+                  <div key={i} className="border rounded-md p-3 flex items-center gap-3 mb-2">
+                    <div className="w-10 h-12 bg-muted rounded flex items-center justify-center flex-shrink-0">
+                      <FileText className="w-5 h-5 text-muted-foreground" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-foreground truncate">{att}</p>
+                      <p className="text-xs text-muted-foreground">Attached just now</p>
+                    </div>
+                    <button onClick={() => removeAttachment(i)} className="text-muted-foreground hover:text-foreground">
+                      <X className="w-4 h-4" />
+                    </button>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-foreground truncate">{documentName}</p>
-                    <p className="text-xs text-muted-foreground">Uploaded Jan 21, 7:42 AM</p>
-                  </div>
-                  <button className="text-muted-foreground hover:text-foreground">
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-                <button className="text-sm text-primary hover:underline flex items-center gap-1 mt-2">
+                ))}
+                <button onClick={() => toast.info('Add attachment coming soon')} className="text-sm text-primary hover:underline flex items-center gap-1 mt-2">
                   <Paperclip className="w-3 h-3" /> Add More Attachments
                 </button>
               </div>
@@ -124,8 +146,8 @@ export function SignaturePanel({ open, onClose, documentName, contacts }: Signat
 
             {/* Footer */}
             <div className="border-t p-4 flex justify-end flex-shrink-0">
-              <Button variant="outline" disabled={to.length === 0}>
-                Next: View in Docusign
+              <Button onClick={handleSend} disabled={to.length === 0}>
+                Send for Signature
               </Button>
             </div>
           </motion.div>
