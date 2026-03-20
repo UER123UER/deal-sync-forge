@@ -24,6 +24,20 @@ import JSZip from 'jszip';
 
 const TABS = ['Checklists', 'Photos', 'Tasks', 'Notes', 'Marketing'] as const;
 
+const CONTACT_ROLES = [
+  'Buyer', 'Buyer Agent', 'Seller', 'Seller Broker', 'Title',
+  'Buyer Broker', 'Co Buyer Agent', 'Buyer Power Of Attorney',
+  'Buyer Lawyer', 'Buyer Referral', 'Co Seller Agent',
+  'Seller Power Of Attorney', 'Seller Lawyer', 'Seller Referral', 'Lender',
+];
+
+const formatPriceWithCommas = (value: string): string => {
+  const num = value.replace(/[^0-9.]/g, '');
+  if (!num) return '';
+  const parts = num.split('.');
+  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  return '$' + parts.join('.');
+
 const MARKETING_ITEMS = [
   'Yard Sign Installed',
   'Professional Photos Taken',
@@ -63,6 +77,8 @@ export default function DealDetail() {
   const [addContactDialogOpen, setAddContactDialogOpen] = useState(false);
   const [selectedContactId, setSelectedContactId] = useState('');
   const [contactRole, setContactRole] = useState('');
+  const [contactSearch, setContactSearch] = useState('');
+  const [contactDropdownOpen, setContactDropdownOpen] = useState(false);
 
   // Marketing local state
   const [marketingChecked, setMarketingChecked] = useState<Set<string>>(new Set());
@@ -454,7 +470,7 @@ export default function DealDetail() {
                     <button onClick={() => setEditingPrice(false)} className="text-muted-foreground"><X className="w-3.5 h-3.5" /></button>
                   </div>
                 ) : (
-                  <button onClick={() => { setPriceValue(deal.price || ''); setEditingPrice(true); }} className="text-foreground hover:text-primary">{deal.price}</button>
+                  <button onClick={() => { setPriceValue(deal.price || ''); setEditingPrice(true); }} className="text-foreground hover:text-primary">{formatPriceWithCommas(deal.price || '')}</button>
                 )}
               </div>
             </div>
@@ -655,18 +671,60 @@ export default function DealDetail() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={addContactDialogOpen} onOpenChange={setAddContactDialogOpen}>
+      <Dialog open={addContactDialogOpen} onOpenChange={(open) => { setAddContactDialogOpen(open); if (!open) { setContactSearch(''); setContactDropdownOpen(false); } }}>
         <DialogContent>
           <DialogHeader><DialogTitle>Add Contact to Deal</DialogTitle></DialogHeader>
           <div className="space-y-4 pt-2">
-            <div>
+            <div className="relative">
               <Label className="text-xs">Contact</Label>
-              <Select value={selectedContactId} onValueChange={setSelectedContactId}>
-                <SelectTrigger className="mt-1"><SelectValue placeholder="Select a contact" /></SelectTrigger>
-                <SelectContent>{allContacts.map((c) => <SelectItem key={c.id} value={c.id}>{c.first_name} {c.last_name}</SelectItem>)}</SelectContent>
+              <Input
+                value={contactSearch}
+                onChange={(e) => {
+                  setContactSearch(e.target.value);
+                  setContactDropdownOpen(true);
+                  setSelectedContactId('');
+                }}
+                onFocus={() => setContactDropdownOpen(true)}
+                placeholder="Search contacts..."
+                className="mt-1"
+                autoComplete="off"
+              />
+              {contactDropdownOpen && contactSearch.length > 0 && (() => {
+                const filtered = allContacts.filter((c) =>
+                  `${c.first_name} ${c.last_name}`.toLowerCase().includes(contactSearch.toLowerCase()) ||
+                  (c.email && c.email.toLowerCase().includes(contactSearch.toLowerCase()))
+                );
+                return filtered.length > 0 ? (
+                  <div className="absolute z-50 mt-1 w-full max-h-48 overflow-auto rounded-md border bg-popover shadow-md">
+                    {filtered.map((c) => (
+                      <button
+                        key={c.id}
+                        type="button"
+                        className="w-full text-left px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground"
+                        onClick={() => {
+                          setSelectedContactId(c.id);
+                          setContactSearch(`${c.first_name} ${c.last_name}`);
+                          setContactDropdownOpen(false);
+                        }}
+                      >
+                        {c.first_name} {c.last_name}{c.email ? ` — ${c.email}` : ''}
+                      </button>
+                    ))}
+                  </div>
+                ) : null;
+              })()}
+            </div>
+            <div>
+              <Label className="text-xs">Role</Label>
+              <Select value={contactRole} onValueChange={setContactRole}>
+                <SelectTrigger className="mt-1"><SelectValue placeholder="Buyer, Seller, Agent..." /></SelectTrigger>
+                <SelectContent>
+                  {CONTACT_ROLES.map((role) => (
+                    <SelectItem key={role} value={role}>{role}</SelectItem>
+                  ))}
+                </SelectContent>
               </Select>
             </div>
-            <div><Label className="text-xs">Role</Label><Input value={contactRole} onChange={(e) => setContactRole(e.target.value)} placeholder="Buyer, Seller, Agent..." className="mt-1" /></div>
             <Button className="w-full" onClick={handleAddContact} disabled={addDealContact.isPending}>Add to Deal</Button>
           </div>
         </DialogContent>
