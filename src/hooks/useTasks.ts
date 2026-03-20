@@ -9,6 +9,7 @@ export interface TaskRow {
   due_date: string | null;
   end_date: string | null;
   assignee: string | null;
+  deal_id: string | null;
   created_at: string;
 }
 
