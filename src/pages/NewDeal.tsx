@@ -1,13 +1,12 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { X, MapPin, Check, ChevronRight, ChevronUp, User, Users, Search, Loader2 } from 'lucide-react';
+import { X, MapPin, Check, User, Users, Search, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useCreateDeal } from '@/hooks/useDeals';
 import { useAddressAutocomplete } from '@/hooks/useAddressAutocomplete';
 import { cn } from '@/lib/utils';
-import { motion } from 'framer-motion';
 
 const PROPERTY_TYPES = [
   'Sale-Condo', 'Sale-Single Family Home', 'Sale-Land', 'Sale-New Construction',
@@ -22,6 +21,16 @@ const MOCK_AGENTS = [
   { id: 'a2', teamName: 'Coastal Properties', location: 'Miami, FL', agents: [
     { id: 'ag3', firstName: 'David', lastName: 'Park', avatar: 'DP' },
   ]},
+];
+
+const STEPS = [
+  { label: 'Property Type' },
+  { label: 'Address' },
+  { label: 'Representation' },
+  { label: 'Agent' },
+  { label: 'Seller Info' },
+  { label: 'Agent Details' },
+  { label: 'Review' },
 ];
 
 export default function NewDeal() {
@@ -47,26 +56,66 @@ export default function NewDeal() {
   const [agentForm, setAgentForm] = useState({ role: 'Seller Agent', firstName: '', lastName: '', email: '', phone: '', company: '', mlsId: '', mls: '', commission: '', commissionType: 'percentage' as 'percentage' | 'dollars' });
   const [agentErrors, setAgentErrors] = useState<Record<string, boolean>>({});
 
-  const stepRefs = useRef<(HTMLDivElement | null)[]>([]);
-  const containerRef = useRef<HTMLDivElement>(null);
-
   const handleClose = () => navigate('/transactions');
 
-  // Auto-scroll to current step
-  useEffect(() => {
-    const el = stepRefs.current[step - 1];
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  const canContinue = () => {
+    switch (step) {
+      case 1: return !!propertyType;
+      case 2: return !!address;
+      case 3: return !!representationSide;
+      case 4: return !!agentForm.firstName;
+      case 5: return true;
+      case 6: return !!agentForm.mls && !!agentForm.firstName && !!agentForm.lastName;
+      default: return false;
     }
-  }, [step]);
-
-  const goToStep = (targetStep: number) => {
-    if (targetStep < step) setStep(targetStep);
   };
+
+  const handleContinue = async () => {
+    if (step === 6) {
+      const errors: Record<string, boolean> = {};
+      if (!agentForm.mls) errors.mls = true;
+      if (!agentForm.firstName) errors.firstName = true;
+      if (!agentForm.lastName) errors.lastName = true;
+      if (Object.keys(errors).length) { setAgentErrors(errors); return; }
+
+      const contacts = [];
+      if (agentForm.firstName) {
+        contacts.push({
+          first_name: agentForm.firstName, last_name: agentForm.lastName,
+          email: agentForm.email || undefined, phone: agentForm.phone || undefined,
+          company: agentForm.company || undefined, role: agentForm.role,
+          mls_id: agentForm.mlsId || undefined, mls: agentForm.mls || undefined,
+          commission: agentForm.commission || undefined, commission_type: agentForm.commissionType || undefined,
+        });
+      }
+      if (sellerForm.firstName) {
+        contacts.push({
+          first_name: sellerForm.firstName, last_name: sellerForm.lastName,
+          email: sellerForm.email || undefined, phone: sellerForm.phone || undefined,
+          company: sellerForm.company || undefined, role: sellerForm.role,
+          current_address: sellerForm.currentAddress || undefined,
+        });
+      }
+      try {
+        const newDeal = await createDealMutation.mutateAsync({
+          property_type: propertyType, address: address || 'TBD',
+          city: city || '', state: state || '', zip: zip || '',
+          representation_side: representationSide || 'seller',
+          primary_agent: agentForm.firstName ? `${agentForm.firstName} ${agentForm.lastName}` : 'Unassigned',
+          contacts,
+        });
+        setCreatedDealId(newDeal.id);
+        setStep(7);
+      } catch (err) { console.error('Failed to create deal:', err); }
+    } else {
+      setStep(step + 1);
+    }
+  };
+
+  const handleBack = () => { if (step > 1) setStep(step - 1); };
 
   const handlePropertyType = (type: string) => {
     setPropertyType(type);
-    setStep(2);
   };
 
   const handleAddress = (addr: { address: string; city: string; state: string; zip: string }) => {
@@ -76,368 +125,317 @@ export default function NewDeal() {
     setZip(addr.zip);
     setAddressSearch('');
     setShowAddresses(false);
-    setStep(3);
   };
 
   const handleRepSide = (side: 'buyer' | 'seller' | 'both') => {
     setRepresentationSide(side);
-    setStep(4);
   };
 
   const handleSelectAgent = (agent: { firstName: string; lastName: string }) => {
     setAgentForm((f) => ({ ...f, firstName: agent.firstName, lastName: agent.lastName }));
-    setStep(5);
   };
 
-  const handleSaveSeller = () => setStep(6);
-
-  const handleSaveAgent = async () => {
-    const errors: Record<string, boolean> = {};
-    if (!agentForm.mls) errors.mls = true;
-    if (!agentForm.firstName) errors.firstName = true;
-    if (!agentForm.lastName) errors.lastName = true;
-    if (Object.keys(errors).length) {
-      setAgentErrors(errors);
-      return;
-    }
-
-    const contacts = [];
-    if (agentForm.firstName) {
-      contacts.push({
-        first_name: agentForm.firstName, last_name: agentForm.lastName,
-        email: agentForm.email || undefined, phone: agentForm.phone || undefined,
-        company: agentForm.company || undefined, role: agentForm.role,
-        mls_id: agentForm.mlsId || undefined, mls: agentForm.mls || undefined,
-        commission: agentForm.commission || undefined, commission_type: agentForm.commissionType || undefined,
-      });
-    }
-    if (sellerForm.firstName) {
-      contacts.push({
-        first_name: sellerForm.firstName, last_name: sellerForm.lastName,
-        email: sellerForm.email || undefined, phone: sellerForm.phone || undefined,
-        company: sellerForm.company || undefined, role: sellerForm.role,
-        current_address: sellerForm.currentAddress || undefined,
-      });
-    }
-
-    try {
-      const newDeal = await createDealMutation.mutateAsync({
-        property_type: propertyType, address: address || 'TBD',
-        city: city || '', state: state || '', zip: zip || '',
-        representation_side: representationSide || 'seller',
-        primary_agent: agentForm.firstName ? `${agentForm.firstName} ${agentForm.lastName}` : 'Unassigned',
-        contacts,
-      });
-      setCreatedDealId(newDeal.id);
-      setStep(7);
-    } catch (err) {
-      console.error('Failed to create deal:', err);
-    }
+  const goToStep = (targetStep: number) => {
+    if (targetStep <= step) setStep(targetStep);
   };
-
-  const stepSummary = (s: number) => {
-    switch (s) {
-      case 1: return propertyType;
-      case 2: return address === 'TBD' ? 'TBD' : `${address}${city ? `, ${city}` : ''}${state ? `, ${state}` : ''} ${zip}`.trim();
-      case 3: return representationSide ? representationSide.charAt(0).toUpperCase() + representationSide.slice(1) : '';
-      case 4: return agentForm.firstName ? `${agentForm.firstName} ${agentForm.lastName}` : '';
-      case 5: return sellerForm.firstName ? `${sellerForm.firstName} ${sellerForm.lastName}` : '';
-      case 6: return 'Completed';
-      default: return '';
-    }
-  };
-
-  const CompletedStep = ({ stepNum, title }: { stepNum: number; title: string }) => (
-    <div
-      ref={(el) => { stepRefs.current[stepNum - 1] = el; }}
-      onClick={() => goToStep(stepNum)}
-      className="cursor-pointer group"
-    >
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="flex items-center gap-3 px-4 py-4 rounded-lg border border-border bg-muted/30 hover:bg-muted/60 transition-colors"
-      >
-        <div className="w-7 h-7 rounded-full bg-primary/10 text-primary flex items-center justify-center flex-shrink-0">
-          <Check className="w-4 h-4" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="text-xs text-muted-foreground">{title}</div>
-          <div className="text-sm font-medium text-foreground truncate">{stepSummary(stepNum)}</div>
-        </div>
-        <ChevronUp className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-      </motion.div>
-    </div>
-  );
 
   return (
     <div className="flex-1 flex flex-col bg-background">
       {/* Header */}
-      <div className="h-14 border-b flex items-center px-6 sticky top-0 bg-background z-20">
+      <div className="h-14 border-b border-border flex items-center px-6 sticky top-0 bg-background z-20">
         <h1 className="text-lg font-semibold text-foreground">Create New Deal</h1>
         <div className="flex-1" />
-        {step > 1 && step < 7 && (
-          <Button variant="ghost" size="sm" onClick={() => setStep(step - 1)} className="mr-2 text-muted-foreground">
-            <ChevronUp className="w-4 h-4 mr-1" /> Back
-          </Button>
-        )}
         <button onClick={handleClose} className="p-2 rounded-md hover:bg-muted transition-colors">
           <X className="w-5 h-5 text-muted-foreground" />
         </button>
       </div>
 
-      {/* Progress bar */}
-      <div className="h-1 bg-muted">
-        <div className="h-full bg-primary transition-all duration-500 ease-out" style={{ width: `${((step) / 7) * 100}%` }} />
-      </div>
-
-      {/* Scrolling content */}
-      <div ref={containerRef} className="flex-1 overflow-auto">
-        <div className="max-w-2xl mx-auto py-10 px-6 space-y-6">
-
-          {/* Completed steps shown as compact summaries */}
-          {step > 1 && (
-            <CompletedStep stepNum={1} title="Property Type" />
-          )}
-          {step > 2 && (
-            <CompletedStep stepNum={2} title="Property Address" />
-          )}
-          {step > 3 && (
-            <CompletedStep stepNum={3} title="Representation Side" />
-          )}
-          {step > 4 && (
-            <CompletedStep stepNum={4} title="Seller's Agent" />
-          )}
-          {step > 5 && (
-            <CompletedStep stepNum={5} title="Seller Info" />
-          )}
-          {step > 6 && (
-            <CompletedStep stepNum={6} title="Agent Details" />
-          )}
-
-          {/* Active step */}
-          <motion.div
-            key={step}
-            ref={(el) => { stepRefs.current[step - 1] = el; }}
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.35, ease: 'easeOut' }}
-          >
-            {/* Step 1: Property Type */}
-            {step === 1 && (
-              <div>
-                <h2 className="text-xl font-semibold mb-1 text-foreground">What type of property is this?</h2>
-                <p className="text-sm text-muted-foreground mb-6">Select the property type to get started.</p>
-                <div className="space-y-1">
-                  {PROPERTY_TYPES.map((type) => (
-                    <button
-                      key={type}
-                      onClick={() => handlePropertyType(type)}
-                      className={cn(
-                        'w-full text-left px-4 py-3 rounded-md border text-sm transition-colors flex items-center justify-between group',
-                        propertyType === type
-                          ? 'border-primary bg-primary/5 text-primary'
-                          : 'border-border hover:border-primary/30 text-foreground'
-                      )}
-                    >
-                      {type}
-                      <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Step 2: Address */}
-            {step === 2 && (
-              <div>
-                <h2 className="text-xl font-semibold mb-1 text-foreground">Property Address</h2>
-                <p className="text-sm text-muted-foreground mb-6">Enter the MLS# or property address.</p>
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  {addressLoading && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground animate-spin" />}
-                  <Input
-                    placeholder="Start typing an address..."
-                    className="pl-9"
-                    value={addressSearch}
-                    onChange={(e) => { setAddressSearch(e.target.value); setShowAddresses(true); }}
-                    onFocus={() => addressSearch.length >= 3 && setShowAddresses(true)}
-                  />
-                  {showAddresses && addressSuggestions.length > 0 && (
-                    <div className="absolute top-full left-0 right-0 mt-1 bg-popover border rounded-md shadow-lg z-10 max-h-64 overflow-auto">
-                      {addressSuggestions.map((addr, i) => (
-                        <button
-                          key={`${addr.label}-${i}`}
-                          onClick={() => handleAddress(addr)}
-                          className="w-full text-left px-4 py-3 hover:bg-muted flex items-center gap-3 text-sm transition-colors"
-                        >
-                          <MapPin className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                          <div>
-                            <div className="text-foreground">{addr.address}</div>
-                            <div className="text-xs text-muted-foreground">{addr.city}{addr.state ? `, ${addr.state}` : ''} {addr.zip}</div>
-                          </div>
-                        </button>
-                      ))}
+      {/* Stepper */}
+      {step < 7 && (
+        <div className="border-b border-border bg-background px-6 py-4">
+          <div className="max-w-3xl mx-auto flex items-center">
+            {STEPS.slice(0, 6).map((s, i) => {
+              const stepNum = i + 1;
+              const isCompleted = step > stepNum;
+              const isCurrent = step === stepNum;
+              const isFuture = step < stepNum;
+              return (
+                <div key={s.label} className="flex items-center flex-1 last:flex-none">
+                  <button
+                    onClick={() => goToStep(stepNum)}
+                    disabled={isFuture}
+                    className="flex flex-col items-center gap-1.5 group"
+                  >
+                    <div className={cn(
+                      'w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium border-2 transition-colors',
+                      isCompleted && 'bg-primary border-primary text-primary-foreground',
+                      isCurrent && 'border-primary bg-background text-primary',
+                      isFuture && 'border-muted-foreground/30 bg-background text-muted-foreground/50',
+                    )}>
+                      {isCompleted ? <Check className="w-4 h-4" /> : stepNum}
                     </div>
+                    <span className={cn(
+                      'text-[11px] font-medium whitespace-nowrap hidden sm:block',
+                      isCompleted && 'text-primary',
+                      isCurrent && 'text-foreground',
+                      isFuture && 'text-muted-foreground/50',
+                    )}>
+                      {s.label}
+                    </span>
+                  </button>
+                  {i < 5 && (
+                    <div className={cn(
+                      'flex-1 h-0.5 mx-2 mt-[-18px] sm:mt-0',
+                      isCompleted ? 'bg-primary' : 'bg-muted-foreground/20',
+                    )} />
                   )}
                 </div>
-                <div className="mt-4 flex justify-end">
-                  <Button variant="ghost" size="sm" onClick={() => { setAddress('TBD'); setCity(''); setState(''); setZip(''); setStep(3); }}>
-                    Skip
-                  </Button>
-                </div>
-              </div>
-            )}
+              );
+            })}
+          </div>
+        </div>
+      )}
 
-            {/* Step 3: Representation Side */}
-            {step === 3 && (
-              <div>
-                <h2 className="text-xl font-semibold mb-1 text-foreground">Which side do you represent?</h2>
-                <p className="text-sm text-muted-foreground mb-6">Select your representation in this deal.</p>
-                <div className="space-y-2">
-                  {([['buyer', 'Buyer', User], ['seller', 'Seller', User], ['both', 'Both', Users]] as const).map(([value, label, Icon]) => (
-                    <button
-                      key={value}
-                      onClick={() => handleRepSide(value)}
-                      className={cn(
-                        'w-full text-left px-4 py-4 rounded-md border text-sm transition-colors flex items-center gap-3',
-                        representationSide === value
-                          ? 'border-primary bg-primary/5'
-                          : 'border-border hover:border-primary/30'
-                      )}
-                    >
-                      <Icon className="w-5 h-5 text-muted-foreground" />
-                      <span className="text-foreground font-medium">{label}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
+      {/* Content */}
+      <div className="flex-1 overflow-auto">
+        <div className="max-w-2xl mx-auto py-10 px-6">
 
-            {/* Step 4: Agent Search */}
-            {step === 4 && (
-              <div>
-                <h2 className="text-xl font-semibold mb-1 text-foreground">Seller's Agent</h2>
-                <p className="text-sm text-muted-foreground mb-6">Search for teams or agents.</p>
-                <div className="relative mb-4">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <Input placeholder="Search for teams or agents" className="pl-9" value={agentSearch} onChange={(e) => setAgentSearch(e.target.value)} />
-                </div>
-                <div className="space-y-4">
-                  {MOCK_AGENTS.map((team) => (
-                    <div key={team.id} className="border rounded-md overflow-hidden">
-                      <div className="px-4 py-2.5 bg-muted/50 border-b">
-                        <div className="text-sm font-medium text-foreground">{team.teamName}</div>
-                        <div className="text-xs text-muted-foreground">{team.location}</div>
-                      </div>
-                      {team.agents.map((agent) => (
-                        <button key={agent.id} onClick={() => handleSelectAgent(agent)} className="w-full text-left px-4 py-3 hover:bg-muted/50 flex items-center gap-3 text-sm transition-colors">
-                          <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-medium">{agent.avatar}</div>
-                          <span className="text-foreground">{agent.firstName} {agent.lastName}</span>
-                        </button>
-                      ))}
-                    </div>
-                  ))}
-                </div>
+          {/* Step 1: Property Type */}
+          {step === 1 && (
+            <div>
+              <h2 className="text-xl font-semibold mb-1 text-foreground">What type of property is this?</h2>
+              <p className="text-sm text-muted-foreground mb-6">Select the property type to get started.</p>
+              <div className="space-y-1">
+                {PROPERTY_TYPES.map((type) => (
+                  <button
+                    key={type}
+                    onClick={() => handlePropertyType(type)}
+                    className={cn(
+                      'w-full text-left px-4 py-3 rounded-md border text-sm transition-colors',
+                      propertyType === type
+                        ? 'border-primary bg-primary/5 text-primary font-medium'
+                        : 'border-border hover:border-primary/30 text-foreground'
+                    )}
+                  >
+                    {type}
+                  </button>
+                ))}
               </div>
-            )}
+            </div>
+          )}
 
-            {/* Step 5: Seller Info */}
-            {step === 5 && (
-              <div>
-                <h2 className="text-xl font-semibold mb-1 text-foreground">Seller Legal Name</h2>
-                <p className="text-sm text-muted-foreground mb-6">Enter the seller's name or add a new seller.</p>
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div><Label className="text-xs">Role</Label><Input value={sellerForm.role} onChange={(e) => setSellerForm((f) => ({ ...f, role: e.target.value }))} className="mt-1" /></div>
+          {/* Step 2: Address */}
+          {step === 2 && (
+            <div>
+              <h2 className="text-xl font-semibold mb-1 text-foreground">Property Address</h2>
+              <p className="text-sm text-muted-foreground mb-6">Enter the MLS# or property address.</p>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                {addressLoading && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground animate-spin" />}
+                <Input
+                  placeholder="Start typing an address..."
+                  className="pl-9"
+                  value={addressSearch}
+                  onChange={(e) => { setAddressSearch(e.target.value); setShowAddresses(true); }}
+                  onFocus={() => addressSearch.length >= 3 && setShowAddresses(true)}
+                />
+                {showAddresses && addressSuggestions.length > 0 && (
+                  <div className="absolute top-full left-0 right-0 mt-1 bg-popover border border-border rounded-md shadow-lg z-10 max-h-64 overflow-auto">
+                    {addressSuggestions.map((addr, i) => (
+                      <button
+                        key={`${addr.label}-${i}`}
+                        onClick={() => handleAddress(addr)}
+                        className="w-full text-left px-4 py-3 hover:bg-muted flex items-center gap-3 text-sm transition-colors"
+                      >
+                        <MapPin className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                        <div>
+                          <div className="text-foreground">{addr.address}</div>
+                          <div className="text-xs text-muted-foreground">{addr.city}{addr.state ? `, ${addr.state}` : ''} {addr.zip}</div>
+                        </div>
+                      </button>
+                    ))}
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div><Label className="text-xs">First Name</Label><Input value={sellerForm.firstName} onChange={(e) => setSellerForm((f) => ({ ...f, firstName: e.target.value }))} className="mt-1" /></div>
-                    <div><Label className="text-xs">Last Name</Label><Input value={sellerForm.lastName} onChange={(e) => setSellerForm((f) => ({ ...f, lastName: e.target.value }))} className="mt-1" /></div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div><Label className="text-xs">Email</Label><Input type="email" value={sellerForm.email} onChange={(e) => setSellerForm((f) => ({ ...f, email: e.target.value }))} className="mt-1" /></div>
-                    <div><Label className="text-xs">Phone</Label><Input value={sellerForm.phone} onChange={(e) => setSellerForm((f) => ({ ...f, phone: e.target.value }))} className="mt-1" /></div>
-                  </div>
-                  <div><Label className="text-xs">Company / Trust</Label><Input value={sellerForm.company} onChange={(e) => setSellerForm((f) => ({ ...f, company: e.target.value }))} className="mt-1" /></div>
-                  <div><Label className="text-xs">Current Address</Label><Input value={sellerForm.currentAddress} onChange={(e) => setSellerForm((f) => ({ ...f, currentAddress: e.target.value }))} className="mt-1" /></div>
-                  <div className="flex gap-2 pt-2">
-                    <Button variant="outline" onClick={() => setStep(4)}>Back</Button>
-                    <Button onClick={handleSaveSeller}>Continue</Button>
-                  </div>
-                </div>
+                )}
               </div>
-            )}
+              {address && (
+                <div className="mt-3 px-3 py-2 rounded-md bg-muted/50 border border-border text-sm text-foreground flex items-center gap-2">
+                  <MapPin className="w-4 h-4 text-primary" />
+                  {address}{city ? `, ${city}` : ''}{state ? `, ${state}` : ''} {zip}
+                </div>
+              )}
+              <div className="mt-4">
+                <Button variant="ghost" size="sm" className="text-muted-foreground" onClick={() => { setAddress('TBD'); setCity(''); setState(''); setZip(''); }}>
+                  I don't have the address yet
+                </Button>
+              </div>
+            </div>
+          )}
 
-            {/* Step 6: Agent Details */}
-            {step === 6 && (
-              <div>
-                <h2 className="text-xl font-semibold mb-1 text-foreground">Seller Agent Details</h2>
-                <p className="text-sm text-muted-foreground mb-6">Complete the agent information.</p>
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div><Label className="text-xs">Role</Label><Input value={agentForm.role} onChange={(e) => setAgentForm((f) => ({ ...f, role: e.target.value }))} className="mt-1" /></div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label className="text-xs">First Name <span className="text-destructive">*</span></Label>
-                      <Input value={agentForm.firstName} onChange={(e) => { setAgentForm((f) => ({ ...f, firstName: e.target.value })); setAgentErrors((e2) => ({ ...e2, firstName: false })); }} className={cn('mt-1', agentErrors.firstName && 'border-destructive')} />
+          {/* Step 3: Representation Side */}
+          {step === 3 && (
+            <div>
+              <h2 className="text-xl font-semibold mb-1 text-foreground">Which side do you represent?</h2>
+              <p className="text-sm text-muted-foreground mb-6">Select your representation in this deal.</p>
+              <div className="space-y-2">
+                {([['buyer', 'Buyer', User], ['seller', 'Seller', User], ['both', 'Both', Users]] as const).map(([value, label, Icon]) => (
+                  <button
+                    key={value}
+                    onClick={() => handleRepSide(value)}
+                    className={cn(
+                      'w-full text-left px-4 py-4 rounded-md border text-sm transition-colors flex items-center gap-3',
+                      representationSide === value
+                        ? 'border-primary bg-primary/5'
+                        : 'border-border hover:border-primary/30'
+                    )}
+                  >
+                    <Icon className="w-5 h-5 text-muted-foreground" />
+                    <span className="text-foreground font-medium">{label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Step 4: Agent Search */}
+          {step === 4 && (
+            <div>
+              <h2 className="text-xl font-semibold mb-1 text-foreground">Seller's Agent</h2>
+              <p className="text-sm text-muted-foreground mb-6">Search for teams or agents.</p>
+              <div className="relative mb-4">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input placeholder="Search for teams or agents" className="pl-9" value={agentSearch} onChange={(e) => setAgentSearch(e.target.value)} />
+              </div>
+              <div className="space-y-4">
+                {MOCK_AGENTS.map((team) => (
+                  <div key={team.id} className="border border-border rounded-md overflow-hidden">
+                    <div className="px-4 py-2.5 bg-muted/50 border-b border-border">
+                      <div className="text-sm font-medium text-foreground">{team.teamName}</div>
+                      <div className="text-xs text-muted-foreground">{team.location}</div>
                     </div>
-                    <div>
-                      <Label className="text-xs">Last Name <span className="text-destructive">*</span></Label>
-                      <Input value={agentForm.lastName} onChange={(e) => { setAgentForm((f) => ({ ...f, lastName: e.target.value })); setAgentErrors((e2) => ({ ...e2, lastName: false })); }} className={cn('mt-1', agentErrors.lastName && 'border-destructive')} />
-                    </div>
+                    {team.agents.map((agent) => (
+                      <button
+                        key={agent.id}
+                        onClick={() => handleSelectAgent(agent)}
+                        className={cn(
+                          'w-full text-left px-4 py-3 hover:bg-muted/50 flex items-center gap-3 text-sm transition-colors',
+                          agentForm.firstName === agent.firstName && agentForm.lastName === agent.lastName && 'bg-primary/5 border-l-2 border-l-primary'
+                        )}
+                      >
+                        <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-medium">{agent.avatar}</div>
+                        <span className="text-foreground">{agent.firstName} {agent.lastName}</span>
+                        {agentForm.firstName === agent.firstName && agentForm.lastName === agent.lastName && (
+                          <Check className="w-4 h-4 text-primary ml-auto" />
+                        )}
+                      </button>
+                    ))}
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div><Label className="text-xs">Email</Label><Input type="email" value={agentForm.email} onChange={(e) => setAgentForm((f) => ({ ...f, email: e.target.value }))} className="mt-1" /></div>
-                    <div><Label className="text-xs">Phone</Label><Input value={agentForm.phone} onChange={(e) => setAgentForm((f) => ({ ...f, phone: e.target.value }))} className="mt-1" /></div>
-                  </div>
-                  <div><Label className="text-xs">Company / Trust</Label><Input value={agentForm.company} onChange={(e) => setAgentForm((f) => ({ ...f, company: e.target.value }))} className="mt-1" /></div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div><Label className="text-xs">MLS ID</Label><Input value={agentForm.mlsId} onChange={(e) => setAgentForm((f) => ({ ...f, mlsId: e.target.value }))} className="mt-1" /></div>
-                    <div>
-                      <Label className="text-xs">MLS <span className="text-destructive">*</span></Label>
-                      <Input value={agentForm.mls} onChange={(e) => { setAgentForm((f) => ({ ...f, mls: e.target.value })); setAgentErrors((e2) => ({ ...e2, mls: false })); }} className={cn('mt-1', agentErrors.mls && 'border-destructive')} />
-                      {agentErrors.mls && <p className="text-xs text-destructive mt-1">MLS is required</p>}
-                    </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Step 5: Seller Info */}
+          {step === 5 && (
+            <div>
+              <h2 className="text-xl font-semibold mb-1 text-foreground">Seller Legal Name</h2>
+              <p className="text-sm text-muted-foreground mb-6">Enter the seller's information.</p>
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div><Label className="text-xs">Role</Label><Input value={sellerForm.role} onChange={(e) => setSellerForm((f) => ({ ...f, role: e.target.value }))} className="mt-1" /></div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div><Label className="text-xs">First Name</Label><Input value={sellerForm.firstName} onChange={(e) => setSellerForm((f) => ({ ...f, firstName: e.target.value }))} className="mt-1" /></div>
+                  <div><Label className="text-xs">Last Name</Label><Input value={sellerForm.lastName} onChange={(e) => setSellerForm((f) => ({ ...f, lastName: e.target.value }))} className="mt-1" /></div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div><Label className="text-xs">Email</Label><Input type="email" value={sellerForm.email} onChange={(e) => setSellerForm((f) => ({ ...f, email: e.target.value }))} className="mt-1" /></div>
+                  <div><Label className="text-xs">Phone</Label><Input value={sellerForm.phone} onChange={(e) => setSellerForm((f) => ({ ...f, phone: e.target.value }))} className="mt-1" /></div>
+                </div>
+                <div><Label className="text-xs">Company / Trust</Label><Input value={sellerForm.company} onChange={(e) => setSellerForm((f) => ({ ...f, company: e.target.value }))} className="mt-1" /></div>
+                <div><Label className="text-xs">Current Address</Label><Input value={sellerForm.currentAddress} onChange={(e) => setSellerForm((f) => ({ ...f, currentAddress: e.target.value }))} className="mt-1" /></div>
+              </div>
+            </div>
+          )}
+
+          {/* Step 6: Agent Details */}
+          {step === 6 && (
+            <div>
+              <h2 className="text-xl font-semibold mb-1 text-foreground">Seller Agent Details</h2>
+              <p className="text-sm text-muted-foreground mb-6">Complete the agent information.</p>
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div><Label className="text-xs">Role</Label><Input value={agentForm.role} onChange={(e) => setAgentForm((f) => ({ ...f, role: e.target.value }))} className="mt-1" /></div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-xs">First Name <span className="text-destructive">*</span></Label>
+                    <Input value={agentForm.firstName} onChange={(e) => { setAgentForm((f) => ({ ...f, firstName: e.target.value })); setAgentErrors((e2) => ({ ...e2, firstName: false })); }} className={cn('mt-1', agentErrors.firstName && 'border-destructive')} />
                   </div>
                   <div>
-                    <Label className="text-xs">Commission</Label>
-                    <div className="flex gap-2 mt-1">
-                      <Input value={agentForm.commission} onChange={(e) => setAgentForm((f) => ({ ...f, commission: e.target.value }))} className="flex-1" placeholder="0" />
-                      <div className="flex border rounded-md overflow-hidden">
-                        <button onClick={() => setAgentForm((f) => ({ ...f, commissionType: 'percentage' }))} className={cn('px-3 py-2 text-xs font-medium transition-colors', agentForm.commissionType === 'percentage' ? 'bg-primary text-primary-foreground' : 'bg-background text-muted-foreground hover:bg-muted')}>%</button>
-                        <button onClick={() => setAgentForm((f) => ({ ...f, commissionType: 'dollars' }))} className={cn('px-3 py-2 text-xs font-medium transition-colors', agentForm.commissionType === 'dollars' ? 'bg-primary text-primary-foreground' : 'bg-background text-muted-foreground hover:bg-muted')}>$</button>
-                      </div>
+                    <Label className="text-xs">Last Name <span className="text-destructive">*</span></Label>
+                    <Input value={agentForm.lastName} onChange={(e) => { setAgentForm((f) => ({ ...f, lastName: e.target.value })); setAgentErrors((e2) => ({ ...e2, lastName: false })); }} className={cn('mt-1', agentErrors.lastName && 'border-destructive')} />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div><Label className="text-xs">Email</Label><Input type="email" value={agentForm.email} onChange={(e) => setAgentForm((f) => ({ ...f, email: e.target.value }))} className="mt-1" /></div>
+                  <div><Label className="text-xs">Phone</Label><Input value={agentForm.phone} onChange={(e) => setAgentForm((f) => ({ ...f, phone: e.target.value }))} className="mt-1" /></div>
+                </div>
+                <div><Label className="text-xs">Company / Trust</Label><Input value={agentForm.company} onChange={(e) => setAgentForm((f) => ({ ...f, company: e.target.value }))} className="mt-1" /></div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div><Label className="text-xs">MLS ID</Label><Input value={agentForm.mlsId} onChange={(e) => setAgentForm((f) => ({ ...f, mlsId: e.target.value }))} className="mt-1" /></div>
+                  <div>
+                    <Label className="text-xs">MLS <span className="text-destructive">*</span></Label>
+                    <Input value={agentForm.mls} onChange={(e) => { setAgentForm((f) => ({ ...f, mls: e.target.value })); setAgentErrors((e2) => ({ ...e2, mls: false })); }} className={cn('mt-1', agentErrors.mls && 'border-destructive')} />
+                    {agentErrors.mls && <p className="text-xs text-destructive mt-1">MLS is required</p>}
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-xs">Commission</Label>
+                  <div className="flex gap-2 mt-1">
+                    <Input value={agentForm.commission} onChange={(e) => setAgentForm((f) => ({ ...f, commission: e.target.value }))} className="flex-1" placeholder="0" />
+                    <div className="flex border border-border rounded-md overflow-hidden">
+                      <button onClick={() => setAgentForm((f) => ({ ...f, commissionType: 'percentage' }))} className={cn('px-3 py-2 text-xs font-medium transition-colors', agentForm.commissionType === 'percentage' ? 'bg-primary text-primary-foreground' : 'bg-background text-muted-foreground hover:bg-muted')}>%</button>
+                      <button onClick={() => setAgentForm((f) => ({ ...f, commissionType: 'dollars' }))} className={cn('px-3 py-2 text-xs font-medium transition-colors', agentForm.commissionType === 'dollars' ? 'bg-primary text-primary-foreground' : 'bg-background text-muted-foreground hover:bg-muted')}>$</button>
                     </div>
                   </div>
-                  <div className="flex gap-2 pt-2">
-                    <Button variant="outline" onClick={() => setStep(5)}>Back</Button>
-                    <Button onClick={handleSaveAgent} disabled={createDealMutation.isPending}>
-                      {createDealMutation.isPending ? 'Creating...' : 'Save'}
-                    </Button>
-                  </div>
                 </div>
               </div>
-            )}
+            </div>
+          )}
 
-            {/* Step 7: Success */}
-            {step === 7 && (
-              <div className="text-center py-16">
-                <div className="w-16 h-16 rounded-full bg-success/10 flex items-center justify-center mx-auto mb-6">
-                  <Check className="w-8 h-8 text-success" />
-                </div>
-                <h2 className="text-2xl font-semibold text-foreground mb-2">Congratulations!</h2>
-                <p className="text-muted-foreground mb-8">Your deal has been created successfully.</p>
-                <Button onClick={() => navigate(`/transactions/${createdDealId}`)}>View Deal</Button>
+          {/* Step 7: Success */}
+          {step === 7 && (
+            <div className="text-center py-16">
+              <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-6">
+                <Check className="w-8 h-8 text-primary" />
               </div>
-            )}
-          </motion.div>
-
-          {/* Bottom spacer for scroll comfort */}
-          <div className="h-32" />
+              <h2 className="text-2xl font-semibold text-foreground mb-2">Congratulations!</h2>
+              <p className="text-muted-foreground mb-8">Your deal has been created successfully.</p>
+              <Button onClick={() => navigate(`/transactions/${createdDealId}`)}>View Deal</Button>
+            </div>
+          )}
         </div>
       </div>
+
+      {/* Footer with Back / Continue */}
+      {step < 7 && (
+        <div className="border-t border-border bg-background px-6 py-4 sticky bottom-0 z-20">
+          <div className="max-w-2xl mx-auto flex justify-end gap-3">
+            {step > 1 && (
+              <Button variant="outline" onClick={handleBack} className="min-w-[100px]">
+                Back
+              </Button>
+            )}
+            <Button
+              onClick={handleContinue}
+              disabled={!canContinue() || createDealMutation.isPending}
+              className="min-w-[140px]"
+            >
+              {step === 6 ? (createDealMutation.isPending ? 'Creating...' : 'Save and Continue') : 'Continue'}
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
