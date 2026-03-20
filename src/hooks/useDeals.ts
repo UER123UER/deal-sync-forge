@@ -94,7 +94,6 @@ export function useCreateDeal() {
       primary_agent?: string;
       contacts?: { contact_id?: string; first_name: string; last_name: string; email?: string; phone?: string; company?: string; role: string; mls_id?: string; mls?: string; commission?: string; commission_type?: string; current_address?: string }[];
     }) => {
-      // Insert deal
       const { data: newDeal, error: dealErr } = await supabase
         .from('deals')
         .insert({
@@ -112,7 +111,6 @@ export function useCreateDeal() {
         .single();
       if (dealErr) throw dealErr;
 
-      // Insert contacts and link them
       if (deal.contacts?.length) {
         for (const c of deal.contacts) {
           let contactId = c.contact_id;
@@ -145,7 +143,6 @@ export function useCreateDeal() {
         }
       }
 
-      // Insert default checklist
       const DEFAULT_CHECKLIST = [
         { name: 'Exclusive Right of Sale Listing Agreement', has_digital_form: true },
         { name: 'Tax Roll', has_digital_form: false },
@@ -175,8 +172,19 @@ export function useCreateDeal() {
 export function useUpdateDeal() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, ...data }: { id: string; status?: string; price?: string; mls_number?: string; primary_agent?: string }) => {
+    mutationFn: async ({ id, ...data }: { id: string; status?: string; price?: string; mls_number?: string; primary_agent?: string; listing_start_date?: string; listing_expiration?: string }) => {
       const { error } = await supabase.from('deals').update(data).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['deals'] }),
+  });
+}
+
+export function useDeleteDeal() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('deals').delete().eq('id', id);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['deals'] }),
@@ -188,6 +196,28 @@ export function useToggleChecklistItem() {
   return useMutation({
     mutationFn: async ({ itemId, completed }: { itemId: string; completed: boolean }) => {
       const { error } = await supabase.from('checklist_items').update({ completed }).eq('id', itemId);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['deals'] }),
+  });
+}
+
+export function useDeleteChecklistItem() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (itemId: string) => {
+      const { error } = await supabase.from('checklist_items').delete().eq('id', itemId);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['deals'] }),
+  });
+}
+
+export function useAddDealContact() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ dealId, contactId, role }: { dealId: string; contactId: string; role: string }) => {
+      const { error } = await supabase.from('deal_contacts').insert({ deal_id: dealId, contact_id: contactId, role });
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['deals'] }),
