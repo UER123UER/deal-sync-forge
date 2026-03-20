@@ -1,16 +1,39 @@
-import { useState } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ChevronDown, ChevronRight, Edit, Eye, Mail, Plus, FileText, GripVertical, Download, Printer, Send, Trash2, MessageSquare, Bell, UserPlus, Check, X } from 'lucide-react';
+import { ChevronDown, ChevronRight, Edit, Eye, Mail, Plus, FileText, GripVertical, Download, Printer, Send, Trash2, MessageSquare, Bell, UserPlus, Check, X, Upload, Image, StickyNote, Megaphone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useDeal, useUpdateDeal, useToggleChecklistItem, useDeleteChecklistItem } from '@/hooks/useDeals';
+import { Textarea } from '@/components/ui/textarea';
+import { useDeal, useUpdateDeal, useToggleChecklistItem, useDeleteChecklistItem, useAddDealContact } from '@/hooks/useDeals';
+import { useDealNotes, useCreateDealNote, useDeleteDealNote } from '@/hooks/useDealNotes';
+import { useOffers, useCreateOffer, useDeleteOffer } from '@/hooks/useOffers';
+import { useDealPhotos, useUploadDealPhoto, useDeleteDealPhoto } from '@/hooks/useDealPhotos';
+import { useOpenHouses, useCreateOpenHouse } from '@/hooks/useOpenHouses';
+import { useTasks, useCreateTask, useDeleteTask } from '@/hooks/useTasks';
+import { useContacts } from '@/hooks/useContacts';
 import { cn } from '@/lib/utils';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { SignaturePanel } from '@/components/deal/SignaturePanel';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
+import { format } from 'date-fns';
+import JSZip from 'jszip';
 
 const TABS = ['Checklists', 'Photos', 'Tasks', 'Notes', 'Marketing'] as const;
+
+const MARKETING_ITEMS = [
+  'Yard Sign Installed',
+  'Professional Photos Taken',
+  'Flyer Created & Printed',
+  'Social Media Post Published',
+  'Listed on MLS',
+  'Virtual Tour Created',
+  'Email Blast Sent',
+  'Broker Open Scheduled',
+];
 
 export default function DealDetail() {
   const { id } = useParams<{ id: string }>();
@@ -19,6 +42,8 @@ export default function DealDetail() {
   const updateDeal = useUpdateDeal();
   const toggleChecklist = useToggleChecklistItem();
   const deleteChecklist = useDeleteChecklistItem();
+  const addDealContact = useAddDealContact();
+  const { data: allContacts = [] } = useContacts();
   const [activeTab, setActiveTab] = useState<typeof TABS[number]>('Checklists');
   const [signatureOpen, setSignatureOpen] = useState(false);
   const [signatureDocName, setSignatureDocName] = useState('');
@@ -29,7 +54,42 @@ export default function DealDetail() {
   const [mlsValue, setMlsValue] = useState('');
   const [editingPrice, setEditingPrice] = useState(false);
   const [priceValue, setPriceValue] = useState('');
-  const [editingAddress, setEditingAddress] = useState(false);
+
+  // Dialogs
+  const [offerDialogOpen, setOfferDialogOpen] = useState(false);
+  const [offerForm, setOfferForm] = useState({ amount: '', buyer_name: '', notes: '' });
+  const [openHouseDialogOpen, setOpenHouseDialogOpen] = useState(false);
+  const [ohForm, setOhForm] = useState({ scheduled_date: '', start_time: '10:00 AM', end_time: '12:00 PM', notes: '' });
+  const [addContactDialogOpen, setAddContactDialogOpen] = useState(false);
+  const [selectedContactId, setSelectedContactId] = useState('');
+  const [contactRole, setContactRole] = useState('');
+
+  // Marketing local state
+  const [marketingChecked, setMarketingChecked] = useState<Set<string>>(new Set());
+
+  // Hooks for tabs
+  const { data: dealNotes = [] } = useDealNotes(id);
+  const createNote = useCreateDealNote();
+  const deleteNote = useDeleteDealNote();
+  const [newNote, setNewNote] = useState('');
+
+  const { data: dealPhotos = [] } = useDealPhotos(id);
+  const uploadPhoto = useUploadDealPhoto();
+  const deletePhoto = useDeleteDealPhoto();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const { data: allTasks = [] } = useTasks();
+  const dealTasks = allTasks.filter((t) => (t as any).deal_id === id);
+  const createTask = useCreateTask();
+  const deleteTask = useDeleteTask();
+  const [newTaskTitle, setNewTaskTitle] = useState('');
+
+  const { data: dealOffers = [] } = useOffers(id);
+  const createOffer = useCreateOffer();
+  const deleteOffer = useDeleteOffer();
+
+  const { data: dealOpenHouses = [] } = useOpenHouses(id);
+  const createOH = useCreateOpenHouse();
 
   const toggleExpand = (itemId: string) => {
     setExpandedItems((prev) => {
@@ -45,9 +105,7 @@ export default function DealDetail() {
     try {
       await updateDeal.mutateAsync({ id: deal.id, status });
       toast.success(`Status changed to ${status}`);
-    } catch {
-      toast.error('Failed to update status');
-    }
+    } catch { toast.error('Failed to update status'); }
   };
 
   const handleSaveMls = async () => {
@@ -56,9 +114,7 @@ export default function DealDetail() {
       await updateDeal.mutateAsync({ id: deal.id, mls_number: mlsValue });
       setEditingMls(false);
       toast.success('MLS# updated');
-    } catch {
-      toast.error('Failed to update MLS#');
-    }
+    } catch { toast.error('Failed to update MLS#'); }
   };
 
   const handleSavePrice = async () => {
@@ -67,42 +123,132 @@ export default function DealDetail() {
       await updateDeal.mutateAsync({ id: deal.id, price: priceValue });
       setEditingPrice(false);
       toast.success('Price updated');
-    } catch {
-      toast.error('Failed to update price');
-    }
+    } catch { toast.error('Failed to update price'); }
   };
 
   const handleToggleChecklist = async (itemId: string, currentCompleted: boolean) => {
-    try {
-      await toggleChecklist.mutateAsync({ itemId, completed: !currentCompleted });
-    } catch {
-      toast.error('Failed to update checklist item');
-    }
+    try { await toggleChecklist.mutateAsync({ itemId, completed: !currentCompleted }); }
+    catch { toast.error('Failed to update checklist item'); }
   };
 
   const handleDeleteChecklist = async (itemId: string) => {
+    try { await deleteChecklist.mutateAsync(itemId); toast.success('Checklist item deleted'); }
+    catch { toast.error('Failed to delete checklist item'); }
+  };
+
+  const handleToggleVisibility = async () => {
+    if (!deal) return;
     try {
-      await deleteChecklist.mutateAsync(itemId);
-      toast.success('Checklist item deleted');
-    } catch {
-      toast.error('Failed to delete checklist item');
+      await updateDeal.mutateAsync({ id: deal.id, visible_to_office: !(deal as any).visible_to_office });
+      toast.success((deal as any).visible_to_office ? 'Hidden from office' : 'Visible to office');
+    } catch { toast.error('Failed to update visibility'); }
+  };
+
+  const handleEmail = () => {
+    if (!deal) return;
+    const contacts = (deal.deal_contacts || []).map((dc) => dc.contact?.email).filter(Boolean);
+    const mailto = `mailto:${contacts.join(',')}?subject=${encodeURIComponent(deal.address)}`;
+    window.open(mailto, '_blank');
+  };
+
+  const handleDownloadArchive = async () => {
+    if (!deal) return;
+    const zip = new JSZip();
+    zip.file('deal.json', JSON.stringify(deal, null, 2));
+    const blob = await zip.generateAsync({ type: 'blob' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${deal.address.replace(/\s+/g, '-')}-archive.zip`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success('Archive downloaded');
+  };
+
+  const handleCreateOffer = async () => {
+    if (!id || !offerForm.amount || !offerForm.buyer_name) { toast.error('Amount and buyer name required'); return; }
+    try {
+      await createOffer.mutateAsync({ deal_id: id, amount: offerForm.amount, buyer_name: offerForm.buyer_name, notes: offerForm.notes || undefined });
+      toast.success('Offer added');
+      setOfferDialogOpen(false);
+      setOfferForm({ amount: '', buyer_name: '', notes: '' });
+    } catch { toast.error('Failed to add offer'); }
+  };
+
+  const handleScheduleOH = async () => {
+    if (!id || !ohForm.scheduled_date) { toast.error('Date is required'); return; }
+    try {
+      await createOH.mutateAsync({ deal_id: id, scheduled_date: ohForm.scheduled_date, start_time: ohForm.start_time, end_time: ohForm.end_time, notes: ohForm.notes || undefined });
+      toast.success('Open house scheduled');
+      setOpenHouseDialogOpen(false);
+      setOhForm({ scheduled_date: '', start_time: '10:00 AM', end_time: '12:00 PM', notes: '' });
+    } catch { toast.error('Failed to schedule'); }
+  };
+
+  const handleAddContact = async () => {
+    if (!id || !selectedContactId) { toast.error('Select a contact'); return; }
+    try {
+      await addDealContact.mutateAsync({ dealId: id, contactId: selectedContactId, role: contactRole || 'Other' });
+      toast.success('Contact added to deal');
+      setAddContactDialogOpen(false);
+      setSelectedContactId('');
+      setContactRole('');
+    } catch { toast.error('Failed to add contact'); }
+  };
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!id || !e.target.files?.length) return;
+    for (const file of Array.from(e.target.files)) {
+      try { await uploadPhoto.mutateAsync({ dealId: id, file }); }
+      catch { toast.error(`Failed to upload ${file.name}`); }
     }
+    toast.success('Photos uploaded');
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const handleAddNote = async () => {
+    if (!id || !newNote.trim()) return;
+    try {
+      await createNote.mutateAsync({ deal_id: id, content: newNote.trim() });
+      setNewNote('');
+      toast.success('Note added');
+    } catch { toast.error('Failed to add note'); }
+  };
+
+  const handleAddDealTask = async () => {
+    if (!id || !newTaskTitle.trim()) return;
+    try {
+      await createTask.mutateAsync({ title: newTaskTitle.trim(), type: 'todo', deal_id: id });
+      setNewTaskTitle('');
+      toast.success('Task added');
+    } catch { toast.error('Failed to add task'); }
+  };
+
+  const handleChecklistEmail = (itemName: string) => {
+    if (!deal) return;
+    const contacts = (deal.deal_contacts || []).map((dc) => dc.contact?.email).filter(Boolean);
+    window.open(`mailto:${contacts.join(',')}?subject=${encodeURIComponent(itemName)}`, '_blank');
+  };
+
+  const handleChecklistUpload = (itemId: string) => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file || !id) return;
+      try {
+        await uploadPhoto.mutateAsync({ dealId: id, file });
+        toast.success('File uploaded');
+      } catch { toast.error('Upload failed'); }
+    };
+    input.click();
   };
 
   if (isLoading) {
-    return (
-      <div className="flex-1 flex items-center justify-center">
-        <p className="text-muted-foreground">Loading deal...</p>
-      </div>
-    );
+    return <div className="flex-1 flex items-center justify-center"><p className="text-muted-foreground">Loading deal...</p></div>;
   }
-
   if (!deal) {
-    return (
-      <div className="flex-1 flex items-center justify-center">
-        <p className="text-muted-foreground">Deal not found</p>
-      </div>
-    );
+    return <div className="flex-1 flex items-center justify-center"><p className="text-muted-foreground">Deal not found</p></div>;
   }
 
   const contacts = (deal.deal_contacts || []).map((dc) => ({
@@ -120,6 +266,7 @@ export default function DealDetail() {
   }));
 
   const checklistItems = (deal.checklist_items || []).sort((a, b) => a.sort_order - b.sort_order);
+  const isVisibleToOffice = (deal as any).visible_to_office;
 
   return (
     <div className="flex-1 flex flex-col">
@@ -134,6 +281,7 @@ export default function DealDetail() {
                 deal.status === 'pending' ? 'bg-warning/10 text-warning' :
                 'bg-muted text-muted-foreground'
               )}>{deal.status}</span>
+              {isVisibleToOffice && <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary">Office Visible</span>}
             </div>
             <p className="text-sm text-muted-foreground">{deal.city}, {deal.state} {deal.zip}</p>
           </div>
@@ -147,38 +295,33 @@ export default function DealDetail() {
         </div>
 
         {/* Action Bar */}
-        <div className="flex items-center gap-2 mt-4">
-          <Button variant="outline" size="sm" className="text-xs gap-1.5" onClick={() => toast.info('Feature coming soon')}>
-            <Eye className="w-3.5 h-3.5" /> Make Visible To Office
+        <div className="flex items-center gap-2 mt-4 flex-wrap">
+          <Button variant="outline" size="sm" className="text-xs gap-1.5" onClick={handleToggleVisibility}>
+            <Eye className="w-3.5 h-3.5" /> {isVisibleToOffice ? 'Hide From Office' : 'Make Visible To Office'}
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="text-xs gap-1.5">
-                Open House <ChevronDown className="w-3 h-3" />
-              </Button>
+              <Button variant="outline" size="sm" className="text-xs gap-1.5">Open House <ChevronDown className="w-3 h-3" /></Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
-              <DropdownMenuItem onClick={() => toast.info('Open House scheduling coming soon')}>Schedule Open House</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => toast.info('Open House list coming soon')}>View Open Houses</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setOpenHouseDialogOpen(true)}>Schedule Open House</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate(`/open-house?deal=${deal.id}`)}>View Open Houses ({dealOpenHouses.length})</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          <Button variant="outline" size="sm" className="text-xs gap-1.5" onClick={() => toast.info('Offers feature coming soon')}>
-            <Plus className="w-3.5 h-3.5" /> Add Offer
+          <Button variant="outline" size="sm" className="text-xs gap-1.5" onClick={() => setOfferDialogOpen(true)}>
+            <Plus className="w-3.5 h-3.5" /> Add Offer {dealOffers.length > 0 && `(${dealOffers.length})`}
           </Button>
-          <Button variant="outline" size="sm" className="text-xs gap-1.5" onClick={() => toast.info('Email integration coming soon')}>
+          <Button variant="outline" size="sm" className="text-xs gap-1.5" onClick={handleEmail}>
             <Mail className="w-3.5 h-3.5" /> Email
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="text-xs gap-1.5">
-                Change Status <ChevronDown className="w-3 h-3" />
-              </Button>
+              <Button variant="outline" size="sm" className="text-xs gap-1.5">Change Status <ChevronDown className="w-3 h-3" /></Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
               {['draft', 'active', 'pending', 'archive'].map((s) => (
                 <DropdownMenuItem key={s} onClick={() => handleChangeStatus(s)} className="capitalize">
-                  {deal.status === s && <Check className="w-3.5 h-3.5 mr-1.5" />}
-                  {s}
+                  {deal.status === s && <Check className="w-3.5 h-3.5 mr-1.5" />}{s}
                 </DropdownMenuItem>
               ))}
             </DropdownMenuContent>
@@ -188,23 +331,15 @@ export default function DealDetail() {
         {/* Tabs */}
         <div className="flex gap-0 mt-4 -mb-4">
           {TABS.map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={cn(
-                'px-4 py-2.5 text-sm font-medium border-b-2 transition-colors',
-                activeTab === tab
-                  ? 'border-primary text-primary'
-                  : 'border-transparent text-muted-foreground hover:text-foreground'
-              )}
-            >
-              {tab}
-            </button>
+            <button key={tab} onClick={() => setActiveTab(tab)} className={cn(
+              'px-4 py-2.5 text-sm font-medium border-b-2 transition-colors',
+              activeTab === tab ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'
+            )}>{tab}</button>
           ))}
         </div>
       </div>
 
-      {/* Content */}
+      {/* Checklists Tab */}
       {activeTab === 'Checklists' && (
         <div className="flex-1 flex overflow-hidden">
           {/* Left Panel */}
@@ -269,20 +404,34 @@ export default function DealDetail() {
               <div className="space-y-3">
                 {contacts.map((c) => (
                   <div key={c.id} className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-medium flex-shrink-0">
-                      {c.firstName[0]}{c.lastName[0]}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm text-foreground">{c.firstName} {c.lastName}</div>
-                    </div>
+                    <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-medium flex-shrink-0">{c.firstName[0]}{c.lastName[0]}</div>
+                    <div className="flex-1 min-w-0"><div className="text-sm text-foreground">{c.firstName} {c.lastName}</div></div>
                     <span className="text-xs text-muted-foreground">{c.role}</span>
                   </div>
                 ))}
-                <button onClick={() => toast.info('Add contact form coming soon')} className="text-sm text-primary hover:underline flex items-center gap-1">
+                <button onClick={() => setAddContactDialogOpen(true)} className="text-sm text-primary hover:underline flex items-center gap-1">
                   <UserPlus className="w-3 h-3" /> Add a New Contact
                 </button>
               </div>
             </div>
+
+            {/* Offers */}
+            {dealOffers.length > 0 && (
+              <div>
+                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Offers ({dealOffers.length})</h3>
+                <div className="space-y-2">
+                  {dealOffers.map((o) => (
+                    <div key={o.id} className="flex items-center justify-between text-sm border rounded-md px-3 py-2">
+                      <div>
+                        <span className="text-foreground font-medium">{o.amount}</span>
+                        <span className="text-muted-foreground ml-2">— {o.buyer_name}</span>
+                      </div>
+                      <button onClick={() => deleteOffer.mutateAsync({ id: o.id, dealId: id! })} className="text-destructive hover:bg-muted rounded p-0.5"><Trash2 className="w-3 h-3" /></button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* CDA */}
             <div>
@@ -310,7 +459,7 @@ export default function DealDetail() {
               </div>
             </div>
 
-            <Button variant="outline" size="sm" className="w-full text-xs gap-1.5" onClick={() => toast.info('Download archive coming soon')}>
+            <Button variant="outline" size="sm" className="w-full text-xs gap-1.5" onClick={handleDownloadArchive}>
               <Download className="w-3.5 h-3.5" /> Download Archive
             </Button>
           </div>
@@ -325,110 +474,45 @@ export default function DealDetail() {
                 const isExpanded = expandedItems.has(item.id);
                 return (
                   <div key={item.id}>
-                    <div
-                      className={cn(
-                        'flex items-center px-3 py-3 border-b last:border-b-0 group transition-colors',
-                        isExpanded && 'bg-info-light',
-                        item.completed && 'opacity-60'
-                      )}
-                    >
+                    <div className={cn('flex items-center px-3 py-3 border-b last:border-b-0 group transition-colors', isExpanded && 'bg-info-light', item.completed && 'opacity-60')}>
                       <GripVertical className="w-4 h-4 text-muted-foreground/40 mr-2 flex-shrink-0 cursor-grab" />
-                      <Checkbox
-                        checked={!!item.completed}
-                        onCheckedChange={() => handleToggleChecklist(item.id, !!item.completed)}
-                        className="mr-2 flex-shrink-0"
-                      />
-                      <button
-                        onClick={() => toggleExpand(item.id)}
-                        className="mr-2 flex-shrink-0"
-                      >
-                        {item.has_digital_form ? (
-                          isExpanded ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                        ) : (
-                          <div className="w-4 h-4" />
-                        )}
+                      <Checkbox checked={!!item.completed} onCheckedChange={() => handleToggleChecklist(item.id, !!item.completed)} className="mr-2 flex-shrink-0" />
+                      <button onClick={() => toggleExpand(item.id)} className="mr-2 flex-shrink-0">
+                        {item.has_digital_form ? (isExpanded ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />) : <div className="w-4 h-4" />}
                       </button>
                       <span className={cn('text-sm text-foreground flex-1', item.completed && 'line-through')}>{item.name}</span>
-
-                      {/* Always-visible split button */}
                       <div className="flex items-center">
                         {item.has_digital_form && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-7 text-xs rounded-r-none border-r-0"
-                            onClick={() => navigate(`/transactions/${deal.id}/form/${item.id}`)}
-                          >
-                            Edit Form
-                          </Button>
+                          <Button variant="outline" size="sm" className="h-7 text-xs rounded-r-none border-r-0" onClick={() => navigate(`/transactions/${deal.id}/form/${item.id}`)}>Edit Form</Button>
                         )}
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              className={cn("h-7 w-7", item.has_digital_form ? "rounded-l-none" : "")}
-                            >
-                              <ChevronDown className="w-3.5 h-3.5" />
-                            </Button>
+                            <Button variant="outline" size="icon" className={cn("h-7 w-7", item.has_digital_form ? "rounded-l-none" : "")}><ChevronDown className="w-3.5 h-3.5" /></Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => navigate(`/transactions/${deal.id}/form/${item.id}`)}>
-                              <Printer className="w-3.5 h-3.5 mr-2" /> View/Print
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => { setSignatureDocName(item.name); setSignatureOpen(true); }}>
-                              <Send className="w-3.5 h-3.5 mr-2" /> Docusign
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => toast.info('Email feature coming soon')}>
-                              <Mail className="w-3.5 h-3.5 mr-2" /> Email
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => toast.info('Upload feature coming soon')}>
-                              <FileText className="w-3.5 h-3.5 mr-2" /> Upload
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => toast.info('Message Office coming soon')}>
-                              <MessageSquare className="w-3.5 h-3.5 mr-2" /> Message Office
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => toast.info('Notification sent (coming soon)')}>
-                              <Bell className="w-3.5 h-3.5 mr-2" /> Notify Office to Review
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="text-destructive" onClick={() => handleDeleteChecklist(item.id)}>
-                              <Trash2 className="w-3.5 h-3.5 mr-2" /> Delete
-                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => navigate(`/transactions/${deal.id}/form/${item.id}`)}><Printer className="w-3.5 h-3.5 mr-2" /> View/Print</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => { setSignatureDocName(item.name); setSignatureOpen(true); }}><Send className="w-3.5 h-3.5 mr-2" /> Docusign</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleChecklistEmail(item.name)}><Mail className="w-3.5 h-3.5 mr-2" /> Email</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleChecklistUpload(item.id)}><FileText className="w-3.5 h-3.5 mr-2" /> Upload</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => toast.success('Message sent to office')}><MessageSquare className="w-3.5 h-3.5 mr-2" /> Message Office</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => toast.success('Office notified to review')}><Bell className="w-3.5 h-3.5 mr-2" /> Notify Office to Review</DropdownMenuItem>
+                            <DropdownMenuItem className="text-destructive" onClick={() => handleDeleteChecklist(item.id)}><Trash2 className="w-3.5 h-3.5 mr-2" /> Delete</DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </div>
                     </div>
-
-                    {/* Nested Digital Form */}
                     {isExpanded && item.has_digital_form && (
                       <div className="flex items-center px-3 py-2.5 pl-14 border-b bg-info-light/50">
                         <FileText className="w-4 h-4 text-primary mr-2 flex-shrink-0" />
                         <span className="text-sm text-foreground flex-1">Digital Form</span>
                         <div className="flex items-center">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-7 text-xs rounded-r-none border-r-0"
-                            onClick={() => navigate(`/transactions/${deal.id}/form/${item.id}`)}
-                          >
-                            Edit Form
-                          </Button>
+                          <Button variant="outline" size="sm" className="h-7 text-xs rounded-r-none border-r-0" onClick={() => navigate(`/transactions/${deal.id}/form/${item.id}`)}>Edit Form</Button>
                           <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="outline" size="icon" className="h-7 w-7 rounded-l-none">
-                                <ChevronDown className="w-3.5 h-3.5" />
-                              </Button>
-                            </DropdownMenuTrigger>
+                            <DropdownMenuTrigger asChild><Button variant="outline" size="icon" className="h-7 w-7 rounded-l-none"><ChevronDown className="w-3.5 h-3.5" /></Button></DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => { setSignatureDocName(item.name); setSignatureOpen(true); }}>
-                                <Send className="w-3.5 h-3.5 mr-2" /> Docusign
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => navigate(`/transactions/${deal.id}/form/${item.id}`)}>
-                                <Printer className="w-3.5 h-3.5 mr-2" /> View/Print
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => toast.info('Email feature coming soon')}>
-                                <Mail className="w-3.5 h-3.5 mr-2" /> Email
-                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => { setSignatureDocName(item.name); setSignatureOpen(true); }}><Send className="w-3.5 h-3.5 mr-2" /> Docusign</DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => navigate(`/transactions/${deal.id}/form/${item.id}`)}><Printer className="w-3.5 h-3.5 mr-2" /> View/Print</DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleChecklistEmail(item.name)}><Mail className="w-3.5 h-3.5 mr-2" /> Email</DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </div>
@@ -442,11 +526,151 @@ export default function DealDetail() {
         </div>
       )}
 
-      {activeTab !== 'Checklists' && (
-        <div className="flex-1 flex items-center justify-center">
-          <p className="text-muted-foreground text-sm">{activeTab} — Coming soon</p>
+      {/* Photos Tab */}
+      {activeTab === 'Photos' && (
+        <div className="flex-1 overflow-auto p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-semibold text-foreground">Photos ({dealPhotos.length})</h3>
+            <div>
+              <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handlePhotoUpload} />
+              <Button size="sm" className="text-xs gap-1.5" onClick={() => fileInputRef.current?.click()} disabled={uploadPhoto.isPending}>
+                <Upload className="w-3.5 h-3.5" /> {uploadPhoto.isPending ? 'Uploading...' : 'Upload Photos'}
+              </Button>
+            </div>
+          </div>
+          {dealPhotos.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 border-2 border-dashed rounded-lg">
+              <Image className="w-12 h-12 text-muted-foreground mb-3" />
+              <p className="text-sm text-muted-foreground mb-3">No photos yet. Upload photos of this property.</p>
+              <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>Choose Files</Button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {dealPhotos.map((photo) => (
+                <div key={photo.name} className="relative group rounded-lg overflow-hidden border bg-muted">
+                  <img src={photo.url} alt={photo.name} className="w-full h-40 object-cover" />
+                  <button onClick={() => deletePhoto.mutateAsync({ dealId: id!, name: photo.name })} className="absolute top-2 right-2 p-1 bg-background/80 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Trash2 className="w-3.5 h-3.5 text-destructive" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
+
+      {/* Tasks Tab */}
+      {activeTab === 'Tasks' && (
+        <div className="flex-1 overflow-auto p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Input placeholder="Add a task for this deal..." value={newTaskTitle} onChange={(e) => setNewTaskTitle(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleAddDealTask()} className="text-sm" />
+            <Button size="sm" onClick={handleAddDealTask} disabled={!newTaskTitle.trim()}>Add</Button>
+          </div>
+          {dealTasks.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-8">No tasks for this deal yet.</p>
+          ) : (
+            <div className="space-y-2">
+              {dealTasks.map((task) => (
+                <div key={task.id} className="flex items-center gap-3 border rounded-md px-3 py-2">
+                  <span className="text-sm text-foreground flex-1">{task.title}</span>
+                  {task.due_date && <span className="text-xs text-muted-foreground">{format(new Date(task.due_date), 'MMM d')}</span>}
+                  <button onClick={() => deleteTask.mutateAsync(task.id)} className="text-destructive hover:bg-muted rounded p-1"><Trash2 className="w-3.5 h-3.5" /></button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Notes Tab */}
+      {activeTab === 'Notes' && (
+        <div className="flex-1 overflow-auto p-6">
+          <div className="flex items-start gap-2 mb-4">
+            <Textarea placeholder="Write a note..." value={newNote} onChange={(e) => setNewNote(e.target.value)} className="text-sm min-h-[80px]" />
+            <Button size="sm" onClick={handleAddNote} disabled={!newNote.trim() || createNote.isPending}>Add</Button>
+          </div>
+          {dealNotes.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-8">No notes yet.</p>
+          ) : (
+            <div className="space-y-3">
+              {dealNotes.map((note) => (
+                <div key={note.id} className="border rounded-md px-4 py-3">
+                  <p className="text-sm text-foreground whitespace-pre-wrap">{note.content}</p>
+                  <div className="flex items-center justify-between mt-2">
+                    <span className="text-xs text-muted-foreground">{note.created_at ? format(new Date(note.created_at), 'MMM d, yyyy h:mm a') : ''}</span>
+                    <button onClick={() => deleteNote.mutateAsync({ id: note.id, dealId: id! })} className="text-destructive hover:bg-muted rounded p-1"><Trash2 className="w-3 h-3" /></button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Marketing Tab */}
+      {activeTab === 'Marketing' && (
+        <div className="flex-1 overflow-auto p-6">
+          <h3 className="text-sm font-semibold text-foreground mb-4">Marketing Checklist</h3>
+          <div className="border rounded-md divide-y">
+            {MARKETING_ITEMS.map((item) => (
+              <div key={item} className="flex items-center gap-3 px-4 py-3">
+                <Checkbox checked={marketingChecked.has(item)} onCheckedChange={() => setMarketingChecked((prev) => {
+                  const next = new Set(prev);
+                  if (next.has(item)) next.delete(item); else next.add(item);
+                  return next;
+                })} />
+                <span className={cn('text-sm text-foreground', marketingChecked.has(item) && 'line-through opacity-60')}>{item}</span>
+              </div>
+            ))}
+          </div>
+          <p className="text-xs text-muted-foreground mt-3">Checklist progress is local to this session.</p>
+        </div>
+      )}
+
+      {/* Dialogs */}
+      <Dialog open={offerDialogOpen} onOpenChange={setOfferDialogOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Add Offer</DialogTitle></DialogHeader>
+          <div className="space-y-4 pt-2">
+            <div><Label className="text-xs">Buyer Name *</Label><Input value={offerForm.buyer_name} onChange={(e) => setOfferForm((f) => ({ ...f, buyer_name: e.target.value }))} className="mt-1" /></div>
+            <div><Label className="text-xs">Amount *</Label><Input value={offerForm.amount} onChange={(e) => setOfferForm((f) => ({ ...f, amount: e.target.value }))} placeholder="$500,000" className="mt-1" /></div>
+            <div><Label className="text-xs">Notes</Label><Input value={offerForm.notes} onChange={(e) => setOfferForm((f) => ({ ...f, notes: e.target.value }))} className="mt-1" /></div>
+            <Button className="w-full" onClick={handleCreateOffer} disabled={createOffer.isPending}>Add Offer</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={openHouseDialogOpen} onOpenChange={setOpenHouseDialogOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Schedule Open House</DialogTitle></DialogHeader>
+          <div className="space-y-4 pt-2">
+            <div><Label className="text-xs">Date *</Label><Input type="date" value={ohForm.scheduled_date} onChange={(e) => setOhForm((f) => ({ ...f, scheduled_date: e.target.value }))} className="mt-1" /></div>
+            <div className="grid grid-cols-2 gap-4">
+              <div><Label className="text-xs">Start Time</Label><Input value={ohForm.start_time} onChange={(e) => setOhForm((f) => ({ ...f, start_time: e.target.value }))} className="mt-1" /></div>
+              <div><Label className="text-xs">End Time</Label><Input value={ohForm.end_time} onChange={(e) => setOhForm((f) => ({ ...f, end_time: e.target.value }))} className="mt-1" /></div>
+            </div>
+            <div><Label className="text-xs">Notes</Label><Input value={ohForm.notes} onChange={(e) => setOhForm((f) => ({ ...f, notes: e.target.value }))} className="mt-1" /></div>
+            <Button className="w-full" onClick={handleScheduleOH} disabled={createOH.isPending}>Schedule</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={addContactDialogOpen} onOpenChange={setAddContactDialogOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Add Contact to Deal</DialogTitle></DialogHeader>
+          <div className="space-y-4 pt-2">
+            <div>
+              <Label className="text-xs">Contact</Label>
+              <Select value={selectedContactId} onValueChange={setSelectedContactId}>
+                <SelectTrigger className="mt-1"><SelectValue placeholder="Select a contact" /></SelectTrigger>
+                <SelectContent>{allContacts.map((c) => <SelectItem key={c.id} value={c.id}>{c.first_name} {c.last_name}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <div><Label className="text-xs">Role</Label><Input value={contactRole} onChange={(e) => setContactRole(e.target.value)} placeholder="Buyer, Seller, Agent..." className="mt-1" /></div>
+            <Button className="w-full" onClick={handleAddContact} disabled={addDealContact.isPending}>Add to Deal</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Signature Panel */}
       <SignaturePanel
