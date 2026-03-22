@@ -131,7 +131,7 @@ export function SignaturePanel({ open, onClose, documentName, contacts, dealId, 
                   From <span className="text-destructive">*</span>
                 </Label>
                 <div className="mt-1 flex items-center border rounded-md px-3 py-2 bg-muted">
-                  <span className="text-sm text-foreground flex-1">You</span>
+                  <span className="text-sm text-foreground flex-1">uerealty1@gmail.com</span>
                 </div>
               </div>
 
