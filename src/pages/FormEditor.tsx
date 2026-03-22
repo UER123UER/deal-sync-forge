@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { X, AlertTriangle, Save } from 'lucide-react';
+import { X, AlertTriangle, Save, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useDeal, useUpdateDeal } from '@/hooks/useDeals';
+import { useUpdateContact } from '@/hooks/useContacts';
+import { SignaturePanel } from '@/components/deal/SignaturePanel';
 import { toast } from 'sonner';
 
 export default function FormEditor() {
@@ -10,18 +12,21 @@ export default function FormEditor() {
   const navigate = useNavigate();
   const { data: deal, isLoading } = useDeal(id);
   const updateDeal = useUpdateDeal();
+  const updateContact = useUpdateContact();
+  const [signatureOpen, setSignatureOpen] = useState(false);
 
-  const contacts = (deal?.deal_contacts || []).map((dc) => ({
+  const dealContacts = (deal?.deal_contacts || []).map((dc) => ({
+    id: dc.contact?.id || dc.contact_id,
     role: dc.role || '',
     firstName: dc.contact?.first_name || '',
     lastName: dc.contact?.last_name || '',
+    email: dc.contact?.email || '',
+    phone: dc.contact?.phone || '',
     company: dc.contact?.company || '',
     commission: dc.contact?.commission || '',
   }));
 
   const checklistItem = (deal?.checklist_items || []).find((ci) => ci.id === formId);
-  const seller = contacts.find((c) => c.role === 'Seller');
-  const agent = contacts.find((c) => c.role.includes('Agent'));
 
   const [fields, setFields] = useState({
     sellerName: '',
@@ -36,11 +41,10 @@ export default function FormEditor() {
   });
   const [initialized, setInitialized] = useState(false);
 
-  // Properly initialize fields when deal data loads
   useEffect(() => {
     if (deal && !initialized) {
-      const s = contacts.find((c) => c.role === 'Seller');
-      const a = contacts.find((c) => c.role.includes('Agent'));
+      const s = dealContacts.find((c) => c.role === 'Seller');
+      const a = dealContacts.find((c) => c.role.includes('Agent') || c.role.includes('Broker'));
       setFields({
         sellerName: s ? `${s.firstName} ${s.lastName}` : '',
         brokerName: a ? `${a.firstName} ${a.lastName}` : '',
@@ -65,13 +69,55 @@ export default function FormEditor() {
   const handleSave = async () => {
     if (!deal) return;
     try {
+      // Parse address back
+      const addressParts = fields.propertyAddress.split(',').map((s) => s.trim());
+      const streetAddress = addressParts[0] || deal.address;
+      const city = addressParts[1] || deal.city;
+      const stateZip = (addressParts[2] || `${deal.state} ${deal.zip}`).trim().split(/\s+/);
+      const state = stateZip[0] || deal.state;
+      const zip = stateZip[1] || deal.zip;
+
+      // Update deal fields
       await updateDeal.mutateAsync({
         id: deal.id,
         price: fields.listPrice || undefined,
         mls_number: fields.mlsNumber || undefined,
         listing_start_date: fields.listingStartDate || undefined,
         listing_expiration: fields.listingExpiration || undefined,
-      });
+        address: streetAddress,
+        city,
+        state,
+        zip,
+      } as any);
+
+      // Update seller contact
+      const sellerDc = (deal.deal_contacts || []).find((dc) => dc.role === 'Seller');
+      if (sellerDc?.contact?.id && fields.sellerName) {
+        const nameParts = fields.sellerName.trim().split(/\s+/);
+        const firstName = nameParts[0] || '';
+        const lastName = nameParts.slice(1).join(' ') || '';
+        await updateContact.mutateAsync({
+          id: sellerDc.contact.id,
+          first_name: firstName,
+          last_name: lastName,
+        });
+      }
+
+      // Update agent/broker contact
+      const agentDc = (deal.deal_contacts || []).find((dc) => dc.role?.includes('Agent') || dc.role?.includes('Broker'));
+      if (agentDc?.contact?.id) {
+        const nameParts = fields.brokerName.trim().split(/\s+/);
+        const firstName = nameParts[0] || '';
+        const lastName = nameParts.slice(1).join(' ') || '';
+        await updateContact.mutateAsync({
+          id: agentDc.contact.id,
+          first_name: firstName,
+          last_name: lastName,
+          company: fields.brokerCompany || undefined,
+          commission: fields.commissionRate || undefined,
+        } as any);
+      }
+
       toast.success('Form saved successfully');
     } catch {
       toast.error('Failed to save form');
@@ -105,6 +151,9 @@ export default function FormEditor() {
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" className="text-xs gap-1.5" onClick={() => toast.info('Issue reported. Thank you!')}>
             <AlertTriangle className="w-3.5 h-3.5" /> Report an Issue
+          </Button>
+          <Button variant="outline" size="sm" className="text-xs gap-1.5" onClick={() => setSignatureOpen(true)}>
+            <Send className="w-3.5 h-3.5" /> Send for Signature
           </Button>
           <Button size="sm" className="text-xs gap-1.5" onClick={handleSave} disabled={updateDeal.isPending}>
             <Save className="w-3.5 h-3.5" /> {updateDeal.isPending ? 'Saving...' : 'Save'}
@@ -151,20 +200,20 @@ export default function FormEditor() {
 
             <p>
               <strong>5. BROKER'S COMPENSATION.</strong> Seller agrees to pay Broker a commission of{' '}
-              <InlineField fieldKey="commissionRate" width={60} />% of the gross sales price as compensation for services rendered. This commission shall be earned upon the earlier of: (a) execution of a binding contract of sale; (b) procurement of a ready, willing, and able buyer; or (c) closing of the transaction.
+              <InlineField fieldKey="commissionRate" width={60} />% of the gross sales price as compensation for services rendered.
             </p>
 
             <p>
               <strong>6. MLS AUTHORIZATION.</strong> Seller authorizes Broker to submit this listing to the Multiple Listing Service (MLS#:{' '}
-              <InlineField fieldKey="mlsNumber" width={120} />) and to provide information about the Property to other brokers and prospective buyers.
+              <InlineField fieldKey="mlsNumber" width={120} />).
             </p>
 
             <p>
-              <strong>7. SELLER'S REPRESENTATIONS.</strong> Seller represents that Seller has full authority to execute this Agreement and to sell the Property. Seller agrees to provide all required disclosures in compliance with applicable laws and regulations.
+              <strong>7. SELLER'S REPRESENTATIONS.</strong> Seller represents that Seller has full authority to execute this Agreement and to sell the Property.
             </p>
 
             <p>
-              <strong>8. BROKER'S DUTIES.</strong> Broker agrees to use reasonable efforts to market the Property, including but not limited to: listing the Property on the MLS, conducting showings, and negotiating offers on behalf of Seller.
+              <strong>8. BROKER'S DUTIES.</strong> Broker agrees to use reasonable efforts to market the Property.
             </p>
 
             <div className="mt-12 pt-8 border-t space-y-8">
@@ -188,6 +237,17 @@ export default function FormEditor() {
           </div>
         </div>
       </div>
+
+      {/* Signature Panel */}
+      <SignaturePanel
+        open={signatureOpen}
+        onClose={() => setSignatureOpen(false)}
+        documentName={checklistItem?.name || 'Document'}
+        contacts={dealContacts}
+        dealId={id || ''}
+        checklistItemId={formId}
+        formData={fields}
+      />
     </div>
   );
 }

@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { X, Plus, FileText, Paperclip, ChevronDown } from 'lucide-react';
+import { X, Plus, FileText, Paperclip } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
+import { useCreateSignatureRequest } from '@/hooks/useSignatureRequests';
 
 interface Contact {
   id: string;
@@ -22,25 +23,75 @@ interface SignaturePanelProps {
   onClose: () => void;
   documentName: string;
   contacts: Contact[];
+  dealId?: string;
+  checklistItemId?: string;
+  formData?: Record<string, any>;
 }
 
-export function SignaturePanel({ open, onClose, documentName, contacts }: SignaturePanelProps) {
+export function SignaturePanel({ open, onClose, documentName, contacts, dealId, checklistItemId, formData }: SignaturePanelProps) {
   const [to, setTo] = useState<string[]>([]);
   const [subject, setSubject] = useState('Please DocuSign');
   const [message, setMessage] = useState('Please review and sign the attached document.');
   const [attachments, setAttachments] = useState([documentName]);
+  const createSignatureRequest = useCreateSignatureRequest();
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (to.length === 0) {
       toast.error('Please select at least one recipient');
       return;
     }
-    const recipientNames = to.map((id) => {
+
+    const recipientsWithoutEmail = to.filter((id) => {
       const c = contacts.find((x) => x.id === id);
-      return c ? `${c.firstName} ${c.lastName}` : id;
+      return !c?.email;
     });
-    toast.success(`Signature request sent to ${recipientNames.join(', ')}`);
-    onClose();
+    if (recipientsWithoutEmail.length > 0) {
+      toast.error('All recipients must have an email address');
+      return;
+    }
+
+    if (!dealId) {
+      toast.error('No deal context');
+      return;
+    }
+
+    try {
+      const recipients = to.map((cId) => {
+        const c = contacts.find((x) => x.id === cId)!;
+        return {
+          contact_id: c.id,
+          name: `${c.firstName} ${c.lastName}`,
+          email: c.email,
+          role: c.role,
+        };
+      });
+
+      const sigReq = await createSignatureRequest.mutateAsync({
+        deal_id: dealId,
+        checklist_item_id: checklistItemId,
+        document_name: documentName,
+        sender_name: 'You',
+        subject,
+        message,
+        form_data: formData || {},
+        recipients,
+      });
+
+      // Build signing URL and open mailto for each recipient
+      const baseUrl = window.location.origin;
+      const signUrl = `${baseUrl}/sign/${sigReq.token}`;
+
+      for (const r of recipients) {
+        const emailBody = `${message}\n\nPlease sign the document here:\n${signUrl}`;
+        const mailto = `mailto:${r.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(emailBody)}`;
+        window.open(mailto, '_blank');
+      }
+
+      toast.success(`Signature request created! Signing link: ${signUrl}`, { duration: 8000 });
+      onClose();
+    } catch {
+      toast.error('Failed to create signature request');
+    }
   };
 
   const removeAttachment = (index: number) => {
@@ -99,6 +150,7 @@ export function SignaturePanel({ open, onClose, documentName, contacts }: Signat
                       />
                       {c.firstName} {c.lastName} ({c.role})
                       {c.email && <span className="text-xs text-muted-foreground">— {c.email}</span>}
+                      {!c.email && <span className="text-xs text-destructive">— no email</span>}
                     </label>
                   ))}
                   <button onClick={() => toast.info('Add recipient coming soon')} className="text-sm text-primary hover:underline flex items-center gap-1">
@@ -146,8 +198,8 @@ export function SignaturePanel({ open, onClose, documentName, contacts }: Signat
 
             {/* Footer */}
             <div className="border-t p-4 flex justify-end flex-shrink-0">
-              <Button onClick={handleSend} disabled={to.length === 0}>
-                Send for Signature
+              <Button onClick={handleSend} disabled={to.length === 0 || createSignatureRequest.isPending}>
+                {createSignatureRequest.isPending ? 'Sending...' : 'Send for Signature'}
               </Button>
             </div>
           </motion.div>

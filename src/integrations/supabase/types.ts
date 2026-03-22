@@ -304,6 +304,117 @@ export type Database = {
           },
         ]
       }
+      signature_recipients: {
+        Row: {
+          contact_id: string | null
+          created_at: string | null
+          email: string
+          id: string
+          name: string
+          role: string | null
+          signature_data: string | null
+          signature_request_id: string
+          signed_at: string | null
+          status: string
+        }
+        Insert: {
+          contact_id?: string | null
+          created_at?: string | null
+          email: string
+          id?: string
+          name: string
+          role?: string | null
+          signature_data?: string | null
+          signature_request_id: string
+          signed_at?: string | null
+          status?: string
+        }
+        Update: {
+          contact_id?: string | null
+          created_at?: string | null
+          email?: string
+          id?: string
+          name?: string
+          role?: string | null
+          signature_data?: string | null
+          signature_request_id?: string
+          signed_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "signature_recipients_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "signature_recipients_signature_request_id_fkey"
+            columns: ["signature_request_id"]
+            isOneToOne: false
+            referencedRelation: "signature_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      signature_requests: {
+        Row: {
+          checklist_item_id: string | null
+          created_at: string | null
+          deal_id: string
+          document_name: string
+          form_data: Json | null
+          id: string
+          message: string | null
+          sender_name: string
+          status: string
+          subject: string
+          token: string
+        }
+        Insert: {
+          checklist_item_id?: string | null
+          created_at?: string | null
+          deal_id: string
+          document_name: string
+          form_data?: Json | null
+          id?: string
+          message?: string | null
+          sender_name?: string
+          status?: string
+          subject?: string
+          token?: string
+        }
+        Update: {
+          checklist_item_id?: string | null
+          created_at?: string | null
+          deal_id?: string
+          document_name?: string
+          form_data?: Json | null
+          id?: string
+          message?: string | null
+          sender_name?: string
+          status?: string
+          subject?: string
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "signature_requests_checklist_item_id_fkey"
+            columns: ["checklist_item_id"]
+            isOneToOne: false
+            referencedRelation: "checklist_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "signature_requests_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tasks: {
         Row: {
           assignee: string | null

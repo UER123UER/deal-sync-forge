@@ -9,6 +9,7 @@ import NewDeal from "@/pages/NewDeal";
 import DealDetail from "@/pages/DealDetail";
 import FormEditor from "@/pages/FormEditor";
 import MarketingEditor from "@/pages/MarketingEditor";
+import SignDocument from "@/pages/SignDocument";
 import People from "@/pages/People";
 import Tasks from "@/pages/Tasks";
 import Inbox from "@/pages/Inbox";
@@ -28,6 +29,7 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Navigate to="/transactions" replace />} />
+          <Route path="/sign/:token" element={<SignDocument />} />
           <Route element={<AppLayout />}>
             <Route path="/transactions" element={<Transactions />} />
             <Route path="/transactions/new" element={<NewDeal />} />

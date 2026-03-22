@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback } from 'react';
 import { TEMPLATES, TEMPLATE_CATEGORIES, type TemplateCategory } from '@/data/marketingTemplates';
+import { useSignatureRequests } from '@/hooks/useSignatureRequests';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ChevronDown, ChevronRight, Edit, Eye, Mail, Plus, FileText, GripVertical, Download, Printer, Send, Trash2, MessageSquare, Bell, UserPlus, Check, X, Upload, Image, StickyNote, Megaphone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -98,6 +99,20 @@ export default function DealDetail() {
 
   const { data: dealOpenHouses = [] } = useOpenHouses(id);
   const createOH = useCreateOpenHouse();
+
+  const { data: signatureRequests = [] } = useSignatureRequests(id);
+
+  // Helper to get signature status for a checklist item
+  const getSignatureStatus = (checklistItemId: string) => {
+    const req = signatureRequests.find((r) => r.checklist_item_id === checklistItemId);
+    if (!req) return null;
+    const recipients = req.signature_recipients || [];
+    const allSigned = recipients.length > 0 && recipients.every((r) => r.status === 'signed');
+    const anySigned = recipients.some((r) => r.status === 'signed');
+    if (allSigned) return 'signed';
+    if (anySigned) return 'partially_signed';
+    return 'sent';
+  };
 
   const toggleExpand = (itemId: string) => {
     setExpandedItems((prev) => {
@@ -489,6 +504,19 @@ export default function DealDetail() {
                         {item.has_digital_form ? (isExpanded ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />) : <div className="w-4 h-4" />}
                       </button>
                       <span className={cn('text-sm text-foreground flex-1', item.completed && 'line-through')}>{item.name}</span>
+                      {(() => {
+                        const sigStatus = getSignatureStatus(item.id);
+                        if (!sigStatus) return null;
+                        return (
+                          <span className={cn('text-[10px] font-medium px-2 py-0.5 rounded-full mr-2',
+                            sigStatus === 'signed' ? 'bg-success/10 text-success' :
+                            sigStatus === 'partially_signed' ? 'bg-warning/10 text-warning' :
+                            'bg-primary/10 text-primary'
+                          )}>
+                            {sigStatus === 'signed' ? 'Signed' : sigStatus === 'partially_signed' ? 'Partially Signed' : 'Sent for Signature'}
+                          </span>
+                        );
+                      })()}
                       <div className="flex items-center">
                         {item.has_digital_form && (
                           <Button variant="outline" size="sm" className="h-7 text-xs rounded-r-none border-r-0" onClick={() => navigate(`/transactions/${deal.id}/form/${item.id}`)}>Edit Form</Button>
@@ -766,6 +794,7 @@ export default function DealDetail() {
         onClose={() => setSignatureOpen(false)}
         documentName={signatureDocName}
         contacts={contacts.map((c) => ({ id: c.id, role: c.role, firstName: c.firstName, lastName: c.lastName, email: c.email || '', phone: c.phone || '', company: c.company || '' }))}
+        dealId={id}
       />
     </div>
   );
