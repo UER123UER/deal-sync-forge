@@ -504,6 +504,19 @@ export default function DealDetail() {
                         {item.has_digital_form ? (isExpanded ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />) : <div className="w-4 h-4" />}
                       </button>
                       <span className={cn('text-sm text-foreground flex-1', item.completed && 'line-through')}>{item.name}</span>
+                      {(() => {
+                        const sigStatus = getSignatureStatus(item.id);
+                        if (!sigStatus) return null;
+                        return (
+                          <span className={cn('text-[10px] font-medium px-2 py-0.5 rounded-full mr-2',
+                            sigStatus === 'signed' ? 'bg-success/10 text-success' :
+                            sigStatus === 'partially_signed' ? 'bg-warning/10 text-warning' :
+                            'bg-primary/10 text-primary'
+                          )}>
+                            {sigStatus === 'signed' ? 'Signed' : sigStatus === 'partially_signed' ? 'Partially Signed' : 'Sent for Signature'}
+                          </span>
+                        );
+                      })()}
                       <div className="flex items-center">
                         {item.has_digital_form && (
                           <Button variant="outline" size="sm" className="h-7 text-xs rounded-r-none border-r-0" onClick={() => navigate(`/transactions/${deal.id}/form/${item.id}`)}>Edit Form</Button>
