@@ -794,6 +794,7 @@ export default function DealDetail() {
         onClose={() => setSignatureOpen(false)}
         documentName={signatureDocName}
         contacts={contacts.map((c) => ({ id: c.id, role: c.role, firstName: c.firstName, lastName: c.lastName, email: c.email || '', phone: c.phone || '', company: c.company || '' }))}
+        dealId={id}
       />
     </div>
   );
