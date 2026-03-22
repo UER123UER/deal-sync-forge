@@ -172,7 +172,7 @@ export function useCreateDeal() {
 export function useUpdateDeal() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, ...data }: { id: string; status?: string; price?: string; mls_number?: string; primary_agent?: string; listing_start_date?: string; listing_expiration?: string; visible_to_office?: boolean }) => {
+    mutationFn: async ({ id, ...data }: { id: string; status?: string; price?: string; mls_number?: string; primary_agent?: string; listing_start_date?: string; listing_expiration?: string; visible_to_office?: boolean; address?: string; city?: string; state?: string; zip?: string }) => {
       const { error } = await supabase.from('deals').update(data).eq('id', id);
       if (error) throw error;
     },
