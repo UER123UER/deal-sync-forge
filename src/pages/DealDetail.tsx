@@ -100,6 +100,20 @@ export default function DealDetail() {
   const { data: dealOpenHouses = [] } = useOpenHouses(id);
   const createOH = useCreateOpenHouse();
 
+  const { data: signatureRequests = [] } = useSignatureRequests(id);
+
+  // Helper to get signature status for a checklist item
+  const getSignatureStatus = (checklistItemId: string) => {
+    const req = signatureRequests.find((r) => r.checklist_item_id === checklistItemId);
+    if (!req) return null;
+    const recipients = req.signature_recipients || [];
+    const allSigned = recipients.length > 0 && recipients.every((r) => r.status === 'signed');
+    const anySigned = recipients.some((r) => r.status === 'signed');
+    if (allSigned) return 'signed';
+    if (anySigned) return 'partially_signed';
+    return 'sent';
+  };
+
   const toggleExpand = (itemId: string) => {
     setExpandedItems((prev) => {
       const next = new Set(prev);
