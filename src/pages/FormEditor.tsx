@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { useDeal, useUpdateDeal } from '@/hooks/useDeals';
 import { useUpdateContact } from '@/hooks/useContacts';
 import { SignaturePanel } from '@/components/deal/SignaturePanel';
+import { ListingAgreementDocument, ListingAgreementFields, DEFAULT_FIELDS } from '@/components/deal/ListingAgreementDocument';
 import { toast } from 'sonner';
 
 export default function FormEditor() {
@@ -28,17 +29,7 @@ export default function FormEditor() {
 
   const checklistItem = (deal?.checklist_items || []).find((ci) => ci.id === formId);
 
-  const [fields, setFields] = useState({
-    sellerName: '',
-    brokerName: '',
-    brokerCompany: '',
-    propertyAddress: '',
-    listingStartDate: '',
-    listingExpiration: '',
-    listPrice: '',
-    commissionRate: '',
-    mlsNumber: '',
-  });
+  const [fields, setFields] = useState<ListingAgreementFields>({ ...DEFAULT_FIELDS });
   const [initialized, setInitialized] = useState(false);
 
   useEffect(() => {
@@ -46,6 +37,7 @@ export default function FormEditor() {
       const s = dealContacts.find((c) => c.role === 'Seller');
       const a = dealContacts.find((c) => c.role.includes('Agent') || c.role.includes('Broker'));
       setFields({
+        ...DEFAULT_FIELDS,
         sellerName: s ? `${s.firstName} ${s.lastName}` : '',
         brokerName: a ? `${a.firstName} ${a.lastName}` : '',
         brokerCompany: a?.company || '',
@@ -53,8 +45,11 @@ export default function FormEditor() {
         listingStartDate: deal.listing_start_date || '',
         listingExpiration: deal.listing_expiration || '',
         listPrice: deal.price || '',
-        commissionRate: a?.commission || '',
+        commissionPercent: a?.commission || '',
         mlsNumber: deal.mls_number || '',
+        sellerPhone: s?.phone || '',
+        sellerEmail: s?.email || '',
+        brokerPhone: a?.phone || '',
       });
       setInitialized(true);
     }
@@ -69,7 +64,6 @@ export default function FormEditor() {
   const handleSave = async () => {
     if (!deal) return;
     try {
-      // Parse address back
       const addressParts = fields.propertyAddress.split(',').map((s) => s.trim());
       const streetAddress = addressParts[0] || deal.address;
       const city = addressParts[1] || deal.city;
@@ -77,7 +71,6 @@ export default function FormEditor() {
       const state = stateZip[0] || deal.state;
       const zip = stateZip[1] || deal.zip;
 
-      // Update deal fields
       await updateDeal.mutateAsync({
         id: deal.id,
         price: fields.listPrice || undefined,
@@ -90,31 +83,25 @@ export default function FormEditor() {
         zip,
       } as any);
 
-      // Update seller contact
       const sellerDc = (deal.deal_contacts || []).find((dc) => dc.role === 'Seller');
       if (sellerDc?.contact?.id && fields.sellerName) {
         const nameParts = fields.sellerName.trim().split(/\s+/);
-        const firstName = nameParts[0] || '';
-        const lastName = nameParts.slice(1).join(' ') || '';
         await updateContact.mutateAsync({
           id: sellerDc.contact.id,
-          first_name: firstName,
-          last_name: lastName,
+          first_name: nameParts[0] || '',
+          last_name: nameParts.slice(1).join(' ') || '',
         });
       }
 
-      // Update agent/broker contact
       const agentDc = (deal.deal_contacts || []).find((dc) => dc.role?.includes('Agent') || dc.role?.includes('Broker'));
       if (agentDc?.contact?.id) {
         const nameParts = fields.brokerName.trim().split(/\s+/);
-        const firstName = nameParts[0] || '';
-        const lastName = nameParts.slice(1).join(' ') || '';
         await updateContact.mutateAsync({
           id: agentDc.contact.id,
-          first_name: firstName,
-          last_name: lastName,
+          first_name: nameParts[0] || '',
+          last_name: nameParts.slice(1).join(' ') || '',
           company: fields.brokerCompany || undefined,
-          commission: fields.commissionRate || undefined,
+          commission: fields.commissionPercent || undefined,
         } as any);
       }
 
@@ -124,13 +111,30 @@ export default function FormEditor() {
     }
   };
 
-  const InlineField = ({ fieldKey, width = 200 }: { fieldKey: keyof typeof fields; width?: number }) => (
-    <input
-      value={fields[fieldKey]}
-      onChange={(e) => updateField(fieldKey, e.target.value)}
-      className="border-b-2 border-primary/30 bg-primary/5 px-1 py-0.5 text-primary outline-none focus:border-primary transition-colors"
-      style={{ width, fontFamily: 'inherit', fontSize: 'inherit' }}
-    />
+  const InlineField = ({ fieldKey, width = 200 }: { fieldKey: keyof ListingAgreementFields; width?: number }) => {
+    if (fieldKey === 'additionalTerms') {
+      return (
+        <textarea
+          value={fields[fieldKey]}
+          onChange={(e) => updateField(fieldKey, e.target.value)}
+          className="w-full border-b-2 border-primary/30 bg-primary/5 px-2 py-1 text-primary outline-none focus:border-primary transition-colors resize-none"
+          rows={4}
+          style={{ fontFamily: 'inherit', fontSize: 'inherit' }}
+        />
+      );
+    }
+    return (
+      <input
+        value={fields[fieldKey]}
+        onChange={(e) => updateField(fieldKey, e.target.value)}
+        className="border-b-2 border-primary/30 bg-primary/5 px-1 py-0.5 text-primary outline-none focus:border-primary transition-colors"
+        style={{ width, fontFamily: 'inherit', fontSize: 'inherit' }}
+      />
+    );
+  };
+
+  const renderField = (key: keyof ListingAgreementFields, width?: number) => (
+    <InlineField fieldKey={key} width={width} />
   );
 
   if (isLoading) {
@@ -146,7 +150,7 @@ export default function FormEditor() {
       {/* Header */}
       <div className="h-14 bg-background border-b flex items-center px-6 flex-shrink-0">
         <h1 className="text-sm font-semibold text-foreground truncate flex-1">
-          {checklistItem?.name || 'Document'}
+          {checklistItem?.name || 'Exclusive Right of Sale Listing Agreement'}
         </h1>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" className="text-xs gap-1.5" onClick={() => toast.info('Issue reported. Thank you!')}>
@@ -166,75 +170,11 @@ export default function FormEditor() {
 
       {/* Document Body */}
       <div className="flex-1 overflow-auto py-8">
-        <div className="max-w-[816px] mx-auto bg-background shadow-sm border rounded px-16 py-12" style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}>
-          <h2 className="text-center text-lg font-bold mb-1 tracking-wide" style={{ fontFamily: 'inherit' }}>
-            EXCLUSIVE RIGHT OF SALE LISTING AGREEMENT
-          </h2>
-          <p className="text-center text-xs text-muted-foreground mb-8" style={{ fontFamily: 'sans-serif' }}>
-            THIS IS A LEGALLY BINDING CONTRACT. IF NOT UNDERSTOOD, SEEK LEGAL ADVICE.
-          </p>
-
-          <div className="space-y-6 text-sm leading-relaxed" style={{ fontFamily: 'inherit' }}>
-            <p>
-              <strong>1. PARTIES.</strong> This Exclusive Right of Sale Listing Agreement ("Agreement") is entered into between{' '}
-              <InlineField fieldKey="sellerName" width={180} /> ("Seller") and{' '}
-              <InlineField fieldKey="brokerName" width={180} /> of{' '}
-              <InlineField fieldKey="brokerCompany" width={180} /> ("Broker").
-            </p>
-
-            <p>
-              <strong>2. PROPERTY.</strong> Seller hereby lists with Broker the property located at{' '}
-              <InlineField fieldKey="propertyAddress" width={320} /> ("Property"), including all improvements thereon and all rights appurtenant thereto.
-            </p>
-
-            <p>
-              <strong>3. LISTING PERIOD.</strong> This Agreement shall commence on{' '}
-              <InlineField fieldKey="listingStartDate" width={120} /> and shall expire on{' '}
-              <InlineField fieldKey="listingExpiration" width={120} /> ("Listing Period"), unless renewed or extended in writing.
-            </p>
-
-            <p>
-              <strong>4. LISTING PRICE.</strong> Seller authorizes Broker to offer the Property for sale at a listing price of{' '}
-              <InlineField fieldKey="listPrice" width={120} /> or at such other price as Seller may subsequently authorize in writing.
-            </p>
-
-            <p>
-              <strong>5. BROKER'S COMPENSATION.</strong> Seller agrees to pay Broker a commission of{' '}
-              <InlineField fieldKey="commissionRate" width={60} />% of the gross sales price as compensation for services rendered.
-            </p>
-
-            <p>
-              <strong>6. MLS AUTHORIZATION.</strong> Seller authorizes Broker to submit this listing to the Multiple Listing Service (MLS#:{' '}
-              <InlineField fieldKey="mlsNumber" width={120} />).
-            </p>
-
-            <p>
-              <strong>7. SELLER'S REPRESENTATIONS.</strong> Seller represents that Seller has full authority to execute this Agreement and to sell the Property.
-            </p>
-
-            <p>
-              <strong>8. BROKER'S DUTIES.</strong> Broker agrees to use reasonable efforts to market the Property.
-            </p>
-
-            <div className="mt-12 pt-8 border-t space-y-8">
-              <div className="flex gap-8">
-                <div className="flex-1">
-                  <div className="border-b border-foreground/30 pb-1 mb-1">
-                    <span className="text-xs text-muted-foreground" style={{ fontFamily: 'sans-serif' }}>Seller Signature</span>
-                  </div>
-                  <div className="h-8" />
-                  <div className="text-xs text-muted-foreground" style={{ fontFamily: 'sans-serif' }}>Date: _______________</div>
-                </div>
-                <div className="flex-1">
-                  <div className="border-b border-foreground/30 pb-1 mb-1">
-                    <span className="text-xs text-muted-foreground" style={{ fontFamily: 'sans-serif' }}>Broker Signature</span>
-                  </div>
-                  <div className="h-8" />
-                  <div className="text-xs text-muted-foreground" style={{ fontFamily: 'sans-serif' }}>Date: _______________</div>
-                </div>
-              </div>
-            </div>
-          </div>
+        <div className="max-w-[816px] mx-auto bg-background shadow-sm border rounded px-16 py-12">
+          <ListingAgreementDocument
+            fields={fields}
+            renderField={renderField}
+          />
         </div>
       </div>
 
@@ -242,7 +182,7 @@ export default function FormEditor() {
       <SignaturePanel
         open={signatureOpen}
         onClose={() => setSignatureOpen(false)}
-        documentName={checklistItem?.name || 'Document'}
+        documentName={checklistItem?.name || 'Exclusive Right of Sale Listing Agreement'}
         contacts={dealContacts}
         dealId={id || ''}
         checklistItemId={formId}
