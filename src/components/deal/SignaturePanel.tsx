@@ -77,17 +77,23 @@ export function SignaturePanel({ open, onClose, documentName, contacts, dealId, 
         recipients,
       });
 
-      // Build signing URL and open mailto for each recipient
+      // Build signing URL and open mailto with all recipients
       const baseUrl = window.location.origin;
       const signUrl = `${baseUrl}/sign/${sigReq.token}`;
+      const allEmails = recipients.map((r) => r.email).join(',');
+      const emailBody = `${message}\n\nPlease sign the document here:\n${signUrl}`;
+      const mailto = `mailto:${allEmails}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(emailBody)}`;
+      
+      // Use location.href to avoid popup blockers
+      window.location.href = mailto;
 
-      for (const r of recipients) {
-        const emailBody = `${message}\n\nPlease sign the document here:\n${signUrl}`;
-        const mailto = `mailto:${r.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(emailBody)}`;
-        window.open(mailto, '_blank');
+      // Also copy signing link to clipboard for easy sharing
+      try {
+        await navigator.clipboard.writeText(signUrl);
+        toast.success('Signature request created! Signing link copied to clipboard. Your email app should open — just hit Send.', { duration: 8000 });
+      } catch {
+        toast.success(`Signature request created! Signing link: ${signUrl}`, { duration: 8000 });
       }
-
-      toast.success(`Signature request created! Signing link: ${signUrl}`, { duration: 8000 });
       onClose();
     } catch {
       toast.error('Failed to create signature request');
