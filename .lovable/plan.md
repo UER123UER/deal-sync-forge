@@ -1,104 +1,103 @@
 
 
-## Make Form Editor Save All Fields + Build Email Signature Flow
+## Rebuild SignDocument.tsx — DocuSign-like Guided Signing Experience
 
-### Problem
-1. **Form Save is incomplete** — only persists price, MLS#, and listing dates. Changes to seller name, broker name, company, address, and commission rate are lost.
-2. **Signature panel is fake** — just shows a toast. No email is sent, no signing experience exists.
+### What Changes
 
-### Plan
+**Only one file changes**: `src/pages/SignDocument.tsx` — complete rewrite.
 
-#### 1. Form Editor — Save All Fields
+The hook (`useSignatureRequests.ts`), panel (`SignaturePanel.tsx`), and route (`App.tsx`) remain unchanged.
 
-Update `FormEditor.tsx` `handleSave` to persist every editable field:
+### Architecture
 
-- **Deal fields**: price, mls_number, listing_start_date, listing_expiration, address (parse back into address/city/state/zip)
-- **Contact fields**: Update the seller contact's first_name/last_name via `useUpdateContact`. Update the agent contact's first_name/last_name/company/commission via `useUpdateContact`.
-- Import and use `useUpdateContact` from `useContacts.ts`
-- Parse `sellerName` back into first_name + last_name (split on first space)
-- Parse `brokerName` similarly
-- Update `brokerCompany` and `commissionRate` on the agent contact
+The document currently renders the form content with a separate signing area below it. The rewrite places interactive field overlays directly ON the document, with a sequential guided flow.
 
-Also add a "Send for Signature" button in the FormEditor header that opens the SignaturePanel.
+### Field System
 
-#### 2. Signature Requests — Database Table
+Define an array of signable fields based on the current recipient's role:
 
-Create new `signature_requests` table:
-| Column | Type |
-|--------|------|
-| id | uuid PK |
-| deal_id | uuid FK → deals |
-| checklist_item_id | uuid FK → checklist_items |
-| document_name | text |
-| sender_name | text |
-| subject | text |
-| message | text |
-| status | text (pending/viewed/signed/voided) |
-| token | text UNIQUE (for public access) |
-| form_data | jsonb (snapshot of all form fields at send time) |
-| created_at | timestamptz |
+```text
+fields = [
+  { id: 'signature', type: 'signature', label: 'Sign Here', position on document },
+  { id: 'initials', type: 'initials', label: 'Initial', position on document },
+  { id: 'date_signed', type: 'date', label: 'Date Signed', auto-fills today's date }
+]
+```
 
-Create `signature_recipients` table:
-| Column | Type |
-|--------|------|
-| id | uuid PK |
-| signature_request_id | uuid FK |
-| contact_id | uuid FK → contacts |
-| name | text |
-| email | text |
-| role | text |
-| status | text (pending/viewed/signed) |
-| signed_at | timestamptz |
-| signature_data | text (base64 drawn signature or typed name) |
+Each field has states: `empty` → `active` → `completed`.
 
-#### 3. Public Signing Page
+The active field index is tracked in state. When a field is completed, activeFieldIndex increments automatically, and the next field scrolls into view with a highlight animation.
 
-Create `/sign/:token` route (outside AppLayout) — a public page that:
-- Fetches the signature request by token
-- Shows the document in read-only mode (same form layout but fields are static text, not editable)
-- Shows a signature area at the bottom where the signer can:
-  - Draw their signature on a canvas (using simple mouse/touch drawing)
-  - Or type their name (renders in a cursive font)
-- "Sign & Complete" button saves the signature and updates recipient status to "signed"
-- Shows confirmation page after signing
+### Signing Modal
 
-#### 4. Email Sending via Transactional Email
+When clicking a signature or initials field:
+- A centered modal opens with Draw / Type tabs
+- Draw: HTML5 canvas (same as current)
+- Type: text input with Dancing Script cursive preview
+- "Create Signature" button confirms → fills the field → closes modal → auto-advances
 
-Use Lovable's built-in transactional email system to send signature request emails:
-- Scaffold a `signature-request` email template styled like DocuSign (blue banner, document icon, "Review Document" CTA button)
-- The CTA links to `/sign/:token`
-- Template receives: senderName, documentName, recipientName, message, signUrl
+Date fields auto-fill immediately on click (today's date) → auto-advance.
 
-#### 5. Wire Up SignaturePanel
+### Field Rendering
 
-Update `SignaturePanel.tsx`:
-- On "Send for Signature": 
-  1. Save current form data as JSON snapshot
-  2. Create `signature_requests` row with a unique token
-  3. Create `signature_recipients` rows for each selected contact
-  4. Call `send-transactional-email` for each recipient with the signing URL
-  5. Show success toast
+Fields render as absolutely positioned overlays on the document container:
+- **Empty**: Yellow/amber background, dashed border, pulsing label ("Sign Here ↓"), clear click target
+- **Active**: Stronger yellow highlight, glowing border animation, scrolled into view
+- **Completed**: Shows signature image or typed name, subtle green check, no highlight, visually locked
 
-#### 6. Track Signature Status
+### Layout
 
-Add a signature status indicator to the DealDetail checklist items — show "Sent for Signature", "Viewed", "Signed" badges next to documents that have been sent.
+```text
+┌─────────────────────────────────────────────┐
+│ Header: DocuSign-blue bar                    │
+│ Doc title | From: sender | Signing as: name  │
+│ Progress: "1 of 3 fields completed"          │
+├─────────────────────────────────────────────┤
+│                                              │
+│  ┌──────── Document ────────┐                │
+│  │ EXCLUSIVE RIGHT OF SALE  │                │
+│  │ ...contract text...      │                │
+│  │                          │                │
+│  │  ┌─[Sign Here]──────┐   │  ← overlay     │
+│  │  │  yellow field     │   │                │
+│  │  └──────────────────┘   │                │
+│  │                          │                │
+│  │  ┌─[Initial]────────┐   │                │
+│  │  │  yellow field     │   │                │
+│  │  └──────────────────┘   │                │
+│  │                          │                │
+│  │  ┌─[Date Signed]────┐   │                │
+│  │  │  yellow field     │   │                │
+│  │  └──────────────────┘   │                │
+│  └──────────────────────────┘                │
+│                                              │
+│  ┌─[Finish Signing]─────────┐  ← only when  │
+│  │  strong yellow CTA        │    all done    │
+│  └───────────────────────────┘                │
+└─────────────────────────────────────────────┘
+```
 
-### New Files
-- `supabase/migrations/[timestamp].sql` — signature_requests + signature_recipients tables
-- `src/pages/SignDocument.tsx` — public signing page
-- `src/hooks/useSignatureRequests.ts` — CRUD hooks
-- Transactional email template for signature requests
+### Auto-Advance Flow
 
-### Modified Files
-- `src/pages/FormEditor.tsx` — save all fields, add Send for Signature button
-- `src/components/deal/SignaturePanel.tsx` — wire to real email sending
-- `src/App.tsx` — add `/sign/:token` route
-- `src/pages/DealDetail.tsx` — show signature status on checklist items
-- `src/integrations/supabase/types.ts` — add new table types
+1. Page loads → first empty field is marked active → scrolled into view
+2. User clicks active field → modal opens (signature/initials) or auto-fills (date)
+3. On confirm → field marked completed → `activeFieldIndex++` → next field scrolls into view with `scrollIntoView({ behavior: 'smooth', block: 'center' })`
+4. When all fields completed → "Finish Signing" CTA appears with strong highlight
+5. Clicking "Finish Signing" → calls `useSignDocument` mutation → shows completion screen
 
-### Technical Notes
-- The form data is snapshotted as JSONB at send time so the signed document preserves the exact values
-- Token is a crypto.randomUUID() for unique public URLs
-- Signature drawing uses an HTML canvas with mouse/touch event handlers (no external library needed)
-- Email requires Lovable email domain setup — will check status and scaffold if needed
+### Signature Reuse
+
+Once the user creates a signature (draw or type), it's stored in local state. Subsequent signature/initials fields auto-fill with the same signature — user just confirms. This matches DocuSign's "adopt and sign" pattern.
+
+### Visual Style
+
+- Header: `#4C00C2` (DocuSign-like deep blue/purple) with white text
+- Field highlights: `bg-amber-100 border-amber-400` for empty, `ring-2 ring-amber-500 shadow-lg` for active
+- Completed fields: `bg-white border-green-300` with green checkmark
+- Finish CTA: Large amber/yellow button, centered below document
+- Progress indicator in header: "1 of 3 completed" with mini progress bar
+
+### Completion Screen
+
+Same as current — centered success message with green check, document name, "You may close this window."
 
