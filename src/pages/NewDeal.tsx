@@ -36,15 +36,11 @@ export default function NewDeal() {
   const { suggestions: addressSuggestions, isLoading: addressLoading } = useAddressAutocomplete(addressSearch);
   const [createdDealId, setCreatedDealId] = useState<string | null>(null);
 
-  const [sellerForm, setSellerForm] = useState({ role: 'Seller', firstName: '', lastName: '', email: '', phone: '', company: '', currentAddress: '' });
+  const [sellerForm, setSellerForm] = useState({ role: 'Seller', firstName: '', lastName: '', email: '', phone: '', company: '' });
   const [sellerErrors, setSellerErrors] = useState<Record<string, boolean>>({});
   const [agentForm, setAgentForm] = useState({ role: 'Seller Agent', firstName: '', lastName: '', email: '', phone: '', company: '', mlsId: '', mls: '', commission: '', commissionType: 'percentage' as 'percentage' | 'dollars' });
   const [agentErrors, setAgentErrors] = useState<Record<string, boolean>>({});
 
-  // Seller address autocomplete
-  const [sellerAddressSearch, setSellerAddressSearch] = useState('');
-  const [showSellerAddresses, setShowSellerAddresses] = useState(false);
-  const { suggestions: sellerAddressSuggestions, isLoading: sellerAddressLoading } = useAddressAutocomplete(sellerAddressSearch);
 
   const stepRefs = useRef<(HTMLDivElement | null)[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -65,7 +61,6 @@ export default function NewDeal() {
     const handler = (e: MouseEvent) => {
       if (addressDropdownRef.current && !addressDropdownRef.current.contains(e.target as Node)) {
         setShowAddresses(false);
-        setShowSellerAddresses(false);
       }
     };
     document.addEventListener('mousedown', handler);
@@ -138,7 +133,6 @@ export default function NewDeal() {
         first_name: sellerForm.firstName, last_name: sellerForm.lastName,
         email: sellerForm.email || undefined, phone: sellerForm.phone || undefined,
         company: sellerForm.company || undefined, role: sellerForm.role,
-        current_address: sellerForm.currentAddress || undefined,
       });
     }
 
@@ -190,11 +184,7 @@ export default function NewDeal() {
       onClick={() => goToStep(stepNum)}
       className="cursor-pointer group"
     >
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="flex items-center gap-3 px-4 py-4 rounded-lg border border-border bg-muted/30 hover:bg-muted/60 transition-colors"
-      >
+      <div className="flex items-center gap-3 px-4 py-4 rounded-lg border border-border bg-muted/30 hover:bg-muted/60 transition-colors">
         <div className="w-7 h-7 rounded-full bg-primary/10 text-primary flex items-center justify-center flex-shrink-0">
           <Check className="w-4 h-4" />
         </div>
@@ -203,7 +193,7 @@ export default function NewDeal() {
           <div className="text-sm font-medium text-foreground truncate">{stepSummary(stepNum)}</div>
         </div>
         <ChevronUp className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-      </motion.div>
+      </div>
     </div>
   );
 
@@ -395,40 +385,6 @@ export default function NewDeal() {
                     <div><Label className="text-xs">Phone</Label><Input value={sellerForm.phone} onChange={(e) => setSellerForm((f) => ({ ...f, phone: e.target.value }))} className="mt-1" /></div>
                   </div>
                   <div><Label className="text-xs">Company / Trust</Label><Input value={sellerForm.company} onChange={(e) => setSellerForm((f) => ({ ...f, company: e.target.value }))} className="mt-1" /></div>
-                  <div className="relative">
-                    <Label className="text-xs">Current Address</Label>
-                    <div className="relative mt-1">
-                      <Input
-                        value={sellerForm.currentAddress || sellerAddressSearch}
-                        onChange={(e) => {
-                          setSellerAddressSearch(e.target.value);
-                          setSellerForm((f) => ({ ...f, currentAddress: e.target.value }));
-                          setShowSellerAddresses(true);
-                        }}
-                        onFocus={() => sellerAddressSearch.length >= 3 && setShowSellerAddresses(true)}
-                      />
-                      {sellerAddressLoading && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground animate-spin" />}
-                    </div>
-                    {showSellerAddresses && sellerAddressSuggestions.length > 0 && (
-                      <div className="absolute top-full left-0 right-0 mt-1 bg-popover border rounded-md shadow-lg z-10 max-h-48 overflow-auto">
-                        {sellerAddressSuggestions.map((addr, i) => (
-                          <button
-                            key={`seller-${addr.label}-${i}`}
-                            onClick={() => {
-                              const fullAddr = `${addr.address}, ${addr.city}, ${addr.state} ${addr.zip}`;
-                              setSellerForm((f) => ({ ...f, currentAddress: fullAddr }));
-                              setSellerAddressSearch('');
-                              setShowSellerAddresses(false);
-                            }}
-                            className="w-full text-left px-3 py-2 hover:bg-muted text-sm"
-                          >
-                            <div className="text-foreground">{addr.address}</div>
-                            <div className="text-xs text-muted-foreground">{addr.city}, {addr.state} {addr.zip}</div>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
                   <div className="flex gap-2 pt-2">
                     <Button variant="outline" onClick={() => setStep(4)}>Back</Button>
                     <Button onClick={handleSaveSeller}>Continue</Button>

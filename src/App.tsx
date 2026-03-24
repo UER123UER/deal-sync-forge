@@ -14,7 +14,7 @@ import People from "@/pages/People";
 import Tasks from "@/pages/Tasks";
 import Inbox from "@/pages/Inbox";
 import Listings from "@/pages/Listings";
-import OpenHouse from "@/pages/OpenHouse";
+
 import CalendarPage from "@/pages/Calendar";
 import Finances from "@/pages/Finances";
 import NotFound from "@/pages/NotFound";
@@ -40,7 +40,7 @@ const App = () => (
             <Route path="/tasks" element={<Tasks />} />
             <Route path="/inbox" element={<Inbox />} />
             <Route path="/listings" element={<Listings />} />
-            <Route path="/open-house" element={<OpenHouse />} />
+            
             <Route path="/calendar" element={<CalendarPage />} />
             <Route path="/finances" element={<Finances />} />
           </Route>

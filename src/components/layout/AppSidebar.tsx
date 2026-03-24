@@ -8,7 +8,6 @@ const navItems = [
   { icon: Users, label: 'People', path: '/people', hasSubmenu: true },
   { icon: Building2, label: 'Transactions', path: '/transactions' },
   { icon: Home, label: 'Listings', path: '/listings' },
-  { icon: CalendarDays, label: 'Open House', path: '/open-house' },
   { icon: DollarSign, label: 'Finances', path: '/finances' },
 ];
 
