@@ -1,10 +1,11 @@
 import { useState, useRef } from 'react';
-import { Search, Plus, ChevronDown, Upload, Globe, X, Trash2, Edit } from 'lucide-react';
+import { Search, Plus, ChevronDown, Upload, Globe, X, Trash2, Edit, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useContacts, useCreateContact, useUpdateContact, useDeleteContact, ContactRow } from '@/hooks/useContacts';
 import { format } from 'date-fns';
