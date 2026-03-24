@@ -1,13 +1,12 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Download, FileDown, Plus, Trash2, ArrowUpDown } from 'lucide-react';
+import { Search, Download, Plus, Trash2, ArrowUpDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useDeals, useDeleteDeal, DealRow } from '@/hooks/useDeals';
 import { cn } from '@/lib/utils';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
-import JSZip from 'jszip';
 
 const TABS = ['All Deals', 'Draft', 'Active', 'Pending', 'Archive'] as const;
 type TabType = typeof TABS[number];
@@ -79,24 +78,6 @@ export default function Transactions() {
     toast.success('Deals exported as CSV');
   };
 
-  const handleDownloadForms = async () => {
-    const target = selectedDeals.length > 0 ? deals.filter((d) => selectedDeals.includes(d.id)) : filtered;
-    if (!target.length) { toast.error('No deals to download forms for'); return; }
-    const zip = new JSZip();
-    target.forEach((deal) => {
-      const items = (deal.checklist_items || []).sort((a, b) => a.sort_order - b.sort_order);
-      const content = items.map((item) => `${item.completed ? '[x]' : '[ ]'} ${item.name}`).join('\n');
-      zip.file(`${deal.address.replace(/[^a-zA-Z0-9]/g, '-')}-checklist.txt`, `Deal: ${deal.address}\nStatus: ${deal.status}\nPrice: ${deal.price || 'N/A'}\n\nChecklist:\n${content}`);
-    });
-    const blob = await zip.generateAsync({ type: 'blob' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'deal-forms.zip';
-    a.click();
-    URL.revokeObjectURL(url);
-    toast.success('Forms downloaded');
-  };
 
   const handleBulkDelete = async () => {
     if (!selectedDeals.length) return;
@@ -130,7 +111,7 @@ export default function Transactions() {
 
       <div className="px-6 pt-4 pb-2 flex items-center gap-2">
         <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={handleExport}><Download className="w-3.5 h-3.5" /> Export Deals</Button>
-        <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={handleDownloadForms}><FileDown className="w-3.5 h-3.5" /> Download Forms</Button>
+        
         {selectedDeals.length > 0 && (
           <Button variant="outline" size="sm" className="gap-1.5 text-xs text-destructive" onClick={handleBulkDelete}><Trash2 className="w-3.5 h-3.5" /> Delete ({selectedDeals.length})</Button>
         )}

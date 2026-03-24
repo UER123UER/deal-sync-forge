@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Building2, Home, CalendarDays, Plus, Users, DollarSign, Mail, CheckSquare, Calendar } from 'lucide-react';
+import { Building2, Home, Plus, Users, DollarSign, Mail, CheckSquare, Calendar, Gift, Phone } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useState, useRef, useEffect } from 'react';
 
@@ -9,6 +9,8 @@ const navItems = [
   { icon: Building2, label: 'Transactions', path: '/transactions' },
   { icon: Home, label: 'Listings', path: '/listings' },
   { icon: DollarSign, label: 'Finances', path: '/finances' },
+  { icon: Gift, label: 'Referral', path: '/referral' },
+  { icon: Phone, label: 'Brokerage', path: '/contact-brokerage' },
 ];
 
 const peopleSubmenu = [

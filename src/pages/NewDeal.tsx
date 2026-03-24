@@ -41,6 +41,8 @@ export default function NewDeal() {
   const [agentForm, setAgentForm] = useState({ role: 'Seller Agent', firstName: '', lastName: '', email: '', phone: '', company: '', mlsId: '', mls: '', commission: '', commissionType: 'percentage' as 'percentage' | 'dollars' });
   const [agentErrors, setAgentErrors] = useState<Record<string, boolean>>({});
 
+  const [sellerSearch, setSellerSearch] = useState('');
+  const [showSellerResults, setShowSellerResults] = useState(false);
 
   const stepRefs = useRef<(HTMLDivElement | null)[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -363,8 +365,49 @@ export default function NewDeal() {
             {step === 5 && (
               <div>
                 <h2 className="text-xl font-semibold mb-1 text-foreground">Seller Legal Name</h2>
-                <p className="text-sm text-muted-foreground mb-6">Enter the seller's name or add a new seller.</p>
+                <p className="text-sm text-muted-foreground mb-6">Search your contacts or enter the seller's name.</p>
                 <div className="space-y-4">
+                  {/* Contact search */}
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search contacts to auto-fill..."
+                      className="pl-9"
+                      value={sellerSearch}
+                      onChange={(e) => setSellerSearch(e.target.value)}
+                      onFocus={() => setShowSellerResults(true)}
+                    />
+                    {showSellerResults && sellerSearch.length >= 1 && (
+                      <div className="absolute top-full left-0 right-0 mt-1 bg-popover border rounded-md shadow-lg z-10 max-h-48 overflow-auto">
+                        {allContacts
+                          .filter((c) => {
+                            const term = sellerSearch.toLowerCase();
+                            return c.first_name.toLowerCase().includes(term) || c.last_name.toLowerCase().includes(term) || (c.email || '').toLowerCase().includes(term);
+                          })
+                          .slice(0, 8)
+                          .map((c) => (
+                            <button
+                              key={c.id}
+                              onClick={() => {
+                                setSellerForm((f) => ({ ...f, firstName: c.first_name, lastName: c.last_name, email: c.email || '', phone: c.phone || '', company: c.company || '', role: c.role || 'Seller' }));
+                                setSellerSearch('');
+                                setShowSellerResults(false);
+                              }}
+                              className="w-full text-left px-4 py-2.5 hover:bg-muted flex items-center gap-3 text-sm transition-colors"
+                            >
+                              <div className="w-7 h-7 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-medium">{c.first_name[0]}{c.last_name[0]}</div>
+                              <div>
+                                <span className="text-foreground">{c.first_name} {c.last_name}</span>
+                                {c.email && <span className="text-xs text-muted-foreground ml-2">• {c.email}</span>}
+                              </div>
+                            </button>
+                          ))}
+                        {allContacts.filter((c) => { const t = sellerSearch.toLowerCase(); return c.first_name.toLowerCase().includes(t) || c.last_name.toLowerCase().includes(t); }).length === 0 && (
+                          <p className="text-sm text-muted-foreground py-3 text-center">No contacts found</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div><Label className="text-xs">Role</Label><Input value={sellerForm.role} onChange={(e) => setSellerForm((f) => ({ ...f, role: e.target.value }))} className="mt-1" /></div>
                   </div>

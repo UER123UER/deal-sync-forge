@@ -1,10 +1,11 @@
 import { useState, useRef } from 'react';
-import { Search, Plus, ChevronDown, Upload, Globe, X, Trash2, Edit } from 'lucide-react';
+import { Search, Plus, ChevronDown, Upload, Globe, X, Trash2, Edit, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useContacts, useCreateContact, useUpdateContact, useDeleteContact, ContactRow } from '@/hooks/useContacts';
 import { format } from 'date-fns';
@@ -17,6 +18,14 @@ function formatDate(date: string | null): string {
   try { return format(new Date(date), 'MMM d, yyyy'); }
   catch { return '—'; }
 }
+
+const CONTACT_ROLES = [
+  'Buyer', 'Buyer Agent', 'Seller', 'Seller Broker', 'Title',
+  'Buyer Broker', 'Co Buyer Agent', 'Buyer Power Of Attorney',
+  'Buyer Lawyer', 'Buyer Referral', 'Co Seller Agent',
+  'Seller Power Of Attorney', 'Seller Lawyer', 'Seller Referral', 'Lender',
+  'Agent', 'Broker', 'Other',
+];
 
 export default function People() {
   const [search, setSearch] = useState('');
@@ -133,6 +142,16 @@ export default function People() {
         )}
         <div className="flex-1" />
         <input ref={csvInputRef} type="file" accept=".csv" className="hidden" onChange={handleCsvFile} />
+        <Button variant="outline" size="sm" className="text-xs gap-1.5" onClick={() => {
+          const headers = ['First Name', 'Last Name', 'Email', 'Phone', 'Company', 'Role', 'Tags'];
+          const rows = (filtered.length > 0 ? filtered : contacts).map((c) => [c.first_name, c.last_name, c.email || '', c.phone || '', c.company || '', c.role || '', (c.tags || []).join(';')]);
+          const csv = [headers.join(','), ...rows.map((r) => r.map((v) => `"${v}"`).join(','))].join('\n');
+          const blob = new Blob([csv], { type: 'text/csv' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a'); a.href = url; a.download = 'contacts-export.csv'; a.click();
+          URL.revokeObjectURL(url);
+          toast.success('Contacts exported');
+        }}><Download className="w-3.5 h-3.5" /> Export</Button>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button size="sm" className="text-xs gap-1.5"><Plus className="w-3.5 h-3.5" /> New Contact <ChevronDown className="w-3 h-3" /></Button>
@@ -247,7 +266,15 @@ export default function People() {
                 <div><Label className="text-xs">Email</Label><Input type="email" value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} className="mt-1" /></div>
                 <div><Label className="text-xs">Phone</Label><Input value={form.phone} onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))} className="mt-1" /></div>
                 <div><Label className="text-xs">Company</Label><Input value={form.company} onChange={(e) => setForm((f) => ({ ...f, company: e.target.value }))} className="mt-1" /></div>
-                <div><Label className="text-xs">Role</Label><Input value={form.role} onChange={(e) => setForm((f) => ({ ...f, role: e.target.value }))} className="mt-1" /></div>
+                <div>
+                  <Label className="text-xs">Role</Label>
+                  <Select value={form.role} onValueChange={(v) => setForm((f) => ({ ...f, role: v }))}>
+                    <SelectTrigger className="mt-1"><SelectValue placeholder="Select a role" /></SelectTrigger>
+                    <SelectContent>
+                      {CONTACT_ROLES.map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
               <div className="border-t p-4 flex justify-end">
                 <Button size="sm" onClick={handleSave} disabled={createContact.isPending || updateContact.isPending}>{createContact.isPending || updateContact.isPending ? 'Saving...' : 'Save'}</Button>

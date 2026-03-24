@@ -17,6 +17,8 @@ import Listings from "@/pages/Listings";
 
 import CalendarPage from "@/pages/Calendar";
 import Finances from "@/pages/Finances";
+import Referral from "@/pages/Referral";
+import ContactBrokerage from "@/pages/ContactBrokerage";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -43,6 +45,8 @@ const App = () => (
             
             <Route path="/calendar" element={<CalendarPage />} />
             <Route path="/finances" element={<Finances />} />
+            <Route path="/referral" element={<Referral />} />
+            <Route path="/contact-brokerage" element={<ContactBrokerage />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>

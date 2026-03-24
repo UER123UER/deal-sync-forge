@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { X, AlertTriangle, Save, Send } from 'lucide-react';
+import { X, Save, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useDeal, useUpdateDeal } from '@/hooks/useDeals';
 import { useUpdateContact } from '@/hooks/useContacts';
@@ -153,9 +153,6 @@ export default function FormEditor() {
           {checklistItem?.name || 'Exclusive Right of Sale Listing Agreement'}
         </h1>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" className="text-xs gap-1.5" onClick={() => toast.info('Issue reported. Thank you!')}>
-            <AlertTriangle className="w-3.5 h-3.5" /> Report an Issue
-          </Button>
           <Button variant="outline" size="sm" className="text-xs gap-1.5" onClick={() => setSignatureOpen(true)}>
             <Send className="w-3.5 h-3.5" /> Send for Signature
           </Button>
