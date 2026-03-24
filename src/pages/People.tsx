@@ -266,7 +266,15 @@ export default function People() {
                 <div><Label className="text-xs">Email</Label><Input type="email" value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} className="mt-1" /></div>
                 <div><Label className="text-xs">Phone</Label><Input value={form.phone} onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))} className="mt-1" /></div>
                 <div><Label className="text-xs">Company</Label><Input value={form.company} onChange={(e) => setForm((f) => ({ ...f, company: e.target.value }))} className="mt-1" /></div>
-                <div><Label className="text-xs">Role</Label><Input value={form.role} onChange={(e) => setForm((f) => ({ ...f, role: e.target.value }))} className="mt-1" /></div>
+                <div>
+                  <Label className="text-xs">Role</Label>
+                  <Select value={form.role} onValueChange={(v) => setForm((f) => ({ ...f, role: v }))}>
+                    <SelectTrigger className="mt-1"><SelectValue placeholder="Select a role" /></SelectTrigger>
+                    <SelectContent>
+                      {CONTACT_ROLES.map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
               <div className="border-t p-4 flex justify-end">
                 <Button size="sm" onClick={handleSave} disabled={createContact.isPending || updateContact.isPending}>{createContact.isPending || updateContact.isPending ? 'Saving...' : 'Save'}</Button>

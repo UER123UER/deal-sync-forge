@@ -111,7 +111,7 @@ export default function Transactions() {
 
       <div className="px-6 pt-4 pb-2 flex items-center gap-2">
         <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={handleExport}><Download className="w-3.5 h-3.5" /> Export Deals</Button>
-        <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={handleDownloadForms}><FileDown className="w-3.5 h-3.5" /> Download Forms</Button>
+        
         {selectedDeals.length > 0 && (
           <Button variant="outline" size="sm" className="gap-1.5 text-xs text-destructive" onClick={handleBulkDelete}><Trash2 className="w-3.5 h-3.5" /> Delete ({selectedDeals.length})</Button>
         )}
