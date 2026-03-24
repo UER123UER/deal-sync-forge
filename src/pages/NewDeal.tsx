@@ -61,7 +61,6 @@ export default function NewDeal() {
     const handler = (e: MouseEvent) => {
       if (addressDropdownRef.current && !addressDropdownRef.current.contains(e.target as Node)) {
         setShowAddresses(false);
-        setShowSellerAddresses(false);
       }
     };
     document.addEventListener('mousedown', handler);
