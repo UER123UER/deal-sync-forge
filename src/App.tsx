@@ -14,7 +14,7 @@ import People from "@/pages/People";
 import Tasks from "@/pages/Tasks";
 import Inbox from "@/pages/Inbox";
 import Listings from "@/pages/Listings";
-import OpenHouse from "@/pages/OpenHouse";
+
 import CalendarPage from "@/pages/Calendar";
 import Finances from "@/pages/Finances";
 import NotFound from "@/pages/NotFound";
