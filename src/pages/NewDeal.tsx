@@ -41,10 +41,6 @@ export default function NewDeal() {
   const [agentForm, setAgentForm] = useState({ role: 'Seller Agent', firstName: '', lastName: '', email: '', phone: '', company: '', mlsId: '', mls: '', commission: '', commissionType: 'percentage' as 'percentage' | 'dollars' });
   const [agentErrors, setAgentErrors] = useState<Record<string, boolean>>({});
 
-  // Seller address autocomplete
-  const [sellerAddressSearch, setSellerAddressSearch] = useState('');
-  const [showSellerAddresses, setShowSellerAddresses] = useState(false);
-  const { suggestions: sellerAddressSuggestions, isLoading: sellerAddressLoading } = useAddressAutocomplete(sellerAddressSearch);
 
   const stepRefs = useRef<(HTMLDivElement | null)[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
