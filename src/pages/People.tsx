@@ -142,6 +142,16 @@ export default function People() {
         )}
         <div className="flex-1" />
         <input ref={csvInputRef} type="file" accept=".csv" className="hidden" onChange={handleCsvFile} />
+        <Button variant="outline" size="sm" className="text-xs gap-1.5" onClick={() => {
+          const headers = ['First Name', 'Last Name', 'Email', 'Phone', 'Company', 'Role', 'Tags'];
+          const rows = (filtered.length > 0 ? filtered : contacts).map((c) => [c.first_name, c.last_name, c.email || '', c.phone || '', c.company || '', c.role || '', (c.tags || []).join(';')]);
+          const csv = [headers.join(','), ...rows.map((r) => r.map((v) => `"${v}"`).join(','))].join('\n');
+          const blob = new Blob([csv], { type: 'text/csv' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a'); a.href = url; a.download = 'contacts-export.csv'; a.click();
+          URL.revokeObjectURL(url);
+          toast.success('Contacts exported');
+        }}><Download className="w-3.5 h-3.5" /> Export</Button>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button size="sm" className="text-xs gap-1.5"><Plus className="w-3.5 h-3.5" /> New Contact <ChevronDown className="w-3 h-3" /></Button>
