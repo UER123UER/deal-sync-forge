@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { X, AlertTriangle, Save, Send } from 'lucide-react';
+import { X, Save, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useDeal, useUpdateDeal } from '@/hooks/useDeals';
 import { useUpdateContact } from '@/hooks/useContacts';
