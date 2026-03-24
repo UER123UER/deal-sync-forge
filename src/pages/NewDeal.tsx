@@ -41,6 +41,8 @@ export default function NewDeal() {
   const [agentForm, setAgentForm] = useState({ role: 'Seller Agent', firstName: '', lastName: '', email: '', phone: '', company: '', mlsId: '', mls: '', commission: '', commissionType: 'percentage' as 'percentage' | 'dollars' });
   const [agentErrors, setAgentErrors] = useState<Record<string, boolean>>({});
 
+  const [sellerSearch, setSellerSearch] = useState('');
+  const [showSellerResults, setShowSellerResults] = useState(false);
 
   const stepRefs = useRef<(HTMLDivElement | null)[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
