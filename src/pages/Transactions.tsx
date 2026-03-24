@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Download, FileDown, Plus, Trash2, ArrowUpDown } from 'lucide-react';
+import { Search, Download, Plus, Trash2, ArrowUpDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useDeals, useDeleteDeal, DealRow } from '@/hooks/useDeals';
