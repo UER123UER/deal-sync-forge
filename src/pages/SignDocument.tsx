@@ -234,7 +234,7 @@ export default function SignDocument() {
         ref={(el) => { fieldRefs.current[field.id] = el; }}
         onClick={() => handleFieldClick(index)}
         className={`relative cursor-pointer transition-all duration-300 rounded-md border-2 px-4 py-3 my-1
-          ${isCompleted ? 'bg-white border-green-400 cursor-default' : isActive ? 'bg-amber-100 border-amber-500 ring-2 ring-amber-400 shadow-lg animate-pulse' : 'bg-amber-50 border-amber-300 border-dashed'}`}
+          ${isCompleted ? 'bg-white border-green-400 cursor-default' : isActive ? 'bg-amber-100 border-amber-500 ring-2 ring-amber-400 shadow-lg' : 'bg-amber-50 border-amber-300 border-dashed'}`}
         style={{ minHeight: 56 }}
       >
         {isCompleted ? (

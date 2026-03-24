@@ -320,7 +320,7 @@ export default function DealDetail() {
         {/* Action Bar */}
         <div className="flex items-center gap-2 mt-4 flex-wrap">
           <Button variant="outline" size="sm" className="text-xs gap-1.5" onClick={handleToggleVisibility}>
-            <Eye className="w-3.5 h-3.5" /> {isVisibleToOffice ? 'Hide From Office' : 'Make Visible To Office'}
+            <Eye className="w-3.5 h-3.5" /> {isVisibleToOffice ? 'Sent to Office' : 'Send to Office'}
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
