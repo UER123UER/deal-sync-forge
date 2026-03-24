@@ -133,7 +133,6 @@ export default function NewDeal() {
         first_name: sellerForm.firstName, last_name: sellerForm.lastName,
         email: sellerForm.email || undefined, phone: sellerForm.phone || undefined,
         company: sellerForm.company || undefined, role: sellerForm.role,
-        current_address: sellerForm.currentAddress || undefined,
       });
     }
 
