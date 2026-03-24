@@ -78,24 +78,6 @@ export default function Transactions() {
     toast.success('Deals exported as CSV');
   };
 
-  const handleDownloadForms = async () => {
-    const target = selectedDeals.length > 0 ? deals.filter((d) => selectedDeals.includes(d.id)) : filtered;
-    if (!target.length) { toast.error('No deals to download forms for'); return; }
-    const zip = new JSZip();
-    target.forEach((deal) => {
-      const items = (deal.checklist_items || []).sort((a, b) => a.sort_order - b.sort_order);
-      const content = items.map((item) => `${item.completed ? '[x]' : '[ ]'} ${item.name}`).join('\n');
-      zip.file(`${deal.address.replace(/[^a-zA-Z0-9]/g, '-')}-checklist.txt`, `Deal: ${deal.address}\nStatus: ${deal.status}\nPrice: ${deal.price || 'N/A'}\n\nChecklist:\n${content}`);
-    });
-    const blob = await zip.generateAsync({ type: 'blob' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'deal-forms.zip';
-    a.click();
-    URL.revokeObjectURL(url);
-    toast.success('Forms downloaded');
-  };
 
   const handleBulkDelete = async () => {
     if (!selectedDeals.length) return;
