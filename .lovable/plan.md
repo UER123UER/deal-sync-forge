@@ -1,31 +1,101 @@
 
 
-## Fix 5 UI Issues
+## Multi-Feature Update Plan
 
-### Changes
+The user is requesting 8 distinct changes. Here's the plan:
 
-#### 1. Remove "Current Address" field from Seller step (NewDeal.tsx)
-Remove lines 398-431 (the entire Current Address field with autocomplete) from the Step 5 seller form. Also remove the related state variables (`sellerAddressSearch`, `showSellerAddresses`, `sellerAddressSuggestions`, `sellerAddressLoading`) and the `currentAddress` field from the `sellerForm` state.
+---
 
-#### 2. Remove animate-pulse from signing fields (SignDocument.tsx)
-Remove `animate-pulse` from the active field class in the `FieldOverlay` component (line 237). The active state will keep its highlight (`bg-amber-100 border-amber-500 ring-2 ring-amber-400 shadow-lg`) but without flickering.
+### 1. Seller Search in NewDeal (Step 5)
+Add a contact search input above the Role field in the Seller Legal Name step. When the user types, filter existing contacts (from `useContacts`). Selecting a contact auto-fills first name, last name, email, phone, and company into `sellerForm`.
 
-#### 3. Fix completed step headers flickering (NewDeal.tsx)
-The `CompletedStep` component uses `motion.div` with `initial={{ opacity: 0, y: 10 }}` and `animate={{ opacity: 1, y: 0 }}`. Because it re-renders when typing (state changes), the animation replays causing flicker. Fix by removing the motion animation from `CompletedStep` — use a plain `div` instead of `motion.div`.
+**File**: `src/pages/NewDeal.tsx` — Add search input + dropdown similar to Step 4's agent search, but for sellers.
 
-#### 4. Change "Make Visible To Office" to "Send to Office" (DealDetail.tsx)
-Update the button text on line 323 from `'Make Visible To Office'` / `'Hide From Office'` to `'Send to Office'` / `'Sent to Office'`.
+---
 
-#### 5. Remove Open House from sidebar and app (AppSidebar.tsx, App.tsx)
-- Remove the Open House nav item from `navItems` array in `AppSidebar.tsx` (line 11)
-- Remove the Open House route from `App.tsx` (line 43)
-- Remove the OpenHouse import from `App.tsx` (line 17)
-- Keep the Open House dropdown in DealDetail.tsx since that's deal-specific scheduling (not a standalone page)
+### 2. Export Contacts (People page)
+Add an "Export" button next to the New Contact dropdown on the People page. Clicking it generates a CSV of all contacts (or filtered/selected contacts) using PapaParse's `unparse` and triggers a download.
 
-### Files Modified
-- `src/pages/NewDeal.tsx` — remove Current Address field + fix CompletedStep flicker
-- `src/pages/SignDocument.tsx` — remove animate-pulse
-- `src/pages/DealDetail.tsx` — rename visibility button text
-- `src/components/layout/AppSidebar.tsx` — remove Open House nav item
-- `src/App.tsx` — remove Open House route and import
+**File**: `src/pages/People.tsx` — Add Export button, implement CSV download using `Papa.unparse`.
+
+---
+
+### 3. Role Dropdown in New Contact Panel
+Replace the free-text Role input in the create/edit contact panel with a `<Select>` dropdown using the same `CONTACT_ROLES` list from DealDetail (Buyer, Buyer Agent, Seller, Seller Broker, Title, etc.).
+
+**File**: `src/pages/People.tsx` — Import `Select` components, replace Role `<Input>` with `<Select>`.
+
+---
+
+### 4. Remove "Download Forms" Button
+Remove the Download Forms button and its handler from the Transactions page.
+
+**File**: `src/pages/Transactions.tsx` — Remove `handleDownloadForms` function and the button.
+
+---
+
+### 5. Referral Tab (New Page)
+Create a new Referral page at `/referral` with:
+- A generated QR code (using a lightweight library or inline SVG via `qrcode` npm package) pointing to a referral link
+- A copyable referral link
+- Earnings display: "$20 per referral" with a mock counter of total earned
+
+Add "Referral" nav item in the sidebar below Finances.
+
+**Files**: New `src/pages/Referral.tsx`, update `AppSidebar.tsx` and `App.tsx`.
+
+---
+
+### 6. Calendar: Add Holidays + Create Events
+Enhance the Calendar page:
+- Add US federal holidays (hardcoded list) displayed on their respective days
+- Add a "+" button or click-on-day to create events/tasks directly from the calendar
+- Show a dialog to enter event title, date, and optionally time
+- Use the existing `useCreateTask` hook to persist
+
+**File**: `src/pages/Calendar.tsx` — Add holidays data, add create-event dialog, wire to `useCreateTask`.
+
+---
+
+### 7. Fix Photo Upload
+The photo upload hook looks correct but may fail due to Supabase storage bucket permissions. Check and ensure the upload flow works. The code itself (`useDealPhotos.ts`) appears functional — the issue is likely a missing storage bucket or RLS policy. Will add error toast feedback so failures are visible.
+
+**File**: `src/pages/DealDetail.tsx` — Ensure `handlePhotoUpload` shows error details on failure.
+
+---
+
+### 8. Remove "Report an Issue" Button
+Remove the Report an Issue button from the FormEditor header.
+
+**File**: `src/pages/FormEditor.tsx` — Remove the button (lines 156-158).
+
+---
+
+### 9. Contact Brokerage Tab (New Page)
+Create a new "Contact Brokerage" page at `/contact-brokerage` with:
+- A category dropdown: Compliance Question, IT Question, General Question
+- File upload area for images, PDFs, and documents (stored in Supabase storage or shown as attachments)
+- A message/description textarea
+- Submit button that shows a success toast
+
+Add "Contact Brokerage" nav item in the sidebar below Referral.
+
+**Files**: New `src/pages/ContactBrokerage.tsx`, update `AppSidebar.tsx` and `App.tsx`.
+
+---
+
+### Summary of File Changes
+
+| File | Change |
+|------|--------|
+| `src/pages/NewDeal.tsx` | Add seller contact search above Role field |
+| `src/pages/People.tsx` | Add Export button + Role dropdown in contact panel |
+| `src/pages/Transactions.tsx` | Remove Download Forms button |
+| `src/pages/FormEditor.tsx` | Remove Report an Issue button |
+| `src/pages/Calendar.tsx` | Add holidays + create event from calendar |
+| `src/pages/DealDetail.tsx` | Better error handling on photo upload |
+| `src/pages/Referral.tsx` | New page: QR code, referral link, earnings |
+| `src/pages/ContactBrokerage.tsx` | New page: category dropdown, file upload, message |
+| `src/components/layout/AppSidebar.tsx` | Add Referral + Contact Brokerage nav items |
+| `src/App.tsx` | Add routes for `/referral` and `/contact-brokerage` |
 
