@@ -36,7 +36,7 @@ export default function NewDeal() {
   const { suggestions: addressSuggestions, isLoading: addressLoading } = useAddressAutocomplete(addressSearch);
   const [createdDealId, setCreatedDealId] = useState<string | null>(null);
 
-  const [sellerForm, setSellerForm] = useState({ role: 'Seller', firstName: '', lastName: '', email: '', phone: '', company: '', currentAddress: '' });
+  const [sellerForm, setSellerForm] = useState({ role: 'Seller', firstName: '', lastName: '', email: '', phone: '', company: '' });
   const [sellerErrors, setSellerErrors] = useState<Record<string, boolean>>({});
   const [agentForm, setAgentForm] = useState({ role: 'Seller Agent', firstName: '', lastName: '', email: '', phone: '', company: '', mlsId: '', mls: '', commission: '', commissionType: 'percentage' as 'percentage' | 'dollars' });
   const [agentErrors, setAgentErrors] = useState<Record<string, boolean>>({});
