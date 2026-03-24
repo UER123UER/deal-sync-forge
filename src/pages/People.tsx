@@ -19,6 +19,14 @@ function formatDate(date: string | null): string {
   catch { return '—'; }
 }
 
+const CONTACT_ROLES = [
+  'Buyer', 'Buyer Agent', 'Seller', 'Seller Broker', 'Title',
+  'Buyer Broker', 'Co Buyer Agent', 'Buyer Power Of Attorney',
+  'Buyer Lawyer', 'Buyer Referral', 'Co Seller Agent',
+  'Seller Power Of Attorney', 'Seller Lawyer', 'Seller Referral', 'Lender',
+  'Agent', 'Broker', 'Other',
+];
+
 export default function People() {
   const [search, setSearch] = useState('');
   const [selectedContacts, setSelectedContacts] = useState<string[]>([]);
