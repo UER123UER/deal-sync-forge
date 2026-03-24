@@ -221,11 +221,17 @@ export default function DealDetail() {
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!id || !e.target.files?.length) return;
+    let uploaded = 0;
     for (const file of Array.from(e.target.files)) {
-      try { await uploadPhoto.mutateAsync({ dealId: id, file }); }
-      catch { toast.error(`Failed to upload ${file.name}`); }
+      try {
+        await uploadPhoto.mutateAsync({ dealId: id, file });
+        uploaded++;
+      } catch (err: any) {
+        const msg = err?.message || 'Unknown error';
+        toast.error(`Failed to upload ${file.name}: ${msg}`);
+      }
     }
-    toast.success('Photos uploaded');
+    if (uploaded > 0) toast.success(`${uploaded} photo(s) uploaded`);
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
