@@ -17,6 +17,8 @@ import Listings from "@/pages/Listings";
 
 import CalendarPage from "@/pages/Calendar";
 import Finances from "@/pages/Finances";
+import Referral from "@/pages/Referral";
+import ContactBrokerage from "@/pages/ContactBrokerage";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
