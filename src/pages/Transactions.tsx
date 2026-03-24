@@ -7,7 +7,6 @@ import { useDeals, useDeleteDeal, DealRow } from '@/hooks/useDeals';
 import { cn } from '@/lib/utils';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
-import JSZip from 'jszip';
 
 const TABS = ['All Deals', 'Draft', 'Active', 'Pending', 'Archive'] as const;
 type TabType = typeof TABS[number];
