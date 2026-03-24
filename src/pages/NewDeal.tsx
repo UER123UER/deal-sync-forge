@@ -184,11 +184,7 @@ export default function NewDeal() {
       onClick={() => goToStep(stepNum)}
       className="cursor-pointer group"
     >
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="flex items-center gap-3 px-4 py-4 rounded-lg border border-border bg-muted/30 hover:bg-muted/60 transition-colors"
-      >
+      <div className="flex items-center gap-3 px-4 py-4 rounded-lg border border-border bg-muted/30 hover:bg-muted/60 transition-colors">
         <div className="w-7 h-7 rounded-full bg-primary/10 text-primary flex items-center justify-center flex-shrink-0">
           <Check className="w-4 h-4" />
         </div>
@@ -197,7 +193,7 @@ export default function NewDeal() {
           <div className="text-sm font-medium text-foreground truncate">{stepSummary(stepNum)}</div>
         </div>
         <ChevronUp className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-      </motion.div>
+      </div>
     </div>
   );
 
