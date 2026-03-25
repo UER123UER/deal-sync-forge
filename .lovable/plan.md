@@ -1,77 +1,67 @@
 
 
-## Redesign Admin PDF Editor to Match Authentisign Layout
+## Redesign Admin PDF Editor — Authentisign-Style Layout
 
-### What Changes
+### Overview
 
-Replace the current horizontal toolbar layout with a right-side vertical tab panel matching the Authentisign screenshots. The PDF stays in the center; a right sidebar has icon tabs (Signers, Docs, Tools, Layouts, Options, Feedback) that open content panels.
+Replace the current horizontal toolbar with a right-side vertical tab panel matching the reference screenshot. The layout becomes: header bar at top, scrollable PDF workspace in center, and a right sidebar with icon tabs + expandable content panels.
 
-### Layout
+### Layout Structure
 
 ```text
-┌──────────────────────────────────────────────────────────┐
-│  Header: Document Name                    [Upload PDF]   │
-├────────────────────────────────────┬─────────┬───────────┤
-│                                    │ Panel   │ Tab Icons │
-│                                    │ Content │ ┌───────┐ │
-│         PDF Canvas Area            │ (shows  │ │Signers│ │
-│         (scrollable)               │  when   │ │ Docs  │ │
-│                                    │  tab    │ │ Tools │ │
-│   ┌─────────────────────┐         │  is     │ │Layouts│ │
-│   │  Page with Fabric   │         │  open)  │ │Options│ │
-│   │  overlay             │         │         │ │Feedbk │ │
-│   └─────────────────────┘         │         │ └───────┘ │
-│                                    │         │           │
-│   [< Prev] Page 1/5 [Next >]      │         │           │
-├────────────────────────────────────┴─────────┴───────────┤
+┌─────────────────────────────────────────────────────────────┐
+│ < Back  [100% ◇]  [+]     [Document Name]     [icons] Next>│
+├─────────────────────────────────────────┬──────────┬────────┤
+│  Document title              Page x/n   │  Panel   │ Icons  │
+│                                         │  Content │┌──────┐│
+│  ┌────────────────────────────┐         │  (350px) ││Signrs││
+│  │                            │         │          ││ Docs ││
+│  │     PDF Page Canvas        │         │          ││Tools ││
+│  │     with Fabric overlay    │         │          ││Laouts││
+│  │                            │         │          ││Optns ││
+│  └────────────────────────────┘         │          ││Feedbk││
+│                                         │          │└──────┘│
+├─────────────────────────────────────────┴──────────┴────────┤
 ```
-
-### Right Sidebar Tabs
-
-**Signers** (User icon)
-- "Set signing order" toggle
-- List of added signers with avatar, name, role, email
-- "Add Participants" dropdown: Add Yourself, Add New, Add from Contacts
-- "Map Signers" button
-- Clicking a signer or "Add New" opens a detail form: First Name, Last Name, Email, Role dropdown, Signer Type (Remote Signer), Signing PIN, Custom Signature/Initials, Language, Save/Cancel
-
-**Docs** (Document icon)
-- List of attached documents with drag handle and number
-- "Add a Document or Form" button
-
-**Tools** (List icon)
-- Signer dropdown (select which signer to assign fields to)
-- **Signer Actions**: Sign Here, Initials buttons
-- **Signer Fields**: Full Name, Email Address, Auto Date, Auto Time
-- **Markup**: Text Box, Highlight, Line, Freehand, Strikethrough, Ellipse
-
-**Layouts** (Layout icon)
-- Placeholder for predefined field layouts
-
-**Options** (Gear icon)
-- Accordion sections: Change Signature, Signing Details, Expiration Dates, Reminders, Authentisign ID Position, Clear Signing Fields
-- Expiration Dates: date picker + time display, Save/Cancel
-
-**Feedback** (Help icon)
-- Placeholder for feedback/help
 
 ### Files
 
-| File | Change |
+| File | Action |
 |------|--------|
-| `src/pages/AdminPdfEditor.tsx` | Complete rewrite — new layout with right sidebar state management, signers list, active tab |
-| `src/components/admin/PdfToolbar.tsx` | Delete — replaced by right sidebar tabs |
-| `src/components/admin/PdfEditorSidebar.tsx` | New — right sidebar with 6 tab panels (Signers, Docs, Tools, Layouts, Options, Feedback) |
-| `src/components/admin/PdfCanvas.tsx` | Minor — no structural changes, tool modes still passed as props |
-| `src/components/admin/SignatureStampModal.tsx` | No changes |
+| `src/components/admin/PdfEditorSidebar.tsx` | **New** — Right sidebar with 6 icon tabs and content panels |
+| `src/pages/AdminPdfEditor.tsx` | **Rewrite** — New layout with header bar, sidebar integration, signer state |
+| `src/components/admin/PdfToolbar.tsx` | **Keep** but repurpose — export `ToolMode` type only; toolbar UI replaced by sidebar |
+| `src/components/admin/PdfCanvas.tsx` | **Minor** — No changes needed, receives tool mode as before |
 
-### Interaction Details
+### Right Sidebar Tabs (PdfEditorSidebar.tsx)
 
-- Clicking a tab icon toggles the panel open/closed (clicking active tab closes it)
-- Active tab has green background matching screenshots (`bg-[#2D5F2B]` dark green)
-- Tab icons are stacked vertically on the far right (~60px wide)
-- Panel content area is ~350px wide, slides between icons and PDF area
-- Tools panel sets the `activeTool` state which flows to `PdfCanvas`
-- Signers are managed in local state (array of signer objects) — persisted alongside annotations on Save
-- "Add from Contacts" queries existing contacts via `useContacts`
+Six vertical icon tabs on the far right (~60px strip), dark green (`#2D5F2B`) when active:
+
+1. **Signers** (User icon) — "Set signing order" toggle, signer list with avatar/name/role/email, "Add Participants" dropdown (Add Yourself, Add New, Add from Contacts), "Map Signers" button. Adding a signer shows inline form: first/last name, email, role dropdown, signer type, save/cancel.
+
+2. **Docs** (FileText icon) — List of attached documents with numbering, "Add a Document or Form" button.
+
+3. **Tools** (List icon) — Signer dropdown at top, then sections: **Signer Actions** (Sign Here, Initials), **Signer Fields** (Full Name, Email, Auto Date, Auto Time), **Markup** (Text Box, Highlight, Line, Freehand, Strikethrough, Ellipse). Clicking a tool sets `activeTool`.
+
+4. **Layouts** (LayoutGrid icon) — Placeholder panel.
+
+5. **Options** (Settings icon) — Accordion: Change Signature, Signing Details, Expiration Dates (date picker), Reminders, Clear Signing Fields.
+
+6. **Feedback** (HelpCircle icon) — Placeholder panel.
+
+### Header Bar (in AdminPdfEditor.tsx)
+
+Matches screenshot: "< Back" link, zoom controls (100% dropdown, +/-), document name centered, action icons (help, print, download, save) on right, green "Next >" button.
+
+### Signer State
+
+Managed in `AdminPdfEditor.tsx` as `signers: Array<{id, firstName, lastName, email, role, type}>`. Passed to sidebar. "Add from Contacts" uses `useContacts` hook. Signers are persisted alongside annotations on Save.
+
+### Key Interactions
+
+- Click tab icon → toggle panel open/close (re-click active tab closes it)
+- Tools panel tools set `activeTool` which flows to `PdfCanvas`
+- Panel is ~350px wide, pushes PDF area left when open
+- Active tab icon gets `bg-[#2D5F2B] text-white` styling
+- Floating help icon at bottom-right corner of the page
 
