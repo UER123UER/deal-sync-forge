@@ -11,6 +11,7 @@ const navItems = [
   { icon: DollarSign, label: 'Finances', path: '/finances' },
   { icon: Gift, label: 'Referral', path: '/referral' },
   { icon: Phone, label: 'Brokerage', path: '/contact-brokerage' },
+  { icon: Shield, label: 'Admin', path: '/admin/pdf-editor' },
 ];
 
 const peopleSubmenu = [
