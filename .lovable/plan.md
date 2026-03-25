@@ -1,111 +1,77 @@
 
 
-## Admin PDF Editor Dashboard
+## Redesign Admin PDF Editor to Match Authentisign Layout
 
-### What This Is
+### What Changes
 
-A new `/admin/pdf-editor` page where you can upload any PDF, view it rendered page-by-page, and overlay interactive annotations on top — text boxes, signatures, initials, drawn marks, lines, highlights, and designated client signing fields. This is a full PDF annotation workspace, not tied to any specific form template.
+Replace the current horizontal toolbar layout with a right-side vertical tab panel matching the Authentisign screenshots. The PDF stays in the center; a right sidebar has icon tabs (Signers, Docs, Tools, Layouts, Options, Feedback) that open content panels.
 
-### Architecture
-
-**PDF Rendering**: Use `pdfjs-dist` (Mozilla's PDF.js) to render each page of the uploaded PDF onto `<canvas>` elements.
-
-**Annotation Layer**: Use `fabric.js` on a transparent canvas overlaid on each PDF page. Fabric.js provides:
-- Free-draw mode (pen/brush)
-- Text objects (editable text boxes)
-- Line objects
-- Rectangle objects (for highlights with semi-transparent fill)
-- Image objects (for signature/initials stamps)
-- Object selection, moving, resizing, deleting
-
-**Tool Modes** (matching the screenshots you shared):
-- **Select** — default pointer, move/resize annotations
-- **Text** — click to place an editable text box
-- **Sign** — click to stamp your saved signature
-- **Initials** — click to stamp your saved initials
-- **Highlight** — drag to create a semi-transparent yellow rectangle
-- **Draw** — freehand drawing with pen tool
-- **Line** — click-drag to draw a straight line
-- **Text Box** — place a bordered text input area
-- **Designate Signature Field** — place a "Sign Here" marker that becomes an interactive field when sent to clients
-- **Designate Initials Field** — place an "Initials" marker for clients
-- **Designate Date Field** — place a "Date" marker for clients
-
-### File Structure
-
-| File | Purpose |
-|------|---------|
-| `src/pages/AdminPdfEditor.tsx` | Main page: upload, toolbar, page navigation, export |
-| `src/components/admin/PdfCanvas.tsx` | Single PDF page renderer + Fabric.js overlay canvas |
-| `src/components/admin/PdfToolbar.tsx` | Horizontal toolbar with all tool icons |
-| `src/components/admin/SignatureStampModal.tsx` | Modal to create/select signature or initials stamp |
-
-### Page Layout
+### Layout
 
 ```text
-┌─────────────────────────────────────────────────┐
-│ Admin PDF Editor                    [Upload PDF] │
-├─────────────────────────────────────────────────┤
-│ Toolbar:                                         │
-│ [Select][Text][Sign][Initials][Highlight]        │
-│ [Draw][Line][Text Box]                           │
-│ [⬜ Signature Field][⬜ Initials Field][⬜ Date] │
-│ ─── separator ───                                │
-│ [Delete Selected] [Undo]  [Save] [Send to Client]│
-├─────────────────────────────────────────────────┤
-│                                                   │
-│   ┌──── Page 1 of N ────┐                        │
-│   │  PDF rendered on     │                        │
-│   │  canvas              │                        │
-│   │                      │                        │
-│   │  [text box overlay]  │  ← Fabric.js canvas   │
-│   │  [signature stamp]   │    on top of PDF       │
-│   │  [drawn line]        │                        │
-│   └──────────────────────┘                        │
-│                                                   │
-│   ┌──── Page 2 of N ────┐                        │
-│   │  ...                 │                        │
-│   └──────────────────────┘                        │
-│                                                   │
-│           [< Prev] Page 1/5 [Next >]              │
-└─────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────┐
+│  Header: Document Name                    [Upload PDF]   │
+├────────────────────────────────────┬─────────┬───────────┤
+│                                    │ Panel   │ Tab Icons │
+│                                    │ Content │ ┌───────┐ │
+│         PDF Canvas Area            │ (shows  │ │Signers│ │
+│         (scrollable)               │  when   │ │ Docs  │ │
+│                                    │  tab    │ │ Tools │ │
+│   ┌─────────────────────┐         │  is     │ │Layouts│ │
+│   │  Page with Fabric   │         │  open)  │ │Options│ │
+│   │  overlay             │         │         │ │Feedbk │ │
+│   └─────────────────────┘         │         │ └───────┘ │
+│                                    │         │           │
+│   [< Prev] Page 1/5 [Next >]      │         │           │
+├────────────────────────────────────┴─────────┴───────────┤
 ```
 
-### Workflow
+### Right Sidebar Tabs
 
-1. Click "Upload PDF" → file picker → PDF.js renders all pages
-2. Select a tool from the toolbar
-3. Click/drag on the PDF page to place annotations
-4. "Designate" tools place colored markers (e.g., yellow "Sign Here" box) that map to client signing fields
-5. "Send to Client" saves the annotation positions + PDF reference, creates a signature request with field positions, and generates a signing link
-6. "Save" persists annotations to Supabase (JSON blob per document)
+**Signers** (User icon)
+- "Set signing order" toggle
+- List of added signers with avatar, name, role, email
+- "Add Participants" dropdown: Add Yourself, Add New, Add from Contacts
+- "Map Signers" button
+- Clicking a signer or "Add New" opens a detail form: First Name, Last Name, Email, Role dropdown, Signer Type (Remote Signer), Signing PIN, Custom Signature/Initials, Language, Save/Cancel
 
-### Database
+**Docs** (Document icon)
+- List of attached documents with drag handle and number
+- "Add a Document or Form" button
 
-New table `admin_documents`:
-- `id`, `user_id`, `file_name`, `storage_path` (PDF in Supabase storage), `annotations` (JSONB — serialized Fabric.js objects per page), `designated_fields` (JSONB — array of client signing field positions), `created_at`, `updated_at`
+**Tools** (List icon)
+- Signer dropdown (select which signer to assign fields to)
+- **Signer Actions**: Sign Here, Initials buttons
+- **Signer Fields**: Full Name, Email Address, Auto Date, Auto Time
+- **Markup**: Text Box, Highlight, Line, Freehand, Strikethrough, Ellipse
 
-New storage bucket `admin-documents` for uploaded PDFs.
+**Layouts** (Layout icon)
+- Placeholder for predefined field layouts
 
-### Route & Navigation
+**Options** (Gear icon)
+- Accordion sections: Change Signature, Signing Details, Expiration Dates, Reminders, Authentisign ID Position, Clear Signing Fields
+- Expiration Dates: date picker + time display, Save/Cancel
 
-- Route: `/admin/pdf-editor` and `/admin/pdf-editor/:documentId`
-- Sidebar: Add a "Admin" nav item with a Shield icon (only visible to admin — for now, always visible; auth gating comes later)
+**Feedback** (Help icon)
+- Placeholder for feedback/help
 
-### Dependencies
-
-- `pdfjs-dist` — PDF rendering
-- `fabric` — canvas annotation layer (v6)
-
-### Files Modified/Created
+### Files
 
 | File | Change |
 |------|--------|
-| `src/pages/AdminPdfEditor.tsx` | New — main editor page |
-| `src/components/admin/PdfCanvas.tsx` | New — PDF page + Fabric overlay |
-| `src/components/admin/PdfToolbar.tsx` | New — tool selection bar |
-| `src/components/admin/SignatureStampModal.tsx` | New — create/reuse signature |
-| `src/components/layout/AppSidebar.tsx` | Add Admin nav item |
-| `src/App.tsx` | Add `/admin/pdf-editor` route |
-| Migration | Create `admin_documents` table + `admin-documents` storage bucket |
+| `src/pages/AdminPdfEditor.tsx` | Complete rewrite — new layout with right sidebar state management, signers list, active tab |
+| `src/components/admin/PdfToolbar.tsx` | Delete — replaced by right sidebar tabs |
+| `src/components/admin/PdfEditorSidebar.tsx` | New — right sidebar with 6 tab panels (Signers, Docs, Tools, Layouts, Options, Feedback) |
+| `src/components/admin/PdfCanvas.tsx` | Minor — no structural changes, tool modes still passed as props |
+| `src/components/admin/SignatureStampModal.tsx` | No changes |
+
+### Interaction Details
+
+- Clicking a tab icon toggles the panel open/closed (clicking active tab closes it)
+- Active tab has green background matching screenshots (`bg-[#2D5F2B]` dark green)
+- Tab icons are stacked vertically on the far right (~60px wide)
+- Panel content area is ~350px wide, slides between icons and PDF area
+- Tools panel sets the `activeTool` state which flows to `PdfCanvas`
+- Signers are managed in local state (array of signer objects) — persisted alongside annotations on Save
+- "Add from Contacts" queries existing contacts via `useContacts`
 
