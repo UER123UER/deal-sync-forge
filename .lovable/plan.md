@@ -1,101 +1,111 @@
 
 
-## Multi-Feature Update Plan
+## Admin PDF Editor Dashboard
 
-The user is requesting 8 distinct changes. Here's the plan:
+### What This Is
 
----
+A new `/admin/pdf-editor` page where you can upload any PDF, view it rendered page-by-page, and overlay interactive annotations on top — text boxes, signatures, initials, drawn marks, lines, highlights, and designated client signing fields. This is a full PDF annotation workspace, not tied to any specific form template.
 
-### 1. Seller Search in NewDeal (Step 5)
-Add a contact search input above the Role field in the Seller Legal Name step. When the user types, filter existing contacts (from `useContacts`). Selecting a contact auto-fills first name, last name, email, phone, and company into `sellerForm`.
+### Architecture
 
-**File**: `src/pages/NewDeal.tsx` — Add search input + dropdown similar to Step 4's agent search, but for sellers.
+**PDF Rendering**: Use `pdfjs-dist` (Mozilla's PDF.js) to render each page of the uploaded PDF onto `<canvas>` elements.
 
----
+**Annotation Layer**: Use `fabric.js` on a transparent canvas overlaid on each PDF page. Fabric.js provides:
+- Free-draw mode (pen/brush)
+- Text objects (editable text boxes)
+- Line objects
+- Rectangle objects (for highlights with semi-transparent fill)
+- Image objects (for signature/initials stamps)
+- Object selection, moving, resizing, deleting
 
-### 2. Export Contacts (People page)
-Add an "Export" button next to the New Contact dropdown on the People page. Clicking it generates a CSV of all contacts (or filtered/selected contacts) using PapaParse's `unparse` and triggers a download.
+**Tool Modes** (matching the screenshots you shared):
+- **Select** — default pointer, move/resize annotations
+- **Text** — click to place an editable text box
+- **Sign** — click to stamp your saved signature
+- **Initials** — click to stamp your saved initials
+- **Highlight** — drag to create a semi-transparent yellow rectangle
+- **Draw** — freehand drawing with pen tool
+- **Line** — click-drag to draw a straight line
+- **Text Box** — place a bordered text input area
+- **Designate Signature Field** — place a "Sign Here" marker that becomes an interactive field when sent to clients
+- **Designate Initials Field** — place an "Initials" marker for clients
+- **Designate Date Field** — place a "Date" marker for clients
 
-**File**: `src/pages/People.tsx` — Add Export button, implement CSV download using `Papa.unparse`.
+### File Structure
 
----
+| File | Purpose |
+|------|---------|
+| `src/pages/AdminPdfEditor.tsx` | Main page: upload, toolbar, page navigation, export |
+| `src/components/admin/PdfCanvas.tsx` | Single PDF page renderer + Fabric.js overlay canvas |
+| `src/components/admin/PdfToolbar.tsx` | Horizontal toolbar with all tool icons |
+| `src/components/admin/SignatureStampModal.tsx` | Modal to create/select signature or initials stamp |
 
-### 3. Role Dropdown in New Contact Panel
-Replace the free-text Role input in the create/edit contact panel with a `<Select>` dropdown using the same `CONTACT_ROLES` list from DealDetail (Buyer, Buyer Agent, Seller, Seller Broker, Title, etc.).
+### Page Layout
 
-**File**: `src/pages/People.tsx` — Import `Select` components, replace Role `<Input>` with `<Select>`.
+```text
+┌─────────────────────────────────────────────────┐
+│ Admin PDF Editor                    [Upload PDF] │
+├─────────────────────────────────────────────────┤
+│ Toolbar:                                         │
+│ [Select][Text][Sign][Initials][Highlight]        │
+│ [Draw][Line][Text Box]                           │
+│ [⬜ Signature Field][⬜ Initials Field][⬜ Date] │
+│ ─── separator ───                                │
+│ [Delete Selected] [Undo]  [Save] [Send to Client]│
+├─────────────────────────────────────────────────┤
+│                                                   │
+│   ┌──── Page 1 of N ────┐                        │
+│   │  PDF rendered on     │                        │
+│   │  canvas              │                        │
+│   │                      │                        │
+│   │  [text box overlay]  │  ← Fabric.js canvas   │
+│   │  [signature stamp]   │    on top of PDF       │
+│   │  [drawn line]        │                        │
+│   └──────────────────────┘                        │
+│                                                   │
+│   ┌──── Page 2 of N ────┐                        │
+│   │  ...                 │                        │
+│   └──────────────────────┘                        │
+│                                                   │
+│           [< Prev] Page 1/5 [Next >]              │
+└─────────────────────────────────────────────────┘
+```
 
----
+### Workflow
 
-### 4. Remove "Download Forms" Button
-Remove the Download Forms button and its handler from the Transactions page.
+1. Click "Upload PDF" → file picker → PDF.js renders all pages
+2. Select a tool from the toolbar
+3. Click/drag on the PDF page to place annotations
+4. "Designate" tools place colored markers (e.g., yellow "Sign Here" box) that map to client signing fields
+5. "Send to Client" saves the annotation positions + PDF reference, creates a signature request with field positions, and generates a signing link
+6. "Save" persists annotations to Supabase (JSON blob per document)
 
-**File**: `src/pages/Transactions.tsx` — Remove `handleDownloadForms` function and the button.
+### Database
 
----
+New table `admin_documents`:
+- `id`, `user_id`, `file_name`, `storage_path` (PDF in Supabase storage), `annotations` (JSONB — serialized Fabric.js objects per page), `designated_fields` (JSONB — array of client signing field positions), `created_at`, `updated_at`
 
-### 5. Referral Tab (New Page)
-Create a new Referral page at `/referral` with:
-- A generated QR code (using a lightweight library or inline SVG via `qrcode` npm package) pointing to a referral link
-- A copyable referral link
-- Earnings display: "$20 per referral" with a mock counter of total earned
+New storage bucket `admin-documents` for uploaded PDFs.
 
-Add "Referral" nav item in the sidebar below Finances.
+### Route & Navigation
 
-**Files**: New `src/pages/Referral.tsx`, update `AppSidebar.tsx` and `App.tsx`.
+- Route: `/admin/pdf-editor` and `/admin/pdf-editor/:documentId`
+- Sidebar: Add a "Admin" nav item with a Shield icon (only visible to admin — for now, always visible; auth gating comes later)
 
----
+### Dependencies
 
-### 6. Calendar: Add Holidays + Create Events
-Enhance the Calendar page:
-- Add US federal holidays (hardcoded list) displayed on their respective days
-- Add a "+" button or click-on-day to create events/tasks directly from the calendar
-- Show a dialog to enter event title, date, and optionally time
-- Use the existing `useCreateTask` hook to persist
+- `pdfjs-dist` — PDF rendering
+- `fabric` — canvas annotation layer (v6)
 
-**File**: `src/pages/Calendar.tsx` — Add holidays data, add create-event dialog, wire to `useCreateTask`.
-
----
-
-### 7. Fix Photo Upload
-The photo upload hook looks correct but may fail due to Supabase storage bucket permissions. Check and ensure the upload flow works. The code itself (`useDealPhotos.ts`) appears functional — the issue is likely a missing storage bucket or RLS policy. Will add error toast feedback so failures are visible.
-
-**File**: `src/pages/DealDetail.tsx` — Ensure `handlePhotoUpload` shows error details on failure.
-
----
-
-### 8. Remove "Report an Issue" Button
-Remove the Report an Issue button from the FormEditor header.
-
-**File**: `src/pages/FormEditor.tsx` — Remove the button (lines 156-158).
-
----
-
-### 9. Contact Brokerage Tab (New Page)
-Create a new "Contact Brokerage" page at `/contact-brokerage` with:
-- A category dropdown: Compliance Question, IT Question, General Question
-- File upload area for images, PDFs, and documents (stored in Supabase storage or shown as attachments)
-- A message/description textarea
-- Submit button that shows a success toast
-
-Add "Contact Brokerage" nav item in the sidebar below Referral.
-
-**Files**: New `src/pages/ContactBrokerage.tsx`, update `AppSidebar.tsx` and `App.tsx`.
-
----
-
-### Summary of File Changes
+### Files Modified/Created
 
 | File | Change |
 |------|--------|
-| `src/pages/NewDeal.tsx` | Add seller contact search above Role field |
-| `src/pages/People.tsx` | Add Export button + Role dropdown in contact panel |
-| `src/pages/Transactions.tsx` | Remove Download Forms button |
-| `src/pages/FormEditor.tsx` | Remove Report an Issue button |
-| `src/pages/Calendar.tsx` | Add holidays + create event from calendar |
-| `src/pages/DealDetail.tsx` | Better error handling on photo upload |
-| `src/pages/Referral.tsx` | New page: QR code, referral link, earnings |
-| `src/pages/ContactBrokerage.tsx` | New page: category dropdown, file upload, message |
-| `src/components/layout/AppSidebar.tsx` | Add Referral + Contact Brokerage nav items |
-| `src/App.tsx` | Add routes for `/referral` and `/contact-brokerage` |
+| `src/pages/AdminPdfEditor.tsx` | New — main editor page |
+| `src/components/admin/PdfCanvas.tsx` | New — PDF page + Fabric overlay |
+| `src/components/admin/PdfToolbar.tsx` | New — tool selection bar |
+| `src/components/admin/SignatureStampModal.tsx` | New — create/reuse signature |
+| `src/components/layout/AppSidebar.tsx` | Add Admin nav item |
+| `src/App.tsx` | Add `/admin/pdf-editor` route |
+| Migration | Create `admin_documents` table + `admin-documents` storage bucket |
 
