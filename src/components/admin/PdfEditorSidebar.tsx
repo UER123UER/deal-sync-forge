@@ -28,6 +28,12 @@ export interface Signer {
   type: string;
 }
 
+export interface SavedDocument {
+  id: string;
+  file_name: string;
+  updated_at: string | null;
+}
+
 interface PdfEditorSidebarProps {
   activeTab: SidebarTab | null;
   onTabChange: (tab: SidebarTab | null) => void;
@@ -39,6 +45,9 @@ interface PdfEditorSidebarProps {
   selectedSignerId: string | null;
   onSelectSigner: (id: string | null) => void;
   documents: { name: string }[];
+  savedDocuments?: SavedDocument[];
+  onOpenDocument?: (id: string) => void;
+  onDeleteDocument?: (id: string) => void;
 }
 
 const tabs: { id: SidebarTab; icon: React.ElementType; label: string }[] = [
@@ -63,6 +72,9 @@ export function PdfEditorSidebar({
   selectedSignerId,
   onSelectSigner,
   documents,
+  savedDocuments = [],
+  onOpenDocument,
+  onDeleteDocument,
 }: PdfEditorSidebarProps) {
   const [showAddForm, setShowAddForm] = useState(false);
   const [newSigner, setNewSigner] = useState({ firstName: '', lastName: '', email: '', role: 'Seller', type: 'Remote Signer' });
@@ -101,7 +113,14 @@ export function PdfEditorSidebar({
                   onAddSigner={handleAddSigner}
                 />
               )}
-              {activeTab === 'docs' && <DocsPanel documents={documents} />}
+              {activeTab === 'docs' && (
+                <DocsPanel
+                  documents={documents}
+                  savedDocuments={savedDocuments}
+                  onOpenDocument={onOpenDocument}
+                  onDeleteDocument={onDeleteDocument}
+                />
+              )}
               {activeTab === 'tools' && (
                 <ToolsPanel
                   activeTool={activeTool}
@@ -275,10 +294,20 @@ function SignersPanel({
   );
 }
 
-function DocsPanel({ documents }: { documents: { name: string }[] }) {
+function DocsPanel({
+  documents,
+  savedDocuments = [],
+  onOpenDocument,
+  onDeleteDocument,
+}: {
+  documents: { name: string }[];
+  savedDocuments?: SavedDocument[];
+  onOpenDocument?: (id: string) => void;
+  onDeleteDocument?: (id: string) => void;
+}) {
   return (
     <div className="space-y-4">
-      <h3 className="text-sm font-semibold text-foreground">Documents</h3>
+      <h3 className="text-sm font-semibold text-foreground">Current Document</h3>
       <div className="space-y-2">
         {documents.map((doc, idx) => (
           <div key={idx} className="flex items-center gap-2 p-2 border rounded-md bg-muted/30">
@@ -288,6 +317,33 @@ function DocsPanel({ documents }: { documents: { name: string }[] }) {
           </div>
         ))}
       </div>
+
+      {savedDocuments.length > 0 && (
+        <>
+          <Separator />
+          <h3 className="text-sm font-semibold text-foreground">Saved Documents</h3>
+          <div className="space-y-2">
+            {savedDocuments.map((doc) => (
+              <div key={doc.id} className="flex items-center gap-2 p-2 border rounded-md bg-muted/30">
+                <FileText className="w-4 h-4 text-muted-foreground shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm truncate">{doc.file_name}</p>
+                  <p className="text-[10px] text-muted-foreground">
+                    {doc.updated_at ? new Date(doc.updated_at).toLocaleDateString() : ''}
+                  </p>
+                </div>
+                <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => onOpenDocument?.(doc.id)}>
+                  <FileText className="w-3 h-3" />
+                </Button>
+                <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0 text-destructive" onClick={() => onDeleteDocument?.(doc.id)}>
+                  <Trash2 className="w-3 h-3" />
+                </Button>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+
       <Button variant="outline" size="sm" className="w-full gap-2">
         <Plus className="w-4 h-4" /> Add a Document or Form
       </Button>
@@ -321,8 +377,8 @@ function ToolsPanel({
     { mode: 'highlight', icon: Highlighter, label: 'Highlight' },
     { mode: 'line', icon: Minus, label: 'Line' },
     { mode: 'draw', icon: Pencil, label: 'Freehand' },
-    { mode: 'line', icon: Strikethrough, label: 'Strikethrough' },
-    { mode: 'highlight', icon: Circle, label: 'Ellipse' },
+    { mode: 'strikethrough', icon: Strikethrough, label: 'Strikethrough' },
+    { mode: 'ellipse', icon: Circle, label: 'Ellipse' },
   ];
 
   return (

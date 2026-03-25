@@ -8,6 +8,8 @@ export type ToolMode =
   | 'draw'
   | 'line'
   | 'textbox'
+  | 'strikethrough'
+  | 'ellipse'
   | 'designate-signature'
   | 'designate-initials'
   | 'designate-date';

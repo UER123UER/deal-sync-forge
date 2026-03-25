@@ -1,5 +1,5 @@
 import { useEffect, useRef, useCallback } from 'react';
-import { Canvas as FabricCanvas, Rect, IText, Line, PencilBrush, FabricImage, FabricObject } from 'fabric';
+import { Canvas as FabricCanvas, Rect, IText, Line, PencilBrush, FabricImage, FabricObject, Ellipse } from 'fabric';
 import type { ToolMode } from './PdfToolbar';
 
 interface PdfCanvasProps {
@@ -30,7 +30,9 @@ export function PdfCanvas({
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasElRef = useRef<HTMLCanvasElement>(null);
   const bgCanvasRef = useRef<HTMLCanvasElement>(null);
-  const lineStartRef = useRef<{ x: number; y: number } | null>(null);
+  const drawStateRef = useRef<{ isDrawing: boolean; startX: number; startY: number; tempObj: FabricObject | null }>({
+    isDrawing: false, startX: 0, startY: 0, tempObj: null,
+  });
 
   // Render PDF page image on background canvas
   useEffect(() => {
@@ -69,10 +71,13 @@ export function PdfCanvas({
     };
   }, [pageWidth, pageHeight]);
 
-  // Update tool mode
+  // Update tool mode + attach drag-draw handlers
   useEffect(() => {
     const fc = fabricCanvasRef.current;
     if (!fc) return;
+
+    const dragTools = ['line', 'highlight', 'ellipse'];
+    const isDragTool = dragTools.includes(activeTool);
 
     fc.isDrawingMode = activeTool === 'draw';
     if (activeTool === 'draw') {
@@ -92,19 +97,104 @@ export function PdfCanvas({
       fc.discardActiveObject();
       fc.renderAll();
     }
+
+    // Drag-draw handlers for line, highlight, ellipse
+    const onMouseDown = (opt: any) => {
+      if (!isDragTool) return;
+      const pointer = fc.getScenePoint(opt.e);
+      const ds = drawStateRef.current;
+      ds.isDrawing = true;
+      ds.startX = pointer.x;
+      ds.startY = pointer.y;
+
+      let obj: FabricObject;
+      if (activeTool === 'line') {
+        obj = new Line([pointer.x, pointer.y, pointer.x, pointer.y], {
+          stroke: '#000000', strokeWidth: 2, selectable: false, evented: false,
+        });
+      } else if (activeTool === 'highlight') {
+        obj = new Rect({
+          left: pointer.x, top: pointer.y, width: 0, height: 0,
+          fill: 'rgba(255, 255, 0, 0.35)', stroke: 'transparent', strokeWidth: 0,
+          selectable: false, evented: false,
+        });
+        (obj as any).customType = 'highlight';
+      } else {
+        // ellipse
+        obj = new Ellipse({
+          left: pointer.x, top: pointer.y, rx: 0, ry: 0,
+          fill: 'transparent', stroke: '#ef4444', strokeWidth: 2,
+          selectable: false, evented: false,
+        });
+      }
+      ds.tempObj = obj;
+      fc.add(obj);
+      fc.renderAll();
+    };
+
+    const onMouseMove = (opt: any) => {
+      const ds = drawStateRef.current;
+      if (!ds.isDrawing || !ds.tempObj) return;
+      const pointer = fc.getScenePoint(opt.e);
+
+      if (activeTool === 'line') {
+        (ds.tempObj as Line).set({ x2: pointer.x, y2: pointer.y });
+      } else if (activeTool === 'highlight') {
+        const left = Math.min(ds.startX, pointer.x);
+        const top = Math.min(ds.startY, pointer.y);
+        ds.tempObj.set({
+          left, top,
+          width: Math.abs(pointer.x - ds.startX),
+          height: Math.abs(pointer.y - ds.startY),
+        });
+      } else if (activeTool === 'ellipse') {
+        const left = Math.min(ds.startX, pointer.x);
+        const top = Math.min(ds.startY, pointer.y);
+        (ds.tempObj as Ellipse).set({
+          left, top,
+          rx: Math.abs(pointer.x - ds.startX) / 2,
+          ry: Math.abs(pointer.y - ds.startY) / 2,
+        });
+      }
+      fc.renderAll();
+    };
+
+    const onMouseUp = () => {
+      const ds = drawStateRef.current;
+      if (!ds.isDrawing || !ds.tempObj) return;
+      ds.tempObj.set({ selectable: true, evented: true });
+      ds.isDrawing = false;
+      ds.tempObj = null;
+      fc.renderAll();
+    };
+
+    if (isDragTool) {
+      fc.on('mouse:down', onMouseDown);
+      fc.on('mouse:move', onMouseMove);
+      fc.on('mouse:up', onMouseUp);
+    }
+
+    return () => {
+      if (isDragTool) {
+        fc.off('mouse:down', onMouseDown);
+        fc.off('mouse:move', onMouseMove);
+        fc.off('mouse:up', onMouseUp);
+      }
+    };
   }, [activeTool]);
 
   const handleCanvasClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     const fc = fabricCanvasRef.current;
     if (!fc) return;
-    if (activeTool === 'select' || activeTool === 'draw') return;
+    // Skip for tools handled by drag or built-in modes
+    if (['select', 'draw', 'line', 'highlight', 'ellipse'].includes(activeTool)) return;
 
     const rect = containerRef.current?.getBoundingClientRect();
     if (!rect) return;
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
-    if (activeTool === 'text') {
+    if (activeTool === 'text' || activeTool === 'textbox') {
       const text = new IText('Type here', {
         left: x, top: y, fontSize: 14, fontFamily: 'Arial',
         fill: '#000000', editable: true,
@@ -112,25 +202,12 @@ export function PdfCanvas({
       fc.add(text);
       fc.setActiveObject(text);
       text.enterEditing();
-    } else if (activeTool === 'highlight') {
-      const highlight = new Rect({
-        left: x, top: y, width: 150, height: 20,
-        fill: 'rgba(255, 255, 0, 0.35)', stroke: 'transparent',
-        strokeWidth: 0,
+    } else if (activeTool === 'strikethrough') {
+      const line = new Line([x - 100, y, x + 100, y], {
+        stroke: '#ef4444', strokeWidth: 2,
       });
-      (highlight as any).customType = 'highlight';
-      fc.add(highlight);
-    } else if (activeTool === 'line') {
-      if (!lineStartRef.current) {
-        lineStartRef.current = { x, y };
-      } else {
-        const line = new Line(
-          [lineStartRef.current.x, lineStartRef.current.y, x, y],
-          { stroke: '#000000', strokeWidth: 2 }
-        );
-        fc.add(line);
-        lineStartRef.current = null;
-      }
+      (line as any).customType = 'strikethrough';
+      fc.add(line);
     } else if (activeTool === 'sign') {
       if (signatureDataUrl) {
         addImageStamp(fc, signatureDataUrl, x, y, 150, 50);
