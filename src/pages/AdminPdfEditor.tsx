@@ -1,13 +1,18 @@
 import { useState, useRef, useCallback } from 'react';
 import { Canvas as FabricCanvas } from 'fabric';
 import * as pdfjsLib from 'pdfjs-dist';
-import { PdfToolbar, type ToolMode } from '@/components/admin/PdfToolbar';
 import { PdfCanvas } from '@/components/admin/PdfCanvas';
+import { PdfEditorSidebar, type SidebarTab, type Signer } from '@/components/admin/PdfEditorSidebar';
 import { SignatureStampModal } from '@/components/admin/SignatureStampModal';
+import type { ToolMode } from '@/components/admin/PdfToolbar';
 import { Button } from '@/components/ui/button';
-import { Upload, ChevronLeft, ChevronRight } from 'lucide-react';
+import {
+  Upload, ChevronLeft, ChevronRight, ArrowLeft,
+  ZoomIn, ZoomOut, HelpCircle, Printer, Download, Save,
+} from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
 
@@ -18,6 +23,7 @@ interface PageData {
 }
 
 export default function AdminPdfEditor() {
+  const navigate = useNavigate();
   const [pages, setPages] = useState<PageData[]>([]);
   const [currentPage, setCurrentPage] = useState(0);
   const [activeTool, setActiveTool] = useState<ToolMode>('select');
@@ -31,11 +37,15 @@ export default function AdminPdfEditor() {
   const [signatureModalOpen, setSignatureModalOpen] = useState(false);
   const [signatureModalMode, setSignatureModalMode] = useState<'sign' | 'initials'>('sign');
   const [isLoading, setIsLoading] = useState(false);
+  const [zoom, setZoom] = useState(100);
+
+  // Sidebar state
+  const [activeTab, setActiveTab] = useState<SidebarTab | null>('signers');
+  const [signers, setSigners] = useState<Signer[]>([]);
+  const [selectedSignerId, setSelectedSignerId] = useState<string | null>(null);
 
   const fabricCanvasRef = useRef<FabricCanvas | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // Store annotations per page
   const annotationsPerPage = useRef<Record<number, string>>({});
 
   const saveCurrentPageAnnotations = useCallback(() => {
@@ -67,25 +77,18 @@ export default function AdminPdfEditor() {
       toast.error('Please upload a PDF file');
       return;
     }
-
     setIsLoading(true);
     setFileName(file.name);
-
     try {
-      // Upload to Supabase storage
       const path = `pdfs/${Date.now()}_${file.name}`;
-      const { error: uploadError } = await supabase.storage
-        .from('admin-documents')
-        .upload(path, file);
+      const { error: uploadError } = await supabase.storage.from('admin-documents').upload(path, file);
       if (uploadError) throw uploadError;
       setStoragePath(path);
 
-      // Render PDF pages
       const arrayBuffer = await file.arrayBuffer();
       const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
       const scale = 1.5;
       const pageDataArr: PageData[] = [];
-
       for (let i = 1; i <= pdf.numPages; i++) {
         const page = await pdf.getPage(i);
         const viewport = page.getViewport({ scale });
@@ -94,13 +97,8 @@ export default function AdminPdfEditor() {
         canvas.height = viewport.height;
         const ctx = canvas.getContext('2d')!;
         await page.render({ canvasContext: ctx, viewport }).promise;
-        pageDataArr.push({
-          imageUrl: canvas.toDataURL('image/png'),
-          width: viewport.width,
-          height: viewport.height,
-        });
+        pageDataArr.push({ imageUrl: canvas.toDataURL('image/png'), width: viewport.width, height: viewport.height });
       }
-
       setPages(pageDataArr);
       setCurrentPage(0);
       annotationsPerPage.current = {};
@@ -121,70 +119,28 @@ export default function AdminPdfEditor() {
     }
   };
 
-  const handleDelete = () => {
-    const fc = fabricCanvasRef.current;
-    if (!fc) return;
-    const active = fc.getActiveObjects();
-    active.forEach((obj) => fc.remove(obj));
-    fc.discardActiveObject();
-    fc.renderAll();
-  };
-
-  const handleUndo = () => {
-    const fc = fabricCanvasRef.current;
-    if (!fc) return;
-    const objects = fc.getObjects();
-    if (objects.length > 0) {
-      fc.remove(objects[objects.length - 1]);
-      fc.renderAll();
-    }
-  };
-
   const handleSave = async () => {
-    if (!storagePath) {
-      toast.error('No document uploaded');
-      return;
-    }
+    if (!storagePath) { toast.error('No document uploaded'); return; }
     setIsSaving(true);
     saveCurrentPageAnnotations();
-
     try {
       const allAnnotations = { ...annotationsPerPage.current };
-      // Collect designated fields
       const designatedFields: any[] = [];
       Object.entries(allAnnotations).forEach(([pageIdx, json]) => {
         const parsed = JSON.parse(json);
         parsed.objects?.forEach((obj: any) => {
           if (obj.customType?.startsWith('designated-')) {
-            designatedFields.push({
-              page: parseInt(pageIdx),
-              type: obj.fieldType,
-              left: obj.left,
-              top: obj.top,
-              width: obj.width,
-              height: obj.height,
-            });
+            designatedFields.push({ page: parseInt(pageIdx), type: obj.fieldType, left: obj.left, top: obj.top, width: obj.width, height: obj.height });
           }
         });
       });
-
       if (documentId) {
-        await (supabase as any).from('admin_documents').update({
-          annotations: allAnnotations,
-          designated_fields: designatedFields,
-          updated_at: new Date().toISOString(),
-        }).eq('id', documentId);
+        await (supabase as any).from('admin_documents').update({ annotations: allAnnotations, designated_fields: designatedFields, updated_at: new Date().toISOString() }).eq('id', documentId);
       } else {
-        const { data, error } = await (supabase as any).from('admin_documents').insert({
-          file_name: fileName,
-          storage_path: storagePath,
-          annotations: allAnnotations,
-          designated_fields: designatedFields,
-        }).select().single();
+        const { data, error } = await (supabase as any).from('admin_documents').insert({ file_name: fileName, storage_path: storagePath, annotations: allAnnotations, designated_fields: designatedFields }).select().single();
         if (error) throw error;
         setDocumentId(data.id);
       }
-
       toast.success('Document saved');
     } catch (err: any) {
       toast.error(err.message || 'Save failed');
@@ -193,8 +149,13 @@ export default function AdminPdfEditor() {
     }
   };
 
-  const handleSendToClient = () => {
-    toast.info('Send to Client — coming soon! Save first to persist your annotations.');
+  const handleAddSigner = (signer: Omit<Signer, 'id'>) => {
+    setSigners((prev) => [...prev, { ...signer, id: crypto.randomUUID() }]);
+  };
+
+  const handleRemoveSigner = (id: string) => {
+    setSigners((prev) => prev.filter((s) => s.id !== id));
+    if (selectedSignerId === id) setSelectedSignerId(null);
   };
 
   const handleSignatureConfirm = (dataUrl: string) => {
@@ -206,10 +167,10 @@ export default function AdminPdfEditor() {
       localStorage.setItem('admin_initials', dataUrl);
     }
     setSignatureModalOpen(false);
-    toast.success(`${signatureModalMode === 'sign' ? 'Signature' : 'Initials'} saved — click on the PDF to place it`);
+    toast.success(`${signatureModalMode === 'sign' ? 'Signature' : 'Initials'} saved`);
   };
 
-  // Load cached signature/initials from localStorage on mount
+  // Load cached signature/initials
   useState(() => {
     const sig = localStorage.getItem('admin_signature');
     const ini = localStorage.getItem('admin_initials');
@@ -220,78 +181,119 @@ export default function AdminPdfEditor() {
   const currentPageData = pages[currentPage];
 
   return (
-    <div className="flex flex-col h-full">
-      {/* Header */}
-      <div className="flex items-center justify-between px-6 py-3 border-b bg-card">
-        <div>
-          <h1 className="text-xl font-bold text-foreground">Admin PDF Editor</h1>
-          {fileName && <p className="text-xs text-muted-foreground mt-0.5">{fileName}</p>}
+    <div className="flex flex-col h-screen bg-background">
+      {/* Header bar */}
+      <div className="h-12 border-b bg-card flex items-center px-4 gap-3 shrink-0">
+        <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+          <ArrowLeft className="w-4 h-4" /> Back
+        </button>
+
+        <div className="flex items-center gap-1 ml-4">
+          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setZoom((z) => Math.max(25, z - 25))}>
+            <ZoomOut className="w-3.5 h-3.5" />
+          </Button>
+          <span className="text-xs font-medium min-w-[40px] text-center">{zoom}%</span>
+          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setZoom((z) => Math.min(200, z + 25))}>
+            <ZoomIn className="w-3.5 h-3.5" />
+          </Button>
         </div>
-        <div>
+
+        <div className="flex-1 text-center">
+          <span className="text-sm font-medium text-foreground">{fileName || 'Untitled Document'}</span>
+        </div>
+
+        <div className="flex items-center gap-1">
           <input ref={fileInputRef} type="file" accept="application/pdf" className="hidden" onChange={handleUpload} />
-          <Button onClick={() => fileInputRef.current?.click()} disabled={isLoading} className="gap-2">
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => fileInputRef.current?.click()} title="Upload PDF">
             <Upload className="w-4 h-4" />
-            {isLoading ? 'Loading...' : 'Upload PDF'}
+          </Button>
+          <Button variant="ghost" size="icon" className="h-8 w-8" title="Help">
+            <HelpCircle className="w-4 h-4" />
+          </Button>
+          <Button variant="ghost" size="icon" className="h-8 w-8" title="Print">
+            <Printer className="w-4 h-4" />
+          </Button>
+          <Button variant="ghost" size="icon" className="h-8 w-8" title="Download">
+            <Download className="w-4 h-4" />
+          </Button>
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleSave} disabled={isSaving} title="Save">
+            <Save className="w-4 h-4" />
+          </Button>
+          <Button size="sm" className="ml-2 bg-[#2D5F2B] hover:bg-[#234A22] text-white gap-1">
+            Next <ChevronRight className="w-3.5 h-3.5" />
           </Button>
         </div>
       </div>
 
-      {/* Toolbar */}
-      {pages.length > 0 && (
-        <PdfToolbar
-          activeTool={activeTool}
-          onToolChange={setActiveTool}
-          onDelete={handleDelete}
-          onUndo={handleUndo}
-          onSave={handleSave}
-          onSendToClient={handleSendToClient}
-          hasSelection={hasSelection}
-          isSaving={isSaving}
-        />
-      )}
-
-      {/* Canvas area */}
-      <div className="flex-1 overflow-auto bg-muted/50 flex flex-col items-center py-6 gap-4">
-        {pages.length === 0 ? (
-          <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground gap-3">
-            <Upload className="w-12 h-12 opacity-40" />
-            <p className="text-lg">Upload a PDF to get started</p>
-            <Button variant="outline" onClick={() => fileInputRef.current?.click()} disabled={isLoading}>
-              Choose File
-            </Button>
-          </div>
-        ) : (
-          <>
-            {currentPageData && (
-              <PdfCanvas
-                pageImageUrl={currentPageData.imageUrl}
-                pageWidth={currentPageData.width}
-                pageHeight={currentPageData.height}
-                activeTool={activeTool}
-                onSelectionChange={setHasSelection}
-                fabricCanvasRef={fabricCanvasRef}
-                signatureDataUrl={signatureDataUrl}
-                initialsDataUrl={initialsDataUrl}
-                onRequestSignature={() => { setSignatureModalMode('sign'); setSignatureModalOpen(true); }}
-                onRequestInitials={() => { setSignatureModalMode('initials'); setSignatureModalOpen(true); }}
-              />
-            )}
-            {/* Page navigation */}
-            {pages.length > 1 && (
-              <div className="flex items-center gap-3">
-                <Button variant="outline" size="sm" onClick={() => changePage(-1)} disabled={currentPage === 0}>
-                  <ChevronLeft className="w-4 h-4" />
-                </Button>
-                <span className="text-sm text-muted-foreground">
+      {/* Main area: PDF + sidebar */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* PDF workspace */}
+        <div className="flex-1 overflow-auto bg-muted/30 flex flex-col items-center py-6 gap-4">
+          {pages.length === 0 ? (
+            <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground gap-3">
+              <Upload className="w-12 h-12 opacity-40" />
+              <p className="text-lg">Upload a PDF to get started</p>
+              <Button variant="outline" onClick={() => fileInputRef.current?.click()} disabled={isLoading}>
+                {isLoading ? 'Loading...' : 'Choose File'}
+              </Button>
+            </div>
+          ) : (
+            <>
+              {/* Page info bar */}
+              <div className="flex items-center justify-between w-full max-w-3xl px-4">
+                <span className="text-sm font-medium text-foreground truncate max-w-[60%]">{fileName}</span>
+                <span className="text-xs text-muted-foreground">
                   Page {currentPage + 1} of {pages.length}
                 </span>
-                <Button variant="outline" size="sm" onClick={() => changePage(1)} disabled={currentPage === pages.length - 1}>
-                  <ChevronRight className="w-4 h-4" />
-                </Button>
               </div>
-            )}
-          </>
-        )}
+
+              {currentPageData && (
+                <div style={{ transform: `scale(${zoom / 100})`, transformOrigin: 'top center' }}>
+                  <PdfCanvas
+                    pageImageUrl={currentPageData.imageUrl}
+                    pageWidth={currentPageData.width}
+                    pageHeight={currentPageData.height}
+                    activeTool={activeTool}
+                    onSelectionChange={setHasSelection}
+                    fabricCanvasRef={fabricCanvasRef}
+                    signatureDataUrl={signatureDataUrl}
+                    initialsDataUrl={initialsDataUrl}
+                    onRequestSignature={() => { setSignatureModalMode('sign'); setSignatureModalOpen(true); }}
+                    onRequestInitials={() => { setSignatureModalMode('initials'); setSignatureModalOpen(true); }}
+                  />
+                </div>
+              )}
+
+              {pages.length > 1 && (
+                <div className="flex items-center gap-3">
+                  <Button variant="outline" size="sm" onClick={() => changePage(-1)} disabled={currentPage === 0}>
+                    <ChevronLeft className="w-4 h-4" />
+                  </Button>
+                  <span className="text-sm text-muted-foreground">
+                    Page {currentPage + 1} of {pages.length}
+                  </span>
+                  <Button variant="outline" size="sm" onClick={() => changePage(1)} disabled={currentPage === pages.length - 1}>
+                    <ChevronRight className="w-4 h-4" />
+                  </Button>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+
+        {/* Right sidebar */}
+        <PdfEditorSidebar
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          activeTool={activeTool}
+          onToolChange={setActiveTool}
+          signers={signers}
+          onAddSigner={handleAddSigner}
+          onRemoveSigner={handleRemoveSigner}
+          selectedSignerId={selectedSignerId}
+          onSelectSigner={setSelectedSignerId}
+          documents={fileName ? [{ name: fileName }] : []}
+        />
       </div>
 
       <SignatureStampModal
