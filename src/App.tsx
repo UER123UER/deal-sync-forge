@@ -19,6 +19,7 @@ import CalendarPage from "@/pages/Calendar";
 import Finances from "@/pages/Finances";
 import Referral from "@/pages/Referral";
 import ContactBrokerage from "@/pages/ContactBrokerage";
+import AdminPdfEditor from "@/pages/AdminPdfEditor";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -47,6 +48,8 @@ const App = () => (
             <Route path="/finances" element={<Finances />} />
             <Route path="/referral" element={<Referral />} />
             <Route path="/contact-brokerage" element={<ContactBrokerage />} />
+            <Route path="/admin/pdf-editor" element={<AdminPdfEditor />} />
+            <Route path="/admin/pdf-editor/:documentId" element={<AdminPdfEditor />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
