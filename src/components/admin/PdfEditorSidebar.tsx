@@ -321,8 +321,8 @@ function ToolsPanel({
     { mode: 'highlight', icon: Highlighter, label: 'Highlight' },
     { mode: 'line', icon: Minus, label: 'Line' },
     { mode: 'draw', icon: Pencil, label: 'Freehand' },
-    { mode: 'line', icon: Strikethrough, label: 'Strikethrough' },
-    { mode: 'highlight', icon: Circle, label: 'Ellipse' },
+    { mode: 'strikethrough', icon: Strikethrough, label: 'Strikethrough' },
+    { mode: 'ellipse', icon: Circle, label: 'Ellipse' },
   ];
 
   return (
