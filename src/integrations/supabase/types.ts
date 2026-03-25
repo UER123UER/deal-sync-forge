@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_documents: {
+        Row: {
+          annotations: Json | null
+          created_at: string | null
+          designated_fields: Json | null
+          file_name: string
+          id: string
+          storage_path: string
+          updated_at: string | null
+        }
+        Insert: {
+          annotations?: Json | null
+          created_at?: string | null
+          designated_fields?: Json | null
+          file_name: string
+          id?: string
+          storage_path: string
+          updated_at?: string | null
+        }
+        Update: {
+          annotations?: Json | null
+          created_at?: string | null
+          designated_fields?: Json | null
+          file_name?: string
+          id?: string
+          storage_path?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       checklist_items: {
         Row: {
           completed: boolean | null
