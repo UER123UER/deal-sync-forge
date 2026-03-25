@@ -113,7 +113,14 @@ export function PdfEditorSidebar({
                   onAddSigner={handleAddSigner}
                 />
               )}
-              {activeTab === 'docs' && <DocsPanel documents={documents} />}
+              {activeTab === 'docs' && (
+                <DocsPanel
+                  documents={documents}
+                  savedDocuments={savedDocuments}
+                  onOpenDocument={onOpenDocument}
+                  onDeleteDocument={onDeleteDocument}
+                />
+              )}
               {activeTab === 'tools' && (
                 <ToolsPanel
                   activeTool={activeTool}
