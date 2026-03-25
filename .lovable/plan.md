@@ -1,80 +1,58 @@
 
 
-## Fix Admin PDF Editor: Document Persistence + Better Drawing Tools
+## Autofill the Real Legal PDF from Deal Data
 
-### Problems to Fix
+### Problem
 
-1. **No document list / reload** — Documents save to Supabase but there's no way to browse and reopen them later.
-2. **Line tool** — Uses two-click placement (click start, click end) which is confusing. Should be click-drag instead.
-3. **Strikethrough** — Maps to same `line` tool mode, no distinct behavior. Should draw a horizontal line through text at click position.
-4. **Highlight** — Places a fixed 150x20 rectangle on click. Should be click-drag to draw a highlight region of any size.
+The current FormEditor uses a custom HTML document (`ListingAgreementDocument.tsx`) that mimics the listing agreement but is not the actual legal PDF. The user needs the **real uploaded PDF** (the one stored in admin-documents, e.g. "Exclusive Right Of Sale Listing Agreement Single Agent ERS-20sa-3.pdf") to be rendered and autofilled with deal data — overlaying text on the exact PDF coordinates without modifying the PDF structure.
 
----
+### Approach
 
-### Changes
+Rewrite `FormEditor.tsx` to:
+1. **Load the legal PDF from admin-documents storage** — find the matching admin document by file name (or let the user pick one), download it, render each page with PDF.js
+2. **Overlay Fabric.js text objects** at predefined coordinates on the PDF pages — placing deal data (seller name, broker name, address, price, dates) at the exact positions where those blanks appear in the real PDF
+3. **Define a field coordinate map** — a configuration object that maps field keys (sellerName, brokerName, propertyAddress, listPrice, etc.) to `{page, x, y, width, fontSize}` so each value lands precisely on the correct blank line of the PDF
+4. **Keep the PDF unchanged** — the PDF is rendered as a background image; autofilled data appears as Fabric.js IText overlays that can be repositioned if needed
 
-#### 1. Document List on Empty State + Docs Tab (AdminPdfEditor.tsx + PdfEditorSidebar.tsx)
+### Architecture
 
-**Empty state**: When no PDF is loaded, show a list of previously saved documents fetched from `admin_documents` table. Each row shows file name, last updated date, and an "Open" button. Clicking loads the PDF from storage and restores annotations.
+```text
+FormEditor loads deal data → finds admin document PDF → renders with PDF.js
+→ for each field in coordinate map, places an IText overlay with the deal value
+→ user can adjust/edit overlays → Save persists annotations back to admin_documents
+→ Send for Signature works as before
+```
 
-**Docs sidebar tab**: Also show saved documents in the Docs panel so you can switch between them while editing.
+### Field Coordinate Map
 
-**Auto-save on page change**: Already saves annotations per page — also trigger save to Supabase when changing pages (not just manual Save click).
+A TypeScript object defining where each field goes on the PDF (coordinates calibrated to the ERS-20sa form at 1.5x scale):
 
-**Load existing document flow**:
-- Fetch document record from `admin_documents`
-- Download PDF from `admin-documents` storage bucket using `storage_path`
-- Re-render with PDF.js
-- Load saved annotations per page from the `annotations` JSONB column
-- Set `documentId` so subsequent saves update rather than insert
+```typescript
+const FIELD_MAP: Record<string, { page: number; x: number; y: number; width: number; fontSize: number }> = {
+  sellerName: { page: 0, x: 180, y: 118, width: 400, fontSize: 11 },
+  brokerCompany: { page: 0, x: 270, y: 140, width: 350, fontSize: 11 },
+  listingStartDate: { page: 0, x: 200, y: 190, width: 120, fontSize: 11 },
+  listingExpiration: { page: 0, x: 420, y: 190, width: 120, fontSize: 11 },
+  propertyAddress: { page: 0, x: 250, y: 270, width: 400, fontSize: 11 },
+  listPrice: { page: 0, x: 220, y: 365, width: 150, fontSize: 11 },
+  // ... more fields
+};
+```
 
-**Route**: `/admin/pdf-editor/:documentId` already exists — wire it up with `useParams` to auto-load on mount.
+These coordinates will need fine-tuning — I'll calibrate them against the actual PDF rendering.
 
-#### 2. Fix Line Tool — Click-Drag (PdfCanvas.tsx)
-
-Replace the two-click line placement with mouse-down/mouse-move/mouse-up drag interaction:
-- `mousedown` on canvas: record start point, create a temporary `Line` object
-- `mousemove`: update the line's end point in real-time
-- `mouseup`: finalize the line
-
-Use Fabric.js canvas events (`mouse:down`, `mouse:move`, `mouse:up`) instead of the React `onClick` handler for line mode.
-
-#### 3. Fix Strikethrough — Distinct Tool Mode (PdfToolbar.tsx + PdfCanvas.tsx)
-
-Add `'strikethrough'` to `ToolMode`. On click, place a horizontal line (fixed width ~200px, 2px stroke, red color) at the click Y position. This creates a visual strikethrough effect across text.
-
-#### 4. Fix Highlight — Click-Drag Rectangle (PdfCanvas.tsx)
-
-Replace fixed-size highlight with drag-to-draw:
-- `mousedown`: record start, create transparent yellow `Rect`
-- `mousemove`: resize rect to current mouse position
-- `mouseup`: finalize
-
-#### 5. Add Ellipse Tool Mode (PdfToolbar.tsx + PdfCanvas.tsx)
-
-Add `'ellipse'` to `ToolMode`. Import `Ellipse` from fabric. Click-drag to draw an ellipse (no fill, red stroke) — useful for circling items on the document.
-
----
-
-### File Changes
+### Files Changed
 
 | File | Change |
 |------|--------|
-| `src/components/admin/PdfToolbar.tsx` | Add `'strikethrough'` and `'ellipse'` to `ToolMode` |
-| `src/components/admin/PdfCanvas.tsx` | Rewrite interaction: add Fabric mouse events for drag-draw (line, highlight, ellipse, strikethrough). Remove two-click line logic. |
-| `src/pages/AdminPdfEditor.tsx` | Add document list fetch, `useParams` for `:documentId`, load-from-storage function, auto-save, empty-state document browser |
-| `src/components/admin/PdfEditorSidebar.tsx` | Update Docs panel to show saved documents with open/delete actions; pass document list as prop |
+| `src/pages/FormEditor.tsx` | **Rewrite** — replace HTML document with PDF.js rendering + Fabric.js autofill overlays. Load PDF from admin-documents, apply field map, render with PdfCanvas-like approach |
+| `src/components/deal/ListingAgreementDocument.tsx` | **No change** — kept for SignDocument page but no longer used in FormEditor |
 
-### Technical Details
+### Key Details
 
-**Drag-draw pattern** (used for line, highlight, ellipse):
-```text
-canvas.on('mouse:down') → create temp object, set isDrawing=true
-canvas.on('mouse:move') → update object dimensions
-canvas.on('mouse:up')   → finalize, set isDrawing=false
-```
-
-All drag-draw logic lives in `PdfCanvas.tsx` inside the tool-mode `useEffect`, attaching/detaching Fabric event handlers based on `activeTool`.
-
-**Document loading**: `supabase.storage.from('admin-documents').download(storagePath)` → convert blob to ArrayBuffer → PDF.js render → restore annotations from JSONB.
+- **PDF discovery**: Query `admin_documents` for a document whose `file_name` contains "ERS" or "Listing Agreement". If multiple exist, use the most recently uploaded one. If none found, show a message directing the user to upload one in the Admin PDF Editor first.
+- **Reuses PdfCanvas component**: The existing `PdfCanvas` component handles Fabric.js overlays on PDF pages — FormEditor will use the same pattern but in a read-focused mode with autofilled IText objects.
+- **Editable overlays**: Each autofilled field is an `IText` object so the user can click and adjust text if needed.
+- **Save flow**: Saves annotations (the filled field positions + values) back to the deal or as a separate record, and the existing "Send for Signature" panel remains functional.
+- **Page navigation**: Multi-page PDF navigation with prev/next buttons, same as AdminPdfEditor.
 
