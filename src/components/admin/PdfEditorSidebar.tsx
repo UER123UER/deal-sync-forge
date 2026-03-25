@@ -28,6 +28,12 @@ export interface Signer {
   type: string;
 }
 
+export interface SavedDocument {
+  id: string;
+  file_name: string;
+  updated_at: string | null;
+}
+
 interface PdfEditorSidebarProps {
   activeTab: SidebarTab | null;
   onTabChange: (tab: SidebarTab | null) => void;
@@ -39,6 +45,9 @@ interface PdfEditorSidebarProps {
   selectedSignerId: string | null;
   onSelectSigner: (id: string | null) => void;
   documents: { name: string }[];
+  savedDocuments?: SavedDocument[];
+  onOpenDocument?: (id: string) => void;
+  onDeleteDocument?: (id: string) => void;
 }
 
 const tabs: { id: SidebarTab; icon: React.ElementType; label: string }[] = [
