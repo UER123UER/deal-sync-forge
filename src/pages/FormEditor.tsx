@@ -16,29 +16,30 @@ const PDF_SCALE = 1.5;
 
 // Field coordinate map — positions in PDF points (will be scaled by PDF_SCALE)
 // Calibrated to "Exclusive Right Of Sale Listing Agreement Single Agent ERS-20sa"
+// y values are baseline-aligned: pdfplumber top minus ~2pt offset for text to sit on the underline
 const FIELD_MAP: Record<string, { page: number; x: number; y: number; width: number; fontSize: number; fieldKey: string }> = {
-  sellerName:       { page: 0, x: 54,  y: 88,  width: 473, fontSize: 10, fieldKey: 'sellerName' },
-  brokerCompany:    { page: 0, x: 121, y: 106, width: 400, fontSize: 10, fieldKey: 'brokerCompany' },
-  listingStartDate: { page: 0, x: 72,  y: 147, width: 111, fontSize: 10, fieldKey: 'listingStartDate' },
-  listingExpiration: { page: 0, x: 333, y: 147, width: 111, fontSize: 10, fieldKey: 'listingExpiration' },
-  streetAddress:    { page: 0, x: 167, y: 235, width: 409, fontSize: 10, fieldKey: 'streetAddress' },
-  streetAddress2:   { page: 0, x: 90,  y: 251, width: 486, fontSize: 10, fieldKey: 'streetAddress2' },
-  legalDescription: { page: 0, x: 175, y: 268, width: 400, fontSize: 10, fieldKey: 'legalDescription' },
-  listPrice:        { page: 0, x: 123, y: 376, width: 117, fontSize: 10, fieldKey: 'listPrice' },
+  sellerName:       { page: 0, x: 54,  y: 86,  width: 473, fontSize: 11, fieldKey: 'sellerName' },
+  brokerCompany:    { page: 0, x: 121, y: 103, width: 400, fontSize: 11, fieldKey: 'brokerCompany' },
+  listingStartDate: { page: 0, x: 72,  y: 144, width: 111, fontSize: 11, fieldKey: 'listingStartDate' },
+  listingExpiration: { page: 0, x: 333, y: 144, width: 111, fontSize: 11, fieldKey: 'listingExpiration' },
+  streetAddress:    { page: 0, x: 167, y: 233, width: 409, fontSize: 11, fieldKey: 'streetAddress' },
+  streetAddress2:   { page: 0, x: 90,  y: 249, width: 486, fontSize: 11, fieldKey: 'streetAddress2' },
+  legalDescription: { page: 0, x: 175, y: 266, width: 400, fontSize: 11, fieldKey: 'legalDescription' },
+  listPrice:        { page: 0, x: 130, y: 374, width: 110, fontSize: 11, fieldKey: 'listPrice' },
   // Page 4 — Signature fields
-  sellerSignatureDate1:  { page: 4, x: 447, y: 37, width: 128, fontSize: 10, fieldKey: 'sellerSignatureDate1' },
-  sellerPhone1:          { page: 4, x: 140, y: 55, width: 95,  fontSize: 10, fieldKey: 'sellerPhone1' },
-  sellerAddress:         { page: 4, x: 100, y: 75, width: 476, fontSize: 10, fieldKey: 'sellerAddress' },
-  sellerEmail:           { page: 4, x: 128, y: 93, width: 448, fontSize: 10, fieldKey: 'sellerEmail' },
-  sellerSignatureDate2:  { page: 4, x: 447, y: 110, width: 128, fontSize: 10, fieldKey: 'sellerSignatureDate2' },
-  sellerPhone2:          { page: 4, x: 140, y: 129, width: 95,  fontSize: 10, fieldKey: 'sellerPhone2' },
-  sellerAddress2:        { page: 4, x: 100, y: 148, width: 476, fontSize: 10, fieldKey: 'sellerAddress2' },
-  sellerEmail2:          { page: 4, x: 128, y: 166, width: 448, fontSize: 10, fieldKey: 'sellerEmail2' },
-  brokerName:            { page: 4, x: 242, y: 185, width: 172, fontSize: 10, fieldKey: 'brokerName' },
-  brokerDate:            { page: 4, x: 447, y: 185, width: 128, fontSize: 10, fieldKey: 'brokerDate' },
-  brokerFirmName:        { page: 4, x: 161, y: 203, width: 250, fontSize: 10, fieldKey: 'brokerFirmName' },
-  brokerPhone:           { page: 4, x: 470, y: 203, width: 106, fontSize: 10, fieldKey: 'brokerPhone' },
-  brokerAddress:         { page: 4, x: 100, y: 222, width: 476, fontSize: 10, fieldKey: 'brokerAddress' },
+  sellerSignatureDate1:  { page: 4, x: 447, y: 35, width: 128, fontSize: 11, fieldKey: 'sellerSignatureDate1' },
+  sellerPhone1:          { page: 4, x: 140, y: 53, width: 95,  fontSize: 11, fieldKey: 'sellerPhone1' },
+  sellerAddress:         { page: 4, x: 100, y: 72, width: 476, fontSize: 11, fieldKey: 'sellerAddress' },
+  sellerEmail:           { page: 4, x: 128, y: 90, width: 448, fontSize: 11, fieldKey: 'sellerEmail' },
+  sellerSignatureDate2:  { page: 4, x: 447, y: 108, width: 128, fontSize: 11, fieldKey: 'sellerSignatureDate2' },
+  sellerPhone2:          { page: 4, x: 140, y: 127, width: 95,  fontSize: 11, fieldKey: 'sellerPhone2' },
+  sellerAddress2:        { page: 4, x: 100, y: 146, width: 476, fontSize: 11, fieldKey: 'sellerAddress2' },
+  sellerEmail2:          { page: 4, x: 128, y: 164, width: 448, fontSize: 11, fieldKey: 'sellerEmail2' },
+  brokerName:            { page: 4, x: 242, y: 182, width: 172, fontSize: 11, fieldKey: 'brokerName' },
+  brokerDate:            { page: 4, x: 447, y: 182, width: 128, fontSize: 11, fieldKey: 'brokerDate' },
+  brokerFirmName:        { page: 4, x: 161, y: 200, width: 250, fontSize: 11, fieldKey: 'brokerFirmName' },
+  brokerPhone:           { page: 4, x: 470, y: 200, width: 106, fontSize: 11, fieldKey: 'brokerPhone' },
+  brokerAddress:         { page: 4, x: 100, y: 219, width: 476, fontSize: 11, fieldKey: 'brokerAddress' },
 };
 
 interface PageData {
@@ -230,8 +231,8 @@ export default function FormEditor() {
           left: field.x * PDF_SCALE,
           top: field.y * PDF_SCALE,
           fontSize: field.fontSize * PDF_SCALE,
-          fontFamily: 'Arial',
-          fill: '#000080',
+          fontFamily: 'Courier, Courier New, monospace',
+          fill: '#000000',
           editable: true,
         });
         (text as any).fieldKey = key;
