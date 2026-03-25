@@ -231,8 +231,8 @@ export default function FormEditor() {
           left: field.x * PDF_SCALE,
           top: field.y * PDF_SCALE,
           fontSize: field.fontSize * PDF_SCALE,
-          fontFamily: 'Arial',
-          fill: '#000080',
+          fontFamily: 'Courier, Courier New, monospace',
+          fill: '#000000',
           editable: true,
         });
         (text as any).fieldKey = key;
