@@ -72,6 +72,9 @@ export function PdfEditorSidebar({
   selectedSignerId,
   onSelectSigner,
   documents,
+  savedDocuments = [],
+  onOpenDocument,
+  onDeleteDocument,
 }: PdfEditorSidebarProps) {
   const [showAddForm, setShowAddForm] = useState(false);
   const [newSigner, setNewSigner] = useState({ firstName: '', lastName: '', email: '', role: 'Seller', type: 'Remote Signer' });
