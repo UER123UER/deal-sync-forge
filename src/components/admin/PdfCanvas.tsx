@@ -1,5 +1,5 @@
 import { useEffect, useRef, useCallback } from 'react';
-import { Canvas as FabricCanvas, Rect, IText, Line, PencilBrush, FabricImage, FabricObject, Ellipse } from 'fabric';
+import { Canvas as FabricCanvas, Rect, IText, Line, PencilBrush, FabricImage, FabricObject, Ellipse, Group } from 'fabric';
 import type { ToolMode } from './PdfToolbar';
 
 interface PdfCanvasProps {
@@ -264,20 +264,24 @@ function addDesignatedField(
   const h = 30;
 
   const bg = new Rect({
-    left: x, top: y, width: w, height: h,
+    left: 0, top: 0, width: w, height: h,
     fill: bgColor, stroke: textColor, strokeWidth: 1.5,
     rx: 4, ry: 4,
   });
-  (bg as any).customType = `designated-${fieldType}`;
-  (bg as any).fieldType = fieldType;
 
   const text = new IText(label, {
-    left: x + 8, top: y + 6, fontSize: 13, fontFamily: 'Arial',
+    left: 8, top: 6, fontSize: 13, fontFamily: 'Arial',
     fill: textColor, fontWeight: 'bold', editable: false,
     selectable: false, evented: false,
   });
-  (text as any).customType = `designated-${fieldType}-label`;
 
-  fc.add(bg);
-  fc.add(text);
+  const group = new Group([bg, text], {
+    left: x,
+    top: y,
+    subTargetCheck: false,
+  });
+  (group as any).customType = `designated-${fieldType}`;
+  (group as any).fieldType = fieldType;
+
+  fc.add(group);
 }
