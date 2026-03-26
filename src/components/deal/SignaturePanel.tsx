@@ -27,6 +27,9 @@ interface SignaturePanelProps {
   checklistItemId?: string;
   formData?: Record<string, any>;
   designatedFields?: Array<{ type: string; x: number; y: number; page: number; width: number; height: number; signerId?: string }>;
+  /** When 'collect', shows "Continue" instead of "Send" and calls onContinue with recipient data */
+  mode?: 'collect' | 'send';
+  onContinue?: (data: { to: string[]; subject: string; message: string }) => void;
 }
 
 export function SignaturePanel({ open, onClose, documentName, contacts, dealId, checklistItemId, formData, designatedFields }: SignaturePanelProps) {
