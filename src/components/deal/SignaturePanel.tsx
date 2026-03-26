@@ -209,9 +209,32 @@ export function SignaturePanel({ open, onClose, documentName, contacts, dealId, 
 
             {/* Footer */}
             <div className="border-t p-4 flex justify-end flex-shrink-0">
-              <Button onClick={handleSend} disabled={to.length === 0 || createSignatureRequest.isPending}>
-                {createSignatureRequest.isPending ? 'Sending...' : 'Send for Signature'}
-              </Button>
+              {mode === 'collect' ? (
+                <Button
+                  onClick={() => {
+                    if (to.length === 0) {
+                      toast.error('Please select at least one recipient');
+                      return;
+                    }
+                    const recipientsWithoutEmail = to.filter((id) => {
+                      const c = contacts.find((x) => x.id === id);
+                      return !c?.email;
+                    });
+                    if (recipientsWithoutEmail.length > 0) {
+                      toast.error('All recipients must have an email address');
+                      return;
+                    }
+                    onContinue?.({ to, subject, message });
+                  }}
+                  disabled={to.length === 0}
+                >
+                  Continue to Preparation
+                </Button>
+              ) : (
+                <Button onClick={handleSend} disabled={to.length === 0 || createSignatureRequest.isPending}>
+                  {createSignatureRequest.isPending ? 'Sending...' : 'Send for Signature'}
+                </Button>
+              )}
             </div>
           </motion.div>
         </>
