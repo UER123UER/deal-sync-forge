@@ -307,8 +307,15 @@ export default function FormEditor() {
   };
 
   // ── SIGNATURE PREP MODE handlers ──
-  const handleEnterPrepMode = () => {
+  const handleSendForSignature = () => {
     saveAnnotations();
+    setSignaturePanelMode('collect');
+    setSignatureOpen(true);
+  };
+
+  const handleContinueToPrep = (data: { to: string[]; subject: string; message: string }) => {
+    setRecipientData(data);
+    setSignatureOpen(false);
     setSignaturePrepMode(true);
     setActiveTool('select');
     setSidebarTab('signers');
@@ -318,6 +325,7 @@ export default function FormEditor() {
     setSignaturePrepMode(false);
     setActiveTool('select');
     setSidebarTab(null);
+    setRecipientData(null);
   };
 
   const collectDesignatedFields = (): Array<{ type: string; x: number; y: number; page: number; width: number; height: number; signerId?: string }> => {
