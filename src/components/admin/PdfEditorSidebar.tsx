@@ -51,7 +51,7 @@ interface PdfEditorSidebarProps {
   mode?: 'admin' | 'agent';
 }
 
-const tabs: { id: SidebarTab; icon: React.ElementType; label: string }[] = [
+const allTabs: { id: SidebarTab; icon: React.ElementType; label: string }[] = [
   { id: 'signers', icon: Users, label: 'Signers' },
   { id: 'docs', icon: FileText, label: 'Docs' },
   { id: 'tools', icon: List, label: 'Tools' },
@@ -59,6 +59,8 @@ const tabs: { id: SidebarTab; icon: React.ElementType; label: string }[] = [
   { id: 'options', icon: Settings, label: 'Options' },
   { id: 'feedback', icon: HelpCircle, label: 'Feedback' },
 ];
+
+const agentTabs: SidebarTab[] = ['signers', 'tools'];
 
 const ROLES = ['Seller', 'Buyer', 'Agent', 'Broker', 'Attorney', 'Other'];
 
