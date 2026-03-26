@@ -60,7 +60,7 @@ const allTabs: { id: SidebarTab; icon: React.ElementType; label: string }[] = [
   { id: 'feedback', icon: HelpCircle, label: 'Feedback' },
 ];
 
-const agentTabs: SidebarTab[] = ['signers', 'tools'];
+const agentTabs: SidebarTab[] = ['signers', 'docs', 'tools', 'layouts', 'options'];
 
 const ROLES = ['Seller', 'Buyer', 'Agent', 'Broker', 'Attorney', 'Other'];
 
@@ -428,20 +428,16 @@ function ToolsPanel({
         </div>
       </div>
 
-      {!agentMode && (
-        <>
-          <Separator />
-          {/* Markup */}
-          <div>
-            <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Markup</h4>
-            <div className="grid grid-cols-2 gap-2">
-              {markupTools.map((t) => (
-                <ToolButton key={t.label} {...t} active={activeTool === t.mode} onClick={() => onToolChange(t.mode)} />
-              ))}
-            </div>
-          </div>
-        </>
-      )}
+      <Separator />
+      {/* Markup */}
+      <div>
+        <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Markup</h4>
+        <div className="grid grid-cols-2 gap-2">
+          {markupTools.map((t) => (
+            <ToolButton key={t.label} {...t} active={activeTool === t.mode} onClick={() => onToolChange(t.mode)} />
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
