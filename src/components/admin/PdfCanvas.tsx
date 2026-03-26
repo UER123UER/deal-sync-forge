@@ -49,6 +49,16 @@ export function PdfCanvas({
     onSelectionChangeRef.current = onSelectionChange;
   }, [onCanvasChange, onCanvasReady, onSelectionChange]);
 
+  const getPointerFromEvent = useCallback((event: MouseEvent) => {
+    const rect = containerRef.current?.getBoundingClientRect();
+    if (!rect) return null;
+
+    return {
+      x: (event.clientX - rect.left) / zoomScale,
+      y: (event.clientY - rect.top) / zoomScale,
+    };
+  }, [zoomScale]);
+
   // Render PDF page image on background canvas
   useEffect(() => {
     if (!pageImageUrl || !bgCanvasRef.current) return;
@@ -129,7 +139,8 @@ export function PdfCanvas({
     // Drag-draw handlers for line, highlight, ellipse
     const onMouseDown = (opt: any) => {
       if (!isDragTool) return;
-      const pointer = fc.getScenePoint(opt.e);
+      const pointer = getPointerFromEvent(opt.e);
+      if (!pointer) return;
       const ds = drawStateRef.current;
       ds.isDrawing = true;
       ds.startX = pointer.x;
@@ -163,7 +174,8 @@ export function PdfCanvas({
     const onMouseMove = (opt: any) => {
       const ds = drawStateRef.current;
       if (!ds.isDrawing || !ds.tempObj) return;
-      const pointer = fc.getScenePoint(opt.e);
+      const pointer = getPointerFromEvent(opt.e);
+      if (!pointer) return;
 
       if (activeTool === 'line') {
         (ds.tempObj as Line).set({ x2: pointer.x, y2: pointer.y });
@@ -219,7 +231,7 @@ export function PdfCanvas({
         fc.off('mouse:up', onMouseUp);
       }
     };
-  }, [activeTool]);
+  }, [activeTool, getPointerFromEvent, pageHeight, pageWidth]);
 
   const handleCanvasClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     const fc = fabricCanvasRef.current;
@@ -245,6 +257,9 @@ export function PdfCanvas({
     } else if (activeTool === 'strikethrough') {
       const line = new Line([x - 100, y, x + 100, y], {
         stroke: '#ef4444', strokeWidth: 2,
+        strokeUniform: true,
+        lockScalingY: true,
+        lockRotation: true,
       });
       (line as any).customType = 'strikethrough';
       applySelectionStyles(line);
