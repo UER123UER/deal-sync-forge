@@ -60,7 +60,7 @@ const allTabs: { id: SidebarTab; icon: React.ElementType; label: string }[] = [
   { id: 'feedback', icon: HelpCircle, label: 'Feedback' },
 ];
 
-const agentTabs: SidebarTab[] = ['signers', 'tools'];
+const agentTabs: SidebarTab[] = ['signers', 'docs', 'tools', 'layouts', 'options'];
 
 const ROLES = ['Seller', 'Buyer', 'Agent', 'Broker', 'Attorney', 'Other'];
 
