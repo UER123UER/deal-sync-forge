@@ -521,7 +521,7 @@ export default function FormEditor() {
               <ChevronRight className="w-4 h-4" />
             </Button>
           </div>
-          <Button variant="outline" size="sm" className="text-xs gap-1.5" onClick={handleEnterPrepMode}>
+          <Button variant="outline" size="sm" className="text-xs gap-1.5" onClick={handleSendForSignature}>
             <Send className="w-3.5 h-3.5" /> Send for Signature
           </Button>
           <Button size="sm" className="text-xs gap-1.5" onClick={handleSave}>
