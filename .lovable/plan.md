@@ -1,50 +1,53 @@
 
 
-## Fix PDF Autofill: Precise Coordinates, Font, and Clarity
+## Add Signature Prep Editor to FormEditor
 
-### Problems
+### What Changes
 
-1. **Wrong font** — Using `Courier, Courier New, monospace` but the Ahmed Mendez reference uses a clean sans-serif font (matches the PDF's native typeface)
-2. **Coordinates off** — Current FIELD_MAP positions don't align with the actual blank lines on the PDF
-3. **Blurry text** — Fabric.js canvas doesn't account for `devicePixelRatio`, causing fuzzy rendering on retina/HiDPI screens
-4. **Page bleeding bug** — When switching pages, annotations from page 0 leak onto page 1 because `currentPage` is already updated when the cleanup runs
+When an agent clicks "Send for Signature" in the FormEditor, instead of immediately opening the send panel, the editor transitions into a **signature preparation mode** — a layout nearly identical to the Admin PDF Editor with the right-side sidebar (Signers, Tools, etc.). The agent can place "Sign Here", "Initials", and "Date" fields on the PDF, assign them to signers, then click "Next >" to open the send panel.
 
-### Changes (single file: `src/pages/FormEditor.tsx`)
+### Flow
 
-#### 1. Font change
-Replace `'Courier, Courier New, monospace'` with `'Helvetica, Arial, sans-serif'` to match the Ahmed Mendez reference document's clean proportional font.
+```text
+FormEditor (autofill mode)
+  → Click "Send for Signature"
+  → Enter Signature Prep mode (same page, sidebar appears)
+     - Right sidebar with tabs: Signers, Tools
+     - Signers auto-populated from deal contacts
+     - Tools: Designated Signature, Initials, Date fields
+     - Agent places fields on the PDF pages
+  → Click "Next >" in header
+  → SignaturePanel opens with recipients pre-selected
+  → Send creates the signature request with designated field positions
+```
 
-#### 2. Recalibrate FIELD_MAP coordinates
-Using the Ahmed Mendez autofilled PDF as the ground truth, update every field position. Key reference points from the PDF:
+### Layout in Prep Mode
 
-**Page 0:**
-- `sellerName` ("Ahmed Mendez"): x=54, y=82 — left-aligned on line 2 baseline
-- `brokerCompany` ("United Estates Realty"): x=120, y=99 — after "and brokerage"
-- `listingStartDate`: x=72, y=138 — beginning date blank
-- `listingExpiration`: x=333, y=138 — termination date blank  
-- `streetAddress` ("15236 SW 181st Ter, Miami, FL 33187"): x=153, y=196 — after "(a) Street Address:"
-- `streetAddress2`: removed (full address fits on one line in this form)
-- `listPrice` ("255,000"): x=107, y=340 — after "(a) Price: $"
+```text
+┌─ Header: ← Back  |  doc name  |  Page X of Y  |  Next > ─────┐
+├───────────────────────┬──────────────┬─────────────────────────┤
+│                       │              │ [Signers] [Tools]  tabs │
+│   PDF with autofill   │  Panel area  │                         │
+│   + designated fields │  (~300px)    │                         │
+│                       │              │                         │
+└───────────────────────┴──────────────┴─────────────────────────┘
+```
 
-**Page 4 (signature page):**
-- `sellerPhone1` ("(561) 306-9490"): x=148, y=37 — after "Home Telephone:"
-- `sellerAddress` ("15236 SW 181st Ter, Miami, FL 33187"): x=93, y=59 — after "Address:"
-- `sellerEmail` ("ahmedmendez@gmail.com"): x=118, y=80 — after "Email Address:"
-- `brokerFirmName` ("United Estates Realty"): x=182, y=167 — after "Brokerage Firm Name:"
-- `brokerPhone` ("561-501-1044"): x=440, y=167 — after "Telephone:"
-- `brokerAddress` ("222 NE 2nd Avenue, Miami, FL 33137"): x=93, y=187 — after "Address:"
+### Files Changed
 
-#### 3. Fix blurry text
-Increase `PDF_SCALE` from 1.5 to 2.0 for sharper rendering. Additionally, set the Fabric.js canvas to use `devicePixelRatio` so text renders crisply on HiDPI displays — set canvas element dimensions to `width * dpr` / `height * dpr` and use CSS to constrain visual size.
+| File | Change |
+|------|--------|
+| `src/pages/FormEditor.tsx` | Add `signaturePrepMode` state. When true: show the `PdfEditorSidebar` (reuse existing component), swap header buttons to "← Back" and "Next >", enable `PdfCanvas` tool interactions. Auto-populate signers from deal contacts. On "Next >", collect designated fields from canvas and open `SignaturePanel` with field data. |
+| `src/components/admin/PdfEditorSidebar.tsx` | Minor: make the component work without doc-management features (hide Docs/Layouts/Options tabs when used in agent context via a new `mode?: 'admin' | 'agent'` prop). |
+| `src/components/deal/SignaturePanel.tsx` | Accept optional `designatedFields` prop to include field placement data in the signature request. |
+| `src/hooks/useSignatureRequests.ts` | Pass `designated_fields` to the signature request creation if provided. |
 
-#### 4. Fix page bleeding
-Add a `prevPageRef` to track the previous page index. When the canvas useEffect fires, save the old canvas JSON under `prevPageRef.current` (the OLD page), not `currentPage` (which is already the NEW page). Then update the ref.
+### Key Details
 
-### Technical Details
-
-- Font size stays at 11pt (scaled by PDF_SCALE) — matches reference
-- Fill color stays `#000000` (solid black)
-- `streetAddress` field now contains the full address with city/state/zip since the ERS-21tb form has one continuous address line
-- The `listPrice` value will be formatted with commas (e.g., "255,000") to match the reference
-- Canvas DPR fix pattern: `canvasEl.width = pageWidth * dpr; canvasEl.style.width = pageWidth + 'px'`
+- **Reuses existing components**: `PdfEditorSidebar` and `PdfCanvas` from the admin editor — no duplication
+- **Signers tab**: Auto-populated from `dealContacts`, no need to manually add
+- **Tools tab**: Only shows "Designated Signature", "Designated Initials", "Designated Date" tools (the markup tools like highlight/line are hidden in agent mode)
+- **Canvas switching**: In prep mode, the raw Fabric canvas is replaced with the `PdfCanvas` component which supports tool interactions
+- **Designated fields are saved**: When "Next >" is clicked, designated field positions are extracted from the Fabric canvas objects and passed through to the signature request so the signer sees exactly where to sign
+- **No route change**: This is a mode toggle within FormEditor, not a new page
 
