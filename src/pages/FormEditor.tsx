@@ -559,6 +559,19 @@ export default function FormEditor() {
           )}
         </div>
       </div>
+      {/* Signature Panel (collect mode from autofill view) */}
+      <SignaturePanel
+        open={signatureOpen}
+        onClose={() => setSignatureOpen(false)}
+        documentName={checklistItem?.name || 'Exclusive Right of Sale Listing Agreement'}
+        contacts={dealContacts}
+        dealId={id || ''}
+        checklistItemId={formId}
+        formData={fieldValuesRef.current}
+        designatedFields={designatedFields}
+        mode={signaturePanelMode}
+        onContinue={handleContinueToPrep}
+      />
     </div>
   );
 }
