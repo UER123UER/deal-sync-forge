@@ -435,8 +435,8 @@ export default function FormEditor() {
                 <ChevronRight className="w-4 h-4" />
               </Button>
             </div>
-            <Button size="sm" className="text-xs gap-1.5" onClick={handleNextToSend}>
-              <Send className="w-3.5 h-3.5" /> Next &gt;
+            <Button size="sm" className="text-xs gap-1.5" onClick={handleFinalSend}>
+              <Send className="w-3.5 h-3.5" /> Send
             </Button>
           </div>
         </div>
