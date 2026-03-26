@@ -62,7 +62,7 @@ export default function FormEditor() {
   const [sidebarTab, setSidebarTab] = useState<SidebarTab | null>('signers');
   const [selectedSignerId, setSelectedSignerId] = useState<string | null>(null);
   const [stampModalOpen, setStampModalOpen] = useState(false);
-  const [stampModalMode, setStampModalMode] = useState<'signature' | 'initials'>('signature');
+  const [stampModalMode, setStampModalMode] = useState<'sign' | 'initials'>('sign');
   const [signatureDataUrl, setSignatureDataUrl] = useState<string | null>(null);
   const [initialsDataUrl, setInitialsDataUrl] = useState<string | null>(null);
   const [designatedFields, setDesignatedFields] = useState<Array<{ type: string; x: number; y: number; page: number; width: number; height: number; signerId?: string }>>([]);
