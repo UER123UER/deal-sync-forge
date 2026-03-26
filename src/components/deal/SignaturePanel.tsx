@@ -29,7 +29,7 @@ interface SignaturePanelProps {
   designatedFields?: Array<{ type: string; x: number; y: number; page: number; width: number; height: number; signerId?: string }>;
 }
 
-export function SignaturePanel({ open, onClose, documentName, contacts, dealId, checklistItemId, formData }: SignaturePanelProps) {
+export function SignaturePanel({ open, onClose, documentName, contacts, dealId, checklistItemId, formData, designatedFields }: SignaturePanelProps) {
   const [to, setTo] = useState<string[]>([]);
   const [subject, setSubject] = useState('Please DocuSign');
   const [message, setMessage] = useState('Please review and sign the attached document.');
