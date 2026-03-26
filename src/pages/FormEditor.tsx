@@ -444,7 +444,7 @@ export default function FormEditor() {
                   fabricCanvasRef={prepFabricCanvasRef}
                   signatureDataUrl={signatureDataUrl}
                   initialsDataUrl={initialsDataUrl}
-                  onRequestSignature={() => { setStampModalMode('signature'); setStampModalOpen(true); }}
+                  onRequestSignature={() => { setStampModalMode('sign'); setStampModalOpen(true); }}
                   onRequestInitials={() => { setStampModalMode('initials'); setStampModalOpen(true); }}
                 />
               )}
