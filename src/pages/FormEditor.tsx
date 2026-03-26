@@ -315,18 +315,26 @@ export default function FormEditor() {
   };
 
   const handleContinueToPrep = (data: { to: string[]; subject: string; message: string }) => {
-    setRecipientData(data);
+    setPendingPrepData(data);
     setSignatureOpen(false);
+  };
+
+  useEffect(() => {
+    if (signatureOpen || !pendingPrepData) return;
+
+    setRecipientData(pendingPrepData);
+    setPendingPrepData(null);
     setSignaturePrepMode(true);
     setActiveTool('select');
     setSidebarTab('signers');
-  };
+  }, [signatureOpen, pendingPrepData]);
 
   const handleExitPrepMode = () => {
     setSignaturePrepMode(false);
     setActiveTool('select');
     setSidebarTab(null);
     setRecipientData(null);
+    setPendingPrepData(null);
   };
 
   const collectDesignatedFields = (): Array<{ type: string; x: number; y: number; page: number; width: number; height: number; signerId?: string }> => {
