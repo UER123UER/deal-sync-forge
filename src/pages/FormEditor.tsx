@@ -377,8 +377,8 @@ export default function FormEditor() {
               x: obj.left,
               y: obj.top,
               page: parseInt(pageIdx),
-              width: (obj.width || 160) * (obj.scaleX || 1),
-              height: (obj.height || 30) * (obj.scaleY || 1),
+              width: obj.width || 160,
+              height: obj.height || 30,
               signerId: selectedSignerId || undefined,
             });
           }
