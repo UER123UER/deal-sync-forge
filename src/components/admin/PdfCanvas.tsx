@@ -119,7 +119,7 @@ export function PdfCanvas({
       } else if (activeTool === 'highlight') {
         obj = new Rect({
           left: pointer.x, top: pointer.y, width: 0, height: 0,
-          fill: 'rgba(255, 255, 0, 0.35)', stroke: '#ca8a04', strokeWidth: 1.5,
+          fill: 'rgba(255, 255, 0, 0.35)', strokeWidth: 0,
           selectable: false, evented: false,
         });
         (obj as any).customType = 'highlight';
