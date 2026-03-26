@@ -2,7 +2,7 @@ import { useState } from 'react';
 import {
   Users, FileText, List, LayoutGrid, Settings, HelpCircle,
   PenTool, Hash, User, Mail, CalendarDays, Clock,
-  Type, Highlighter, Minus, Pencil, Strikethrough, Circle,
+  Type, Highlighter, Minus, Pencil, Strikethrough, Circle, MousePointer2,
   Plus, ChevronDown, GripVertical, Trash2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -380,6 +380,7 @@ function ToolsPanel({
   ];
 
   const markupTools: { mode: ToolMode; icon: React.ElementType; label: string }[] = [
+    { mode: 'select', icon: MousePointer2, label: 'Select' },
     { mode: 'text', icon: Type, label: 'Text Box' },
     { mode: 'highlight', icon: Highlighter, label: 'Highlight' },
     { mode: 'line', icon: Minus, label: 'Line' },
