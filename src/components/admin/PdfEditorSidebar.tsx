@@ -133,6 +133,7 @@ export function PdfEditorSidebar({
                   signers={signers}
                   selectedSignerId={selectedSignerId}
                   onSelectSigner={onSelectSigner}
+                  agentMode={mode === 'agent'}
                 />
               )}
               {activeTab === 'layouts' && <LayoutsPanel />}
