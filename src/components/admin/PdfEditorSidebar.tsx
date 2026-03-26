@@ -357,13 +357,14 @@ function DocsPanel({
 }
 
 function ToolsPanel({
-  activeTool, onToolChange, signers, selectedSignerId, onSelectSigner,
+  activeTool, onToolChange, signers, selectedSignerId, onSelectSigner, agentMode = false,
 }: {
   activeTool: ToolMode;
   onToolChange: (tool: ToolMode) => void;
   signers: Signer[];
   selectedSignerId: string | null;
   onSelectSigner: (id: string | null) => void;
+  agentMode?: boolean;
 }) {
   const signerActions: { mode: ToolMode; icon: React.ElementType; label: string }[] = [
     { mode: 'designate-signature', icon: PenTool, label: 'Sign Here' },
