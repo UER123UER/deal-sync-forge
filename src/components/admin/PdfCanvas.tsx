@@ -58,6 +58,10 @@ export function PdfCanvas({
       height: pageHeight,
       selection: true,
       backgroundColor: 'transparent',
+      preserveObjectStacking: true,
+      selectionBorderColor: '#2563eb',
+      selectionColor: 'rgba(37, 99, 235, 0.12)',
+      selectionLineWidth: 1.5,
     });
     fabricCanvasRef.current = fc;
 
@@ -115,7 +119,7 @@ export function PdfCanvas({
       } else if (activeTool === 'highlight') {
         obj = new Rect({
           left: pointer.x, top: pointer.y, width: 0, height: 0,
-          fill: 'rgba(255, 255, 0, 0.35)', stroke: 'transparent', strokeWidth: 0,
+          fill: 'rgba(255, 255, 0, 0.35)', stroke: '#ca8a04', strokeWidth: 1.5,
           selectable: false, evented: false,
         });
         (obj as any).customType = 'highlight';
@@ -163,6 +167,7 @@ export function PdfCanvas({
       const ds = drawStateRef.current;
       if (!ds.isDrawing || !ds.tempObj) return;
       ds.tempObj.set({ selectable: true, evented: true });
+      fc.setActiveObject(ds.tempObj);
       ds.isDrawing = false;
       ds.tempObj = null;
       fc.renderAll();
@@ -199,6 +204,7 @@ export function PdfCanvas({
         left: x, top: y, fontSize: 14, fontFamily: 'Arial',
         fill: '#000000', editable: true,
       });
+      applySelectionStyles(text);
       fc.add(text);
       fc.setActiveObject(text);
       text.enterEditing();
@@ -207,7 +213,9 @@ export function PdfCanvas({
         stroke: '#ef4444', strokeWidth: 2,
       });
       (line as any).customType = 'strikethrough';
+      applySelectionStyles(line);
       fc.add(line);
+      fc.setActiveObject(line);
     } else if (activeTool === 'sign') {
       if (signatureDataUrl) {
         addImageStamp(fc, signatureDataUrl, x, y, 150, 50);
@@ -250,7 +258,9 @@ function addImageStamp(fc: FabricCanvas, dataUrl: string, x: number, y: number, 
     const fImg = new FabricImage(imgEl, {
       left: x, top: y, scaleX: w / imgEl.width, scaleY: h / imgEl.height,
     });
+    applySelectionStyles(fImg);
     fc.add(fImg);
+    fc.setActiveObject(fImg);
     fc.renderAll();
   };
   imgEl.src = dataUrl;
@@ -280,8 +290,23 @@ function addDesignatedField(
     top: y,
     subTargetCheck: false,
   });
+  applySelectionStyles(group);
   (group as any).customType = `designated-${fieldType}`;
   (group as any).fieldType = fieldType;
 
   fc.add(group);
+  fc.setActiveObject(group);
+  fc.renderAll();
+}
+
+function applySelectionStyles(obj: FabricObject) {
+  obj.set({
+    borderColor: '#2563eb',
+    cornerColor: '#2563eb',
+    cornerStrokeColor: '#ffffff',
+    cornerStyle: 'circle',
+    transparentCorners: false,
+    cornerSize: 10,
+    padding: 4,
+  });
 }

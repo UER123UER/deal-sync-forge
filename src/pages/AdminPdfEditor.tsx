@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import {
   Upload, ChevronLeft, ChevronRight, ArrowLeft,
   ZoomIn, ZoomOut, HelpCircle, Printer, Download, Save,
-  FileText,
+  FileText, Trash2,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -258,6 +258,47 @@ export default function AdminPdfEditor() {
     }
   };
 
+  const handleDeleteSelection = useCallback(() => {
+    const fc = fabricCanvasRef.current;
+    if (!fc) return;
+
+    const activeObjects = fc.getActiveObjects();
+    if (activeObjects.length === 0) return;
+
+    activeObjects.forEach((obj) => fc.remove(obj));
+    fc.discardActiveObject();
+    fc.renderAll();
+    setHasSelection(false);
+
+    if (pages.length > 0) {
+      annotationsPerPage.current[currentPage] = JSON.stringify(fc.toJSON());
+    }
+  }, [currentPage, pages.length]);
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Delete' && event.key !== 'Backspace') return;
+
+      const target = event.target as HTMLElement | null;
+      if (
+        target instanceof HTMLInputElement ||
+        target instanceof HTMLTextAreaElement ||
+        target?.isContentEditable
+      ) {
+        return;
+      }
+
+      const activeObject = fabricCanvasRef.current?.getActiveObject();
+      if (!activeObject) return;
+
+      event.preventDefault();
+      handleDeleteSelection();
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [handleDeleteSelection]);
+
   const handleOpenDocument = (id: string) => {
     // Save current work first
     if (storagePath && pages.length > 0) {
@@ -345,6 +386,16 @@ export default function AdminPdfEditor() {
           </Button>
           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleSave} disabled={isSaving} title="Save">
             <Save className="w-4 h-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={handleDeleteSelection}
+            disabled={!hasSelection}
+            title="Delete selected"
+          >
+            <Trash2 className="w-4 h-4" />
           </Button>
           <Button size="sm" className="ml-2 bg-[#2D5F2B] hover:bg-[#234A22] text-white gap-1">
             Next <ChevronRight className="w-3.5 h-3.5" />
