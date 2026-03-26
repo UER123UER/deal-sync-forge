@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { X, Save, Send, ChevronLeft, ChevronRight, ArrowLeft } from 'lucide-react';
+import { X, Save, Send, ChevronLeft, ChevronRight, ArrowLeft, ZoomIn, ZoomOut, Bold, Italic, Underline, Undo2, Redo2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useDeal, useUpdateDeal } from '@/hooks/useDeals';
 import { useUpdateContact } from '@/hooks/useContacts';
 import { SignaturePanel } from '@/components/deal/SignaturePanel';
 import { PdfEditorSidebar, type Signer, type SidebarTab } from '@/components/admin/PdfEditorSidebar';
-import { PdfCanvas } from '@/components/admin/PdfCanvas';
+import { PdfCanvas, type FontStyle } from '@/components/admin/PdfCanvas';
 import { SignatureStampModal } from '@/components/admin/SignatureStampModal';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -70,6 +70,15 @@ export default function FormEditor() {
   const [signatureDataUrl, setSignatureDataUrl] = useState<string | null>(null);
   const [initialsDataUrl, setInitialsDataUrl] = useState<string | null>(null);
   const [designatedFields, setDesignatedFields] = useState<Array<{ type: string; x: number; y: number; page: number; width: number; height: number; signerId?: string }>>([]);
+  const [zoom, setZoom] = useState(100);
+  const [selectedFontStyle, setSelectedFontStyle] = useState<FontStyle | null>(null);
+  const [canUndo, setCanUndo] = useState(false);
+  const [canRedo, setCanRedo] = useState(false);
+  const historyPerPageRef = useRef<Record<number, string[]>>({});
+  const historyIndexPerPageRef = useRef<Record<number, number>>({});
+  const applyingHistoryRef = useRef(false);
+  const prepHistoryPerPageRef = useRef<Record<number, string[]>>({});
+  const prepHistoryIndexPerPageRef = useRef<Record<number, number>>({});
 
   const [pages, setPages] = useState<PageData[]>([]);
   const [currentPage, setCurrentPage] = useState(0);
@@ -319,6 +328,120 @@ export default function FormEditor() {
     }
   };
 
+  // ── Undo/Redo for prep mode ──
+  const recordPrepSnapshot = useCallback((pageIndex: number) => {
+    if (applyingHistoryRef.current) return;
+    const fc = prepFabricCanvasRef.current;
+    if (!fc) return;
+    const snapshot = JSON.stringify(fc.toJSON());
+    const history = prepHistoryPerPageRef.current[pageIndex] || [];
+    const idx = prepHistoryIndexPerPageRef.current[pageIndex] ?? -1;
+    if (history[idx] === snapshot) return;
+    const next = history.slice(0, idx + 1);
+    next.push(snapshot);
+    const trimmed = next.slice(-50);
+    prepHistoryPerPageRef.current[pageIndex] = trimmed;
+    prepHistoryIndexPerPageRef.current[pageIndex] = trimmed.length - 1;
+    setCanUndo(trimmed.length > 1);
+    setCanRedo(false);
+  }, []);
+
+  const handlePrepUndo = useCallback(() => {
+    const pageIndex = currentPage;
+    const history = prepHistoryPerPageRef.current[pageIndex] || [];
+    const idx = prepHistoryIndexPerPageRef.current[pageIndex] ?? 0;
+    if (idx <= 0 || !prepFabricCanvasRef.current) return;
+    applyingHistoryRef.current = true;
+    const next = idx - 1;
+    prepHistoryIndexPerPageRef.current[pageIndex] = next;
+    prepFabricCanvasRef.current.loadFromJSON(JSON.parse(history[next])).then(() => {
+      prepFabricCanvasRef.current?.renderAll();
+      applyingHistoryRef.current = false;
+      setCanUndo(next > 0);
+      setCanRedo(true);
+    });
+  }, [currentPage]);
+
+  const handlePrepRedo = useCallback(() => {
+    const pageIndex = currentPage;
+    const history = prepHistoryPerPageRef.current[pageIndex] || [];
+    const idx = prepHistoryIndexPerPageRef.current[pageIndex] ?? 0;
+    if (idx >= history.length - 1 || !prepFabricCanvasRef.current) return;
+    applyingHistoryRef.current = true;
+    const next = idx + 1;
+    prepHistoryIndexPerPageRef.current[pageIndex] = next;
+    prepFabricCanvasRef.current.loadFromJSON(JSON.parse(history[next])).then(() => {
+      prepFabricCanvasRef.current?.renderAll();
+      applyingHistoryRef.current = false;
+      setCanUndo(true);
+      setCanRedo(next < history.length - 1);
+    });
+  }, [currentPage]);
+
+  const applyFontStyle = useCallback((patch: Partial<FontStyle>) => {
+    const fc = signaturePrepMode ? prepFabricCanvasRef.current : fabricCanvasRef.current;
+    if (!fc) return;
+    const obj = fc.getActiveObject() as any;
+    if (!obj) return;
+    if (patch.fontSize !== undefined) obj.set({ fontSize: patch.fontSize });
+    if (patch.bold !== undefined) obj.set({ fontWeight: patch.bold ? 'bold' : 'normal' });
+    if (patch.italic !== undefined) obj.set({ fontStyle: patch.italic ? 'italic' : 'normal' });
+    if (patch.underline !== undefined) obj.set({ underline: patch.underline });
+    fc.renderAll();
+    setSelectedFontStyle((prev) => prev ? { ...prev, ...patch } : null);
+  }, [signaturePrepMode]);
+
+  // Keyboard shortcuts for FormEditor
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target?.isContentEditable) return;
+
+      // Zoom
+      if ((e.metaKey || e.ctrlKey) && (e.key === '=' || e.key === '+')) { e.preventDefault(); setZoom((z) => Math.min(200, z + 25)); return; }
+      if ((e.metaKey || e.ctrlKey) && e.key === '-') { e.preventDefault(); setZoom((z) => Math.max(25, z - 25)); return; }
+
+      // Undo/Redo (prep mode only)
+      if (signaturePrepMode) {
+        if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z' && !e.shiftKey) { e.preventDefault(); handlePrepUndo(); return; }
+        if (((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z' && e.shiftKey) || (e.ctrlKey && e.key.toLowerCase() === 'y')) {
+          e.preventDefault(); handlePrepRedo(); return;
+        }
+      }
+
+      // Arrow nudge for prep mode
+      const fc = signaturePrepMode ? prepFabricCanvasRef.current : fabricCanvasRef.current;
+      if (!fc) return;
+      const activeObjects = fc.getActiveObjects();
+      if (activeObjects.length > 0 && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+        e.preventDefault();
+        const step = e.shiftKey ? 10 : 1;
+        const dx = e.key === 'ArrowRight' ? step : e.key === 'ArrowLeft' ? -step : 0;
+        const dy = e.key === 'ArrowDown' ? step : e.key === 'ArrowUp' ? -step : 0;
+        activeObjects.forEach((obj) => { obj.set({ left: (obj.left || 0) + dx, top: (obj.top || 0) + dy }); obj.setCoords(); });
+        fc.renderAll();
+        return;
+      }
+
+      // Font shortcuts
+      const activeObj = fc.getActiveObject() as any;
+      if (activeObj && (activeObj.type === 'i-text' || activeObj.type === 'textbox')) {
+        if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'b') { e.preventDefault(); applyFontStyle({ bold: activeObj.fontWeight !== 'bold' }); return; }
+        if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'i') { e.preventDefault(); applyFontStyle({ italic: activeObj.fontStyle !== 'italic' }); return; }
+        if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'u') { e.preventDefault(); applyFontStyle({ underline: !activeObj.underline }); return; }
+      }
+
+      // Delete
+      if ((e.key === 'Delete' || e.key === 'Backspace') && activeObj) {
+        e.preventDefault();
+        fc.remove(activeObj);
+        fc.renderAll();
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [signaturePrepMode, handlePrepUndo, handlePrepRedo, applyFontStyle]);
+
   const handleClose = () => navigate(`/transactions/${id}`);
 
   const handleSave = async () => {
@@ -445,25 +568,54 @@ export default function FormEditor() {
     return (
       <div className="flex-1 flex flex-col bg-muted/30">
         {/* Prep Header */}
-        <div className="h-14 bg-background border-b flex items-center px-6 flex-shrink-0">
-          <Button variant="ghost" size="sm" className="text-xs gap-1.5 mr-4" onClick={handleExitPrepMode}>
+        <div className="h-14 bg-background border-b flex items-center px-4 gap-2 flex-shrink-0">
+          <Button variant="ghost" size="sm" className="text-xs gap-1.5" onClick={handleExitPrepMode}>
             <ArrowLeft className="w-3.5 h-3.5" /> Back
           </Button>
-          <h1 className="text-sm font-semibold text-foreground truncate flex-1">
+
+          {/* Zoom */}
+          <div className="flex items-center gap-1 border-l pl-2">
+            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setZoom((z) => Math.max(25, z - 25))} title="Zoom out">
+              <ZoomOut className="w-3.5 h-3.5" />
+            </Button>
+            <span className="text-xs font-medium min-w-[38px] text-center">{zoom}%</span>
+            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setZoom((z) => Math.min(200, z + 25))} title="Zoom in">
+              <ZoomIn className="w-3.5 h-3.5" />
+            </Button>
+          </div>
+
+          {/* Undo / Redo */}
+          <div className="flex items-center gap-1 border-l pl-2">
+            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handlePrepUndo} disabled={!canUndo} title="Undo">
+              <Undo2 className="w-3.5 h-3.5" />
+            </Button>
+            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handlePrepRedo} disabled={!canRedo} title="Redo">
+              <Redo2 className="w-3.5 h-3.5" />
+            </Button>
+          </div>
+
+          {/* Font toolbar */}
+          {selectedFontStyle && (
+            <div className="flex items-center gap-1 border-l pl-2">
+              <input
+                type="number" min={6} max={144}
+                value={selectedFontStyle.fontSize}
+                onChange={(e) => { const v = parseInt(e.target.value); if (!isNaN(v) && v >= 6 && v <= 144) applyFontStyle({ fontSize: v }); }}
+                className="w-14 h-7 text-xs border rounded px-1 text-center bg-background"
+                title="Font size"
+              />
+              <Button variant={selectedFontStyle.bold ? 'default' : 'ghost'} size="icon" className="h-7 w-7" onClick={() => applyFontStyle({ bold: !selectedFontStyle.bold })} title="Bold"><Bold className="w-3.5 h-3.5" /></Button>
+              <Button variant={selectedFontStyle.italic ? 'default' : 'ghost'} size="icon" className="h-7 w-7" onClick={() => applyFontStyle({ italic: !selectedFontStyle.italic })} title="Italic"><Italic className="w-3.5 h-3.5" /></Button>
+              <Button variant={selectedFontStyle.underline ? 'default' : 'ghost'} size="icon" className="h-7 w-7" onClick={() => applyFontStyle({ underline: !selectedFontStyle.underline })} title="Underline"><Underline className="w-3.5 h-3.5" /></Button>
+            </div>
+          )}
+
+          <h1 className="text-sm font-semibold text-foreground truncate flex-1 text-center">
             Prepare for Signing — {checklistItem?.name || 'Listing Agreement'}
           </h1>
+
           <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1 mr-4">
-              <Button variant="ghost" size="icon" onClick={() => changePage(-1)} disabled={currentPage === 0}>
-                <ChevronLeft className="w-4 h-4" />
-              </Button>
-              <span className="text-xs text-muted-foreground">
-                Page {currentPage + 1} of {pages.length}
-              </span>
-              <Button variant="ghost" size="icon" onClick={() => changePage(1)} disabled={currentPage === pages.length - 1}>
-                <ChevronRight className="w-4 h-4" />
-              </Button>
-            </div>
+            <span className="text-xs text-muted-foreground">Page {currentPage + 1} of {pages.length}</span>
             <Button size="sm" className="text-xs gap-1.5" onClick={handleFinalSend}>
               <Send className="w-3.5 h-3.5" /> Send
             </Button>
@@ -472,23 +624,43 @@ export default function FormEditor() {
 
         {/* Prep Body */}
         <div className="flex-1 flex overflow-hidden">
-          {/* PDF Canvas area */}
+          {/* PDF Canvas area — all pages stacked */}
           <div className="flex-1 overflow-auto py-8">
-            <div className="flex justify-center">
-              {pageData && (
-                <PdfCanvas
-                  pageImageUrl={pageData.imageUrl}
-                  pageWidth={pageData.width}
-                  pageHeight={pageData.height}
-                  activeTool={activeTool}
-                  onSelectionChange={() => {}}
-                  fabricCanvasRef={prepFabricCanvasRef}
-                  signatureDataUrl={signatureDataUrl}
-                  initialsDataUrl={initialsDataUrl}
-                  onRequestSignature={() => { setStampModalMode('sign'); setStampModalOpen(true); }}
-                  onRequestInitials={() => { setStampModalMode('initials'); setStampModalOpen(true); }}
-                />
-              )}
+            <div className="flex flex-col items-center gap-6">
+              {pages.map((page, idx) => (
+                <div key={idx} className="flex flex-col items-center gap-1">
+                  <span className="text-xs text-muted-foreground">Page {idx + 1}</span>
+                  <div
+                    style={{ transform: `scale(${zoom / 100})`, transformOrigin: 'top center' }}
+                    onClick={() => { if (idx !== currentPage) { if (prepFabricCanvasRef.current) persistCanvasState(prepFabricCanvasRef.current, currentPage, prepAnnotationsPerPage); setCurrentPage(idx); } }}
+                  >
+                    {idx === currentPage ? (
+                      <PdfCanvas
+                        pageImageUrl={page.imageUrl}
+                        pageWidth={page.width}
+                        pageHeight={page.height}
+                        activeTool={activeTool}
+                        onSelectionChange={() => {}}
+                        onSelectionFontChange={setSelectedFontStyle}
+                        fabricCanvasRef={prepFabricCanvasRef}
+                        signatureDataUrl={signatureDataUrl}
+                        initialsDataUrl={initialsDataUrl}
+                        zoomScale={zoom / 100}
+                        onCanvasChange={() => recordPrepSnapshot(currentPage)}
+                        onRequestSignature={() => { setStampModalMode('sign'); setStampModalOpen(true); }}
+                        onRequestInitials={() => { setStampModalMode('initials'); setStampModalOpen(true); }}
+                      />
+                    ) : (
+                      <div
+                        className="relative border shadow-sm bg-white cursor-pointer hover:ring-2 hover:ring-primary/40 transition-all"
+                        style={{ width: page.width, height: page.height }}
+                      >
+                        <img src={page.imageUrl} alt={`Page ${idx + 1}`} style={{ width: page.width, height: page.height, display: 'block' }} />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
 
@@ -537,55 +709,79 @@ export default function FormEditor() {
   return (
     <div className="flex-1 flex flex-col bg-muted/30">
       {/* Header */}
-      <div className="h-14 bg-background border-b flex items-center px-6 flex-shrink-0">
+      <div className="h-14 bg-background border-b flex items-center px-4 gap-2 flex-shrink-0">
         <h1 className="text-sm font-semibold text-foreground truncate flex-1">
           {checklistItem?.name || 'Exclusive Right of Sale Listing Agreement'}
         </h1>
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1 mr-4">
-            <Button variant="ghost" size="icon" onClick={() => changePage(-1)} disabled={currentPage === 0}>
-              <ChevronLeft className="w-4 h-4" />
-            </Button>
-            <span className="text-xs text-muted-foreground">
-              Page {currentPage + 1} of {pages.length}
-            </span>
-            <Button variant="ghost" size="icon" onClick={() => changePage(1)} disabled={currentPage === pages.length - 1}>
-              <ChevronRight className="w-4 h-4" />
-            </Button>
-          </div>
-          <Button variant="outline" size="sm" className="text-xs gap-1.5" onClick={handleSendForSignature}>
-            <Send className="w-3.5 h-3.5" /> Send for Signature
+
+        {/* Zoom */}
+        <div className="flex items-center gap-1">
+          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setZoom((z) => Math.max(25, z - 25))} title="Zoom out">
+            <ZoomOut className="w-3.5 h-3.5" />
           </Button>
-          <Button size="sm" className="text-xs gap-1.5" onClick={handleSave}>
-            <Save className="w-3.5 h-3.5" /> Save
+          <span className="text-xs font-medium min-w-[38px] text-center">{zoom}%</span>
+          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setZoom((z) => Math.min(200, z + 25))} title="Zoom in">
+            <ZoomIn className="w-3.5 h-3.5" />
           </Button>
-          <button onClick={handleClose} className="p-2 rounded-md hover:bg-muted transition-colors ml-2">
-            <X className="w-4 h-4 text-muted-foreground" />
-          </button>
         </div>
+
+        {/* Font toolbar */}
+        {selectedFontStyle && (
+          <div className="flex items-center gap-1 border-l pl-2">
+            <input
+              type="number" min={6} max={144}
+              value={selectedFontStyle.fontSize}
+              onChange={(e) => { const v = parseInt(e.target.value); if (!isNaN(v) && v >= 6 && v <= 144) applyFontStyle({ fontSize: v }); }}
+              className="w-14 h-7 text-xs border rounded px-1 text-center bg-background"
+              title="Font size"
+            />
+            <Button variant={selectedFontStyle.bold ? 'default' : 'ghost'} size="icon" className="h-7 w-7" onClick={() => applyFontStyle({ bold: !selectedFontStyle.bold })} title="Bold"><Bold className="w-3.5 h-3.5" /></Button>
+            <Button variant={selectedFontStyle.italic ? 'default' : 'ghost'} size="icon" className="h-7 w-7" onClick={() => applyFontStyle({ italic: !selectedFontStyle.italic })} title="Italic"><Italic className="w-3.5 h-3.5" /></Button>
+            <Button variant={selectedFontStyle.underline ? 'default' : 'ghost'} size="icon" className="h-7 w-7" onClick={() => applyFontStyle({ underline: !selectedFontStyle.underline })} title="Underline"><Underline className="w-3.5 h-3.5" /></Button>
+          </div>
+        )}
+
+        <span className="text-xs text-muted-foreground">Page {currentPage + 1} of {pages.length}</span>
+        <Button variant="outline" size="sm" className="text-xs gap-1.5" onClick={handleSendForSignature}>
+          <Send className="w-3.5 h-3.5" /> Send for Signature
+        </Button>
+        <Button size="sm" className="text-xs gap-1.5" onClick={handleSave}>
+          <Save className="w-3.5 h-3.5" /> Save
+        </Button>
+        <button onClick={handleClose} className="p-2 rounded-md hover:bg-muted transition-colors">
+          <X className="w-4 h-4 text-muted-foreground" />
+        </button>
       </div>
 
-      {/* Document Body */}
+      {/* Document Body — all pages stacked */}
       <div className="flex-1 overflow-auto py-8">
-        <div className="flex justify-center">
-          {pageData && (
-            <div
-              ref={containerRef}
-              className="relative inline-block border shadow-sm bg-white"
-              style={{ width: pageData.width, height: pageData.height }}
-            >
-              <canvas
-                ref={bgCanvasRef}
-                className="absolute inset-0"
-                style={{ width: pageData.width, height: pageData.height }}
-              />
-              <canvas
-                ref={canvasElRef}
-                className="absolute inset-0"
-                style={{ width: pageData.width, height: pageData.height }}
-              />
+        <div className="flex flex-col items-center gap-6">
+          {pages.map((page, idx) => (
+            <div key={idx} className="flex flex-col items-center gap-1">
+              <span className="text-xs text-muted-foreground">Page {idx + 1}</span>
+              <div style={{ transform: `scale(${zoom / 100})`, transformOrigin: 'top center' }}>
+                {idx === currentPage ? (
+                  <div
+                    ref={containerRef}
+                    className="relative inline-block border shadow-sm bg-white"
+                    style={{ width: page.width, height: page.height }}
+                    onClick={() => setCurrentPage(idx)}
+                  >
+                    <canvas ref={bgCanvasRef} className="absolute inset-0" style={{ width: page.width, height: page.height }} />
+                    <canvas ref={canvasElRef} className="absolute inset-0" style={{ width: page.width, height: page.height }} />
+                  </div>
+                ) : (
+                  <div
+                    className="relative border shadow-sm bg-white cursor-pointer hover:ring-2 hover:ring-primary/40 transition-all"
+                    style={{ width: page.width, height: page.height }}
+                    onClick={() => { saveAnnotations(); setCurrentPage(idx); }}
+                  >
+                    <img src={page.imageUrl} alt={`Page ${idx + 1}`} style={{ width: page.width, height: page.height, display: 'block' }} />
+                  </div>
+                )}
+              </div>
             </div>
-          )}
+          ))}
         </div>
       </div>
       {/* Signature Panel (collect mode from autofill view) */}

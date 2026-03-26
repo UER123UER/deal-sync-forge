@@ -12,4 +12,7 @@ export type ToolMode =
   | 'ellipse'
   | 'designate-signature'
   | 'designate-initials'
-  | 'designate-date';
+  | 'designate-date'
+  | 'designate-fullname'
+  | 'designate-email'
+  | 'designate-time';

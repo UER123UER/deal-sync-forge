@@ -373,10 +373,10 @@ function ToolsPanel({
   ];
 
   const signerFields: { mode: ToolMode; icon: React.ElementType; label: string }[] = [
-    { mode: 'text', icon: User, label: 'Full Name' },
-    { mode: 'text', icon: Mail, label: 'Email Address' },
+    { mode: 'designate-fullname', icon: User, label: 'Full Name' },
+    { mode: 'designate-email', icon: Mail, label: 'Email Address' },
     { mode: 'designate-date', icon: CalendarDays, label: 'Auto Date' },
-    { mode: 'designate-date', icon: Clock, label: 'Auto Time' },
+    { mode: 'designate-time', icon: Clock, label: 'Auto Time' },
   ];
 
   const markupTools: { mode: ToolMode; icon: React.ElementType; label: string }[] = [
@@ -424,7 +424,7 @@ function ToolsPanel({
         <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Signer Fields</h4>
         <div className="grid grid-cols-2 gap-2">
           {signerFields.map((t) => (
-            <ToolButton key={t.label} {...t} active={false} onClick={() => onToolChange(t.mode)} />
+            <ToolButton key={t.label} {...t} active={activeTool === t.mode} onClick={() => onToolChange(t.mode)} />
           ))}
         </div>
       </div>

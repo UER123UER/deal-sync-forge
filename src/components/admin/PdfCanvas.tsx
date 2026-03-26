@@ -2,12 +2,20 @@ import { useEffect, useRef, useCallback } from 'react';
 import { Canvas as FabricCanvas, Rect, IText, Line, PencilBrush, FabricImage, FabricObject, Ellipse, Group } from 'fabric';
 import type { ToolMode } from './PdfToolbar';
 
+export interface FontStyle {
+  fontSize: number;
+  bold: boolean;
+  italic: boolean;
+  underline: boolean;
+}
+
 interface PdfCanvasProps {
   pageImageUrl: string | null;
   pageWidth: number;
   pageHeight: number;
   activeTool: ToolMode;
   onSelectionChange: (hasSelection: boolean) => void;
+  onSelectionFontChange?: (style: FontStyle | null) => void;
   fabricCanvasRef: React.MutableRefObject<FabricCanvas | null>;
   signatureDataUrl: string | null;
   initialsDataUrl: string | null;
@@ -24,6 +32,7 @@ export function PdfCanvas({
   pageHeight,
   activeTool,
   onSelectionChange,
+  onSelectionFontChange,
   fabricCanvasRef,
   signatureDataUrl,
   initialsDataUrl,
@@ -39,6 +48,7 @@ export function PdfCanvas({
   const onCanvasReadyRef = useRef(onCanvasReady);
   const onCanvasChangeRef = useRef(onCanvasChange);
   const onSelectionChangeRef = useRef(onSelectionChange);
+  const onSelectionFontChangeRef = useRef(onSelectionFontChange);
   const drawStateRef = useRef<{ isDrawing: boolean; startX: number; startY: number; tempObj: FabricObject | null }>({
     isDrawing: false, startX: 0, startY: 0, tempObj: null,
   });
@@ -47,17 +57,9 @@ export function PdfCanvas({
     onCanvasReadyRef.current = onCanvasReady;
     onCanvasChangeRef.current = onCanvasChange;
     onSelectionChangeRef.current = onSelectionChange;
-  }, [onCanvasChange, onCanvasReady, onSelectionChange]);
+    onSelectionFontChangeRef.current = onSelectionFontChange;
+  }, [onCanvasChange, onCanvasReady, onSelectionChange, onSelectionFontChange]);
 
-  const getPointerFromEvent = useCallback((event: MouseEvent) => {
-    const rect = containerRef.current?.getBoundingClientRect();
-    if (!rect) return null;
-
-    return {
-      x: (event.clientX - rect.left) / zoomScale,
-      y: (event.clientY - rect.top) / zoomScale,
-    };
-  }, [zoomScale]);
 
   // Render PDF page image on background canvas
   useEffect(() => {
@@ -91,9 +93,23 @@ export function PdfCanvas({
     fabricCanvasRef.current = fc;
     onCanvasReadyRef.current?.(fc);
 
-    fc.on('selection:created', () => onSelectionChangeRef.current(true));
-    fc.on('selection:updated', () => onSelectionChangeRef.current(true));
-    fc.on('selection:cleared', () => onSelectionChangeRef.current(false));
+    const reportFontStyle = () => {
+      const obj = fc.getActiveObject() as any;
+      if (obj && (obj.type === 'i-text' || obj.type === 'textbox' || obj.type === 'text')) {
+        onSelectionFontChangeRef.current?.({
+          fontSize: obj.fontSize ?? 14,
+          bold: obj.fontWeight === 'bold',
+          italic: obj.fontStyle === 'italic',
+          underline: !!obj.underline,
+        });
+      } else {
+        onSelectionFontChangeRef.current?.(null);
+      }
+    };
+
+    fc.on('selection:created', () => { onSelectionChangeRef.current(true); reportFontStyle(); });
+    fc.on('selection:updated', () => { onSelectionChangeRef.current(true); reportFontStyle(); });
+    fc.on('selection:cleared', () => { onSelectionChangeRef.current(false); onSelectionFontChangeRef.current?.(null); });
 
     const handleCanvasChange = () => onCanvasChangeRef.current?.();
     fc.on('path:created', handleCanvasChange);
@@ -239,6 +255,7 @@ export function PdfCanvas({
     // Skip for tools handled by drag or built-in modes
     if (['select', 'draw', 'line', 'highlight', 'ellipse'].includes(activeTool)) return;
 
+
     const rect = containerRef.current?.getBoundingClientRect();
     if (!rect) return;
     const x = (e.clientX - rect.left) / zoomScale;
@@ -283,7 +300,13 @@ export function PdfCanvas({
     } else if (activeTool === 'designate-initials') {
       addDesignatedField(fc, x, y, 'INITIALS', 'rgba(59, 130, 246, 0.3)', '#1d4ed8', 'initials', onCanvasChange);
     } else if (activeTool === 'designate-date') {
-      addDesignatedField(fc, x, y, 'DATE', 'rgba(34, 197, 94, 0.3)', '#15803d', 'date', onCanvasChange);
+      addDesignatedField(fc, x, y, 'MM/DD/YYYY', 'rgba(34, 197, 94, 0.3)', '#15803d', 'date', onCanvasChange);
+    } else if (activeTool === 'designate-fullname') {
+      addPresetTextField(fc, x, y, 'Full Name', 'Enter full name...', '#1e40af', onCanvasChange);
+    } else if (activeTool === 'designate-email') {
+      addPresetTextField(fc, x, y, 'Email', 'email@example.com', '#7c3aed', onCanvasChange);
+    } else if (activeTool === 'designate-time') {
+      addDesignatedField(fc, x, y, 'HH:MM AM/PM', 'rgba(249, 115, 22, 0.3)', '#c2410c', 'time', onCanvasChange);
     }
 
     fc.renderAll();
@@ -315,6 +338,46 @@ function addImageStamp(fc: FabricCanvas, dataUrl: string, x: number, y: number, 
     onCanvasChange?.();
   };
   imgEl.src = dataUrl;
+}
+
+function addPresetTextField(
+  fc: FabricCanvas, x: number, y: number,
+  label: string, placeholder: string, color: string, onCanvasChange?: () => void
+) {
+  const w = label === 'Email' ? 200 : 220;
+  const h = 32;
+
+  const bg = new Rect({
+    left: 0, top: 0, width: w, height: h,
+    fill: `rgba(${color === '#1e40af' ? '30,64,175' : '124,58,237'},0.08)`,
+    stroke: color, strokeWidth: 1.5,
+    rx: 4, ry: 4,
+  });
+
+  const labelText = new IText(`${label}: `, {
+    left: 6, top: 6, fontSize: 11, fontFamily: 'Arial',
+    fill: color, fontWeight: 'bold', editable: false,
+    selectable: false, evented: false,
+  });
+
+  const valueText = new IText(placeholder, {
+    left: label === 'Email' ? 52 : 60, top: 7, fontSize: 11, fontFamily: 'Arial',
+    fill: '#6b7280', fontStyle: 'italic', editable: true,
+    selectable: false, evented: false,
+  });
+
+  const group = new Group([bg, labelText, valueText], {
+    left: x, top: y,
+    subTargetCheck: false,
+  });
+  applySelectionStyles(group);
+  (group as any).customType = `designated-${label.toLowerCase().replace(' ', '')}`;
+  (group as any).fieldType = label.toLowerCase().replace(' ', '');
+
+  fc.add(group);
+  fc.setActiveObject(group);
+  fc.renderAll();
+  onCanvasChange?.();
 }
 
 function addDesignatedField(

@@ -2,7 +2,7 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { Canvas as FabricCanvas } from 'fabric';
 import * as pdfjsLib from 'pdfjs-dist';
 import { useParams, useNavigate } from 'react-router-dom';
-import { PdfCanvas } from '@/components/admin/PdfCanvas';
+import { PdfCanvas, type FontStyle } from '@/components/admin/PdfCanvas';
 import { PdfEditorSidebar, type SidebarTab, type Signer, type SavedDocument } from '@/components/admin/PdfEditorSidebar';
 import { SignatureStampModal } from '@/components/admin/SignatureStampModal';
 import type { ToolMode } from '@/components/admin/PdfToolbar';
@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import {
   Upload, ChevronLeft, ChevronRight, ArrowLeft,
   ZoomIn, ZoomOut, HelpCircle, Printer, Download, Save,
-  FileText, Trash2, Undo2, Redo2,
+  FileText, Trash2, Undo2, Redo2, Bold, Italic, Underline,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -44,6 +44,7 @@ export default function AdminPdfEditor() {
   const [canvasReadyTick, setCanvasReadyTick] = useState(0);
   const [canUndo, setCanUndo] = useState(false);
   const [canRedo, setCanRedo] = useState(false);
+  const [selectedFontStyle, setSelectedFontStyle] = useState<FontStyle | null>(null);
 
   // Sidebar state
   const [activeTab, setActiveTab] = useState<SidebarTab | null>('signers');
@@ -438,6 +439,44 @@ export default function AdminPdfEditor() {
         return;
       }
 
+      // Zoom keyboard shortcuts
+      const isZoomIn = (event.metaKey || event.ctrlKey) && (event.key === '=' || event.key === '+');
+      const isZoomOut = (event.metaKey || event.ctrlKey) && event.key === '-';
+      if (isZoomIn) { event.preventDefault(); setZoom((z) => Math.min(200, z + 25)); return; }
+      if (isZoomOut) { event.preventDefault(); setZoom((z) => Math.max(25, z - 25)); return; }
+
+      // Font style shortcuts (only when text is selected)
+      const activeObj = fabricCanvasRef.current?.getActiveObject() as any;
+      if (activeObj && (activeObj.type === 'i-text' || activeObj.type === 'textbox' || activeObj.type === 'text')) {
+        if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'b') {
+          event.preventDefault();
+          const isBold = activeObj.fontWeight === 'bold';
+          activeObj.set({ fontWeight: isBold ? 'normal' : 'bold' });
+          fabricCanvasRef.current?.renderAll();
+          setSelectedFontStyle((prev) => prev ? { ...prev, bold: !isBold } : null);
+          registerCanvasChange(currentPage);
+          return;
+        }
+        if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'i') {
+          event.preventDefault();
+          const isItalic = activeObj.fontStyle === 'italic';
+          activeObj.set({ fontStyle: isItalic ? 'normal' : 'italic' });
+          fabricCanvasRef.current?.renderAll();
+          setSelectedFontStyle((prev) => prev ? { ...prev, italic: !isItalic } : null);
+          registerCanvasChange(currentPage);
+          return;
+        }
+        if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'u') {
+          event.preventDefault();
+          const isUnderlined = !!activeObj.underline;
+          activeObj.set({ underline: !isUnderlined });
+          fabricCanvasRef.current?.renderAll();
+          setSelectedFontStyle((prev) => prev ? { ...prev, underline: !isUnderlined } : null);
+          registerCanvasChange(currentPage);
+          return;
+        }
+      }
+
       const activeObject = fabricCanvasRef.current?.getActiveObject();
       const activeObjects = fabricCanvasRef.current?.getActiveObjects() || [];
 
@@ -468,7 +507,7 @@ export default function AdminPdfEditor() {
 
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [currentPage, handleDeleteSelection, handleRedo, handleUndo, registerCanvasChange]);
+  }, [currentPage, handleDeleteSelection, handleRedo, handleUndo, registerCanvasChange, applyFontStyle]);
 
   const handleOpenDocument = async (id: string) => {
     if (storagePath && pages.length > 0) {
@@ -524,6 +563,22 @@ export default function AdminPdfEditor() {
     if (selectedSignerId === id) setSelectedSignerId(null);
   };
 
+  const applyFontStyle = useCallback((patch: Partial<FontStyle>) => {
+    const fc = fabricCanvasRef.current;
+    if (!fc) return;
+    const obj = fc.getActiveObject() as any;
+    if (!obj) return;
+    const updates: any = {};
+    if (patch.fontSize !== undefined) updates.fontSize = patch.fontSize;
+    if (patch.bold !== undefined) updates.fontWeight = patch.bold ? 'bold' : 'normal';
+    if (patch.italic !== undefined) updates.fontStyle = patch.italic ? 'italic' : 'normal';
+    if (patch.underline !== undefined) updates.underline = patch.underline;
+    obj.set(updates);
+    fc.renderAll();
+    setSelectedFontStyle((prev) => prev ? { ...prev, ...patch } : null);
+    registerCanvasChange(currentPage);
+  }, [currentPage, registerCanvasChange]);
+
   const handleSignatureConfirm = (dataUrl: string) => {
     if (signatureModalMode === 'sign') {
       setSignatureDataUrl(dataUrl);
@@ -545,14 +600,59 @@ export default function AdminPdfEditor() {
         </button>
 
         <div className="flex items-center gap-1 ml-4">
-          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setZoom((z) => Math.max(25, z - 25))}>
+          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setZoom((z) => Math.max(25, z - 25))} title="Zoom out (Ctrl/⌘ -)">
             <ZoomOut className="w-3.5 h-3.5" />
           </Button>
           <span className="text-xs font-medium min-w-[40px] text-center">{zoom}%</span>
-          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setZoom((z) => Math.min(200, z + 25))}>
+          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setZoom((z) => Math.min(200, z + 25))} title="Zoom in (Ctrl/⌘ +)">
             <ZoomIn className="w-3.5 h-3.5" />
           </Button>
         </div>
+
+        {/* Font toolbar — shown when a text object is selected */}
+        {selectedFontStyle && (
+          <div className="flex items-center gap-1 ml-2 border-l pl-2">
+            <input
+              type="number"
+              min={6}
+              max={144}
+              value={selectedFontStyle.fontSize}
+              onChange={(e) => {
+                const v = parseInt(e.target.value);
+                if (!isNaN(v) && v >= 6 && v <= 144) applyFontStyle({ fontSize: v });
+              }}
+              className="w-14 h-7 text-xs border rounded px-1 text-center bg-background"
+              title="Font size"
+            />
+            <Button
+              variant={selectedFontStyle.bold ? 'default' : 'ghost'}
+              size="icon"
+              className="h-7 w-7"
+              onClick={() => applyFontStyle({ bold: !selectedFontStyle.bold })}
+              title="Bold (Ctrl+B)"
+            >
+              <Bold className="w-3.5 h-3.5" />
+            </Button>
+            <Button
+              variant={selectedFontStyle.italic ? 'default' : 'ghost'}
+              size="icon"
+              className="h-7 w-7"
+              onClick={() => applyFontStyle({ italic: !selectedFontStyle.italic })}
+              title="Italic (Ctrl+I)"
+            >
+              <Italic className="w-3.5 h-3.5" />
+            </Button>
+            <Button
+              variant={selectedFontStyle.underline ? 'default' : 'ghost'}
+              size="icon"
+              className="h-7 w-7"
+              onClick={() => applyFontStyle({ underline: !selectedFontStyle.underline })}
+              title="Underline (Ctrl+U)"
+            >
+              <Underline className="w-3.5 h-3.5" />
+            </Button>
+          </div>
+        )}
 
         <div className="flex-1 text-center">
           <span className="text-sm font-medium text-foreground">{fileName || 'Untitled Document'}</span>
@@ -646,39 +746,53 @@ export default function AdminPdfEditor() {
                 </span>
               </div>
 
-              {currentPageData && (
-                <div style={{ transform: `scale(${zoom / 100})`, transformOrigin: 'top center' }}>
-                  <PdfCanvas
-                    pageImageUrl={currentPageData.imageUrl}
-                    pageWidth={currentPageData.width}
-                    pageHeight={currentPageData.height}
-                    activeTool={activeTool}
-                    onSelectionChange={setHasSelection}
-                    fabricCanvasRef={fabricCanvasRef}
-                    signatureDataUrl={signatureDataUrl}
-                    initialsDataUrl={initialsDataUrl}
-                    zoomScale={zoom / 100}
-                    onCanvasReady={() => setCanvasReadyTick((tick) => tick + 1)}
-                    onCanvasChange={() => registerCanvasChange(currentPage)}
-                    onRequestSignature={() => { setSignatureModalMode('sign'); setSignatureModalOpen(true); }}
-                    onRequestInitials={() => { setSignatureModalMode('initials'); setSignatureModalOpen(true); }}
-                  />
-                </div>
-              )}
-
-              {pages.length > 1 && (
-                <div className="flex items-center gap-3">
-                  <Button variant="outline" size="sm" onClick={() => changePage(-1)} disabled={currentPage === 0}>
-                    <ChevronLeft className="w-4 h-4" />
-                  </Button>
-                  <span className="text-sm text-muted-foreground">
-                    Page {currentPage + 1} of {pages.length}
-                  </span>
-                  <Button variant="outline" size="sm" onClick={() => changePage(1)} disabled={currentPage === pages.length - 1}>
-                    <ChevronRight className="w-4 h-4" />
-                  </Button>
-                </div>
-              )}
+              {/* All pages stacked — scroll to navigate */}
+              <div className="flex flex-col items-center gap-6">
+                {pages.map((page, idx) => (
+                  <div key={idx} className="flex flex-col items-center gap-1">
+                    <span className="text-xs text-muted-foreground">Page {idx + 1}</span>
+                    <div
+                      style={{ transform: `scale(${zoom / 100})`, transformOrigin: 'top center' }}
+                      onClick={() => {
+                        if (idx !== currentPage) {
+                          registerCanvasChange(currentPage);
+                          setCurrentPage(idx);
+                        }
+                      }}
+                    >
+                      {idx === currentPage ? (
+                        <PdfCanvas
+                          pageImageUrl={page.imageUrl}
+                          pageWidth={page.width}
+                          pageHeight={page.height}
+                          activeTool={activeTool}
+                          onSelectionChange={setHasSelection}
+                          onSelectionFontChange={setSelectedFontStyle}
+                          fabricCanvasRef={fabricCanvasRef}
+                          signatureDataUrl={signatureDataUrl}
+                          initialsDataUrl={initialsDataUrl}
+                          zoomScale={zoom / 100}
+                          onCanvasReady={() => setCanvasReadyTick((tick) => tick + 1)}
+                          onCanvasChange={() => registerCanvasChange(currentPage)}
+                          onRequestSignature={() => { setSignatureModalMode('sign'); setSignatureModalOpen(true); }}
+                          onRequestInitials={() => { setSignatureModalMode('initials'); setSignatureModalOpen(true); }}
+                        />
+                      ) : (
+                        <div
+                          className="relative border shadow-sm bg-white cursor-pointer hover:ring-2 hover:ring-primary/40 transition-all"
+                          style={{ width: page.width, height: page.height }}
+                        >
+                          <img
+                            src={page.imageUrl}
+                            alt={`Page ${idx + 1}`}
+                            style={{ width: page.width, height: page.height, display: 'block' }}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </>
           )}
         </div>
