@@ -54,10 +54,6 @@ export default function AdminPdfEditor() {
   const fabricCanvasRef = useRef<FabricCanvas | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const annotationsPerPage = useRef<Record<number, string>>({});
-  const autosaveTimeoutRef = useRef<number | null>(null);
-  const historyPerPageRef = useRef<Record<number, string[]>>({});
-  const historyIndexPerPageRef = useRef<Record<number, number>>({});
-  const applyingHistoryRef = useRef(false);
 
   // Fetch saved documents list
   const fetchSavedDocuments = useCallback(async () => {
@@ -127,13 +123,20 @@ export default function AdminPdfEditor() {
       // Restore annotations
       const annotations = (doc.annotations as Record<string, any>) || {};
       annotationsPerPage.current = {};
-      historyPerPageRef.current = {};
-      historyIndexPerPageRef.current = {};
-      setCanUndo(false);
-      setCanRedo(false);
       Object.entries(annotations).forEach(([key, val]) => {
         annotationsPerPage.current[parseInt(key)] = typeof val === 'string' ? val : JSON.stringify(val);
       });
+
+      // Load first page annotations after canvas initializes
+      setTimeout(() => {
+        const fc = fabricCanvasRef.current;
+        if (fc && annotationsPerPage.current[0]) {
+          fc.loadFromJSON(JSON.parse(annotationsPerPage.current[0])).then(() => {
+            fc.backgroundColor = 'transparent';
+            fc.renderAll();
+          });
+        }
+      }, 300);
 
       toast.success(`Opened "${doc.file_name}"`);
     } catch (err: any) {
@@ -143,12 +146,12 @@ export default function AdminPdfEditor() {
     }
   };
 
-  const savePageAnnotations = useCallback((pageIndex: number) => {
+  const saveCurrentPageAnnotations = useCallback(() => {
     const fc = fabricCanvasRef.current;
     if (fc && pages.length > 0) {
-      annotationsPerPage.current[pageIndex] = JSON.stringify(fc.toJSON());
+      annotationsPerPage.current[currentPage] = JSON.stringify(fc.toJSON());
     }
-  }, [pages.length]);
+  }, [currentPage, pages.length]);
 
   const loadPageAnnotations = useCallback((pageIndex: number) => {
     const fc = fabricCanvasRef.current;
@@ -166,82 +169,10 @@ export default function AdminPdfEditor() {
     }
   }, []);
 
-  const currentPageData = pages[currentPage];
-
-  const updateHistoryAvailability = useCallback((pageIndex: number) => {
-    const history = historyPerPageRef.current[pageIndex] || [];
-    const index = historyIndexPerPageRef.current[pageIndex] ?? -1;
-    setCanUndo(index > 0);
-    setCanRedo(index >= 0 && index < history.length - 1);
-  }, []);
-
-  const ensureHistorySnapshot = useCallback((pageIndex: number) => {
-    if (historyPerPageRef.current[pageIndex]) {
-      updateHistoryAvailability(pageIndex);
-      return;
-    }
-
-    const snapshot = annotationsPerPage.current[pageIndex] ?? JSON.stringify(fabricCanvasRef.current?.toJSON() || { objects: [] });
-    annotationsPerPage.current[pageIndex] = snapshot;
-    historyPerPageRef.current[pageIndex] = [snapshot];
-    historyIndexPerPageRef.current[pageIndex] = 0;
-    updateHistoryAvailability(pageIndex);
-  }, [updateHistoryAvailability]);
-
-  const recordHistorySnapshot = useCallback((pageIndex: number) => {
-    if (applyingHistoryRef.current) return;
-
-    const snapshot = annotationsPerPage.current[pageIndex];
-    if (!snapshot) return;
-
-    const history = historyPerPageRef.current[pageIndex] || [];
-    const currentIndex = historyIndexPerPageRef.current[pageIndex] ?? -1;
-
-    if (history[currentIndex] === snapshot) {
-      updateHistoryAvailability(pageIndex);
-      return;
-    }
-
-    const nextHistory = history.slice(0, currentIndex + 1);
-    nextHistory.push(snapshot);
-
-    const trimmedHistory = nextHistory.slice(-50);
-    historyPerPageRef.current[pageIndex] = trimmedHistory;
-    historyIndexPerPageRef.current[pageIndex] = trimmedHistory.length - 1;
-    updateHistoryAvailability(pageIndex);
-  }, [updateHistoryAvailability]);
-
-  useEffect(() => {
-    if (!pages.length || !currentPageData || !fabricCanvasRef.current) return;
-    loadPageAnnotations(currentPage);
-    setHasSelection(false);
-    ensureHistorySnapshot(currentPage);
-  }, [currentPage, currentPageData, ensureHistorySnapshot, loadPageAnnotations, pages.length, canvasReadyTick]);
-
-  const getScaledSize = (obj: any) => ({
-    width: (obj.width || 160) * (obj.scaleX || 1),
-    height: (obj.height || 30) * (obj.scaleY || 1),
-  });
-
-  const persistDocument = useCallback(async ({
-    showToast = true,
-    refreshDocuments = true,
-    captureCurrentCanvas = true,
-  }: {
-    showToast?: boolean;
-    refreshDocuments?: boolean;
-    captureCurrentCanvas?: boolean;
-  } = {}) => {
-    if (!storagePath) {
-      if (showToast) {
-        toast.error('No document uploaded');
-      }
-      return false;
-    }
+  const handleSave = async () => {
+    if (!storagePath) { toast.error('No document uploaded'); return; }
     setIsSaving(true);
-    if (captureCurrentCanvas) {
-      savePageAnnotations(currentPage);
-    }
+    saveCurrentPageAnnotations();
     try {
       const allAnnotations = { ...annotationsPerPage.current };
       const designatedFields: any[] = [];
@@ -249,8 +180,7 @@ export default function AdminPdfEditor() {
         const parsed = JSON.parse(json);
         parsed.objects?.forEach((obj: any) => {
           if (obj.customType?.startsWith('designated-')) {
-            const { width, height } = getScaledSize(obj);
-            designatedFields.push({ page: parseInt(pageIdx), type: obj.fieldType, left: obj.left, top: obj.top, width, height });
+            designatedFields.push({ page: parseInt(pageIdx), type: obj.fieldType, left: obj.left, top: obj.top, width: obj.width, height: obj.height });
           }
         });
       });
@@ -270,83 +200,14 @@ export default function AdminPdfEditor() {
         if (error) throw error;
         setDocumentId(data.id);
       }
-      if (showToast) {
-        toast.success('Document saved');
-      }
-      if (refreshDocuments) {
-        fetchSavedDocuments();
-      }
-      return true;
+      toast.success('Document saved');
+      fetchSavedDocuments();
     } catch (err: any) {
-      if (showToast) {
-        toast.error(err.message || 'Save failed');
-      }
-      return false;
+      toast.error(err.message || 'Save failed');
     } finally {
       setIsSaving(false);
     }
-  }, [currentPage, documentId, fetchSavedDocuments, fileName, savePageAnnotations, storagePath]);
-
-  const queueAutosave = useCallback((pageIndex: number) => {
-    if (!storagePath) return;
-
-    if (autosaveTimeoutRef.current) {
-      window.clearTimeout(autosaveTimeoutRef.current);
-    }
-
-    autosaveTimeoutRef.current = window.setTimeout(() => {
-      void persistDocument({ showToast: false, refreshDocuments: false, captureCurrentCanvas: false });
-      autosaveTimeoutRef.current = null;
-    }, 800);
-  }, [persistDocument, storagePath]);
-
-  const registerCanvasChange = useCallback((pageIndex: number) => {
-    savePageAnnotations(pageIndex);
-    recordHistorySnapshot(pageIndex);
-    queueAutosave(pageIndex);
-  }, [queueAutosave, recordHistorySnapshot, savePageAnnotations]);
-
-  const restoreHistorySnapshot = useCallback(async (pageIndex: number, nextIndex: number) => {
-    const fc = fabricCanvasRef.current;
-    const history = historyPerPageRef.current[pageIndex] || [];
-    const snapshot = history[nextIndex];
-    if (!fc || !snapshot) return;
-
-    applyingHistoryRef.current = true;
-    annotationsPerPage.current[pageIndex] = snapshot;
-    historyIndexPerPageRef.current[pageIndex] = nextIndex;
-
-    await fc.loadFromJSON(JSON.parse(snapshot));
-    fc.backgroundColor = 'transparent';
-    fc.discardActiveObject();
-    fc.renderAll();
-
-    applyingHistoryRef.current = false;
-    setHasSelection(false);
-    updateHistoryAvailability(pageIndex);
-    queueAutosave(pageIndex);
-  }, [queueAutosave, updateHistoryAvailability]);
-
-  const handleUndo = useCallback(() => {
-    const historyIndex = historyIndexPerPageRef.current[currentPage] ?? -1;
-    if (historyIndex <= 0) return;
-    void restoreHistorySnapshot(currentPage, historyIndex - 1);
-  }, [currentPage, restoreHistorySnapshot]);
-
-  const handleRedo = useCallback(() => {
-    const history = historyPerPageRef.current[currentPage] || [];
-    const historyIndex = historyIndexPerPageRef.current[currentPage] ?? -1;
-    if (historyIndex >= history.length - 1) return;
-    void restoreHistorySnapshot(currentPage, historyIndex + 1);
-  }, [currentPage, restoreHistorySnapshot]);
-
-  useEffect(() => {
-    return () => {
-      if (autosaveTimeoutRef.current) {
-        window.clearTimeout(autosaveTimeoutRef.current);
-      }
-    };
-  }, []);
+  };
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -379,10 +240,6 @@ export default function AdminPdfEditor() {
       setPages(pageDataArr);
       setCurrentPage(0);
       annotationsPerPage.current = {};
-      historyPerPageRef.current = {};
-      historyIndexPerPageRef.current = {};
-      setCanUndo(false);
-      setCanRedo(false);
       setDocumentId(null);
       toast.success(`Loaded ${pdf.numPages} page(s)`);
     } catch (err: any) {
@@ -392,13 +249,18 @@ export default function AdminPdfEditor() {
     }
   };
 
-  const changePage = useCallback((dir: number) => {
+  const changePage = (dir: number) => {
+    saveCurrentPageAnnotations();
     const next = currentPage + dir;
     if (next >= 0 && next < pages.length) {
-      registerCanvasChange(currentPage);
       setCurrentPage(next);
+      setTimeout(() => loadPageAnnotations(next), 100);
+      // Auto-save to Supabase on page change
+      if (storagePath) {
+        setTimeout(() => handleSave(), 200);
+      }
     }
-  }, [currentPage, pages.length, registerCanvasChange]);
+  };
 
   const handleDeleteSelection = useCallback(() => {
     const fc = fabricCanvasRef.current;
@@ -411,11 +273,16 @@ export default function AdminPdfEditor() {
     fc.discardActiveObject();
     fc.renderAll();
     setHasSelection(false);
-    registerCanvasChange(currentPage);
-  }, [currentPage, registerCanvasChange]);
+
+    if (pages.length > 0) {
+      annotationsPerPage.current[currentPage] = JSON.stringify(fc.toJSON());
+    }
+  }, [currentPage, pages.length]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Delete' && event.key !== 'Backspace') return;
+
       const target = event.target as HTMLElement | null;
       if (
         target instanceof HTMLInputElement ||
@@ -478,27 +345,6 @@ export default function AdminPdfEditor() {
       }
 
       const activeObject = fabricCanvasRef.current?.getActiveObject();
-      const activeObjects = fabricCanvasRef.current?.getActiveObjects() || [];
-
-      if (activeObjects.length > 0 && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) {
-        event.preventDefault();
-        const step = event.shiftKey ? 10 : 1;
-        const deltaX = event.key === 'ArrowRight' ? step : event.key === 'ArrowLeft' ? -step : 0;
-        const deltaY = event.key === 'ArrowDown' ? step : event.key === 'ArrowUp' ? -step : 0;
-
-        activeObjects.forEach((obj) => {
-          obj.set({
-            left: (obj.left || 0) + deltaX,
-            top: (obj.top || 0) + deltaY,
-          });
-          obj.setCoords();
-        });
-        fabricCanvasRef.current?.renderAll();
-        registerCanvasChange(currentPage);
-        return;
-      }
-
-      if (event.key !== 'Delete' && event.key !== 'Backspace') return;
       if (!activeObject) return;
 
       event.preventDefault();
@@ -509,28 +355,13 @@ export default function AdminPdfEditor() {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [currentPage, handleDeleteSelection, handleRedo, handleUndo, registerCanvasChange, applyFontStyle]);
 
-  const handleOpenDocument = async (id: string) => {
+  const handleOpenDocument = (id: string) => {
+    // Save current work first
     if (storagePath && pages.length > 0) {
-      if (autosaveTimeoutRef.current) {
-        window.clearTimeout(autosaveTimeoutRef.current);
-        autosaveTimeoutRef.current = null;
-      }
-      const saved = await persistDocument({ showToast: false, refreshDocuments: false });
-      if (!saved) return;
+      saveCurrentPageAnnotations();
     }
     navigate(`/admin/pdf-editor/${id}`);
-  };
-
-  const handleBack = async () => {
-    if (storagePath && pages.length > 0) {
-      if (autosaveTimeoutRef.current) {
-        window.clearTimeout(autosaveTimeoutRef.current);
-        autosaveTimeoutRef.current = null;
-      }
-      const saved = await persistDocument({ showToast: false, refreshDocuments: false });
-      if (!saved) return;
-    }
-    navigate(-1);
+    loadDocument(id);
   };
 
   const handleDeleteDocument = async (id: string) => {
@@ -544,10 +375,6 @@ export default function AdminPdfEditor() {
         setFileName('');
         setStoragePath('');
         annotationsPerPage.current = {};
-        historyPerPageRef.current = {};
-        historyIndexPerPageRef.current = {};
-        setCanUndo(false);
-        setCanRedo(false);
       }
     } catch (err: any) {
       toast.error('Delete failed');
@@ -591,11 +418,13 @@ export default function AdminPdfEditor() {
     toast.success(`${signatureModalMode === 'sign' ? 'Signature' : 'Initials'} saved`);
   };
 
+  const currentPageData = pages[currentPage];
+
   return (
     <div className="flex flex-col h-screen bg-background">
       {/* Header bar */}
       <div className="h-12 border-b bg-card flex items-center px-4 gap-3 shrink-0">
-        <button onClick={handleBack} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+        <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
           <ArrowLeft className="w-4 h-4" /> Back
         </button>
 
@@ -672,13 +501,7 @@ export default function AdminPdfEditor() {
           <Button variant="ghost" size="icon" className="h-8 w-8" title="Download">
             <Download className="w-4 h-4" />
           </Button>
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleUndo} disabled={!canUndo} title="Undo">
-            <Undo2 className="w-4 h-4" />
-          </Button>
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleRedo} disabled={!canRedo} title="Redo">
-            <Redo2 className="w-4 h-4" />
-          </Button>
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => void persistDocument()} disabled={isSaving} title="Save">
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleSave} disabled={isSaving} title="Save">
             <Save className="w-4 h-4" />
           </Button>
           <Button
