@@ -412,21 +412,7 @@ export default function AdminPdfEditor() {
     if (selectedSignerId === id) setSelectedSignerId(null);
   };
 
-  const applyFontStyle = useCallback((patch: Partial<FontStyle>) => {
-    const fc = fabricCanvasRef.current;
-    if (!fc) return;
-    const obj = fc.getActiveObject() as any;
-    if (!obj) return;
-    const updates: any = {};
-    if (patch.fontSize !== undefined) updates.fontSize = patch.fontSize;
-    if (patch.bold !== undefined) updates.fontWeight = patch.bold ? 'bold' : 'normal';
-    if (patch.italic !== undefined) updates.fontStyle = patch.italic ? 'italic' : 'normal';
-    if (patch.underline !== undefined) updates.underline = patch.underline;
-    obj.set(updates);
-    fc.renderAll();
-    setSelectedFontStyle((prev) => prev ? { ...prev, ...patch } : null);
-    registerCanvasChange(currentPage);
-  }, [currentPage, registerCanvasChange]);
+  // applyFontStyle defined above with registerCanvasChange
 
   const handleSignatureConfirm = (dataUrl: string) => {
     if (signatureModalMode === 'sign') {
