@@ -48,6 +48,7 @@ interface PdfEditorSidebarProps {
   savedDocuments?: SavedDocument[];
   onOpenDocument?: (id: string) => void;
   onDeleteDocument?: (id: string) => void;
+  mode?: 'admin' | 'agent';
 }
 
 const tabs: { id: SidebarTab; icon: React.ElementType; label: string }[] = [
