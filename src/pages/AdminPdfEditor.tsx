@@ -41,6 +41,7 @@ export default function AdminPdfEditor() {
   const [isLoading, setIsLoading] = useState(false);
   const [zoom, setZoom] = useState(100);
   const [savedDocuments, setSavedDocuments] = useState<SavedDocument[]>([]);
+  const [canvasReadyTick, setCanvasReadyTick] = useState(0);
 
   // Sidebar state
   const [activeTab, setActiveTab] = useState<SidebarTab | null>('signers');
@@ -50,6 +51,7 @@ export default function AdminPdfEditor() {
   const fabricCanvasRef = useRef<FabricCanvas | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const annotationsPerPage = useRef<Record<number, string>>({});
+  const autosaveTimeoutRef = useRef<number | null>(null);
 
   // Fetch saved documents list
   const fetchSavedDocuments = useCallback(async () => {
@@ -123,17 +125,6 @@ export default function AdminPdfEditor() {
         annotationsPerPage.current[parseInt(key)] = typeof val === 'string' ? val : JSON.stringify(val);
       });
 
-      // Load first page annotations after canvas initializes
-      setTimeout(() => {
-        const fc = fabricCanvasRef.current;
-        if (fc && annotationsPerPage.current[0]) {
-          fc.loadFromJSON(JSON.parse(annotationsPerPage.current[0])).then(() => {
-            fc.backgroundColor = 'transparent';
-            fc.renderAll();
-          });
-        }
-      }, 300);
-
       toast.success(`Opened "${doc.file_name}"`);
     } catch (err: any) {
       toast.error(err.message || 'Failed to load document');
@@ -142,12 +133,12 @@ export default function AdminPdfEditor() {
     }
   };
 
-  const saveCurrentPageAnnotations = useCallback(() => {
+  const savePageAnnotations = useCallback((pageIndex: number) => {
     const fc = fabricCanvasRef.current;
     if (fc && pages.length > 0) {
-      annotationsPerPage.current[currentPage] = JSON.stringify(fc.toJSON());
+      annotationsPerPage.current[pageIndex] = JSON.stringify(fc.toJSON());
     }
-  }, [currentPage, pages.length]);
+  }, [pages.length]);
 
   const loadPageAnnotations = useCallback((pageIndex: number) => {
     const fc = fabricCanvasRef.current;
@@ -165,10 +156,38 @@ export default function AdminPdfEditor() {
     }
   }, []);
 
-  const handleSave = async () => {
-    if (!storagePath) { toast.error('No document uploaded'); return; }
+  const currentPageData = pages[currentPage];
+
+  useEffect(() => {
+    if (!pages.length || !currentPageData || !fabricCanvasRef.current) return;
+    loadPageAnnotations(currentPage);
+    setHasSelection(false);
+  }, [currentPage, currentPageData, loadPageAnnotations, pages.length, canvasReadyTick]);
+
+  const getScaledSize = (obj: any) => ({
+    width: (obj.width || 160) * (obj.scaleX || 1),
+    height: (obj.height || 30) * (obj.scaleY || 1),
+  });
+
+  const persistDocument = useCallback(async ({
+    showToast = true,
+    refreshDocuments = true,
+    captureCurrentCanvas = true,
+  }: {
+    showToast?: boolean;
+    refreshDocuments?: boolean;
+    captureCurrentCanvas?: boolean;
+  } = {}) => {
+    if (!storagePath) {
+      if (showToast) {
+        toast.error('No document uploaded');
+      }
+      return false;
+    }
     setIsSaving(true);
-    saveCurrentPageAnnotations();
+    if (captureCurrentCanvas) {
+      savePageAnnotations(currentPage);
+    }
     try {
       const allAnnotations = { ...annotationsPerPage.current };
       const designatedFields: any[] = [];
@@ -176,7 +195,8 @@ export default function AdminPdfEditor() {
         const parsed = JSON.parse(json);
         parsed.objects?.forEach((obj: any) => {
           if (obj.customType?.startsWith('designated-')) {
-            designatedFields.push({ page: parseInt(pageIdx), type: obj.fieldType, left: obj.left, top: obj.top, width: obj.width, height: obj.height });
+            const { width, height } = getScaledSize(obj);
+            designatedFields.push({ page: parseInt(pageIdx), type: obj.fieldType, left: obj.left, top: obj.top, width, height });
           }
         });
       });
@@ -196,14 +216,44 @@ export default function AdminPdfEditor() {
         if (error) throw error;
         setDocumentId(data.id);
       }
-      toast.success('Document saved');
-      fetchSavedDocuments();
+      if (showToast) {
+        toast.success('Document saved');
+      }
+      if (refreshDocuments) {
+        fetchSavedDocuments();
+      }
+      return true;
     } catch (err: any) {
-      toast.error(err.message || 'Save failed');
+      if (showToast) {
+        toast.error(err.message || 'Save failed');
+      }
+      return false;
     } finally {
       setIsSaving(false);
     }
-  };
+  }, [currentPage, documentId, fetchSavedDocuments, fileName, savePageAnnotations, storagePath]);
+
+  const queueAutosave = useCallback((pageIndex: number) => {
+    savePageAnnotations(pageIndex);
+    if (!storagePath) return;
+
+    if (autosaveTimeoutRef.current) {
+      window.clearTimeout(autosaveTimeoutRef.current);
+    }
+
+    autosaveTimeoutRef.current = window.setTimeout(() => {
+      void persistDocument({ showToast: false, refreshDocuments: false, captureCurrentCanvas: false });
+      autosaveTimeoutRef.current = null;
+    }, 800);
+  }, [persistDocument, savePageAnnotations, storagePath]);
+
+  useEffect(() => {
+    return () => {
+      if (autosaveTimeoutRef.current) {
+        window.clearTimeout(autosaveTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -246,15 +296,11 @@ export default function AdminPdfEditor() {
   };
 
   const changePage = (dir: number) => {
-    saveCurrentPageAnnotations();
     const next = currentPage + dir;
     if (next >= 0 && next < pages.length) {
+      savePageAnnotations(currentPage);
+      queueAutosave(currentPage);
       setCurrentPage(next);
-      setTimeout(() => loadPageAnnotations(next), 100);
-      // Auto-save to Supabase on page change
-      if (storagePath) {
-        setTimeout(() => handleSave(), 200);
-      }
     }
   };
 
@@ -269,11 +315,8 @@ export default function AdminPdfEditor() {
     fc.discardActiveObject();
     fc.renderAll();
     setHasSelection(false);
-
-    if (pages.length > 0) {
-      annotationsPerPage.current[currentPage] = JSON.stringify(fc.toJSON());
-    }
-  }, [currentPage, pages.length]);
+    queueAutosave(currentPage);
+  }, [currentPage, queueAutosave]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -299,13 +342,28 @@ export default function AdminPdfEditor() {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [handleDeleteSelection]);
 
-  const handleOpenDocument = (id: string) => {
-    // Save current work first
+  const handleOpenDocument = async (id: string) => {
     if (storagePath && pages.length > 0) {
-      saveCurrentPageAnnotations();
+      if (autosaveTimeoutRef.current) {
+        window.clearTimeout(autosaveTimeoutRef.current);
+        autosaveTimeoutRef.current = null;
+      }
+      const saved = await persistDocument({ showToast: false, refreshDocuments: false });
+      if (!saved) return;
     }
     navigate(`/admin/pdf-editor/${id}`);
-    loadDocument(id);
+  };
+
+  const handleBack = async () => {
+    if (storagePath && pages.length > 0) {
+      if (autosaveTimeoutRef.current) {
+        window.clearTimeout(autosaveTimeoutRef.current);
+        autosaveTimeoutRef.current = null;
+      }
+      const saved = await persistDocument({ showToast: false, refreshDocuments: false });
+      if (!saved) return;
+    }
+    navigate(-1);
   };
 
   const handleDeleteDocument = async (id: string) => {
@@ -346,13 +404,11 @@ export default function AdminPdfEditor() {
     toast.success(`${signatureModalMode === 'sign' ? 'Signature' : 'Initials'} saved`);
   };
 
-  const currentPageData = pages[currentPage];
-
   return (
     <div className="flex flex-col h-screen bg-background">
       {/* Header bar */}
       <div className="h-12 border-b bg-card flex items-center px-4 gap-3 shrink-0">
-        <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+        <button onClick={handleBack} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
           <ArrowLeft className="w-4 h-4" /> Back
         </button>
 
@@ -384,7 +440,7 @@ export default function AdminPdfEditor() {
           <Button variant="ghost" size="icon" className="h-8 w-8" title="Download">
             <Download className="w-4 h-4" />
           </Button>
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleSave} disabled={isSaving} title="Save">
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => void persistDocument()} disabled={isSaving} title="Save">
             <Save className="w-4 h-4" />
           </Button>
           <Button
@@ -463,6 +519,9 @@ export default function AdminPdfEditor() {
                     fabricCanvasRef={fabricCanvasRef}
                     signatureDataUrl={signatureDataUrl}
                     initialsDataUrl={initialsDataUrl}
+                    zoomScale={zoom / 100}
+                    onCanvasReady={() => setCanvasReadyTick((tick) => tick + 1)}
+                    onCanvasChange={() => queueAutosave(currentPage)}
                     onRequestSignature={() => { setSignatureModalMode('sign'); setSignatureModalOpen(true); }}
                     onRequestInitials={() => { setSignatureModalMode('initials'); setSignatureModalOpen(true); }}
                   />

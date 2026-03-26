@@ -11,6 +11,9 @@ interface PdfCanvasProps {
   fabricCanvasRef: React.MutableRefObject<FabricCanvas | null>;
   signatureDataUrl: string | null;
   initialsDataUrl: string | null;
+  zoomScale?: number;
+  onCanvasReady?: (canvas: FabricCanvas) => void;
+  onCanvasChange?: () => void;
   onRequestSignature: () => void;
   onRequestInitials: () => void;
 }
@@ -24,15 +27,27 @@ export function PdfCanvas({
   fabricCanvasRef,
   signatureDataUrl,
   initialsDataUrl,
+  zoomScale = 1,
+  onCanvasReady,
+  onCanvasChange,
   onRequestSignature,
   onRequestInitials,
 }: PdfCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasElRef = useRef<HTMLCanvasElement>(null);
   const bgCanvasRef = useRef<HTMLCanvasElement>(null);
+  const onCanvasReadyRef = useRef(onCanvasReady);
+  const onCanvasChangeRef = useRef(onCanvasChange);
+  const onSelectionChangeRef = useRef(onSelectionChange);
   const drawStateRef = useRef<{ isDrawing: boolean; startX: number; startY: number; tempObj: FabricObject | null }>({
     isDrawing: false, startX: 0, startY: 0, tempObj: null,
   });
+
+  useEffect(() => {
+    onCanvasReadyRef.current = onCanvasReady;
+    onCanvasChangeRef.current = onCanvasChange;
+    onSelectionChangeRef.current = onSelectionChange;
+  }, [onCanvasChange, onCanvasReady, onSelectionChange]);
 
   // Render PDF page image on background canvas
   useEffect(() => {
@@ -64,12 +79,19 @@ export function PdfCanvas({
       selectionLineWidth: 1.5,
     });
     fabricCanvasRef.current = fc;
+    onCanvasReadyRef.current?.(fc);
 
-    fc.on('selection:created', () => onSelectionChange(true));
-    fc.on('selection:updated', () => onSelectionChange(true));
-    fc.on('selection:cleared', () => onSelectionChange(false));
+    fc.on('selection:created', () => onSelectionChangeRef.current(true));
+    fc.on('selection:updated', () => onSelectionChangeRef.current(true));
+    fc.on('selection:cleared', () => onSelectionChangeRef.current(false));
+
+    const handleCanvasChange = () => onCanvasChangeRef.current?.();
+    fc.on('path:created', handleCanvasChange);
+    fc.on('object:modified', handleCanvasChange);
 
     return () => {
+      fc.off('path:created', handleCanvasChange);
+      fc.off('object:modified', handleCanvasChange);
       fc.dispose();
       fabricCanvasRef.current = null;
     };
@@ -166,11 +188,20 @@ export function PdfCanvas({
     const onMouseUp = () => {
       const ds = drawStateRef.current;
       if (!ds.isDrawing || !ds.tempObj) return;
+      const bounds = ds.tempObj.getBoundingRect();
+      if (bounds.width < 6 && bounds.height < 6) {
+        fc.remove(ds.tempObj);
+        ds.isDrawing = false;
+        ds.tempObj = null;
+        fc.renderAll();
+        return;
+      }
       ds.tempObj.set({ selectable: true, evented: true });
       fc.setActiveObject(ds.tempObj);
       ds.isDrawing = false;
       ds.tempObj = null;
       fc.renderAll();
+      onCanvasChangeRef.current?.();
     };
 
     if (isDragTool) {
@@ -196,8 +227,8 @@ export function PdfCanvas({
 
     const rect = containerRef.current?.getBoundingClientRect();
     if (!rect) return;
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const x = (e.clientX - rect.left) / zoomScale;
+    const y = (e.clientY - rect.top) / zoomScale;
 
     if (activeTool === 'text' || activeTool === 'textbox') {
       const text = new IText('Type here', {
@@ -208,6 +239,7 @@ export function PdfCanvas({
       fc.add(text);
       fc.setActiveObject(text);
       text.enterEditing();
+      onCanvasChange?.();
     } else if (activeTool === 'strikethrough') {
       const line = new Line([x - 100, y, x + 100, y], {
         stroke: '#ef4444', strokeWidth: 2,
@@ -216,28 +248,29 @@ export function PdfCanvas({
       applySelectionStyles(line);
       fc.add(line);
       fc.setActiveObject(line);
+      onCanvasChange?.();
     } else if (activeTool === 'sign') {
       if (signatureDataUrl) {
-        addImageStamp(fc, signatureDataUrl, x, y, 150, 50);
+        addImageStamp(fc, signatureDataUrl, x, y, 150, 50, onCanvasChange);
       } else {
         onRequestSignature();
       }
     } else if (activeTool === 'initials') {
       if (initialsDataUrl) {
-        addImageStamp(fc, initialsDataUrl, x, y, 80, 40);
+        addImageStamp(fc, initialsDataUrl, x, y, 80, 40, onCanvasChange);
       } else {
         onRequestInitials();
       }
     } else if (activeTool === 'designate-signature') {
-      addDesignatedField(fc, x, y, 'SIGN HERE', 'rgba(255, 200, 0, 0.3)', '#b45309', 'signature');
+      addDesignatedField(fc, x, y, 'SIGN HERE', 'rgba(255, 200, 0, 0.3)', '#b45309', 'signature', onCanvasChange);
     } else if (activeTool === 'designate-initials') {
-      addDesignatedField(fc, x, y, 'INITIALS', 'rgba(59, 130, 246, 0.3)', '#1d4ed8', 'initials');
+      addDesignatedField(fc, x, y, 'INITIALS', 'rgba(59, 130, 246, 0.3)', '#1d4ed8', 'initials', onCanvasChange);
     } else if (activeTool === 'designate-date') {
-      addDesignatedField(fc, x, y, 'DATE', 'rgba(34, 197, 94, 0.3)', '#15803d', 'date');
+      addDesignatedField(fc, x, y, 'DATE', 'rgba(34, 197, 94, 0.3)', '#15803d', 'date', onCanvasChange);
     }
 
     fc.renderAll();
-  }, [activeTool, signatureDataUrl, initialsDataUrl, onRequestSignature, onRequestInitials]);
+  }, [activeTool, initialsDataUrl, onCanvasChange, onRequestInitials, onRequestSignature, signatureDataUrl, zoomScale]);
 
   return (
     <div
@@ -252,7 +285,7 @@ export function PdfCanvas({
   );
 }
 
-function addImageStamp(fc: FabricCanvas, dataUrl: string, x: number, y: number, w: number, h: number) {
+function addImageStamp(fc: FabricCanvas, dataUrl: string, x: number, y: number, w: number, h: number, onCanvasChange?: () => void) {
   const imgEl = new Image();
   imgEl.onload = () => {
     const fImg = new FabricImage(imgEl, {
@@ -262,13 +295,14 @@ function addImageStamp(fc: FabricCanvas, dataUrl: string, x: number, y: number, 
     fc.add(fImg);
     fc.setActiveObject(fImg);
     fc.renderAll();
+    onCanvasChange?.();
   };
   imgEl.src = dataUrl;
 }
 
 function addDesignatedField(
   fc: FabricCanvas, x: number, y: number,
-  label: string, bgColor: string, textColor: string, fieldType: string
+  label: string, bgColor: string, textColor: string, fieldType: string, onCanvasChange?: () => void
 ) {
   const w = fieldType === 'date' ? 120 : fieldType === 'initials' ? 100 : 160;
   const h = 30;
@@ -297,6 +331,7 @@ function addDesignatedField(
   fc.add(group);
   fc.setActiveObject(group);
   fc.renderAll();
+  onCanvasChange?.();
 }
 
 function applySelectionStyles(obj: FabricObject) {
