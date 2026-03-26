@@ -26,6 +26,7 @@ interface SignaturePanelProps {
   dealId?: string;
   checklistItemId?: string;
   formData?: Record<string, any>;
+  designatedFields?: Array<{ type: string; x: number; y: number; page: number; width: number; height: number; signerId?: string }>;
 }
 
 export function SignaturePanel({ open, onClose, documentName, contacts, dealId, checklistItemId, formData }: SignaturePanelProps) {
