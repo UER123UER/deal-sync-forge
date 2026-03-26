@@ -12,34 +12,36 @@ import { Canvas as FabricCanvas, IText } from 'fabric';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
 
-const PDF_SCALE = 1.5;
+const PDF_SCALE = 2.0;
 
 // Field coordinate map — positions in PDF points (will be scaled by PDF_SCALE)
-// Calibrated to "Exclusive Right Of Sale Listing Agreement Single Agent ERS-20sa"
-// y values are baseline-aligned: pdfplumber top minus ~2pt offset for text to sit on the underline
+// Calibrated from the Ahmed Mendez autofilled ERS-21tb reference document
+// y values are baseline-aligned from visual measurement of the filled reference
 const FIELD_MAP: Record<string, { page: number; x: number; y: number; width: number; fontSize: number; fieldKey: string }> = {
-  sellerName:       { page: 0, x: 54,  y: 86,  width: 473, fontSize: 11, fieldKey: 'sellerName' },
-  brokerCompany:    { page: 0, x: 121, y: 103, width: 400, fontSize: 11, fieldKey: 'brokerCompany' },
-  listingStartDate: { page: 0, x: 72,  y: 144, width: 111, fontSize: 11, fieldKey: 'listingStartDate' },
-  listingExpiration: { page: 0, x: 333, y: 144, width: 111, fontSize: 11, fieldKey: 'listingExpiration' },
-  streetAddress:    { page: 0, x: 167, y: 233, width: 409, fontSize: 11, fieldKey: 'streetAddress' },
-  streetAddress2:   { page: 0, x: 90,  y: 249, width: 486, fontSize: 11, fieldKey: 'streetAddress2' },
-  legalDescription: { page: 0, x: 175, y: 266, width: 400, fontSize: 11, fieldKey: 'legalDescription' },
-  listPrice:        { page: 0, x: 130, y: 374, width: 110, fontSize: 11, fieldKey: 'listPrice' },
-  // Page 4 — Signature fields
-  sellerSignatureDate1:  { page: 4, x: 447, y: 35, width: 128, fontSize: 11, fieldKey: 'sellerSignatureDate1' },
-  sellerPhone1:          { page: 4, x: 140, y: 53, width: 95,  fontSize: 11, fieldKey: 'sellerPhone1' },
-  sellerAddress:         { page: 4, x: 100, y: 72, width: 476, fontSize: 11, fieldKey: 'sellerAddress' },
-  sellerEmail:           { page: 4, x: 128, y: 90, width: 448, fontSize: 11, fieldKey: 'sellerEmail' },
-  sellerSignatureDate2:  { page: 4, x: 447, y: 108, width: 128, fontSize: 11, fieldKey: 'sellerSignatureDate2' },
-  sellerPhone2:          { page: 4, x: 140, y: 127, width: 95,  fontSize: 11, fieldKey: 'sellerPhone2' },
-  sellerAddress2:        { page: 4, x: 100, y: 146, width: 476, fontSize: 11, fieldKey: 'sellerAddress2' },
-  sellerEmail2:          { page: 4, x: 128, y: 164, width: 448, fontSize: 11, fieldKey: 'sellerEmail2' },
-  brokerName:            { page: 4, x: 242, y: 182, width: 172, fontSize: 11, fieldKey: 'brokerName' },
-  brokerDate:            { page: 4, x: 447, y: 182, width: 128, fontSize: 11, fieldKey: 'brokerDate' },
-  brokerFirmName:        { page: 4, x: 161, y: 200, width: 250, fontSize: 11, fieldKey: 'brokerFirmName' },
-  brokerPhone:           { page: 4, x: 470, y: 200, width: 106, fontSize: 11, fieldKey: 'brokerPhone' },
-  brokerAddress:         { page: 4, x: 100, y: 219, width: 476, fontSize: 11, fieldKey: 'brokerAddress' },
+  // Page 0 — Main fields
+  sellerName:        { page: 0, x: 55,  y: 62,  width: 480, fontSize: 11, fieldKey: 'sellerName' },
+  brokerCompany:     { page: 0, x: 82,  y: 84,  width: 440, fontSize: 11, fieldKey: 'brokerCompany' },
+  listingStartDate:  { page: 0, x: 72,  y: 120, width: 111, fontSize: 11, fieldKey: 'listingStartDate' },
+  listingExpiration:  { page: 0, x: 333, y: 120, width: 111, fontSize: 11, fieldKey: 'listingExpiration' },
+  streetAddress:     { page: 0, x: 115, y: 168, width: 460, fontSize: 11, fieldKey: 'streetAddress' },
+  legalDescription:  { page: 0, x: 130, y: 210, width: 400, fontSize: 11, fieldKey: 'legalDescription' },
+  listPrice:         { page: 0, x: 70,  y: 276, width: 150, fontSize: 11, fieldKey: 'listPrice' },
+  // Page 4 — Seller signature section
+  sellerSignatureDate1: { page: 4, x: 420, y: 18, width: 128, fontSize: 11, fieldKey: 'sellerSignatureDate1' },
+  sellerPhone1:         { page: 4, x: 110, y: 37, width: 100, fontSize: 11, fieldKey: 'sellerPhone1' },
+  sellerAddress:        { page: 4, x: 74,  y: 59, width: 480, fontSize: 11, fieldKey: 'sellerAddress' },
+  sellerEmail:          { page: 4, x: 94,  y: 80, width: 460, fontSize: 11, fieldKey: 'sellerEmail' },
+  // Seller 2
+  sellerSignatureDate2: { page: 4, x: 420, y: 100, width: 128, fontSize: 11, fieldKey: 'sellerSignatureDate2' },
+  sellerPhone2:         { page: 4, x: 110, y: 120, width: 100, fontSize: 11, fieldKey: 'sellerPhone2' },
+  sellerAddress2:       { page: 4, x: 74,  y: 140, width: 480, fontSize: 11, fieldKey: 'sellerAddress2' },
+  sellerEmail2:         { page: 4, x: 94,  y: 160, width: 460, fontSize: 11, fieldKey: 'sellerEmail2' },
+  // Broker section
+  brokerName:           { page: 4, x: 200, y: 195, width: 200, fontSize: 11, fieldKey: 'brokerName' },
+  brokerDate:           { page: 4, x: 420, y: 195, width: 128, fontSize: 11, fieldKey: 'brokerDate' },
+  brokerFirmName:       { page: 4, x: 122, y: 217, width: 250, fontSize: 11, fieldKey: 'brokerFirmName' },
+  brokerPhone:          { page: 4, x: 312, y: 217, width: 120, fontSize: 11, fieldKey: 'brokerPhone' },
+  brokerAddress:        { page: 4, x: 74,  y: 239, width: 480, fontSize: 11, fieldKey: 'brokerAddress' },
 };
 
 interface PageData {
@@ -67,6 +69,7 @@ export default function FormEditor() {
   const containerRef = useRef<HTMLDivElement>(null);
   const fieldValuesRef = useRef<Record<string, string>>({});
   const annotationsPerPage = useRef<Record<number, string>>({});
+  const prevPageRef = useRef<number>(0);
 
   const dealContacts = (deal?.deal_contacts || []).map((dc: any) => ({
     id: dc.contact?.id || dc.contact_id,
@@ -88,20 +91,19 @@ export default function FormEditor() {
     const s2 = dealContacts.filter((c: any) => c.role === 'Seller');
     const a = dealContacts.find((c: any) => c.role?.includes('Agent') || c.role?.includes('Broker'));
     const today = new Date().toLocaleDateString('en-US');
-    const addr = `${deal.address}, ${deal.city}, ${deal.state} ${deal.zip}`;
+    const fullAddr = `${deal.address}, ${deal.city}, ${deal.state} ${deal.zip}`;
 
     fieldValuesRef.current = {
       sellerName: s ? `${s.firstName} ${s.lastName}` : '',
       brokerCompany: a?.company || '',
       listingStartDate: deal.listing_start_date || '',
       listingExpiration: deal.listing_expiration || '',
-      streetAddress: deal.address || '',
-      streetAddress2: `${deal.city}, ${deal.state} ${deal.zip}`,
+      streetAddress: fullAddr,
       legalDescription: '',
-      listPrice: deal.price || '',
+      listPrice: deal.price ? Number(deal.price).toLocaleString('en-US') : '',
       sellerSignatureDate1: today,
       sellerPhone1: s?.phone || '',
-      sellerAddress: s ? addr : '',
+      sellerAddress: s ? fullAddr : '',
       sellerEmail: s?.email || '',
       sellerSignatureDate2: today,
       sellerPhone2: s2[1]?.phone || '',
@@ -124,7 +126,6 @@ export default function FormEditor() {
     setPdfLoading(true);
     setPdfError(null);
     try {
-      // Find the ERS listing agreement document
       const { data: docs, error } = await supabase
         .from('admin_documents')
         .select('*')
@@ -154,9 +155,14 @@ export default function FormEditor() {
         const page = await pdf.getPage(i + 1);
         const viewport = page.getViewport({ scale: PDF_SCALE });
         const canvas = document.createElement('canvas');
-        canvas.width = viewport.width;
-        canvas.height = viewport.height;
+        // Use devicePixelRatio for crisp rendering
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width = viewport.width * dpr;
+        canvas.height = viewport.height * dpr;
+        canvas.style.width = viewport.width + 'px';
+        canvas.style.height = viewport.height + 'px';
         const ctx = canvas.getContext('2d')!;
+        ctx.scale(dpr, dpr);
         await page.render({ canvasContext: ctx, viewport }).promise;
         renderedPages.push({
           imageUrl: canvas.toDataURL(),
@@ -197,11 +203,10 @@ export default function FormEditor() {
     const pageData = pages[currentPage];
     if (!pageData || !canvasElRef.current) return;
 
-    // Dispose previous
+    // Save OLD page annotations under the OLD page index
     if (fabricCanvasRef.current) {
-      // Save current page annotations before switching
-      const prevJson = fabricCanvasRef.current.toJSON();
-      annotationsPerPage.current[currentPage] = JSON.stringify(prevJson);
+      const json = fabricCanvasRef.current.toJSON();
+      annotationsPerPage.current[prevPageRef.current] = JSON.stringify(json);
       fabricCanvasRef.current.dispose();
     }
 
@@ -212,6 +217,9 @@ export default function FormEditor() {
       backgroundColor: 'transparent',
     });
     fabricCanvasRef.current = fc;
+
+    // Update prevPageRef to current page AFTER saving old page
+    prevPageRef.current = currentPage;
 
     // Check if we have saved annotations for this page
     if (annotationsPerPage.current[currentPage]) {
@@ -231,7 +239,7 @@ export default function FormEditor() {
           left: field.x * PDF_SCALE,
           top: field.y * PDF_SCALE,
           fontSize: field.fontSize * PDF_SCALE,
-          fontFamily: 'Courier, Courier New, monospace',
+          fontFamily: 'Helvetica, Arial, sans-serif',
           fill: '#000000',
           editable: true,
         });
