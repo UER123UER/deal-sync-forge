@@ -358,7 +358,7 @@ export default function FormEditor() {
   };
 
   const handleStampConfirm = (dataUrl: string) => {
-    if (stampModalMode === 'signature') {
+    if (stampModalMode === 'sign') {
       setSignatureDataUrl(dataUrl);
     } else {
       setInitialsDataUrl(dataUrl);
