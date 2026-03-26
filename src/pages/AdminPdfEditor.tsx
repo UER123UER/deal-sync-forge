@@ -55,7 +55,7 @@ export default function AdminPdfEditor() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const annotationsPerPage = useRef<Record<number, string>>({});
 
-  // Fetch saved documents list
+  // Annotations per page are saved via saveCurrentPageAnnotations
   const fetchSavedDocuments = useCallback(async () => {
     const { data } = await supabase
       .from('admin_documents')
