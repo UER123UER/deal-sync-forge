@@ -32,7 +32,7 @@ interface SignaturePanelProps {
   onContinue?: (data: { to: string[]; subject: string; message: string }) => void;
 }
 
-export function SignaturePanel({ open, onClose, documentName, contacts, dealId, checklistItemId, formData, designatedFields }: SignaturePanelProps) {
+export function SignaturePanel({ open, onClose, documentName, contacts, dealId, checklistItemId, formData, designatedFields, mode = 'send', onContinue }: SignaturePanelProps) {
   const [to, setTo] = useState<string[]>([]);
   const [subject, setSubject] = useState('Please DocuSign');
   const [message, setMessage] = useState('Please review and sign the attached document.');
