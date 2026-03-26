@@ -72,6 +72,7 @@ export function useCreateSignatureRequest() {
       message: string;
       form_data: Record<string, any>;
       recipients: { contact_id: string; name: string; email: string; role: string }[];
+      designated_fields?: Array<{ type: string; x: number; y: number; page: number; width: number; height: number; signerId?: string }>;
     }) => {
       const token = crypto.randomUUID();
       const { data: sigReq, error: reqErr } = await (supabase as any)
@@ -84,7 +85,10 @@ export function useCreateSignatureRequest() {
           subject: req.subject,
           message: req.message,
           token,
-          form_data: req.form_data,
+          form_data: {
+            ...req.form_data,
+            designated_fields: req.designated_fields || [],
+          },
         })
         .select()
         .single();

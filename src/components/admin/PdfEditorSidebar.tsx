@@ -48,9 +48,10 @@ interface PdfEditorSidebarProps {
   savedDocuments?: SavedDocument[];
   onOpenDocument?: (id: string) => void;
   onDeleteDocument?: (id: string) => void;
+  mode?: 'admin' | 'agent';
 }
 
-const tabs: { id: SidebarTab; icon: React.ElementType; label: string }[] = [
+const allTabs: { id: SidebarTab; icon: React.ElementType; label: string }[] = [
   { id: 'signers', icon: Users, label: 'Signers' },
   { id: 'docs', icon: FileText, label: 'Docs' },
   { id: 'tools', icon: List, label: 'Tools' },
@@ -58,6 +59,8 @@ const tabs: { id: SidebarTab; icon: React.ElementType; label: string }[] = [
   { id: 'options', icon: Settings, label: 'Options' },
   { id: 'feedback', icon: HelpCircle, label: 'Feedback' },
 ];
+
+const agentTabs: SidebarTab[] = ['signers', 'tools'];
 
 const ROLES = ['Seller', 'Buyer', 'Agent', 'Broker', 'Attorney', 'Other'];
 
@@ -75,7 +78,9 @@ export function PdfEditorSidebar({
   savedDocuments = [],
   onOpenDocument,
   onDeleteDocument,
+  mode = 'admin',
 }: PdfEditorSidebarProps) {
+  const tabs = mode === 'agent' ? allTabs.filter(t => agentTabs.includes(t.id)) : allTabs;
   const [showAddForm, setShowAddForm] = useState(false);
   const [newSigner, setNewSigner] = useState({ firstName: '', lastName: '', email: '', role: 'Seller', type: 'Remote Signer' });
   const [signingOrder, setSigningOrder] = useState(false);
@@ -128,6 +133,7 @@ export function PdfEditorSidebar({
                   signers={signers}
                   selectedSignerId={selectedSignerId}
                   onSelectSigner={onSelectSigner}
+                  agentMode={mode === 'agent'}
                 />
               )}
               {activeTab === 'layouts' && <LayoutsPanel />}
@@ -352,13 +358,14 @@ function DocsPanel({
 }
 
 function ToolsPanel({
-  activeTool, onToolChange, signers, selectedSignerId, onSelectSigner,
+  activeTool, onToolChange, signers, selectedSignerId, onSelectSigner, agentMode = false,
 }: {
   activeTool: ToolMode;
   onToolChange: (tool: ToolMode) => void;
   signers: Signer[];
   selectedSignerId: string | null;
   onSelectSigner: (id: string | null) => void;
+  agentMode?: boolean;
 }) {
   const signerActions: { mode: ToolMode; icon: React.ElementType; label: string }[] = [
     { mode: 'designate-signature', icon: PenTool, label: 'Sign Here' },
@@ -421,17 +428,20 @@ function ToolsPanel({
         </div>
       </div>
 
-      <Separator />
-
-      {/* Markup */}
-      <div>
-        <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Markup</h4>
-        <div className="grid grid-cols-2 gap-2">
-          {markupTools.map((t) => (
-            <ToolButton key={t.label} {...t} active={activeTool === t.mode} onClick={() => onToolChange(t.mode)} />
-          ))}
-        </div>
-      </div>
+      {!agentMode && (
+        <>
+          <Separator />
+          {/* Markup */}
+          <div>
+            <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Markup</h4>
+            <div className="grid grid-cols-2 gap-2">
+              {markupTools.map((t) => (
+                <ToolButton key={t.label} {...t} active={activeTool === t.mode} onClick={() => onToolChange(t.mode)} />
+              ))}
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }

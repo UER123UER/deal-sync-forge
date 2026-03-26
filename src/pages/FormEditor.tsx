@@ -1,42 +1,40 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { X, Save, Send, ChevronLeft, ChevronRight } from 'lucide-react';
+import { X, Save, Send, ChevronLeft, ChevronRight, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useDeal, useUpdateDeal } from '@/hooks/useDeals';
 import { useUpdateContact } from '@/hooks/useContacts';
 import { SignaturePanel } from '@/components/deal/SignaturePanel';
+import { PdfEditorSidebar, type Signer, type SidebarTab } from '@/components/admin/PdfEditorSidebar';
+import { PdfCanvas } from '@/components/admin/PdfCanvas';
+import { SignatureStampModal } from '@/components/admin/SignatureStampModal';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import * as pdfjsLib from 'pdfjs-dist';
 import { Canvas as FabricCanvas, IText } from 'fabric';
+import type { ToolMode } from '@/components/admin/PdfToolbar';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
 
 const PDF_SCALE = 2.0;
 
-// Field coordinate map — positions in PDF points (will be scaled by PDF_SCALE)
-// Calibrated from the Ahmed Mendez autofilled ERS-21tb reference document
-// y values are baseline-aligned from visual measurement of the filled reference
+// Field coordinate map — calibrated from Ahmed Mendez autofilled ERS-21tb reference
 const FIELD_MAP: Record<string, { page: number; x: number; y: number; width: number; fontSize: number; fieldKey: string }> = {
-  // Page 0 — Main fields
   sellerName:        { page: 0, x: 55,  y: 62,  width: 480, fontSize: 11, fieldKey: 'sellerName' },
   brokerCompany:     { page: 0, x: 82,  y: 84,  width: 440, fontSize: 11, fieldKey: 'brokerCompany' },
   listingStartDate:  { page: 0, x: 72,  y: 120, width: 111, fontSize: 11, fieldKey: 'listingStartDate' },
-  listingExpiration:  { page: 0, x: 333, y: 120, width: 111, fontSize: 11, fieldKey: 'listingExpiration' },
+  listingExpiration: { page: 0, x: 333, y: 120, width: 111, fontSize: 11, fieldKey: 'listingExpiration' },
   streetAddress:     { page: 0, x: 115, y: 168, width: 460, fontSize: 11, fieldKey: 'streetAddress' },
   legalDescription:  { page: 0, x: 130, y: 210, width: 400, fontSize: 11, fieldKey: 'legalDescription' },
   listPrice:         { page: 0, x: 70,  y: 276, width: 150, fontSize: 11, fieldKey: 'listPrice' },
-  // Page 4 — Seller signature section
   sellerSignatureDate1: { page: 4, x: 420, y: 18, width: 128, fontSize: 11, fieldKey: 'sellerSignatureDate1' },
   sellerPhone1:         { page: 4, x: 110, y: 37, width: 100, fontSize: 11, fieldKey: 'sellerPhone1' },
   sellerAddress:        { page: 4, x: 74,  y: 59, width: 480, fontSize: 11, fieldKey: 'sellerAddress' },
   sellerEmail:          { page: 4, x: 94,  y: 80, width: 460, fontSize: 11, fieldKey: 'sellerEmail' },
-  // Seller 2
   sellerSignatureDate2: { page: 4, x: 420, y: 100, width: 128, fontSize: 11, fieldKey: 'sellerSignatureDate2' },
   sellerPhone2:         { page: 4, x: 110, y: 120, width: 100, fontSize: 11, fieldKey: 'sellerPhone2' },
   sellerAddress2:       { page: 4, x: 74,  y: 140, width: 480, fontSize: 11, fieldKey: 'sellerAddress2' },
   sellerEmail2:         { page: 4, x: 94,  y: 160, width: 460, fontSize: 11, fieldKey: 'sellerEmail2' },
-  // Broker section
   brokerName:           { page: 4, x: 200, y: 195, width: 200, fontSize: 11, fieldKey: 'brokerName' },
   brokerDate:           { page: 4, x: 420, y: 195, width: 128, fontSize: 11, fieldKey: 'brokerDate' },
   brokerFirmName:       { page: 4, x: 122, y: 217, width: 250, fontSize: 11, fieldKey: 'brokerFirmName' },
@@ -58,11 +56,23 @@ export default function FormEditor() {
   const updateContact = useUpdateContact();
   const [signatureOpen, setSignatureOpen] = useState(false);
 
+  // Signature prep mode
+  const [signaturePrepMode, setSignaturePrepMode] = useState(false);
+  const [activeTool, setActiveTool] = useState<ToolMode>('select');
+  const [sidebarTab, setSidebarTab] = useState<SidebarTab | null>('signers');
+  const [selectedSignerId, setSelectedSignerId] = useState<string | null>(null);
+  const [stampModalOpen, setStampModalOpen] = useState(false);
+  const [stampModalMode, setStampModalMode] = useState<'sign' | 'initials'>('sign');
+  const [signatureDataUrl, setSignatureDataUrl] = useState<string | null>(null);
+  const [initialsDataUrl, setInitialsDataUrl] = useState<string | null>(null);
+  const [designatedFields, setDesignatedFields] = useState<Array<{ type: string; x: number; y: number; page: number; width: number; height: number; signerId?: string }>>([]);
+
   const [pages, setPages] = useState<PageData[]>([]);
   const [currentPage, setCurrentPage] = useState(0);
   const [pdfLoading, setPdfLoading] = useState(true);
   const [pdfError, setPdfError] = useState<string | null>(null);
 
+  // Autofill mode refs
   const canvasElRef = useRef<HTMLCanvasElement>(null);
   const bgCanvasRef = useRef<HTMLCanvasElement>(null);
   const fabricCanvasRef = useRef<FabricCanvas | null>(null);
@@ -70,6 +80,10 @@ export default function FormEditor() {
   const fieldValuesRef = useRef<Record<string, string>>({});
   const annotationsPerPage = useRef<Record<number, string>>({});
   const prevPageRef = useRef<number>(0);
+
+  // Prep mode canvas ref (used by PdfCanvas component)
+  const prepFabricCanvasRef = useRef<FabricCanvas | null>(null);
+  const prepAnnotationsPerPage = useRef<Record<number, string>>({});
 
   const dealContacts = (deal?.deal_contacts || []).map((dc: any) => ({
     id: dc.contact?.id || dc.contact_id,
@@ -80,6 +94,15 @@ export default function FormEditor() {
     phone: dc.contact?.phone || '',
     company: dc.contact?.company || '',
     commission: dc.contact?.commission || '',
+  }));
+
+  const signers: Signer[] = dealContacts.map((c: any) => ({
+    id: c.id,
+    firstName: c.firstName,
+    lastName: c.lastName,
+    email: c.email,
+    role: c.role,
+    type: 'Remote Signer',
   }));
 
   const checklistItem = (deal?.checklist_items || []).find((ci: any) => ci.id === formId);
@@ -117,7 +140,7 @@ export default function FormEditor() {
     };
   }, [deal]);
 
-  // Load the legal PDF from admin-documents
+  // Load the legal PDF
   useEffect(() => {
     loadPdf();
   }, []);
@@ -155,7 +178,6 @@ export default function FormEditor() {
         const page = await pdf.getPage(i + 1);
         const viewport = page.getViewport({ scale: PDF_SCALE });
         const canvas = document.createElement('canvas');
-        // Use devicePixelRatio for crisp rendering
         const dpr = window.devicePixelRatio || 1;
         canvas.width = viewport.width * dpr;
         canvas.height = viewport.height * dpr;
@@ -181,8 +203,9 @@ export default function FormEditor() {
     }
   };
 
-  // Render background image
+  // ── AUTOFILL MODE: Render background image ──
   useEffect(() => {
+    if (signaturePrepMode) return;
     const pageData = pages[currentPage];
     if (!pageData || !bgCanvasRef.current) return;
     const bgCanvas = bgCanvasRef.current;
@@ -196,14 +219,14 @@ export default function FormEditor() {
       ctx.drawImage(img, 0, 0, pageData.width, pageData.height);
     };
     img.src = pageData.imageUrl;
-  }, [pages, currentPage]);
+  }, [pages, currentPage, signaturePrepMode]);
 
-  // Initialize Fabric canvas + place autofill fields
+  // ── AUTOFILL MODE: Initialize Fabric canvas + place autofill fields ──
   useEffect(() => {
+    if (signaturePrepMode) return;
     const pageData = pages[currentPage];
     if (!pageData || !canvasElRef.current) return;
 
-    // Save OLD page annotations under the OLD page index
     if (fabricCanvasRef.current) {
       const json = fabricCanvasRef.current.toJSON();
       annotationsPerPage.current[prevPageRef.current] = JSON.stringify(json);
@@ -217,17 +240,13 @@ export default function FormEditor() {
       backgroundColor: 'transparent',
     });
     fabricCanvasRef.current = fc;
-
-    // Update prevPageRef to current page AFTER saving old page
     prevPageRef.current = currentPage;
 
-    // Check if we have saved annotations for this page
     if (annotationsPerPage.current[currentPage]) {
       fc.loadFromJSON(JSON.parse(annotationsPerPage.current[currentPage])).then(() => {
         fc.renderAll();
       });
     } else {
-      // Place autofill field overlays for this page
       const fieldsForPage = Object.entries(FIELD_MAP).filter(([, f]) => f.page === currentPage);
       const values = fieldValuesRef.current;
 
@@ -250,13 +269,12 @@ export default function FormEditor() {
     }
 
     return () => {
-      // Save annotations on unmount
       if (fabricCanvasRef.current) {
         const json = fabricCanvasRef.current.toJSON();
         annotationsPerPage.current[currentPage] = JSON.stringify(json);
       }
     };
-  }, [pages, currentPage]);
+  }, [pages, currentPage, signaturePrepMode]);
 
   const saveAnnotations = useCallback(() => {
     if (fabricCanvasRef.current) {
@@ -266,7 +284,12 @@ export default function FormEditor() {
   }, [currentPage]);
 
   const changePage = (dir: number) => {
-    saveAnnotations();
+    if (!signaturePrepMode) saveAnnotations();
+    // Save prep mode annotations
+    if (signaturePrepMode && prepFabricCanvasRef.current) {
+      const json = prepFabricCanvasRef.current.toJSON();
+      prepAnnotationsPerPage.current[currentPage] = JSON.stringify(json);
+    }
     const next = currentPage + dir;
     if (next >= 0 && next < pages.length) {
       setCurrentPage(next);
@@ -279,6 +302,83 @@ export default function FormEditor() {
     saveAnnotations();
     toast.success('Form annotations saved');
   };
+
+  // ── SIGNATURE PREP MODE handlers ──
+  const handleEnterPrepMode = () => {
+    saveAnnotations();
+    setSignaturePrepMode(true);
+    setActiveTool('select');
+    setSidebarTab('signers');
+  };
+
+  const handleExitPrepMode = () => {
+    setSignaturePrepMode(false);
+    setActiveTool('select');
+    setSidebarTab(null);
+  };
+
+  const collectDesignatedFields = (): Array<{ type: string; x: number; y: number; page: number; width: number; height: number; signerId?: string }> => {
+    // Save current page annotations first
+    if (prepFabricCanvasRef.current) {
+      const json = prepFabricCanvasRef.current.toJSON();
+      prepAnnotationsPerPage.current[currentPage] = JSON.stringify(json);
+    }
+
+    const fields: Array<{ type: string; x: number; y: number; page: number; width: number; height: number; signerId?: string }> = [];
+    
+    for (const [pageIdx, jsonStr] of Object.entries(prepAnnotationsPerPage.current)) {
+      try {
+        const parsed = JSON.parse(jsonStr);
+        const objects = parsed.objects || [];
+        for (const obj of objects) {
+          if (obj.customType && obj.customType.startsWith('designated-') && !obj.customType.endsWith('-label')) {
+            fields.push({
+              type: obj.fieldType || obj.customType.replace('designated-', ''),
+              x: obj.left,
+              y: obj.top,
+              page: parseInt(pageIdx),
+              width: obj.width || 160,
+              height: obj.height || 30,
+              signerId: selectedSignerId || undefined,
+            });
+          }
+        }
+      } catch {
+        // skip invalid JSON
+      }
+    }
+
+    return fields;
+  };
+
+  const handleNextToSend = () => {
+    const fields = collectDesignatedFields();
+    setDesignatedFields(fields);
+    setSignatureOpen(true);
+  };
+
+  const handleStampConfirm = (dataUrl: string) => {
+    if (stampModalMode === 'sign') {
+      setSignatureDataUrl(dataUrl);
+    } else {
+      setInitialsDataUrl(dataUrl);
+    }
+    setStampModalOpen(false);
+  };
+
+  // ── PREP MODE: restore annotations when switching pages ──
+  useEffect(() => {
+    if (!signaturePrepMode) return;
+    const fc = prepFabricCanvasRef.current;
+    if (!fc) return;
+    
+    const savedJson = prepAnnotationsPerPage.current[currentPage];
+    if (savedJson) {
+      fc.loadFromJSON(JSON.parse(savedJson)).then(() => {
+        fc.renderAll();
+      });
+    }
+  }, [currentPage, signaturePrepMode]);
 
   if (isLoading || pdfLoading) {
     return (
@@ -299,6 +399,98 @@ export default function FormEditor() {
 
   const pageData = pages[currentPage];
 
+  // ━━━ SIGNATURE PREP MODE RENDER ━━━
+  if (signaturePrepMode) {
+    return (
+      <div className="flex-1 flex flex-col bg-muted/30">
+        {/* Prep Header */}
+        <div className="h-14 bg-background border-b flex items-center px-6 flex-shrink-0">
+          <Button variant="ghost" size="sm" className="text-xs gap-1.5 mr-4" onClick={handleExitPrepMode}>
+            <ArrowLeft className="w-3.5 h-3.5" /> Back
+          </Button>
+          <h1 className="text-sm font-semibold text-foreground truncate flex-1">
+            Prepare for Signing — {checklistItem?.name || 'Listing Agreement'}
+          </h1>
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 mr-4">
+              <Button variant="ghost" size="icon" onClick={() => changePage(-1)} disabled={currentPage === 0}>
+                <ChevronLeft className="w-4 h-4" />
+              </Button>
+              <span className="text-xs text-muted-foreground">
+                Page {currentPage + 1} of {pages.length}
+              </span>
+              <Button variant="ghost" size="icon" onClick={() => changePage(1)} disabled={currentPage === pages.length - 1}>
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+            </div>
+            <Button size="sm" className="text-xs gap-1.5" onClick={handleNextToSend}>
+              <Send className="w-3.5 h-3.5" /> Next &gt;
+            </Button>
+          </div>
+        </div>
+
+        {/* Prep Body */}
+        <div className="flex-1 flex overflow-hidden">
+          {/* PDF Canvas area */}
+          <div className="flex-1 overflow-auto py-8">
+            <div className="flex justify-center">
+              {pageData && (
+                <PdfCanvas
+                  pageImageUrl={pageData.imageUrl}
+                  pageWidth={pageData.width}
+                  pageHeight={pageData.height}
+                  activeTool={activeTool}
+                  onSelectionChange={() => {}}
+                  fabricCanvasRef={prepFabricCanvasRef}
+                  signatureDataUrl={signatureDataUrl}
+                  initialsDataUrl={initialsDataUrl}
+                  onRequestSignature={() => { setStampModalMode('sign'); setStampModalOpen(true); }}
+                  onRequestInitials={() => { setStampModalMode('initials'); setStampModalOpen(true); }}
+                />
+              )}
+            </div>
+          </div>
+
+          {/* Right sidebar */}
+          <PdfEditorSidebar
+            mode="agent"
+            activeTab={sidebarTab}
+            onTabChange={setSidebarTab}
+            activeTool={activeTool}
+            onToolChange={setActiveTool}
+            signers={signers}
+            onAddSigner={() => {}}
+            onRemoveSigner={() => {}}
+            selectedSignerId={selectedSignerId}
+            onSelectSigner={setSelectedSignerId}
+            documents={[{ name: checklistItem?.name || 'Listing Agreement' }]}
+          />
+        </div>
+
+        {/* Stamp Modal */}
+        <SignatureStampModal
+          open={stampModalOpen}
+          onClose={() => setStampModalOpen(false)}
+          mode={stampModalMode}
+          onConfirm={handleStampConfirm}
+        />
+
+        {/* Signature Panel */}
+        <SignaturePanel
+          open={signatureOpen}
+          onClose={() => setSignatureOpen(false)}
+          documentName={checklistItem?.name || 'Exclusive Right of Sale Listing Agreement'}
+          contacts={dealContacts}
+          dealId={id || ''}
+          checklistItemId={formId}
+          formData={fieldValuesRef.current}
+          designatedFields={designatedFields}
+        />
+      </div>
+    );
+  }
+
+  // ━━━ AUTOFILL MODE RENDER ━━━
   return (
     <div className="flex-1 flex flex-col bg-muted/30">
       {/* Header */}
@@ -307,7 +499,6 @@ export default function FormEditor() {
           {checklistItem?.name || 'Exclusive Right of Sale Listing Agreement'}
         </h1>
         <div className="flex items-center gap-2">
-          {/* Page Navigation */}
           <div className="flex items-center gap-1 mr-4">
             <Button variant="ghost" size="icon" onClick={() => changePage(-1)} disabled={currentPage === 0}>
               <ChevronLeft className="w-4 h-4" />
@@ -319,7 +510,7 @@ export default function FormEditor() {
               <ChevronRight className="w-4 h-4" />
             </Button>
           </div>
-          <Button variant="outline" size="sm" className="text-xs gap-1.5" onClick={() => setSignatureOpen(true)}>
+          <Button variant="outline" size="sm" className="text-xs gap-1.5" onClick={handleEnterPrepMode}>
             <Send className="w-3.5 h-3.5" /> Send for Signature
           </Button>
           <Button size="sm" className="text-xs gap-1.5" onClick={handleSave}>
@@ -354,17 +545,6 @@ export default function FormEditor() {
           )}
         </div>
       </div>
-
-      {/* Signature Panel */}
-      <SignaturePanel
-        open={signatureOpen}
-        onClose={() => setSignatureOpen(false)}
-        documentName={checklistItem?.name || 'Exclusive Right of Sale Listing Agreement'}
-        contacts={dealContacts}
-        dealId={id || ''}
-        checklistItemId={formId}
-        formData={fieldValuesRef.current}
-      />
     </div>
   );
 }
