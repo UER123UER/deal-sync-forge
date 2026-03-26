@@ -139,7 +139,7 @@ export function PdfCanvas({
     // Drag-draw handlers for line, highlight, ellipse
     const onMouseDown = (opt: any) => {
       if (!isDragTool) return;
-      const pointer = getPointerFromEvent(opt.e);
+      const pointer = fc.getScenePoint(opt.e);
       if (!pointer) return;
       const ds = drawStateRef.current;
       ds.isDrawing = true;
@@ -174,7 +174,7 @@ export function PdfCanvas({
     const onMouseMove = (opt: any) => {
       const ds = drawStateRef.current;
       if (!ds.isDrawing || !ds.tempObj) return;
-      const pointer = getPointerFromEvent(opt.e);
+      const pointer = fc.getScenePoint(opt.e);
       if (!pointer) return;
 
       if (activeTool === 'line') {
