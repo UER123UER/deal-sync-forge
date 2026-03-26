@@ -174,7 +174,7 @@ export function PdfCanvas({
     const onMouseMove = (opt: any) => {
       const ds = drawStateRef.current;
       if (!ds.isDrawing || !ds.tempObj) return;
-      const pointer = activeTool === 'highlight' ? fc.getScenePoint(opt.e) : getPointerFromEvent(opt.e);
+      const pointer = getPointerFromEvent(opt.e);
       if (!pointer) return;
 
       if (activeTool === 'line') {
