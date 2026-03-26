@@ -76,6 +76,7 @@ export function SignaturePanel({ open, onClose, documentName, contacts, dealId, 
         message,
         form_data: formData || {},
         recipients,
+        designated_fields: designatedFields,
       });
 
       // Build signing URL and open mailto with all recipients

@@ -428,17 +428,20 @@ function ToolsPanel({
         </div>
       </div>
 
-      <Separator />
-
-      {/* Markup */}
-      <div>
-        <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Markup</h4>
-        <div className="grid grid-cols-2 gap-2">
-          {markupTools.map((t) => (
-            <ToolButton key={t.label} {...t} active={activeTool === t.mode} onClick={() => onToolChange(t.mode)} />
-          ))}
-        </div>
-      </div>
+      {!agentMode && (
+        <>
+          <Separator />
+          {/* Markup */}
+          <div>
+            <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Markup</h4>
+            <div className="grid grid-cols-2 gap-2">
+              {markupTools.map((t) => (
+                <ToolButton key={t.label} {...t} active={activeTool === t.mode} onClick={() => onToolChange(t.mode)} />
+              ))}
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
