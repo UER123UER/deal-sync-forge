@@ -497,6 +497,8 @@ export default function FormEditor() {
           checklistItemId={formId}
           formData={fieldValuesRef.current}
           designatedFields={designatedFields}
+          mode={signaturePanelMode}
+          onContinue={handleContinueToPrep}
         />
       </div>
     );
