@@ -60,6 +60,7 @@ export default function FormEditor() {
   const [signaturePrepMode, setSignaturePrepMode] = useState(false);
   // Stored recipient data from the initial panel
   const [recipientData, setRecipientData] = useState<{ to: string[]; subject: string; message: string } | null>(null);
+  const [pendingPrepData, setPendingPrepData] = useState<{ to: string[]; subject: string; message: string } | null>(null);
   const [signaturePanelMode, setSignaturePanelMode] = useState<'collect' | 'send'>('collect');
   const [activeTool, setActiveTool] = useState<ToolMode>('select');
   const [sidebarTab, setSidebarTab] = useState<SidebarTab | null>('signers');
