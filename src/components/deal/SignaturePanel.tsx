@@ -27,9 +27,12 @@ interface SignaturePanelProps {
   checklistItemId?: string;
   formData?: Record<string, any>;
   designatedFields?: Array<{ type: string; x: number; y: number; page: number; width: number; height: number; signerId?: string }>;
+  /** When 'collect', shows "Continue" instead of "Send" and calls onContinue with recipient data */
+  mode?: 'collect' | 'send';
+  onContinue?: (data: { to: string[]; subject: string; message: string }) => void;
 }
 
-export function SignaturePanel({ open, onClose, documentName, contacts, dealId, checklistItemId, formData, designatedFields }: SignaturePanelProps) {
+export function SignaturePanel({ open, onClose, documentName, contacts, dealId, checklistItemId, formData, designatedFields, mode = 'send', onContinue }: SignaturePanelProps) {
   const [to, setTo] = useState<string[]>([]);
   const [subject, setSubject] = useState('Please DocuSign');
   const [message, setMessage] = useState('Please review and sign the attached document.');
@@ -206,9 +209,32 @@ export function SignaturePanel({ open, onClose, documentName, contacts, dealId, 
 
             {/* Footer */}
             <div className="border-t p-4 flex justify-end flex-shrink-0">
-              <Button onClick={handleSend} disabled={to.length === 0 || createSignatureRequest.isPending}>
-                {createSignatureRequest.isPending ? 'Sending...' : 'Send for Signature'}
-              </Button>
+              {mode === 'collect' ? (
+                <Button
+                  onClick={() => {
+                    if (to.length === 0) {
+                      toast.error('Please select at least one recipient');
+                      return;
+                    }
+                    const recipientsWithoutEmail = to.filter((id) => {
+                      const c = contacts.find((x) => x.id === id);
+                      return !c?.email;
+                    });
+                    if (recipientsWithoutEmail.length > 0) {
+                      toast.error('All recipients must have an email address');
+                      return;
+                    }
+                    onContinue?.({ to, subject, message });
+                  }}
+                  disabled={to.length === 0}
+                >
+                  Continue to Preparation
+                </Button>
+              ) : (
+                <Button onClick={handleSend} disabled={to.length === 0 || createSignatureRequest.isPending}>
+                  {createSignatureRequest.isPending ? 'Sending...' : 'Send for Signature'}
+                </Button>
+              )}
             </div>
           </motion.div>
         </>

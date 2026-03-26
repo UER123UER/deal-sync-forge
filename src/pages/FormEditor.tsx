@@ -58,6 +58,9 @@ export default function FormEditor() {
 
   // Signature prep mode
   const [signaturePrepMode, setSignaturePrepMode] = useState(false);
+  // Stored recipient data from the initial panel
+  const [recipientData, setRecipientData] = useState<{ to: string[]; subject: string; message: string } | null>(null);
+  const [signaturePanelMode, setSignaturePanelMode] = useState<'collect' | 'send'>('collect');
   const [activeTool, setActiveTool] = useState<ToolMode>('select');
   const [sidebarTab, setSidebarTab] = useState<SidebarTab | null>('signers');
   const [selectedSignerId, setSelectedSignerId] = useState<string | null>(null);
@@ -304,8 +307,15 @@ export default function FormEditor() {
   };
 
   // ── SIGNATURE PREP MODE handlers ──
-  const handleEnterPrepMode = () => {
+  const handleSendForSignature = () => {
     saveAnnotations();
+    setSignaturePanelMode('collect');
+    setSignatureOpen(true);
+  };
+
+  const handleContinueToPrep = (data: { to: string[]; subject: string; message: string }) => {
+    setRecipientData(data);
+    setSignatureOpen(false);
     setSignaturePrepMode(true);
     setActiveTool('select');
     setSidebarTab('signers');
@@ -315,6 +325,7 @@ export default function FormEditor() {
     setSignaturePrepMode(false);
     setActiveTool('select');
     setSidebarTab(null);
+    setRecipientData(null);
   };
 
   const collectDesignatedFields = (): Array<{ type: string; x: number; y: number; page: number; width: number; height: number; signerId?: string }> => {
@@ -351,9 +362,10 @@ export default function FormEditor() {
     return fields;
   };
 
-  const handleNextToSend = () => {
+  const handleFinalSend = () => {
     const fields = collectDesignatedFields();
     setDesignatedFields(fields);
+    setSignaturePanelMode('send');
     setSignatureOpen(true);
   };
 
@@ -423,8 +435,8 @@ export default function FormEditor() {
                 <ChevronRight className="w-4 h-4" />
               </Button>
             </div>
-            <Button size="sm" className="text-xs gap-1.5" onClick={handleNextToSend}>
-              <Send className="w-3.5 h-3.5" /> Next &gt;
+            <Button size="sm" className="text-xs gap-1.5" onClick={handleFinalSend}>
+              <Send className="w-3.5 h-3.5" /> Send
             </Button>
           </div>
         </div>
@@ -485,6 +497,8 @@ export default function FormEditor() {
           checklistItemId={formId}
           formData={fieldValuesRef.current}
           designatedFields={designatedFields}
+          mode={signaturePanelMode}
+          onContinue={handleContinueToPrep}
         />
       </div>
     );
@@ -510,7 +524,7 @@ export default function FormEditor() {
               <ChevronRight className="w-4 h-4" />
             </Button>
           </div>
-          <Button variant="outline" size="sm" className="text-xs gap-1.5" onClick={handleEnterPrepMode}>
+          <Button variant="outline" size="sm" className="text-xs gap-1.5" onClick={handleSendForSignature}>
             <Send className="w-3.5 h-3.5" /> Send for Signature
           </Button>
           <Button size="sm" className="text-xs gap-1.5" onClick={handleSave}>
@@ -545,6 +559,19 @@ export default function FormEditor() {
           )}
         </div>
       </div>
+      {/* Signature Panel (collect mode from autofill view) */}
+      <SignaturePanel
+        open={signatureOpen}
+        onClose={() => setSignatureOpen(false)}
+        documentName={checklistItem?.name || 'Exclusive Right of Sale Listing Agreement'}
+        contacts={dealContacts}
+        dealId={id || ''}
+        checklistItemId={formId}
+        formData={fieldValuesRef.current}
+        designatedFields={designatedFields}
+        mode={signaturePanelMode}
+        onContinue={handleContinueToPrep}
+      />
     </div>
   );
 }
