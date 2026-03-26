@@ -55,7 +55,7 @@ export default function AdminPdfEditor() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const annotationsPerPage = useRef<Record<number, string>>({});
 
-  // Fetch saved documents list
+  // Annotations per page are saved via saveCurrentPageAnnotations
   const fetchSavedDocuments = useCallback(async () => {
     const { data } = await supabase
       .from('admin_documents')
@@ -279,10 +279,39 @@ export default function AdminPdfEditor() {
     }
   }, [currentPage, pages.length]);
 
+  const registerCanvasChange = useCallback((pageIdx: number) => {
+    const fc = fabricCanvasRef.current;
+    if (fc && pages.length > 0) {
+      annotationsPerPage.current[pageIdx] = JSON.stringify(fc.toJSON());
+    }
+  }, [pages.length]);
+
+  const handleUndo = useCallback(() => {
+    // Basic undo: not implemented yet
+  }, []);
+
+  const handleRedo = useCallback(() => {
+    // Basic redo: not implemented yet
+  }, []);
+
+  const applyFontStyle = useCallback((patch: Partial<FontStyle>) => {
+    const fc = fabricCanvasRef.current;
+    if (!fc) return;
+    const obj = fc.getActiveObject() as any;
+    if (!obj) return;
+    const updates: any = {};
+    if (patch.fontSize !== undefined) updates.fontSize = patch.fontSize;
+    if (patch.bold !== undefined) updates.fontWeight = patch.bold ? 'bold' : 'normal';
+    if (patch.italic !== undefined) updates.fontStyle = patch.italic ? 'italic' : 'normal';
+    if (patch.underline !== undefined) updates.underline = patch.underline;
+    obj.set(updates);
+    fc.renderAll();
+    setSelectedFontStyle((prev) => prev ? { ...prev, ...patch } : null);
+    registerCanvasChange(currentPage);
+  }, [currentPage, registerCanvasChange]);
+
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== 'Delete' && event.key !== 'Backspace') return;
-
       const target = event.target as HTMLElement | null;
       if (
         target instanceof HTMLInputElement ||
@@ -295,16 +324,8 @@ export default function AdminPdfEditor() {
       const isUndo = (event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'z' && !event.shiftKey;
       const isRedo = ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'z' && event.shiftKey)
         || (event.ctrlKey && event.key.toLowerCase() === 'y');
-      if (isUndo) {
-        event.preventDefault();
-        handleUndo();
-        return;
-      }
-      if (isRedo) {
-        event.preventDefault();
-        handleRedo();
-        return;
-      }
+      if (isUndo) { event.preventDefault(); handleUndo(); return; }
+      if (isRedo) { event.preventDefault(); handleRedo(); return; }
 
       // Zoom keyboard shortcuts
       const isZoomIn = (event.metaKey || event.ctrlKey) && (event.key === '=' || event.key === '+');
@@ -312,7 +333,7 @@ export default function AdminPdfEditor() {
       if (isZoomIn) { event.preventDefault(); setZoom((z) => Math.min(200, z + 25)); return; }
       if (isZoomOut) { event.preventDefault(); setZoom((z) => Math.max(25, z - 25)); return; }
 
-      // Font style shortcuts (only when text is selected)
+      // Font style shortcuts
       const activeObj = fabricCanvasRef.current?.getActiveObject() as any;
       if (activeObj && (activeObj.type === 'i-text' || activeObj.type === 'textbox' || activeObj.type === 'text')) {
         if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'b') {
@@ -344,11 +365,12 @@ export default function AdminPdfEditor() {
         }
       }
 
-      const activeObject = fabricCanvasRef.current?.getActiveObject();
-      if (!activeObject) return;
-
-      event.preventDefault();
-      handleDeleteSelection();
+      if (event.key === 'Delete' || event.key === 'Backspace') {
+        const activeObject = fabricCanvasRef.current?.getActiveObject();
+        if (!activeObject) return;
+        event.preventDefault();
+        handleDeleteSelection();
+      }
     };
 
     window.addEventListener('keydown', onKeyDown);
@@ -390,21 +412,7 @@ export default function AdminPdfEditor() {
     if (selectedSignerId === id) setSelectedSignerId(null);
   };
 
-  const applyFontStyle = useCallback((patch: Partial<FontStyle>) => {
-    const fc = fabricCanvasRef.current;
-    if (!fc) return;
-    const obj = fc.getActiveObject() as any;
-    if (!obj) return;
-    const updates: any = {};
-    if (patch.fontSize !== undefined) updates.fontSize = patch.fontSize;
-    if (patch.bold !== undefined) updates.fontWeight = patch.bold ? 'bold' : 'normal';
-    if (patch.italic !== undefined) updates.fontStyle = patch.italic ? 'italic' : 'normal';
-    if (patch.underline !== undefined) updates.underline = patch.underline;
-    obj.set(updates);
-    fc.renderAll();
-    setSelectedFontStyle((prev) => prev ? { ...prev, ...patch } : null);
-    registerCanvasChange(currentPage);
-  }, [currentPage, registerCanvasChange]);
+  // applyFontStyle defined above with registerCanvasChange
 
   const handleSignatureConfirm = (dataUrl: string) => {
     if (signatureModalMode === 'sign') {

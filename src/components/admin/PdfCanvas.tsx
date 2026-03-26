@@ -21,6 +21,9 @@ interface PdfCanvasProps {
   initialsDataUrl: string | null;
   onRequestSignature: () => void;
   onRequestInitials: () => void;
+  zoomScale?: number;
+  onCanvasReady?: () => void;
+  onCanvasChange?: () => void;
 }
 
 export function PdfCanvas({
@@ -35,6 +38,8 @@ export function PdfCanvas({
   initialsDataUrl,
   onRequestSignature,
   onRequestInitials,
+  onCanvasReady,
+  onCanvasChange,
 }: PdfCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasElRef = useRef<HTMLCanvasElement>(null);
@@ -355,7 +360,7 @@ function addPresetTextField(
 
 function addDesignatedField(
   fc: FabricCanvas, x: number, y: number,
-  label: string, bgColor: string, textColor: string, fieldType: string
+  label: string, bgColor: string, textColor: string, fieldType: string, _onCanvasChange?: () => void
 ) {
   const w = fieldType === 'date' ? 120 : fieldType === 'initials' ? 100 : 160;
   const h = 30;
