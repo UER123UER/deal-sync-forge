@@ -89,6 +89,34 @@ export default function FormEditor() {
   const prepFabricCanvasRef = useRef<FabricCanvas | null>(null);
   const prepAnnotationsPerPage = useRef<Record<number, string>>({});
 
+  const persistCanvasState = useCallback((canvas: FabricCanvas | null, pageIndex: number, store: React.MutableRefObject<Record<number, string>>) => {
+    if (!canvas) return;
+
+    try {
+      store.current[pageIndex] = JSON.stringify(canvas.toJSON());
+    } catch {
+      // Ignore serialization errors during teardown
+    }
+  }, []);
+
+  const disposeCanvas = useCallback((
+    canvasRef: React.MutableRefObject<FabricCanvas | null>,
+    pageIndex?: number,
+    store?: React.MutableRefObject<Record<number, string>>,
+  ) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    try {
+      if (typeof pageIndex === 'number' && store) {
+        persistCanvasState(canvas, pageIndex, store);
+      }
+    } finally {
+      canvas.dispose();
+      canvasRef.current = null;
+    }
+  }, [persistCanvasState]);
+
   const dealContacts = (deal?.deal_contacts || []).map((dc: any) => ({
     id: dc.contact?.id || dc.contact_id,
     role: dc.role || '',
@@ -232,9 +260,7 @@ export default function FormEditor() {
     if (!pageData || !canvasElRef.current) return;
 
     if (fabricCanvasRef.current) {
-      const json = fabricCanvasRef.current.toJSON();
-      annotationsPerPage.current[prevPageRef.current] = JSON.stringify(json);
-      fabricCanvasRef.current.dispose();
+      disposeCanvas(fabricCanvasRef, prevPageRef.current, annotationsPerPage);
     }
 
     const fc = new FabricCanvas(canvasElRef.current, {
@@ -273,26 +299,19 @@ export default function FormEditor() {
     }
 
     return () => {
-      if (fabricCanvasRef.current) {
-        const json = fabricCanvasRef.current.toJSON();
-        annotationsPerPage.current[currentPage] = JSON.stringify(json);
-      }
+      disposeCanvas(fabricCanvasRef, currentPage, annotationsPerPage);
     };
-  }, [pages, currentPage, signaturePrepMode]);
+  }, [pages, currentPage, signaturePrepMode, disposeCanvas]);
 
   const saveAnnotations = useCallback(() => {
-    if (fabricCanvasRef.current) {
-      const json = fabricCanvasRef.current.toJSON();
-      annotationsPerPage.current[currentPage] = JSON.stringify(json);
-    }
-  }, [currentPage]);
+    persistCanvasState(fabricCanvasRef.current, currentPage, annotationsPerPage);
+  }, [currentPage, persistCanvasState]);
 
   const changePage = (dir: number) => {
     if (!signaturePrepMode) saveAnnotations();
     // Save prep mode annotations
     if (signaturePrepMode && prepFabricCanvasRef.current) {
-      const json = prepFabricCanvasRef.current.toJSON();
-      prepAnnotationsPerPage.current[currentPage] = JSON.stringify(json);
+      persistCanvasState(prepFabricCanvasRef.current, currentPage, prepAnnotationsPerPage);
     }
     const next = currentPage + dir;
     if (next >= 0 && next < pages.length) {
@@ -322,14 +341,16 @@ export default function FormEditor() {
   useEffect(() => {
     if (signatureOpen || !pendingPrepData) return;
 
+    disposeCanvas(fabricCanvasRef, currentPage, annotationsPerPage);
     setRecipientData(pendingPrepData);
     setPendingPrepData(null);
     setSignaturePrepMode(true);
     setActiveTool('select');
     setSidebarTab('signers');
-  }, [signatureOpen, pendingPrepData]);
+  }, [signatureOpen, pendingPrepData, currentPage, disposeCanvas]);
 
   const handleExitPrepMode = () => {
+    disposeCanvas(prepFabricCanvasRef, currentPage, prepAnnotationsPerPage);
     setSignaturePrepMode(false);
     setActiveTool('select');
     setSidebarTab(null);
@@ -340,8 +361,7 @@ export default function FormEditor() {
   const collectDesignatedFields = (): Array<{ type: string; x: number; y: number; page: number; width: number; height: number; signerId?: string }> => {
     // Save current page annotations first
     if (prepFabricCanvasRef.current) {
-      const json = prepFabricCanvasRef.current.toJSON();
-      prepAnnotationsPerPage.current[currentPage] = JSON.stringify(json);
+      persistCanvasState(prepFabricCanvasRef.current, currentPage, prepAnnotationsPerPage);
     }
 
     const fields: Array<{ type: string; x: number; y: number; page: number; width: number; height: number; signerId?: string }> = [];
