@@ -78,7 +78,9 @@ export function PdfEditorSidebar({
   savedDocuments = [],
   onOpenDocument,
   onDeleteDocument,
+  mode = 'admin',
 }: PdfEditorSidebarProps) {
+  const tabs = mode === 'agent' ? allTabs.filter(t => agentTabs.includes(t.id)) : allTabs;
   const [showAddForm, setShowAddForm] = useState(false);
   const [newSigner, setNewSigner] = useState({ firstName: '', lastName: '', email: '', role: 'Seller', type: 'Remote Signer' });
   const [signingOrder, setSigningOrder] = useState(false);
