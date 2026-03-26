@@ -464,7 +464,12 @@ export default function FormEditor() {
   useEffect(() => {
     if (signatureOpen || !pendingPrepData) return;
 
+    // Save current autofill canvas state before switching modes
     disposeCanvas(fabricCanvasRef, currentPage, annotationsPerPage);
+
+    // Copy all autofill annotations into prep mode so existing fields are visible
+    prepAnnotationsPerPage.current = { ...annotationsPerPage.current };
+
     setRecipientData(pendingPrepData);
     setPendingPrepData(null);
     setSignaturePrepMode(true);
