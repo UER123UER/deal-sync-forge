@@ -362,9 +362,10 @@ export default function FormEditor() {
     return fields;
   };
 
-  const handleNextToSend = () => {
+  const handleFinalSend = () => {
     const fields = collectDesignatedFields();
     setDesignatedFields(fields);
+    setSignaturePanelMode('send');
     setSignatureOpen(true);
   };
 
