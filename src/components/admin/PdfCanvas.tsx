@@ -88,10 +88,12 @@ export function PdfCanvas({
     const handleCanvasChange = () => onCanvasChangeRef.current?.();
     fc.on('path:created', handleCanvasChange);
     fc.on('object:modified', handleCanvasChange);
+    fc.on('text:changed', handleCanvasChange);
 
     return () => {
       fc.off('path:created', handleCanvasChange);
       fc.off('object:modified', handleCanvasChange);
+      fc.off('text:changed', handleCanvasChange);
       fc.dispose();
       fabricCanvasRef.current = null;
     };
