@@ -42,6 +42,9 @@ const App = () => (
             <Route path="/transactions/:id" element={<DealDetail />} />
             <Route path="/transactions/:id/form/:formId" element={<FormEditor />} />
             <Route path="/transactions/:id/marketing" element={<MarketingEditor />} />
+            <Route path="/transactions/:id/signing-sessions" element={<SigningSessions />} />
+            <Route path="/transactions/:id/signing-session/:sessionId/setup" element={<SigningSessionSetup />} />
+            <Route path="/transactions/:id/signing-session/:sessionId/prepare" element={<SigningSessionPrepare />} />
             <Route path="/people" element={<People />} />
             <Route path="/tasks" element={<Tasks />} />
             <Route path="/inbox" element={<Inbox />} />
