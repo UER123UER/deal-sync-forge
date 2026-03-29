@@ -3,12 +3,15 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, ZoomIn, ZoomOut, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { PdfCanvas, type FontStyle } from '@/components/admin/PdfCanvas';
+import { PdfCanvas } from '@/components/admin/PdfCanvas';
 import { PdfEditorSidebar, type Signer, type SidebarTab } from '@/components/admin/PdfEditorSidebar';
 import { SignatureStampModal } from '@/components/admin/SignatureStampModal';
 import {
-  useSigningSession, useSessionRecipients, useSessionDocuments,
-  useUpdateSigningSession, useSaveSessionFields,
+  useSigningSession,
+  useSessionRecipients,
+  useSessionDocuments,
+  useUpdateSigningSession,
+  useSaveSessionFields,
 } from '@/hooks/useSigningSessions';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -20,7 +23,11 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.j
 
 const SIGNER_COLORS = ['#4F46E5', '#DC2626', '#059669', '#D97706', '#7C3AED', '#DB2777'];
 
-interface PageData { imageUrl: string; width: number; height: number; }
+interface PageData {
+  imageUrl: string;
+  width: number;
+  height: number;
+}
 
 export default function SigningSessionPrepare() {
   const { id: dealId, sessionId } = useParams<{ id: string; sessionId: string }>();
@@ -33,83 +40,133 @@ export default function SigningSessionPrepare() {
 
   const [pages, setPages] = useState<PageData[]>([]);
   const [currentPage, setCurrentPage] = useState(0);
+  const [currentDocumentId, setCurrentDocumentId] = useState<string | null>(null);
+  const [documentLoading, setDocumentLoading] = useState(false);
+  const [documentError, setDocumentError] = useState<string | null>(null);
   const [activeTool, setActiveTool] = useState<ToolMode>('select');
   const [zoomScale, setZoomScale] = useState(1);
   const [showPreview, setShowPreview] = useState(false);
 
-  // Sidebar
   const [activeTab, setActiveTab] = useState<SidebarTab>('signers');
   const [signers, setSigners] = useState<Signer[]>([]);
   const [selectedSigner, setSelectedSigner] = useState<string | null>(null);
 
-  // Signature stamp modal
   const [stampModalOpen, setStampModalOpen] = useState(false);
   const [stampType, setStampType] = useState<'sign' | 'initials'>('sign');
   const [savedSignature, setSavedSignature] = useState<string | null>(null);
   const [savedInitials, setSavedInitials] = useState<string | null>(null);
 
-  // Canvas
   const fabricCanvasRef = useRef<FabricCanvas | null>(null);
-  const annotationsPerPage = useRef<Record<number, string>>({});
+  const annotationsByDocument = useRef<Record<string, Record<number, string>>>({});
 
-  // Convert recipients to signers for sidebar
+  const currentDocument =
+    sessionDocs?.find((doc) => doc.id === currentDocumentId) || sessionDocs?.[0] || null;
+
   useEffect(() => {
-    if (recipients) {
-      const s: Signer[] = recipients.map((r, i) => ({
-        id: r.id,
-        firstName: r.first_name,
-        lastName: r.last_name,
-        email: r.email,
-        role: r.type === 'signer' ? 'Signer' : r.type === 'reviewer' ? 'Reviewer' : 'CC',
-        type: r.type,
-      }));
-      setSigners(s);
-      if (!selectedSigner && s.length) setSelectedSigner(s[0].id);
-    }
-  }, [recipients]);
+    if (!recipients) return;
 
-  // Load PDF pages
+    const nextSigners: Signer[] = recipients.map((recipient) => ({
+      id: recipient.id,
+      firstName: recipient.first_name,
+      lastName: recipient.last_name,
+      email: recipient.email,
+      role:
+        recipient.type === 'signer'
+          ? 'Signer'
+          : recipient.type === 'reviewer'
+            ? 'Reviewer'
+            : 'CC',
+      type: recipient.type,
+    }));
+
+    setSigners(nextSigners);
+    if (!selectedSigner && nextSigners.length > 0) {
+      setSelectedSigner(nextSigners[0].id);
+    }
+  }, [recipients, selectedSigner]);
+
+  useEffect(() => {
+    if (!sessionDocs?.length) {
+      setCurrentDocumentId(null);
+      return;
+    }
+
+    setCurrentDocumentId((previousId) => {
+      if (previousId && sessionDocs.some((doc) => doc.id === previousId)) {
+        return previousId;
+      }
+      return sessionDocs[0].id;
+    });
+  }, [sessionDocs]);
+
   useEffect(() => {
     const loadPdf = async () => {
-      let pdfUrl: string | null = null;
-      if (sessionDocs?.length) {
-        const { data } = supabase.storage.from('admin-documents').getPublicUrl(sessionDocs[0].storage_path);
-        pdfUrl = data.publicUrl;
-      } else {
-        const { data: files } = await supabase.storage.from('admin-documents').list();
-        if (files?.length) {
-          const { data } = supabase.storage.from('admin-documents').getPublicUrl(files[0].name);
-          pdfUrl = data.publicUrl;
-        }
+      if (!currentDocument) {
+        setPages([]);
+        setCurrentPage(0);
+        setDocumentError('No documents in this signing session yet.');
+        return;
       }
-      if (!pdfUrl) return;
+
+      if (!currentDocument.storage_path) {
+        setPages([]);
+        setCurrentPage(0);
+        setDocumentError(`"${currentDocument.name}" does not have a linked PDF yet.`);
+        return;
+      }
+
+      setDocumentLoading(true);
+      setDocumentError(null);
+      setCurrentPage(0);
 
       try {
-        const pdf = await pdfjsLib.getDocument(pdfUrl).promise;
-        const rendered: PageData[] = [];
-        for (let i = 1; i <= pdf.numPages; i++) {
+        const { data } = supabase.storage
+          .from('admin-documents')
+          .getPublicUrl(currentDocument.storage_path);
+        const pdf = await pdfjsLib.getDocument(data.publicUrl).promise;
+        const renderedPages: PageData[] = [];
+
+        for (let i = 1; i <= pdf.numPages; i += 1) {
           const page = await pdf.getPage(i);
           const viewport = page.getViewport({ scale: 2.0 });
           const canvas = document.createElement('canvas');
           canvas.width = viewport.width;
           canvas.height = viewport.height;
-          const ctx = canvas.getContext('2d')!;
-          await page.render({ canvasContext: ctx, viewport }).promise;
-          rendered.push({ imageUrl: canvas.toDataURL(), width: viewport.width / 2, height: viewport.height / 2 });
+          const context = canvas.getContext('2d');
+          if (!context) continue;
+
+          await page.render({ canvasContext: context, viewport }).promise;
+          renderedPages.push({
+            imageUrl: canvas.toDataURL(),
+            width: viewport.width / 2,
+            height: viewport.height / 2,
+          });
         }
-        setPages(rendered);
-      } catch (e) {
-        console.error('Failed to load PDF:', e);
+
+        setPages(renderedPages);
+      } catch (error) {
+        console.error('Failed to load PDF:', error);
+        setPages([]);
+        setDocumentError(`Failed to load "${currentDocument.name}".`);
+      } finally {
+        setDocumentLoading(false);
       }
     };
+
     loadPdf();
-  }, [sessionDocs]);
+  }, [currentDocument]);
 
   const saveCurrentAnnotations = useCallback(() => {
-    if (fabricCanvasRef.current) {
-      annotationsPerPage.current[currentPage] = JSON.stringify(fabricCanvasRef.current.toJSON());
+    if (!fabricCanvasRef.current || !currentDocumentId) return;
+
+    if (!annotationsByDocument.current[currentDocumentId]) {
+      annotationsByDocument.current[currentDocumentId] = {};
     }
-  }, [currentPage]);
+
+    annotationsByDocument.current[currentDocumentId][currentPage] = JSON.stringify(
+      fabricCanvasRef.current.toJSON()
+    );
+  }, [currentDocumentId, currentPage]);
 
   const changePage = (newPage: number) => {
     if (newPage < 0 || newPage >= pages.length) return;
@@ -117,13 +174,22 @@ export default function SigningSessionPrepare() {
     setCurrentPage(newPage);
   };
 
+  const changeDocument = (documentId: string) => {
+    if (documentId === currentDocumentId) return;
+    saveCurrentAnnotations();
+    setCurrentDocumentId(documentId);
+  };
+
   const handleCanvasReady = useCallback(() => {
-    if (fabricCanvasRef.current && annotationsPerPage.current[currentPage]) {
-      fabricCanvasRef.current.loadFromJSON(annotationsPerPage.current[currentPage], () => {
-        fabricCanvasRef.current?.renderAll();
-      });
-    }
-  }, [currentPage]);
+    if (!fabricCanvasRef.current || !currentDocumentId) return;
+
+    const pageAnnotations = annotationsByDocument.current[currentDocumentId]?.[currentPage];
+    if (!pageAnnotations) return;
+
+    fabricCanvasRef.current.loadFromJSON(pageAnnotations, () => {
+      fabricCanvasRef.current?.renderAll();
+    });
+  }, [currentDocumentId, currentPage]);
 
   const handleCanvasChange = useCallback(() => {
     saveCurrentAnnotations();
@@ -131,30 +197,48 @@ export default function SigningSessionPrepare() {
 
   const collectFields = () => {
     saveCurrentAnnotations();
-    const fields: any[] = [];
-    for (const [pageStr, json] of Object.entries(annotationsPerPage.current)) {
-      const page = parseInt(pageStr);
-      try {
-        const data = JSON.parse(json);
-        if (data.objects) {
-          for (const obj of data.objects) {
-            if (obj.designatedField) {
-              fields.push({
-                session_id: sessionId!,
-                document_id: sessionDocs?.[0]?.id || null,
-                recipient_id: obj.recipientId || selectedSigner,
-                type: obj.designatedField,
-                page,
-                x: obj.left || 0,
-                y: obj.top || 0,
-                width: obj.width || 150,
-                height: obj.height || 40,
-              });
-            }
+    const fields: Array<{
+      session_id: string;
+      document_id: string | null;
+      recipient_id: string | null;
+      type: string;
+      page: number;
+      x: number;
+      y: number;
+      width: number;
+      height: number;
+    }> = [];
+
+    for (const document of sessionDocs || []) {
+      const documentAnnotations = annotationsByDocument.current[document.id];
+      if (!documentAnnotations) continue;
+
+      for (const [pageKey, json] of Object.entries(documentAnnotations)) {
+        try {
+          const parsed = JSON.parse(json);
+          if (!parsed.objects) continue;
+
+          for (const object of parsed.objects) {
+            if (!object.designatedField) continue;
+
+            fields.push({
+              session_id: sessionId!,
+              document_id: document.id,
+              recipient_id: object.recipientId || selectedSigner,
+              type: object.designatedField,
+              page: parseInt(pageKey, 10),
+              x: object.left || 0,
+              y: object.top || 0,
+              width: (object.width || 150) * (object.scaleX || 1),
+              height: (object.height || 40) * (object.scaleY || 1),
+            });
           }
+        } catch {
+          // Ignore invalid annotation snapshots.
         }
-      } catch {}
+      }
     }
+
     return fields;
   };
 
@@ -164,6 +248,7 @@ export default function SigningSessionPrepare() {
       if (fields.length > 0) {
         await saveFields.mutateAsync({ session_id: sessionId!, fields });
       }
+
       await updateSession.mutateAsync({
         id: sessionId!,
         status: 'in_progress',
@@ -171,14 +256,14 @@ export default function SigningSessionPrepare() {
       });
 
       if (recipients?.length) {
-        const urls = recipients.map(r => `${window.location.origin}/sign/${r.token}`);
+        const urls = recipients.map((recipient) => `${window.location.origin}/sign/${recipient.token}`);
         await navigator.clipboard.writeText(urls.join('\n'));
         toast.success(`Session sent! ${urls.length} signing link(s) copied to clipboard.`);
       }
 
       navigate(`/transactions/${dealId}/signing-sessions`);
-    } catch (e: any) {
-      toast.error(e.message || 'Failed to send');
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to send');
     }
   };
 
@@ -189,6 +274,9 @@ export default function SigningSessionPrepare() {
   };
 
   if (showPreview) {
+    const fields = collectFields();
+    const linkedDocumentCount = (sessionDocs || []).filter((doc) => !!doc.storage_path).length;
+
     return (
       <div className="min-h-screen bg-background">
         <div className="border-b px-4 py-3 flex items-center justify-between">
@@ -202,27 +290,46 @@ export default function SigningSessionPrepare() {
             <Send className="w-4 h-4 mr-2" /> Send for Signature
           </Button>
         </div>
+
         <div className="max-w-2xl mx-auto p-6 space-y-6">
           <div className="border rounded-lg p-4 space-y-3">
             <h2 className="text-sm font-medium">Session Summary</h2>
             <div className="text-sm"><span className="text-muted-foreground">Subject:</span> {session?.session_name}</div>
             <div className="text-sm"><span className="text-muted-foreground">Message:</span> {session?.email_message}</div>
-            <div className="text-sm"><span className="text-muted-foreground">Documents:</span> {pages.length} page(s)</div>
+            <div className="text-sm">
+              <span className="text-muted-foreground">Documents:</span> {sessionDocs?.length || 0} selected, {linkedDocumentCount} linked
+            </div>
           </div>
+
           <div className="border rounded-lg p-4 space-y-2">
-            <h2 className="text-sm font-medium">Recipients ({recipients?.length || 0})</h2>
-            {recipients?.map((r, i) => (
-              <div key={r.id} className="flex items-center gap-2 text-sm">
-                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: SIGNER_COLORS[i % SIGNER_COLORS.length] }} />
-                <span className="font-medium">{r.first_name} {r.last_name}</span>
-                <span className="text-muted-foreground">{r.email}</span>
-                <span className="text-xs px-2 py-0.5 bg-muted rounded capitalize ml-auto">{r.type}</span>
+            <h2 className="text-sm font-medium">Session Documents</h2>
+            {(sessionDocs || []).map((document) => (
+              <div key={document.id} className="flex items-center justify-between gap-3 text-sm">
+                <span>{document.name}</span>
+                <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${
+                  document.storage_path ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning'
+                }`}>
+                  {document.storage_path ? 'Ready' : 'Needs linked PDF'}
+                </span>
               </div>
             ))}
           </div>
+
+          <div className="border rounded-lg p-4 space-y-2">
+            <h2 className="text-sm font-medium">Recipients ({recipients?.length || 0})</h2>
+            {recipients?.map((recipient, index) => (
+              <div key={recipient.id} className="flex items-center gap-2 text-sm">
+                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: SIGNER_COLORS[index % SIGNER_COLORS.length] }} />
+                <span className="font-medium">{recipient.first_name} {recipient.last_name}</span>
+                <span className="text-muted-foreground">{recipient.email}</span>
+                <span className="text-xs px-2 py-0.5 bg-muted rounded capitalize ml-auto">{recipient.type}</span>
+              </div>
+            ))}
+          </div>
+
           <div className="border rounded-lg p-4">
             <h2 className="text-sm font-medium mb-2">Fields Placed</h2>
-            <p className="text-sm text-muted-foreground">{collectFields().length} field(s) placed across {pages.length} page(s)</p>
+            <p className="text-sm text-muted-foreground">{fields.length} field(s) placed across {sessionDocs?.length || 0} document(s)</p>
           </div>
         </div>
       </div>
@@ -231,12 +338,26 @@ export default function SigningSessionPrepare() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      {/* Header */}
       <div className="border-b px-4 py-2 flex items-center gap-3 shrink-0">
         <Button variant="ghost" size="icon" onClick={() => navigate(`/transactions/${dealId}/signing-session/${sessionId}/setup`)}>
           <ArrowLeft className="w-4 h-4" />
         </Button>
         <span className="text-sm font-medium flex-1">{session?.session_name || 'Field Editor'}</span>
+
+        {sessionDocs && sessionDocs.length > 1 && (
+          <Select value={currentDocumentId || ''} onValueChange={changeDocument}>
+            <SelectTrigger className="w-64 h-8 text-xs">
+              <SelectValue placeholder="Select document" />
+            </SelectTrigger>
+            <SelectContent>
+              {sessionDocs.map((document) => (
+                <SelectItem key={document.id} value={document.id}>
+                  {document.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
 
         {signers.length > 0 && (
           <Select value={selectedSigner || ''} onValueChange={setSelectedSigner}>
@@ -244,11 +365,11 @@ export default function SigningSessionPrepare() {
               <SelectValue placeholder="Select signer" />
             </SelectTrigger>
             <SelectContent>
-              {signers.map((s, i) => (
-                <SelectItem key={s.id} value={s.id}>
+              {signers.map((signer, index) => (
+                <SelectItem key={signer.id} value={signer.id}>
                   <div className="flex items-center gap-2">
-                    <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: SIGNER_COLORS[i % SIGNER_COLORS.length] }} />
-                    {s.firstName} {s.lastName}
+                    <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: SIGNER_COLORS[index % SIGNER_COLORS.length] }} />
+                    {signer.firstName} {signer.lastName}
                   </div>
                 </SelectItem>
               ))}
@@ -257,11 +378,11 @@ export default function SigningSessionPrepare() {
         )}
 
         <div className="flex items-center gap-1 border rounded px-1">
-          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setZoomScale(z => Math.max(0.25, z - 0.25))}>
+          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setZoomScale((value) => Math.max(0.25, value - 0.25))}>
             <ZoomOut className="w-3 h-3" />
           </Button>
           <span className="text-xs w-10 text-center">{Math.round(zoomScale * 100)}%</span>
-          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setZoomScale(z => Math.min(2, z + 0.25))}>
+          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setZoomScale((value) => Math.min(2, value + 0.25))}>
             <ZoomIn className="w-3 h-3" />
           </Button>
         </div>
@@ -271,17 +392,23 @@ export default function SigningSessionPrepare() {
         </Button>
       </div>
 
-      {/* Main area */}
       <div className="flex flex-1 overflow-hidden">
-        {/* PDF workspace */}
         <div className="flex-1 overflow-auto bg-muted/30 p-4">
-          {pages.length === 0 ? (
+          {documentLoading ? (
             <div className="flex items-center justify-center h-full text-muted-foreground text-sm">Loading document...</div>
+          ) : pages.length === 0 ? (
+            <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
+              {documentError || 'No document selected.'}
+            </div>
           ) : (
             <div className="flex flex-col items-center gap-4">
-              {pages.map((page, idx) => (
-                <div key={idx} className="relative" style={{ width: page.width * zoomScale, height: page.height * zoomScale }}>
-                  {idx === currentPage ? (
+              {pages.map((page, index) => (
+                <div
+                  key={`${currentDocumentId || 'document'}-${index}`}
+                  className="relative"
+                  style={{ width: page.width * zoomScale, height: page.height * zoomScale }}
+                >
+                  {index === currentPage ? (
                     <PdfCanvas
                       pageImageUrl={page.imageUrl}
                       pageWidth={page.width}
@@ -291,8 +418,14 @@ export default function SigningSessionPrepare() {
                       fabricCanvasRef={fabricCanvasRef}
                       signatureDataUrl={savedSignature}
                       initialsDataUrl={savedInitials}
-                      onRequestSignature={() => { setStampType('sign'); setStampModalOpen(true); }}
-                      onRequestInitials={() => { setStampType('initials'); setStampModalOpen(true); }}
+                      onRequestSignature={() => {
+                        setStampType('sign');
+                        setStampModalOpen(true);
+                      }}
+                      onRequestInitials={() => {
+                        setStampType('initials');
+                        setStampModalOpen(true);
+                      }}
                       zoomScale={zoomScale}
                       onCanvasReady={handleCanvasReady}
                       onCanvasChange={handleCanvasChange}
@@ -300,14 +433,14 @@ export default function SigningSessionPrepare() {
                   ) : (
                     <img
                       src={page.imageUrl}
-                      alt={`Page ${idx + 1}`}
+                      alt={`Page ${index + 1}`}
                       className="w-full h-full cursor-pointer border shadow-sm"
-                      onClick={() => changePage(idx)}
+                      onClick={() => changePage(index)}
                       style={{ width: page.width * zoomScale, height: page.height * zoomScale }}
                     />
                   )}
                   <div className="absolute bottom-2 right-2 text-xs bg-background/80 px-2 py-1 rounded">
-                    Page {idx + 1} of {pages.length}
+                    Page {index + 1} of {pages.length}
                   </div>
                 </div>
               ))}
@@ -315,7 +448,6 @@ export default function SigningSessionPrepare() {
           )}
         </div>
 
-        {/* Sidebar */}
         <PdfEditorSidebar
           activeTab={activeTab}
           onTabChange={setActiveTab}
@@ -324,11 +456,13 @@ export default function SigningSessionPrepare() {
           signers={signers}
           selectedSignerId={selectedSigner}
           onSelectSigner={setSelectedSigner}
-          onAddSigner={(s) => setSigners(prev => [...prev, { ...s, id: crypto.randomUUID() }])}
-          onRemoveSigner={(id) => setSigners(prev => prev.filter(s => s.id !== id))}
-          documents={[{ name: session?.session_name || 'Document' }]}
+          onAddSigner={(signer) => setSigners((previous) => [...previous, { ...signer, id: crypto.randomUUID() }])}
+          onRemoveSigner={(signerId) => setSigners((previous) => previous.filter((signer) => signer.id !== signerId))}
+          documents={(sessionDocs || []).map((document) => ({
+            name: document.id === currentDocumentId ? `${document.name} (Active)` : document.name,
+          }))}
           savedDocuments={[]}
-          onOpenDocument={() => {}}
+          onOpenDocument={changeDocument}
           onDeleteDocument={() => {}}
           mode="agent"
         />

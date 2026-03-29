@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef } from 'react';
 import { TEMPLATES, TEMPLATE_CATEGORIES, type TemplateCategory } from '@/data/marketingTemplates';
 import { useSignatureRequests } from '@/hooks/useSignatureRequests';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -6,7 +6,7 @@ import { ChevronDown, ChevronRight, Edit, Eye, Mail, Plus, FileText, GripVertica
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { useDeal, useUpdateDeal, useToggleChecklistItem, useDeleteChecklistItem, useAddDealContact } from '@/hooks/useDeals';
+import { useDeal, useUpdateDeal, useDeleteChecklistItem, useAddDealContact } from '@/hooks/useDeals';
 import { useDealNotes, useCreateDealNote, useDeleteDealNote } from '@/hooks/useDealNotes';
 import { useOffers, useCreateOffer, useDeleteOffer } from '@/hooks/useOffers';
 import { useDealPhotos, useUploadDealPhoto, useDeleteDealPhoto } from '@/hooks/useDealPhotos';
@@ -17,7 +17,6 @@ import { cn } from '@/lib/utils';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { SignaturePanel } from '@/components/deal/SignaturePanel';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
@@ -46,14 +45,12 @@ export default function DealDetail() {
   const navigate = useNavigate();
   const { data: deal, isLoading } = useDeal(id);
   const updateDeal = useUpdateDeal();
-  const toggleChecklist = useToggleChecklistItem();
   const deleteChecklist = useDeleteChecklistItem();
   const addDealContact = useAddDealContact();
   const { data: allContacts = [] } = useContacts();
   const [activeTab, setActiveTab] = useState<typeof TABS[number]>('Checklists');
-  const [signatureOpen, setSignatureOpen] = useState(false);
-  const [signatureDocName, setSignatureDocName] = useState('');
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
+  const [selectedSigningItems, setSelectedSigningItems] = useState<Set<string>>(new Set());
 
   // Inline editing states
   const [editingMls, setEditingMls] = useState(false);
@@ -149,9 +146,13 @@ export default function DealDetail() {
     } catch { toast.error('Failed to update price'); }
   };
 
-  const handleToggleChecklist = async (itemId: string, currentCompleted: boolean) => {
-    try { await toggleChecklist.mutateAsync({ itemId, completed: !currentCompleted }); }
-    catch { toast.error('Failed to update checklist item'); }
+  const handleToggleSigningSelection = (itemId: string) => {
+    setSelectedSigningItems((prev) => {
+      const next = new Set(prev);
+      if (next.has(itemId)) next.delete(itemId);
+      else next.add(itemId);
+      return next;
+    });
   };
 
   const handleDeleteChecklist = async (itemId: string) => {
@@ -271,6 +272,21 @@ export default function DealDetail() {
       } catch { toast.error('Upload failed'); }
     };
     input.click();
+  };
+
+  const handleCreateSigningSession = (itemIds?: string[]) => {
+    if (!deal) return;
+
+    const selectedIds = itemIds?.length ? itemIds : Array.from(selectedSigningItems);
+    if (selectedIds.length === 0) {
+      toast.error('Select at least one document for the signing session');
+      return;
+    }
+
+    const params = new URLSearchParams({
+      documents: selectedIds.join(','),
+    });
+    navigate(`/transactions/${deal.id}/signing-session/new/setup?${params.toString()}`);
   };
 
   if (isLoading) {
@@ -496,20 +512,56 @@ export default function DealDetail() {
           {/* Right Panel - Checklists */}
           <div className="flex-1 overflow-auto p-4">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-semibold text-foreground">Listing</h3>
+              <div>
+                <h3 className="text-sm font-semibold text-foreground">Listing</h3>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Select the documents you want included in the signing session.
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                {selectedSigningItems.size > 0 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-xs"
+                    onClick={() => setSelectedSigningItems(new Set())}
+                  >
+                    Clear
+                  </Button>
+                )}
+                <Button
+                  size="sm"
+                  className="text-xs gap-1.5"
+                  onClick={() => handleCreateSigningSession()}
+                  disabled={selectedSigningItems.size === 0}
+                >
+                  <Send className="w-3.5 h-3.5" />
+                  Create Signing Session
+                  {selectedSigningItems.size > 0 ? ` (${selectedSigningItems.size})` : ''}
+                </Button>
+              </div>
             </div>
             <div className="border rounded-md overflow-hidden">
               {checklistItems.map((item) => {
                 const isExpanded = expandedItems.has(item.id);
+                const isSelectedForSigning = selectedSigningItems.has(item.id);
                 return (
                   <div key={item.id}>
-                    <div className={cn('flex items-center px-3 py-3 border-b last:border-b-0 group transition-colors', isExpanded && 'bg-info-light', item.completed && 'opacity-60')}>
+                    <div className={cn(
+                      'flex items-center px-3 py-3 border-b last:border-b-0 group transition-colors',
+                      isExpanded && 'bg-info-light',
+                      isSelectedForSigning && 'bg-primary/5'
+                    )}>
                       <GripVertical className="w-4 h-4 text-muted-foreground/40 mr-2 flex-shrink-0 cursor-grab" />
-                      <Checkbox checked={!!item.completed} onCheckedChange={() => handleToggleChecklist(item.id, !!item.completed)} className="mr-2 flex-shrink-0" />
+                      <Checkbox
+                        checked={isSelectedForSigning}
+                        onCheckedChange={() => handleToggleSigningSelection(item.id)}
+                        className="mr-2 flex-shrink-0"
+                      />
                       <button onClick={() => toggleExpand(item.id)} className="mr-2 flex-shrink-0">
                         {item.has_digital_form ? (isExpanded ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />) : <div className="w-4 h-4" />}
                       </button>
-                      <span className={cn('text-sm text-foreground flex-1', item.completed && 'line-through')}>{item.name}</span>
+                      <span className="text-sm text-foreground flex-1">{item.name}</span>
                       {(() => {
                         const sigStatus = getSignatureStatus(item.id);
                         if (!sigStatus) return null;
@@ -533,7 +585,7 @@ export default function DealDetail() {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem onClick={() => navigate(`/transactions/${deal.id}/form/${item.id}`)}><Printer className="w-3.5 h-3.5 mr-2" /> View/Print</DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => navigate(`/transactions/${deal.id}/signing-session/new/setup`)}><Send className="w-3.5 h-3.5 mr-2" /> Docusign</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleCreateSigningSession([item.id])}><Send className="w-3.5 h-3.5 mr-2" /> Docusign</DropdownMenuItem>
                             <DropdownMenuItem onClick={() => handleChecklistEmail(item.name)}><Mail className="w-3.5 h-3.5 mr-2" /> Email</DropdownMenuItem>
                             <DropdownMenuItem onClick={() => handleChecklistUpload(item.id)}><FileText className="w-3.5 h-3.5 mr-2" /> Upload</DropdownMenuItem>
                             <DropdownMenuItem onClick={() => toast.success('Message sent to office')}><MessageSquare className="w-3.5 h-3.5 mr-2" /> Message Office</DropdownMenuItem>
@@ -552,7 +604,7 @@ export default function DealDetail() {
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild><Button variant="outline" size="icon" className="h-7 w-7 rounded-l-none"><ChevronDown className="w-3.5 h-3.5" /></Button></DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => navigate(`/transactions/${deal.id}/signing-session/new/setup`)}><Send className="w-3.5 h-3.5 mr-2" /> Docusign</DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleCreateSigningSession([item.id])}><Send className="w-3.5 h-3.5 mr-2" /> Docusign</DropdownMenuItem>
                               <DropdownMenuItem onClick={() => navigate(`/transactions/${deal.id}/form/${item.id}`)}><Printer className="w-3.5 h-3.5 mr-2" /> View/Print</DropdownMenuItem>
                               <DropdownMenuItem onClick={() => handleChecklistEmail(item.name)}><Mail className="w-3.5 h-3.5 mr-2" /> Email</DropdownMenuItem>
                             </DropdownMenuContent>
@@ -793,15 +845,6 @@ export default function DealDetail() {
           </div>
         </DialogContent>
       </Dialog>
-
-      {/* Signature Panel */}
-      <SignaturePanel
-        open={signatureOpen}
-        onClose={() => setSignatureOpen(false)}
-        documentName={signatureDocName}
-        contacts={contacts.map((c) => ({ id: c.id, role: c.role, firstName: c.firstName, lastName: c.lastName, email: c.email || '', phone: c.phone || '', company: c.company || '' }))}
-        dealId={id}
-      />
     </div>
   );
 }
