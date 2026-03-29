@@ -533,7 +533,7 @@ export default function DealDetail() {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem onClick={() => navigate(`/transactions/${deal.id}/form/${item.id}`)}><Printer className="w-3.5 h-3.5 mr-2" /> View/Print</DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => { setSignatureDocName(item.name); setSignatureOpen(true); }}><Send className="w-3.5 h-3.5 mr-2" /> Docusign</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => navigate(`/transactions/${deal.id}/signing-session/new/setup`)}><Send className="w-3.5 h-3.5 mr-2" /> Docusign</DropdownMenuItem>
                             <DropdownMenuItem onClick={() => handleChecklistEmail(item.name)}><Mail className="w-3.5 h-3.5 mr-2" /> Email</DropdownMenuItem>
                             <DropdownMenuItem onClick={() => handleChecklistUpload(item.id)}><FileText className="w-3.5 h-3.5 mr-2" /> Upload</DropdownMenuItem>
                             <DropdownMenuItem onClick={() => toast.success('Message sent to office')}><MessageSquare className="w-3.5 h-3.5 mr-2" /> Message Office</DropdownMenuItem>
@@ -552,7 +552,7 @@ export default function DealDetail() {
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild><Button variant="outline" size="icon" className="h-7 w-7 rounded-l-none"><ChevronDown className="w-3.5 h-3.5" /></Button></DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => { setSignatureDocName(item.name); setSignatureOpen(true); }}><Send className="w-3.5 h-3.5 mr-2" /> Docusign</DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => navigate(`/transactions/${deal.id}/signing-session/new/setup`)}><Send className="w-3.5 h-3.5 mr-2" /> Docusign</DropdownMenuItem>
                               <DropdownMenuItem onClick={() => navigate(`/transactions/${deal.id}/form/${item.id}`)}><Printer className="w-3.5 h-3.5 mr-2" /> View/Print</DropdownMenuItem>
                               <DropdownMenuItem onClick={() => handleChecklistEmail(item.name)}><Mail className="w-3.5 h-3.5 mr-2" /> Email</DropdownMenuItem>
                             </DropdownMenuContent>

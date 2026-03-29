@@ -20,6 +20,9 @@ import Finances from "@/pages/Finances";
 import Referral from "@/pages/Referral";
 import ContactBrokerage from "@/pages/ContactBrokerage";
 import AdminPdfEditor from "@/pages/AdminPdfEditor";
+import SigningSessions from "@/pages/SigningSessions";
+import SigningSessionSetup from "@/pages/SigningSessionSetup";
+import SigningSessionPrepare from "@/pages/SigningSessionPrepare";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -39,6 +42,9 @@ const App = () => (
             <Route path="/transactions/:id" element={<DealDetail />} />
             <Route path="/transactions/:id/form/:formId" element={<FormEditor />} />
             <Route path="/transactions/:id/marketing" element={<MarketingEditor />} />
+            <Route path="/transactions/:id/signing-sessions" element={<SigningSessions />} />
+            <Route path="/transactions/:id/signing-session/:sessionId/setup" element={<SigningSessionSetup />} />
+            <Route path="/transactions/:id/signing-session/:sessionId/prepare" element={<SigningSessionPrepare />} />
             <Route path="/people" element={<People />} />
             <Route path="/tasks" element={<Tasks />} />
             <Route path="/inbox" element={<Inbox />} />
