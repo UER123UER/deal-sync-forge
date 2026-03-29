@@ -334,6 +334,174 @@ export type Database = {
           },
         ]
       }
+      session_documents: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string
+          page_count: number | null
+          session_id: string
+          sort_order: number | null
+          storage_path: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name: string
+          page_count?: number | null
+          session_id: string
+          sort_order?: number | null
+          storage_path: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string
+          page_count?: number | null
+          session_id?: string
+          sort_order?: number | null
+          storage_path?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "session_documents_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "signing_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      session_fields: {
+        Row: {
+          created_at: string | null
+          document_id: string | null
+          height: number
+          id: string
+          page: number
+          recipient_id: string | null
+          session_id: string
+          type: string
+          value: string | null
+          width: number
+          x: number
+          y: number
+        }
+        Insert: {
+          created_at?: string | null
+          document_id?: string | null
+          height?: number
+          id?: string
+          page?: number
+          recipient_id?: string | null
+          session_id: string
+          type?: string
+          value?: string | null
+          width?: number
+          x?: number
+          y?: number
+        }
+        Update: {
+          created_at?: string | null
+          document_id?: string | null
+          height?: number
+          id?: string
+          page?: number
+          recipient_id?: string | null
+          session_id?: string
+          type?: string
+          value?: string | null
+          width?: number
+          x?: number
+          y?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "session_fields_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "session_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_fields_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "session_recipients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_fields_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "signing_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      session_recipients: {
+        Row: {
+          contact_id: string | null
+          created_at: string | null
+          email: string
+          first_name: string
+          id: string
+          last_name: string
+          session_id: string
+          signature_data: string | null
+          signed_at: string | null
+          sort_order: number | null
+          status: string
+          token: string
+          type: string
+        }
+        Insert: {
+          contact_id?: string | null
+          created_at?: string | null
+          email: string
+          first_name: string
+          id?: string
+          last_name?: string
+          session_id: string
+          signature_data?: string | null
+          signed_at?: string | null
+          sort_order?: number | null
+          status?: string
+          token?: string
+          type?: string
+        }
+        Update: {
+          contact_id?: string | null
+          created_at?: string | null
+          email?: string
+          first_name?: string
+          id?: string
+          last_name?: string
+          session_id?: string
+          signature_data?: string | null
+          signed_at?: string | null
+          sort_order?: number | null
+          status?: string
+          token?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "session_recipients_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_recipients_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "signing_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       signature_recipients: {
         Row: {
           contact_id: string | null
@@ -438,6 +606,59 @@ export type Database = {
           },
           {
             foreignKeyName: "signature_requests_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      signing_sessions: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          date_sent: string | null
+          deal_id: string
+          email_message: string | null
+          expiration_date: string | null
+          id: string
+          reminder_interval_days: number | null
+          session_name: string
+          signing_order_enabled: boolean | null
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          date_sent?: string | null
+          deal_id: string
+          email_message?: string | null
+          expiration_date?: string | null
+          id?: string
+          reminder_interval_days?: number | null
+          session_name?: string
+          signing_order_enabled?: boolean | null
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          date_sent?: string | null
+          deal_id?: string
+          email_message?: string | null
+          expiration_date?: string | null
+          id?: string
+          reminder_interval_days?: number | null
+          session_name?: string
+          signing_order_enabled?: boolean | null
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "signing_sessions_deal_id_fkey"
             columns: ["deal_id"]
             isOneToOne: false
             referencedRelation: "deals"
