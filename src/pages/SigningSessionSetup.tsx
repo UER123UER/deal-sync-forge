@@ -7,7 +7,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useContacts } from '@/hooks/useContacts';
 import { useDeal } from '@/hooks/useDeals';
 import {
   useSigningSession,
@@ -15,6 +14,8 @@ import {
   useUpdateSigningSession,
   useSessionRecipients,
   useAddSessionRecipient,
+  useRemoveSessionRecipient,
+  useUpdateSessionRecipient,
   useSessionDocuments,
   useAddSessionDocument,
 } from '@/hooks/useSigningSessions';
@@ -25,6 +26,7 @@ const STEPS = ['Details', 'Documents', 'Recipients', 'Roles', 'Settings'] as con
 
 interface LocalRecipient {
   id?: string;
+  local_id: string;
   first_name: string;
   last_name: string;
   email: string;
@@ -39,6 +41,12 @@ interface PendingSessionDocument {
   storage_path: string;
   page_count: number;
 }
+
+const reindexRecipients = (recipients: LocalRecipient[]) =>
+  recipients.map((recipient, index) => ({
+    ...recipient,
+    sort_order: index,
+  }));
 
 const normalizeDocumentName = (value: string) =>
   value.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
@@ -73,7 +81,6 @@ export default function SigningSessionSetup() {
   const [searchParams] = useSearchParams();
   const isNew = sessionId === 'new';
   const { data: deal } = useDeal(dealId);
-  const { data: contacts } = useContacts();
   const { data: existingSession } = useSigningSession(isNew ? undefined : sessionId);
   const { data: existingRecipients } = useSessionRecipients(isNew ? undefined : sessionId);
   const { data: existingDocs } = useSessionDocuments(isNew ? undefined : sessionId);
@@ -81,6 +88,8 @@ export default function SigningSessionSetup() {
   const createSession = useCreateSigningSession();
   const updateSession = useUpdateSigningSession();
   const addRecipient = useAddSessionRecipient();
+  const removeRecipient = useRemoveSessionRecipient();
+  const updateRecipient = useUpdateSessionRecipient();
   const addDocument = useAddSessionDocument();
 
   const [step, setStep] = useState(0);
@@ -105,6 +114,18 @@ export default function SigningSessionSetup() {
   const [newLast, setNewLast] = useState('');
   const [newEmail, setNewEmail] = useState('');
   const [newType, setNewType] = useState('signer');
+  const [draggedRecipientId, setDraggedRecipientId] = useState<string | null>(null);
+  const [dragOverRecipientId, setDragOverRecipientId] = useState<string | null>(null);
+
+  const dealPeople = (deal?.deal_contacts || [])
+    .map((dealContact) => ({
+      id: dealContact.contact?.id || dealContact.contact_id,
+      first_name: dealContact.contact?.first_name || '',
+      last_name: dealContact.contact?.last_name || '',
+      email: dealContact.contact?.email || '',
+      role: dealContact.role || 'Other',
+    }))
+    .filter((person) => !!person.id);
 
   useEffect(() => {
     if (!existingSession) return;
@@ -120,15 +141,16 @@ export default function SigningSessionSetup() {
     if (!existingRecipients) return;
 
     setRecipients(
-      existingRecipients.map((recipient) => ({
+      reindexRecipients(existingRecipients.map((recipient) => ({
         id: recipient.id,
+        local_id: recipient.id,
         first_name: recipient.first_name,
         last_name: recipient.last_name,
         email: recipient.email,
         type: recipient.type,
         sort_order: recipient.sort_order || 0,
         contact_id: recipient.contact_id || undefined,
-      }))
+      })))
     );
   }, [existingRecipients]);
 
@@ -221,13 +243,16 @@ export default function SigningSessionSetup() {
     setRecipients((prev) => [
       ...prev,
       {
+        local_id: crypto.randomUUID(),
         first_name: newFirst,
         last_name: newLast,
         email: newEmail,
         type: newType,
-        sort_order: prev.length,
       },
-    ]);
+    ].map((recipient, index) => ({
+      ...recipient,
+      sort_order: index,
+    })));
 
     setNewFirst('');
     setNewLast('');
@@ -236,28 +261,45 @@ export default function SigningSessionSetup() {
   };
 
   const removeLocalRecipient = (index: number) => {
-    setRecipients((prev) => prev.filter((_, itemIndex) => itemIndex !== index));
+    setRecipients((prev) => reindexRecipients(prev.filter((_, itemIndex) => itemIndex !== index)));
   };
 
-  const addFromContact = (contactId: string) => {
-    const contact = contacts?.find((item) => item.id === contactId);
-    if (!contact) return;
-    if (recipients.some((recipient) => recipient.contact_id === contactId)) {
+  const addFromDealPeople = (personId: string) => {
+    const person = dealPeople.find((item) => item.id === personId);
+    if (!person) return;
+    if (recipients.some((recipient) => recipient.contact_id === personId)) {
       toast.info('Already added');
       return;
     }
 
-    setRecipients((prev) => [
+    setRecipients((prev) => reindexRecipients([
       ...prev,
       {
-        first_name: contact.first_name,
-        last_name: contact.last_name,
-        email: contact.email || '',
+        local_id: crypto.randomUUID(),
+        first_name: person.first_name,
+        last_name: person.last_name,
+        email: person.email || '',
         type: 'signer',
         sort_order: prev.length,
-        contact_id: contact.id,
+        contact_id: person.id,
       },
-    ]);
+    ]));
+  };
+
+  const moveRecipient = (draggedId: string, targetId: string) => {
+    if (draggedId === targetId) return;
+
+    setRecipients((prev) => {
+      const fromIndex = prev.findIndex((recipient) => recipient.local_id === draggedId);
+      const toIndex = prev.findIndex((recipient) => recipient.local_id === targetId);
+
+      if (fromIndex === -1 || toIndex === -1) return prev;
+
+      const next = [...prev];
+      const [moved] = next.splice(fromIndex, 1);
+      next.splice(toIndex, 0, moved);
+      return reindexRecipients(next);
+    });
   };
 
   const handleContinue = async () => {
@@ -292,17 +334,38 @@ export default function SigningSessionSetup() {
       }
 
       for (const recipient of recipients) {
-        if (recipient.id) continue;
+        if (recipient.id) {
+          await updateRecipient.mutateAsync({
+            id: recipient.id,
+            session_id: nextSessionId!,
+            first_name: recipient.first_name,
+            last_name: recipient.last_name,
+            email: recipient.email,
+            type: recipient.type,
+            sort_order: recipient.sort_order,
+            contact_id: recipient.contact_id || null,
+          });
+        } else {
+          await addRecipient.mutateAsync({
+            session_id: nextSessionId!,
+            first_name: recipient.first_name,
+            last_name: recipient.last_name,
+            email: recipient.email,
+            type: recipient.type,
+            sort_order: recipient.sort_order,
+            contact_id: recipient.contact_id,
+          });
+        }
+      }
 
-        await addRecipient.mutateAsync({
-          session_id: nextSessionId!,
-          first_name: recipient.first_name,
-          last_name: recipient.last_name,
-          email: recipient.email,
-          type: recipient.type,
-          sort_order: recipient.sort_order,
-          contact_id: recipient.contact_id,
-        });
+      for (const existingRecipient of existingRecipients || []) {
+        const stillPresent = recipients.some((recipient) => recipient.id === existingRecipient.id);
+        if (!stillPresent) {
+          await removeRecipient.mutateAsync({
+            id: existingRecipient.id,
+            session_id: nextSessionId!,
+          });
+        }
       }
 
       if (isNew) {
@@ -335,7 +398,14 @@ export default function SigningSessionSetup() {
         </div>
         <Button
           onClick={handleContinue}
-          disabled={documentsLoading || createSession.isPending || updateSession.isPending}
+          disabled={
+            documentsLoading ||
+            createSession.isPending ||
+            updateSession.isPending ||
+            addRecipient.isPending ||
+            updateRecipient.isPending ||
+            removeRecipient.isPending
+          }
         >
           {step < STEPS.length - 1 ? 'Next' : 'Continue to Field Editor'}
         </Button>
@@ -423,9 +493,36 @@ export default function SigningSessionSetup() {
             </div>
 
             {recipients.map((recipient, index) => (
-              <div key={index} className="flex items-center gap-2 border rounded px-3 py-2">
+              <div
+                key={recipient.local_id}
+                draggable
+                onDragStart={() => setDraggedRecipientId(recipient.local_id)}
+                onDragEnd={() => {
+                  setDraggedRecipientId(null);
+                  setDragOverRecipientId(null);
+                }}
+                onDragOver={(event) => {
+                  event.preventDefault();
+                  setDragOverRecipientId(recipient.local_id);
+                }}
+                onDragLeave={() => {
+                  if (dragOverRecipientId === recipient.local_id) {
+                    setDragOverRecipientId(null);
+                  }
+                }}
+                onDrop={(event) => {
+                  event.preventDefault();
+                  if (!draggedRecipientId) return;
+                  moveRecipient(draggedRecipientId, recipient.local_id);
+                  setDraggedRecipientId(null);
+                  setDragOverRecipientId(null);
+                }}
+                className={`flex items-center gap-2 border rounded px-3 py-2 transition-colors ${
+                  dragOverRecipientId === recipient.local_id ? 'border-primary bg-primary/5' : ''
+                }`}
+              >
                 {signingOrderEnabled && <span className="text-xs font-bold text-muted-foreground w-5">{index + 1}</span>}
-                <GripVertical className="w-4 h-4 text-muted-foreground" />
+                <GripVertical className="w-4 h-4 text-muted-foreground cursor-grab" />
                 <div className="flex-1 text-sm">
                   <span className="font-medium">{recipient.first_name} {recipient.last_name}</span>
                   <span className="text-muted-foreground ml-2">{recipient.email}</span>
@@ -437,15 +534,15 @@ export default function SigningSessionSetup() {
               </div>
             ))}
 
-            {contacts && contacts.length > 0 && (
+            {dealPeople.length > 0 && (
               <div>
-                <Label className="text-xs text-muted-foreground">Add from contacts</Label>
-                <Select onValueChange={addFromContact}>
-                  <SelectTrigger><SelectValue placeholder="Select a contact..." /></SelectTrigger>
+                <Label className="text-xs text-muted-foreground">Add from deal people</Label>
+                <Select onValueChange={addFromDealPeople}>
+                  <SelectTrigger><SelectValue placeholder="Select someone on this deal..." /></SelectTrigger>
                   <SelectContent>
-                    {contacts.map((contact) => (
-                      <SelectItem key={contact.id} value={contact.id}>
-                        {contact.first_name} {contact.last_name} — {contact.email}
+                    {dealPeople.map((person) => (
+                      <SelectItem key={person.id} value={person.id}>
+                        {person.first_name} {person.last_name} — {person.role}
                       </SelectItem>
                     ))}
                   </SelectContent>

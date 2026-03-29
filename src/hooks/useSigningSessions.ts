@@ -202,6 +202,29 @@ export function useRemoveSessionRecipient() {
   });
 }
 
+export function useUpdateSessionRecipient() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      id,
+      session_id,
+      ...updates
+    }: Partial<SessionRecipient> & { id: string; session_id: string }) => {
+      const { data, error } = await supabase
+        .from('session_recipients')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+      if (error) throw error;
+      return data as SessionRecipient;
+    },
+    onSuccess: (d) => {
+      qc.invalidateQueries({ queryKey: ['session_recipients', d.session_id] });
+    },
+  });
+}
+
 // Documents
 export function useAddSessionDocument() {
   const qc = useQueryClient();
