@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, Plus, Trash2, GripVertical } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -92,6 +92,12 @@ export default function SigningSessionSetup() {
   const updateRecipient = useUpdateSessionRecipient();
   const addDocument = useAddSessionDocument();
 
+  const selectedDocumentsParam = searchParams.get('documents') || '';
+  const selectedDocumentIds = selectedDocumentsParam
+    .split(',')
+    .map((value) => value.trim())
+    .filter(Boolean);
+
   const [step, setStep] = useState(0);
   const [sessionName, setSessionName] = useState('');
   const [emailMessage, setEmailMessage] = useState('Please review and sign the attached document(s).');
@@ -99,16 +105,13 @@ export default function SigningSessionSetup() {
   const [recipients, setRecipients] = useState<LocalRecipient[]>([]);
   const [pendingDocuments, setPendingDocuments] = useState<PendingSessionDocument[]>([]);
   const [documentsLoading, setDocumentsLoading] = useState(false);
+  const [documentsResolved, setDocumentsResolved] = useState(selectedDocumentIds.length === 0);
+  const [draftSessionId, setDraftSessionId] = useState<string | null>(null);
+  const [autosaveStatus, setAutosaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [reminderDays, setReminderDays] = useState(3);
   const [enableReminders, setEnableReminders] = useState(false);
   const [enableExpiration, setEnableExpiration] = useState(false);
   const [expirationDays, setExpirationDays] = useState(30);
-
-  const selectedDocumentsParam = searchParams.get('documents') || '';
-  const selectedDocumentIds = selectedDocumentsParam
-    .split(',')
-    .map((value) => value.trim())
-    .filter(Boolean);
 
   const [newFirst, setNewFirst] = useState('');
   const [newLast, setNewLast] = useState('');
@@ -116,6 +119,12 @@ export default function SigningSessionSetup() {
   const [newType, setNewType] = useState('signer');
   const [draggedRecipientId, setDraggedRecipientId] = useState<string | null>(null);
   const [dragOverRecipientId, setDragOverRecipientId] = useState<string | null>(null);
+
+  const lastSavedSnapshotRef = useRef('');
+  const hasBootstrappedDraftRef = useRef(false);
+  const hasInsertedDraftDocumentsRef = useRef(false);
+
+  const targetSessionId = isNew ? draftSessionId : sessionId || null;
 
   const dealPeople = (deal?.deal_contacts || [])
     .map((dealContact) => ({
@@ -127,6 +136,37 @@ export default function SigningSessionSetup() {
     }))
     .filter((person) => !!person.id);
 
+  const buildSnapshot = useCallback(
+    () =>
+      JSON.stringify({
+        sessionName,
+        emailMessage,
+        signingOrderEnabled,
+        reminderDays: enableReminders ? reminderDays : 0,
+        enableExpiration,
+        expirationDays: enableExpiration ? expirationDays : 0,
+        recipients: recipients.map((recipient) => ({
+          id: recipient.id || null,
+          contact_id: recipient.contact_id || null,
+          first_name: recipient.first_name,
+          last_name: recipient.last_name,
+          email: recipient.email,
+          type: recipient.type,
+          sort_order: recipient.sort_order,
+        })),
+      }),
+    [
+      emailMessage,
+      enableExpiration,
+      enableReminders,
+      expirationDays,
+      recipients,
+      reminderDays,
+      sessionName,
+      signingOrderEnabled,
+    ]
+  );
+
   useEffect(() => {
     if (!existingSession) return;
 
@@ -135,22 +175,35 @@ export default function SigningSessionSetup() {
     setSigningOrderEnabled(existingSession.signing_order_enabled || false);
     setReminderDays(existingSession.reminder_interval_days || 3);
     setEnableReminders((existingSession.reminder_interval_days || 0) > 0);
+    setEnableExpiration(!!existingSession.expiration_date);
+    if (existingSession.expiration_date) {
+      setExpirationDays(
+        Math.max(
+          1,
+          Math.ceil(
+            (new Date(existingSession.expiration_date).getTime() - Date.now()) / 86400000
+          )
+        )
+      );
+    }
   }, [existingSession]);
 
   useEffect(() => {
     if (!existingRecipients) return;
 
     setRecipients(
-      reindexRecipients(existingRecipients.map((recipient) => ({
-        id: recipient.id,
-        local_id: recipient.id,
-        first_name: recipient.first_name,
-        last_name: recipient.last_name,
-        email: recipient.email,
-        type: recipient.type,
-        sort_order: recipient.sort_order || 0,
-        contact_id: recipient.contact_id || undefined,
-      })))
+      reindexRecipients(
+        existingRecipients.map((recipient) => ({
+          id: recipient.id,
+          local_id: recipient.id,
+          first_name: recipient.first_name,
+          last_name: recipient.last_name,
+          email: recipient.email,
+          type: recipient.type,
+          sort_order: recipient.sort_order || 0,
+          contact_id: recipient.contact_id || undefined,
+        }))
+      )
     );
   }, [existingRecipients]);
 
@@ -169,6 +222,7 @@ export default function SigningSessionSetup() {
 
     if (selectedChecklistItems.length === 0) {
       setPendingDocuments([]);
+      setDocumentsResolved(true);
       return;
     }
 
@@ -176,6 +230,7 @@ export default function SigningSessionSetup() {
 
     const loadPendingDocuments = async () => {
       setDocumentsLoading(true);
+      setDocumentsResolved(false);
 
       try {
         const { data: adminDocs, error } = await supabase
@@ -214,6 +269,7 @@ export default function SigningSessionSetup() {
       } finally {
         if (!cancelled) {
           setDocumentsLoading(false);
+          setDocumentsResolved(true);
         }
       }
     };
@@ -224,6 +280,227 @@ export default function SigningSessionSetup() {
       cancelled = true;
     };
   }, [deal, isNew, selectedDocumentsParam]);
+
+  const syncRecipients = useCallback(
+    async (nextSessionId: string) => {
+      for (const recipient of recipients) {
+        if (recipient.id) {
+          await updateRecipient.mutateAsync({
+            id: recipient.id,
+            session_id: nextSessionId,
+            first_name: recipient.first_name,
+            last_name: recipient.last_name,
+            email: recipient.email,
+            type: recipient.type,
+            sort_order: recipient.sort_order,
+            contact_id: recipient.contact_id || null,
+          });
+          continue;
+        }
+
+        const createdRecipient = await addRecipient.mutateAsync({
+          session_id: nextSessionId,
+          first_name: recipient.first_name,
+          last_name: recipient.last_name,
+          email: recipient.email,
+          type: recipient.type,
+          sort_order: recipient.sort_order,
+          contact_id: recipient.contact_id,
+        });
+
+        setRecipients((prev) =>
+          prev.map((currentRecipient) =>
+            currentRecipient.local_id === recipient.local_id
+              ? {
+                  ...currentRecipient,
+                  id: createdRecipient.id,
+                  local_id: createdRecipient.id,
+                }
+              : currentRecipient
+          )
+        );
+      }
+
+      for (const existingRecipient of existingRecipients || []) {
+        const stillPresent = recipients.some((recipient) => recipient.id === existingRecipient.id);
+        if (!stillPresent) {
+          await removeRecipient.mutateAsync({
+            id: existingRecipient.id,
+            session_id: nextSessionId,
+          });
+        }
+      }
+    },
+    [addRecipient, existingRecipients, recipients, removeRecipient, updateRecipient]
+  );
+
+  const persistSession = useCallback(
+    async (nextSessionId: string) => {
+      setAutosaveStatus('saving');
+
+      await updateSession.mutateAsync({
+        id: nextSessionId,
+        session_name: sessionName,
+        email_message: emailMessage,
+        signing_order_enabled: signingOrderEnabled,
+        reminder_interval_days: enableReminders ? reminderDays : 0,
+        expiration_date: enableExpiration
+          ? new Date(Date.now() + expirationDays * 86400000).toISOString()
+          : null,
+      });
+
+      await syncRecipients(nextSessionId);
+
+      lastSavedSnapshotRef.current = buildSnapshot();
+      setAutosaveStatus('saved');
+    },
+    [
+      buildSnapshot,
+      emailMessage,
+      enableExpiration,
+      enableReminders,
+      expirationDays,
+      reminderDays,
+      sessionName,
+      signingOrderEnabled,
+      syncRecipients,
+      updateSession,
+    ]
+  );
+
+  useEffect(() => {
+    if (isNew || !existingSession || existingRecipients === undefined) return;
+
+    lastSavedSnapshotRef.current = JSON.stringify({
+      sessionName: existingSession.session_name,
+      emailMessage: existingSession.email_message || '',
+      signingOrderEnabled: existingSession.signing_order_enabled || false,
+      reminderDays: existingSession.reminder_interval_days || 0,
+      enableExpiration: !!existingSession.expiration_date,
+      expirationDays: existingSession.expiration_date
+        ? Math.max(
+            1,
+            Math.ceil(
+              (new Date(existingSession.expiration_date).getTime() - Date.now()) / 86400000
+            )
+          )
+        : 0,
+      recipients: existingRecipients.map((recipient) => ({
+        id: recipient.id,
+        contact_id: recipient.contact_id || null,
+        first_name: recipient.first_name,
+        last_name: recipient.last_name,
+        email: recipient.email,
+        type: recipient.type,
+        sort_order: recipient.sort_order || 0,
+      })),
+    });
+  }, [existingRecipients, existingSession, isNew]);
+
+  useEffect(() => {
+    if (!isNew || !dealId || !deal || draftSessionId || hasBootstrappedDraftRef.current) return;
+    if (!documentsResolved) return;
+
+    hasBootstrappedDraftRef.current = true;
+
+    let cancelled = false;
+
+    const createDraftSession = async () => {
+      try {
+        setAutosaveStatus('saving');
+        const created = await createSession.mutateAsync({
+          deal_id: dealId,
+          session_name: sessionName || `Signing - ${deal?.address || ''}`,
+          email_message: emailMessage,
+          signing_order_enabled: signingOrderEnabled,
+          reminder_interval_days: enableReminders ? reminderDays : 0,
+          expiration_date: enableExpiration
+            ? new Date(Date.now() + expirationDays * 86400000).toISOString()
+            : undefined,
+        });
+
+        if (cancelled) return;
+
+        setDraftSessionId(created.id);
+
+        if (!hasInsertedDraftDocumentsRef.current) {
+          hasInsertedDraftDocumentsRef.current = true;
+          for (const [index, document] of pendingDocuments.entries()) {
+            await addDocument.mutateAsync({
+              session_id: created.id,
+              name: document.name,
+              storage_path: document.storage_path,
+              sort_order: index,
+              page_count: document.page_count,
+            });
+          }
+        }
+
+        lastSavedSnapshotRef.current = buildSnapshot();
+        setAutosaveStatus('saved');
+        navigate(`/transactions/${dealId}/signing-session/${created.id}/setup`, { replace: true });
+      } catch {
+        if (!cancelled) {
+          hasBootstrappedDraftRef.current = false;
+          setAutosaveStatus('error');
+          toast.error('Failed to start signing session');
+        }
+      }
+    };
+
+    createDraftSession();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    addDocument,
+    buildSnapshot,
+    createSession,
+    deal?.address,
+    dealId,
+    documentsResolved,
+    draftSessionId,
+    emailMessage,
+    enableExpiration,
+    enableReminders,
+    expirationDays,
+    isNew,
+    navigate,
+    pendingDocuments,
+    reminderDays,
+    sessionName,
+    signingOrderEnabled,
+  ]);
+
+  useEffect(() => {
+    if (!targetSessionId) return;
+    if (!isNew && (existingSession === undefined || existingRecipients === undefined)) return;
+    if (createSession.isPending) return;
+
+    const snapshot = buildSnapshot();
+    if (snapshot === lastSavedSnapshotRef.current) return;
+
+    const timeoutId = window.setTimeout(async () => {
+      try {
+        await persistSession(targetSessionId);
+      } catch {
+        setAutosaveStatus('error');
+      }
+    }, 800);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [
+    buildSnapshot,
+    createSession.isPending,
+    existingRecipients,
+    existingSession,
+    isNew,
+    persistSession,
+    targetSessionId,
+  ]);
 
   const documentsForStep = isNew
     ? pendingDocuments
@@ -240,19 +517,19 @@ export default function SigningSessionSetup() {
       return;
     }
 
-    setRecipients((prev) => [
-      ...prev,
-      {
-        local_id: crypto.randomUUID(),
-        first_name: newFirst,
-        last_name: newLast,
-        email: newEmail,
-        type: newType,
-      },
-    ].map((recipient, index) => ({
-      ...recipient,
-      sort_order: index,
-    })));
+    setRecipients((prev) =>
+      reindexRecipients([
+        ...prev,
+        {
+          local_id: crypto.randomUUID(),
+          first_name: newFirst,
+          last_name: newLast,
+          email: newEmail,
+          type: newType,
+          sort_order: prev.length,
+        },
+      ])
+    );
 
     setNewFirst('');
     setNewLast('');
@@ -272,18 +549,20 @@ export default function SigningSessionSetup() {
       return;
     }
 
-    setRecipients((prev) => reindexRecipients([
-      ...prev,
-      {
-        local_id: crypto.randomUUID(),
-        first_name: person.first_name,
-        last_name: person.last_name,
-        email: person.email || '',
-        type: 'signer',
-        sort_order: prev.length,
-        contact_id: person.id,
-      },
-    ]));
+    setRecipients((prev) =>
+      reindexRecipients([
+        ...prev,
+        {
+          local_id: crypto.randomUUID(),
+          first_name: person.first_name,
+          last_name: person.last_name,
+          email: person.email || '',
+          type: 'signer',
+          sort_order: prev.length,
+          contact_id: person.id,
+        },
+      ])
+    );
   };
 
   const moveRecipient = (draggedId: string, targetId: string) => {
@@ -309,79 +588,13 @@ export default function SigningSessionSetup() {
     }
 
     try {
-      let nextSessionId = sessionId;
-
-      if (isNew) {
-        const created = await createSession.mutateAsync({
-          deal_id: dealId!,
-          session_name: sessionName,
-          email_message: emailMessage,
-          signing_order_enabled: signingOrderEnabled,
-          reminder_interval_days: enableReminders ? reminderDays : 0,
-          expiration_date: enableExpiration
-            ? new Date(Date.now() + expirationDays * 86400000).toISOString()
-            : undefined,
-        });
-        nextSessionId = created.id;
-      } else {
-        await updateSession.mutateAsync({
-          id: sessionId!,
-          session_name: sessionName,
-          email_message: emailMessage,
-          signing_order_enabled: signingOrderEnabled,
-          reminder_interval_days: enableReminders ? reminderDays : 0,
-        });
+      if (!targetSessionId) {
+        toast.error('Signing session is still being created');
+        return;
       }
 
-      for (const recipient of recipients) {
-        if (recipient.id) {
-          await updateRecipient.mutateAsync({
-            id: recipient.id,
-            session_id: nextSessionId!,
-            first_name: recipient.first_name,
-            last_name: recipient.last_name,
-            email: recipient.email,
-            type: recipient.type,
-            sort_order: recipient.sort_order,
-            contact_id: recipient.contact_id || null,
-          });
-        } else {
-          await addRecipient.mutateAsync({
-            session_id: nextSessionId!,
-            first_name: recipient.first_name,
-            last_name: recipient.last_name,
-            email: recipient.email,
-            type: recipient.type,
-            sort_order: recipient.sort_order,
-            contact_id: recipient.contact_id,
-          });
-        }
-      }
-
-      for (const existingRecipient of existingRecipients || []) {
-        const stillPresent = recipients.some((recipient) => recipient.id === existingRecipient.id);
-        if (!stillPresent) {
-          await removeRecipient.mutateAsync({
-            id: existingRecipient.id,
-            session_id: nextSessionId!,
-          });
-        }
-      }
-
-      if (isNew) {
-        for (const [index, document] of pendingDocuments.entries()) {
-          await addDocument.mutateAsync({
-            session_id: nextSessionId!,
-            name: document.name,
-            storage_path: document.storage_path,
-            sort_order: index,
-            page_count: document.page_count,
-          });
-        }
-      }
-
-      toast.success('Session saved');
-      navigate(`/transactions/${dealId}/signing-session/${nextSessionId}/prepare`);
+      await persistSession(targetSessionId);
+      navigate(`/transactions/${dealId}/signing-session/${targetSessionId}/prepare`);
     } catch (error: any) {
       toast.error(error.message || 'Failed to save');
     }
@@ -396,19 +609,32 @@ export default function SigningSessionSetup() {
           </Button>
           <h1 className="text-lg font-semibold">{isNew ? 'New Signing Session' : 'Edit Session'}</h1>
         </div>
-        <Button
-          onClick={handleContinue}
-          disabled={
-            documentsLoading ||
-            createSession.isPending ||
-            updateSession.isPending ||
-            addRecipient.isPending ||
-            updateRecipient.isPending ||
-            removeRecipient.isPending
-          }
-        >
-          {step < STEPS.length - 1 ? 'Next' : 'Continue to Field Editor'}
-        </Button>
+        <div className="flex items-center gap-3">
+          <span className="text-xs text-muted-foreground min-w-[110px] text-right">
+            {!targetSessionId
+              ? 'Creating draft...'
+              : autosaveStatus === 'saving'
+                ? 'Saving...'
+                : autosaveStatus === 'saved'
+                  ? 'All changes saved'
+                  : autosaveStatus === 'error'
+                    ? 'Autosave failed'
+                    : 'Draft'}
+          </span>
+          <Button
+            onClick={handleContinue}
+            disabled={
+              documentsLoading ||
+              createSession.isPending ||
+              updateSession.isPending ||
+              addRecipient.isPending ||
+              updateRecipient.isPending ||
+              removeRecipient.isPending
+            }
+          >
+            {step < STEPS.length - 1 ? 'Next' : 'Continue to Field Editor'}
+          </Button>
+        </div>
       </div>
 
       <div className="flex border-b">
@@ -579,7 +805,7 @@ export default function SigningSessionSetup() {
             {recipients
               .filter((recipient) => recipient.type === 'signer')
               .map((recipient, index) => (
-                <div key={index} className="flex items-center gap-3 border rounded px-3 py-2">
+                <div key={recipient.local_id} className="flex items-center gap-3 border rounded px-3 py-2">
                   <span className="text-sm font-medium flex-1">{recipient.first_name} {recipient.last_name}</span>
                   <span className="text-xs px-2 py-0.5 bg-primary/10 text-primary rounded">Signer {index + 1}</span>
                 </div>

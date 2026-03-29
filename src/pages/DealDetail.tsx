@@ -19,11 +19,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
+import { SigningSessionsPanel } from '@/components/deal/SigningSessionsPanel';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import JSZip from 'jszip';
 
-const TABS = ['Checklists', 'Photos', 'Tasks', 'Notes', 'Marketing'] as const;
+const TABS = ['Checklists', 'Signing Sessions', 'Photos', 'Tasks', 'Notes', 'Marketing'] as const;
 
 const CONTACT_ROLES = [
   'Buyer', 'Buyer Agent', 'Seller', 'Seller Broker', 'Title',
@@ -616,6 +617,14 @@ export default function DealDetail() {
                 );
               })}
             </div>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'Signing Sessions' && id && (
+        <div className="flex-1 overflow-auto p-4">
+          <div className="mx-auto max-w-5xl">
+            <SigningSessionsPanel dealId={id} embedded />
           </div>
         </div>
       )}
