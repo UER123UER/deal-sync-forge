@@ -20,6 +20,9 @@ import Finances from "@/pages/Finances";
 import Referral from "@/pages/Referral";
 import ContactBrokerage from "@/pages/ContactBrokerage";
 import AdminPdfEditor from "@/pages/AdminPdfEditor";
+import SigningSessions from "@/pages/SigningSessions";
+import SigningSessionSetup from "@/pages/SigningSessionSetup";
+import SigningSessionPrepare from "@/pages/SigningSessionPrepare";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
