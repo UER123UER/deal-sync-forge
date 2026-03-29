@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, ZoomIn, ZoomOut, Undo2, Redo2, Send } from 'lucide-react';
+import { ArrowLeft, ZoomIn, ZoomOut, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { PdfCanvas, type FontStyle } from '@/components/admin/PdfCanvas';
@@ -8,7 +8,7 @@ import { PdfEditorSidebar, type Signer, type SidebarTab } from '@/components/adm
 import { SignatureStampModal } from '@/components/admin/SignatureStampModal';
 import {
   useSigningSession, useSessionRecipients, useSessionDocuments,
-  useUpdateSigningSession, useSaveSessionFields, type SessionRecipient,
+  useUpdateSigningSession, useSaveSessionFields,
 } from '@/hooks/useSigningSessions';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -44,7 +44,7 @@ export default function SigningSessionPrepare() {
 
   // Signature stamp modal
   const [stampModalOpen, setStampModalOpen] = useState(false);
-  const [stampType, setStampType] = useState<'signature' | 'initials'>('signature');
+  const [stampType, setStampType] = useState<'sign' | 'initials'>('sign');
   const [savedSignature, setSavedSignature] = useState<string | null>(null);
   const [savedInitials, setSavedInitials] = useState<string | null>(null);
 
@@ -52,35 +52,30 @@ export default function SigningSessionPrepare() {
   const fabricCanvasRef = useRef<FabricCanvas | null>(null);
   const annotationsPerPage = useRef<Record<number, string>>({});
 
-  // Font
-  const [fontStyle, setFontStyle] = useState<FontStyle>({ bold: false, italic: false, underline: false, size: 14 });
-
   // Convert recipients to signers for sidebar
   useEffect(() => {
     if (recipients) {
       const s: Signer[] = recipients.map((r, i) => ({
         id: r.id,
-        name: `${r.first_name} ${r.last_name}`,
+        firstName: r.first_name,
+        lastName: r.last_name,
         email: r.email,
         role: r.type === 'signer' ? 'Signer' : r.type === 'reviewer' ? 'Reviewer' : 'CC',
-        type: r.type as any,
-        color: SIGNER_COLORS[i % SIGNER_COLORS.length],
+        type: r.type,
       }));
       setSigners(s);
       if (!selectedSigner && s.length) setSelectedSigner(s[0].id);
     }
   }, [recipients]);
 
-  // Load PDF pages from the first document (or deal doc)
+  // Load PDF pages
   useEffect(() => {
     const loadPdf = async () => {
-      // Try to load from session documents first, fall back to deal's form document
       let pdfUrl: string | null = null;
       if (sessionDocs?.length) {
         const { data } = supabase.storage.from('admin-documents').getPublicUrl(sessionDocs[0].storage_path);
         pdfUrl = data.publicUrl;
       } else {
-        // Try deal form PDF
         const { data: files } = await supabase.storage.from('admin-documents').list();
         if (files?.length) {
           const { data } = supabase.storage.from('admin-documents').getPublicUrl(files[0].name);
@@ -123,7 +118,6 @@ export default function SigningSessionPrepare() {
   };
 
   const handleCanvasReady = useCallback(() => {
-    // Load annotations for current page if they exist
     if (fabricCanvasRef.current && annotationsPerPage.current[currentPage]) {
       fabricCanvasRef.current.loadFromJSON(annotationsPerPage.current[currentPage], () => {
         fabricCanvasRef.current?.renderAll();
@@ -135,7 +129,6 @@ export default function SigningSessionPrepare() {
     saveCurrentAnnotations();
   }, [saveCurrentAnnotations]);
 
-  // Collect designated fields from all pages
   const collectFields = () => {
     saveCurrentAnnotations();
     const fields: any[] = [];
@@ -177,11 +170,8 @@ export default function SigningSessionPrepare() {
         date_sent: new Date().toISOString(),
       });
 
-      // Generate signing URLs
       if (recipients?.length) {
-        const urls = recipients.map(r =>
-          `${window.location.origin}/sign/${r.token}`
-        );
+        const urls = recipients.map(r => `${window.location.origin}/sign/${r.token}`);
         await navigator.clipboard.writeText(urls.join('\n'));
         toast.success(`Session sent! ${urls.length} signing link(s) copied to clipboard.`);
       }
@@ -193,7 +183,7 @@ export default function SigningSessionPrepare() {
   };
 
   const handleStampConfirm = (dataUrl: string) => {
-    if (stampType === 'signature') setSavedSignature(dataUrl);
+    if (stampType === 'sign') setSavedSignature(dataUrl);
     else setSavedInitials(dataUrl);
     setStampModalOpen(false);
   };
@@ -248,7 +238,6 @@ export default function SigningSessionPrepare() {
         </Button>
         <span className="text-sm font-medium flex-1">{session?.session_name || 'Field Editor'}</span>
 
-        {/* Signer selector */}
         {signers.length > 0 && (
           <Select value={selectedSigner || ''} onValueChange={setSelectedSigner}>
             <SelectTrigger className="w-48 h-8 text-xs">
@@ -259,7 +248,7 @@ export default function SigningSessionPrepare() {
                 <SelectItem key={s.id} value={s.id}>
                   <div className="flex items-center gap-2">
                     <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: SIGNER_COLORS[i % SIGNER_COLORS.length] }} />
-                    {s.name}
+                    {s.firstName} {s.lastName}
                   </div>
                 </SelectItem>
               ))}
@@ -299,10 +288,11 @@ export default function SigningSessionPrepare() {
                       pageHeight={page.height}
                       activeTool={activeTool}
                       onSelectionChange={() => {}}
-                      onFontStyleChange={setFontStyle}
                       fabricCanvasRef={fabricCanvasRef}
                       signatureDataUrl={savedSignature}
                       initialsDataUrl={savedInitials}
+                      onRequestSignature={() => { setStampType('sign'); setStampModalOpen(true); }}
+                      onRequestInitials={() => { setStampType('initials'); setStampModalOpen(true); }}
                       zoomScale={zoomScale}
                       onCanvasReady={handleCanvasReady}
                       onCanvasChange={handleCanvasChange}
@@ -332,12 +322,12 @@ export default function SigningSessionPrepare() {
           activeTool={activeTool}
           onToolChange={setActiveTool}
           signers={signers}
-          selectedSigner={selectedSigner}
-          onSignerSelect={setSelectedSigner}
-          onAddSigner={(s) => setSigners(prev => [...prev, s])}
+          selectedSignerId={selectedSigner}
+          onSelectSigner={setSelectedSigner}
+          onAddSigner={(s) => setSigners(prev => [...prev, { ...s, id: crypto.randomUUID() }])}
           onRemoveSigner={(id) => setSigners(prev => prev.filter(s => s.id !== id))}
+          documents={[{ name: session?.session_name || 'Document' }]}
           savedDocuments={[]}
-          currentDocName={session?.session_name || 'Document'}
           onOpenDocument={() => {}}
           onDeleteDocument={() => {}}
           mode="agent"
@@ -346,9 +336,9 @@ export default function SigningSessionPrepare() {
 
       <SignatureStampModal
         open={stampModalOpen}
-        onOpenChange={setStampModalOpen}
-        stampType={stampType}
+        onClose={() => setStampModalOpen(false)}
         onConfirm={handleStampConfirm}
+        mode={stampType}
       />
     </div>
   );
