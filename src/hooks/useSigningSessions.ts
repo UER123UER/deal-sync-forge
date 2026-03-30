@@ -173,9 +173,11 @@ export function useUpdateSigningSession() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, ...updates }: Partial<SigningSession> & { id: string }) => {
-      const { data, error } = await supabase.from('signing_sessions').update(updates).eq('id', id).select().single();
+      const { role_assignments, ...restUpdates } = updates;
+      const payload = { ...restUpdates, ...(role_assignments !== undefined ? { role_assignments: role_assignments as unknown as Json } : {}) };
+      const { data, error } = await supabase.from('signing_sessions').update(payload).eq('id', id).select().single();
       if (error) throw error;
-      return data as SigningSession;
+      return data as unknown as SigningSession;
     },
     onSuccess: (d) => {
       qc.invalidateQueries({ queryKey: ['signing_session', d.id] });
