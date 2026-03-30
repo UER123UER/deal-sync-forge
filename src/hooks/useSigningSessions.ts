@@ -306,7 +306,7 @@ export function useSessionByToken(token: string | undefined) {
         .order('sort_order');
 
       return {
-        session: session as SigningSession,
+        session: session as unknown as SigningSession,
         recipient: recipient as SessionRecipient,
         fields: (fields || []) as SessionField[],
         documents: (documents || []) as SessionDocument[],

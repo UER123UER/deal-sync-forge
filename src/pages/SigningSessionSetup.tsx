@@ -166,7 +166,7 @@ const buildLocalRoleAssignment = (
   roleName: string,
   recipientLocalId: string | null,
   suggestedRoleOptions: string[],
-  id = crypto.randomUUID()
+  id: string = crypto.randomUUID()
 ): LocalRoleAssignment => {
   const normalizedRoleName = roleName.trim();
 

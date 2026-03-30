@@ -231,6 +231,7 @@ export default function SigningSessionPrepare() {
               y: object.top || 0,
               width: (object.width || 150) * (object.scaleX || 1),
               height: (object.height || 40) * (object.scaleY || 1),
+              value: null,
             });
           }
         } catch {
