@@ -323,7 +323,6 @@ export default function SigningSessionSetup() {
     .filter(Boolean);
 
   const [step, setStep] = useState(0);
-  const [draftRetryNonce, setDraftRetryNonce] = useState(0);
   const [sessionName, setSessionName] = useState('');
   const [emailMessage, setEmailMessage] = useState('Please review and sign the attached document(s).');
   const [signingOrderEnabled, setSigningOrderEnabled] = useState(false);
@@ -352,7 +351,8 @@ export default function SigningSessionSetup() {
   const haveHydratedRolesRef = useRef(false);
 
   const targetSessionId = isNew ? draftSessionId : sessionId || null;
-  const isWaitingForDraft = isNew && !targetSessionId && autosaveStatus !== 'error';
+  const isDraftCreationInProgress =
+    isNew && !targetSessionId && (createSession.isPending || autosaveStatus === 'saving');
 
   const dealPeople: DealPerson[] = (deal?.deal_contacts || [])
     .map((dealContact) => ({
@@ -854,7 +854,6 @@ export default function SigningSessionSetup() {
     createSession,
     deal,
     dealId,
-    draftRetryNonce,
     documentsResolved,
     draftSessionId,
     emailMessage,
@@ -1007,19 +1006,63 @@ export default function SigningSessionSetup() {
     }
 
     try {
-      if (!targetSessionId) {
-        if (autosaveStatus === 'error') {
-          hasBootstrappedDraftRef.current = false;
-          setAutosaveStatus('idle');
-          setDraftRetryNonce((currentValue) => currentValue + 1);
-          toast.info('Retrying signing session setup');
+      let nextSessionId = targetSessionId;
+
+      if (!nextSessionId && isNew) {
+        if (!dealId || !deal) {
+          toast.error('Deal details are still loading');
+          return;
         }
+
+        if (!documentsResolved || documentsLoading) {
+          toast.error('Documents are still loading');
+          return;
+        }
+
+        hasBootstrappedDraftRef.current = true;
+        setAutosaveStatus('saving');
+
+        const created = await createSession.mutateAsync({
+          deal_id: dealId,
+          session_name: sessionName || `Signing - ${deal.address || ''}`,
+          email_message: emailMessage,
+          signing_order_enabled: signingOrderEnabled,
+          reminder_interval_days: enableReminders ? reminderDays : 0,
+          expiration_date: enableExpiration
+            ? new Date(Date.now() + expirationDays * 86400000).toISOString()
+            : undefined,
+          role_assignments: [],
+        });
+
+        nextSessionId = created.id;
+        setDraftSessionId(created.id);
+
+        if (!hasInsertedDraftDocumentsRef.current) {
+          hasInsertedDraftDocumentsRef.current = true;
+          for (const [index, document] of pendingDocuments.entries()) {
+            await addDocument.mutateAsync({
+              session_id: created.id,
+              name: document.name,
+              storage_path: document.storage_path,
+              sort_order: index,
+              page_count: document.page_count,
+            });
+          }
+        }
+      }
+
+      if (!nextSessionId) {
+        toast.error('Failed to create signing session');
         return;
       }
 
-      await persistSession(targetSessionId);
-      navigate(`/transactions/${dealId}/signing-session/${targetSessionId}/prepare`);
+      await persistSession(nextSessionId);
+      navigate(`/transactions/${dealId}/signing-session/${nextSessionId}/prepare`);
     } catch (error: any) {
+      if (isNew && !targetSessionId) {
+        hasBootstrappedDraftRef.current = false;
+      }
+      setAutosaveStatus('error');
       toast.error(error.message || 'Failed to save');
     }
   };
@@ -1043,8 +1086,10 @@ export default function SigningSessionSetup() {
           <span className="min-w-[110px] text-right text-xs text-muted-foreground">
             {autosaveStatus === 'error'
               ? 'Draft failed'
-              : !targetSessionId
+              : isDraftCreationInProgress
               ? 'Creating draft...'
+              : !targetSessionId
+                ? 'Ready to create'
               : autosaveStatus === 'saving'
                 ? 'Saving...'
                 : autosaveStatus === 'saved'
@@ -1057,7 +1102,7 @@ export default function SigningSessionSetup() {
             onClick={handleContinue}
             disabled={
               documentsLoading ||
-              isWaitingForDraft ||
+              isDraftCreationInProgress ||
               createSession.isPending ||
               updateSession.isPending ||
               addRecipient.isPending ||
@@ -1065,10 +1110,10 @@ export default function SigningSessionSetup() {
               removeRecipient.isPending
             }
           >
-            {autosaveStatus === 'error' && !targetSessionId
-              ? 'Retry setup'
-              : isWaitingForDraft
+            {isDraftCreationInProgress
               ? 'Preparing session...'
+              : !targetSessionId && step === STEPS.length - 1
+                ? 'Create Session and Continue'
               : step < STEPS.length - 1
                 ? 'Next'
                 : 'Continue to Field Editor'}
