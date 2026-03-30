@@ -77,7 +77,7 @@ export function useSigningSessions(dealId: string | undefined) {
         .eq('deal_id', dealId!)
         .order('created_at', { ascending: false });
       if (error) throw error;
-      return data as SigningSession[];
+      return data as unknown as SigningSession[];
     },
   });
 }
@@ -94,7 +94,7 @@ export function useSigningSession(sessionId: string | undefined) {
         .eq('id', sessionId!)
         .single();
       if (error) throw error;
-      return data as SigningSession;
+      return data as unknown as SigningSession;
     },
   });
 }
