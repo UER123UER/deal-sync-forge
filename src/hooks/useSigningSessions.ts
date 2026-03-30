@@ -159,9 +159,11 @@ export function useCreateSigningSession() {
       expiration_date?: string;
       role_assignments?: SessionRoleAssignment[];
     }) => {
-      const { data, error } = await supabase.from('signing_sessions').insert(input).select().single();
+      const { role_assignments, ...rest } = input;
+      const payload = { ...rest, role_assignments: role_assignments as unknown as Json };
+      const { data, error } = await supabase.from('signing_sessions').insert(payload).select().single();
       if (error) throw error;
-      return data as SigningSession;
+      return data as unknown as SigningSession;
     },
     onSuccess: (d) => { qc.invalidateQueries({ queryKey: ['signing_sessions', d.deal_id] }); },
   });
