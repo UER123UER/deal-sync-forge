@@ -65,6 +65,21 @@ export interface SessionField {
   created_at: string | null;
 }
 
+const isMissingRoleAssignmentsColumnError = (error: unknown) => {
+  if (!error || typeof error !== 'object') return false;
+
+  const values = Object.values(error as Record<string, unknown>)
+    .filter((value) => typeof value === 'string')
+    .join(' ')
+    .toLowerCase();
+
+  return values.includes('role_assignments') && (
+    values.includes('column') ||
+    values.includes('schema cache') ||
+    values.includes('could not find')
+  );
+};
+
 // Fetch all sessions for a deal
 export function useSigningSessions(dealId: string | undefined) {
   return useQuery({
@@ -161,7 +176,24 @@ export function useCreateSigningSession() {
     }) => {
       const { role_assignments, ...rest } = input;
       const payload = { ...rest, role_assignments: role_assignments as unknown as Json };
-      const { data, error } = await supabase.from('signing_sessions').insert(payload).select().single();
+      const { data, error } = await supabase
+        .from('signing_sessions')
+        .insert(payload)
+        .select()
+        .single();
+      if (error && input.role_assignments && isMissingRoleAssignmentsColumnError(error)) {
+        const { role_assignments: _ignored, ...fallbackInput } = input;
+        const { data: fallbackData, error: fallbackError } = await supabase
+          .from('signing_sessions')
+          .insert(fallbackInput)
+          .select()
+          .single();
+        if (fallbackError) throw fallbackError;
+        return {
+          ...fallbackData,
+          role_assignments: input.role_assignments,
+        } as SigningSession;
+      }
       if (error) throw error;
       return data as unknown as SigningSession;
     },
@@ -175,7 +207,26 @@ export function useUpdateSigningSession() {
     mutationFn: async ({ id, ...updates }: Partial<SigningSession> & { id: string }) => {
       const { role_assignments, ...restUpdates } = updates;
       const payload = { ...restUpdates, ...(role_assignments !== undefined ? { role_assignments: role_assignments as unknown as Json } : {}) };
-      const { data, error } = await supabase.from('signing_sessions').update(payload).eq('id', id).select().single();
+      const { data, error } = await supabase
+        .from('signing_sessions')
+        .update(payload)
+        .eq('id', id)
+        .select()
+        .single();
+      if (error && 'role_assignments' in updates && isMissingRoleAssignmentsColumnError(error)) {
+        const { role_assignments: _ignored, ...fallbackUpdates } = updates;
+        const { data: fallbackData, error: fallbackError } = await supabase
+          .from('signing_sessions')
+          .update(fallbackUpdates)
+          .eq('id', id)
+          .select()
+          .single();
+        if (fallbackError) throw fallbackError;
+        return {
+          ...fallbackData,
+          role_assignments: updates.role_assignments ?? null,
+        } as SigningSession;
+      }
       if (error) throw error;
       return data as unknown as SigningSession;
     },

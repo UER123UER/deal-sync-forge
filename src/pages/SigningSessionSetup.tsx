@@ -323,6 +323,7 @@ export default function SigningSessionSetup() {
     .filter(Boolean);
 
   const [step, setStep] = useState(0);
+  const [draftRetryNonce, setDraftRetryNonce] = useState(0);
   const [sessionName, setSessionName] = useState('');
   const [emailMessage, setEmailMessage] = useState('Please review and sign the attached document(s).');
   const [signingOrderEnabled, setSigningOrderEnabled] = useState(false);
@@ -351,6 +352,7 @@ export default function SigningSessionSetup() {
   const haveHydratedRolesRef = useRef(false);
 
   const targetSessionId = isNew ? draftSessionId : sessionId || null;
+  const isWaitingForDraft = isNew && !targetSessionId && autosaveStatus !== 'error';
 
   const dealPeople: DealPerson[] = (deal?.deal_contacts || [])
     .map((dealContact) => ({
@@ -831,7 +833,8 @@ export default function SigningSessionSetup() {
         lastSavedSnapshotRef.current = buildSnapshot();
         setAutosaveStatus('saved');
         navigate(`/transactions/${dealId}/signing-session/${created.id}/setup`, { replace: true });
-      } catch {
+      } catch (error) {
+        console.error('Failed to create signing session draft:', error);
         if (!cancelled) {
           hasBootstrappedDraftRef.current = false;
           setAutosaveStatus('error');
@@ -851,6 +854,7 @@ export default function SigningSessionSetup() {
     createSession,
     deal,
     dealId,
+    draftRetryNonce,
     documentsResolved,
     draftSessionId,
     emailMessage,
@@ -1004,7 +1008,12 @@ export default function SigningSessionSetup() {
 
     try {
       if (!targetSessionId) {
-        toast.error('Signing session is still being created');
+        if (autosaveStatus === 'error') {
+          hasBootstrappedDraftRef.current = false;
+          setAutosaveStatus('idle');
+          setDraftRetryNonce((currentValue) => currentValue + 1);
+          toast.info('Retrying signing session setup');
+        }
         return;
       }
 
@@ -1032,7 +1041,9 @@ export default function SigningSessionSetup() {
         </div>
         <div className="flex items-center gap-3">
           <span className="min-w-[110px] text-right text-xs text-muted-foreground">
-            {!targetSessionId
+            {autosaveStatus === 'error'
+              ? 'Draft failed'
+              : !targetSessionId
               ? 'Creating draft...'
               : autosaveStatus === 'saving'
                 ? 'Saving...'
@@ -1046,6 +1057,7 @@ export default function SigningSessionSetup() {
             onClick={handleContinue}
             disabled={
               documentsLoading ||
+              isWaitingForDraft ||
               createSession.isPending ||
               updateSession.isPending ||
               addRecipient.isPending ||
@@ -1053,7 +1065,13 @@ export default function SigningSessionSetup() {
               removeRecipient.isPending
             }
           >
-            {step < STEPS.length - 1 ? 'Next' : 'Continue to Field Editor'}
+            {autosaveStatus === 'error' && !targetSessionId
+              ? 'Retry setup'
+              : isWaitingForDraft
+              ? 'Preparing session...'
+              : step < STEPS.length - 1
+                ? 'Next'
+                : 'Continue to Field Editor'}
           </Button>
         </div>
       </div>
