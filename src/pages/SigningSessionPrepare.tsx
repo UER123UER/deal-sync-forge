@@ -12,6 +12,7 @@ import {
   useSessionDocuments,
   useUpdateSigningSession,
   useSaveSessionFields,
+  type SessionField,
 } from '@/hooks/useSigningSessions';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
