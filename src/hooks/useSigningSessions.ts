@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import type { Json } from '@/integrations/supabase/types';
 
 export interface SessionRoleAssignment {
   id: string;
@@ -76,7 +77,7 @@ export function useSigningSessions(dealId: string | undefined) {
         .eq('deal_id', dealId!)
         .order('created_at', { ascending: false });
       if (error) throw error;
-      return data as SigningSession[];
+      return data as unknown as SigningSession[];
     },
   });
 }
@@ -93,7 +94,7 @@ export function useSigningSession(sessionId: string | undefined) {
         .eq('id', sessionId!)
         .single();
       if (error) throw error;
-      return data as SigningSession;
+      return data as unknown as SigningSession;
     },
   });
 }
@@ -158,9 +159,11 @@ export function useCreateSigningSession() {
       expiration_date?: string;
       role_assignments?: SessionRoleAssignment[];
     }) => {
-      const { data, error } = await supabase.from('signing_sessions').insert(input).select().single();
+      const { role_assignments, ...rest } = input;
+      const payload = { ...rest, role_assignments: role_assignments as unknown as Json };
+      const { data, error } = await supabase.from('signing_sessions').insert(payload).select().single();
       if (error) throw error;
-      return data as SigningSession;
+      return data as unknown as SigningSession;
     },
     onSuccess: (d) => { qc.invalidateQueries({ queryKey: ['signing_sessions', d.deal_id] }); },
   });
@@ -170,9 +173,11 @@ export function useUpdateSigningSession() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, ...updates }: Partial<SigningSession> & { id: string }) => {
-      const { data, error } = await supabase.from('signing_sessions').update(updates).eq('id', id).select().single();
+      const { role_assignments, ...restUpdates } = updates;
+      const payload = { ...restUpdates, ...(role_assignments !== undefined ? { role_assignments: role_assignments as unknown as Json } : {}) };
+      const { data, error } = await supabase.from('signing_sessions').update(payload).eq('id', id).select().single();
       if (error) throw error;
-      return data as SigningSession;
+      return data as unknown as SigningSession;
     },
     onSuccess: (d) => {
       qc.invalidateQueries({ queryKey: ['signing_session', d.id] });
@@ -301,7 +306,7 @@ export function useSessionByToken(token: string | undefined) {
         .order('sort_order');
 
       return {
-        session: session as SigningSession,
+        session: session as unknown as SigningSession,
         recipient: recipient as SessionRecipient,
         fields: (fields || []) as SessionField[],
         documents: (documents || []) as SessionDocument[],

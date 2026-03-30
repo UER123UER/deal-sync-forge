@@ -12,6 +12,7 @@ import {
   useSessionDocuments,
   useUpdateSigningSession,
   useSaveSessionFields,
+  type SessionField,
 } from '@/hooks/useSigningSessions';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -197,17 +198,7 @@ export default function SigningSessionPrepare() {
 
   const collectFields = () => {
     saveCurrentAnnotations();
-    const fields: Array<{
-      session_id: string;
-      document_id: string | null;
-      recipient_id: string | null;
-      type: string;
-      page: number;
-      x: number;
-      y: number;
-      width: number;
-      height: number;
-    }> = [];
+    const fields: Omit<SessionField, 'id' | 'created_at'>[] = [];
 
     for (const document of sessionDocs || []) {
       const documentAnnotations = annotationsByDocument.current[document.id];
@@ -231,6 +222,7 @@ export default function SigningSessionPrepare() {
               y: object.top || 0,
               width: (object.width || 150) * (object.scaleX || 1),
               height: (object.height || 40) * (object.scaleY || 1),
+              value: null,
             });
           }
         } catch {
