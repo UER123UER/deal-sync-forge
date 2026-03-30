@@ -197,17 +197,7 @@ export default function SigningSessionPrepare() {
 
   const collectFields = () => {
     saveCurrentAnnotations();
-    const fields: Array<{
-      session_id: string;
-      document_id: string | null;
-      recipient_id: string | null;
-      type: string;
-      page: number;
-      x: number;
-      y: number;
-      width: number;
-      height: number;
-    }> = [];
+    const fields: Omit<SessionField, 'id' | 'created_at'>[] = [];
 
     for (const document of sessionDocs || []) {
       const documentAnnotations = annotationsByDocument.current[document.id];
