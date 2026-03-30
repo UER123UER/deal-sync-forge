@@ -1092,11 +1092,9 @@ export default function SigningSessionSetup() {
                 ? 'Ready to create'
               : autosaveStatus === 'saving'
                 ? 'Saving...'
-                : autosaveStatus === 'saved'
+              : autosaveStatus === 'saved'
                   ? 'All changes saved'
-                  : autosaveStatus === 'error'
-                    ? 'Autosave failed'
-                    : 'Draft'}
+                  : 'Draft'}
           </span>
           <Button
             onClick={handleContinue}
