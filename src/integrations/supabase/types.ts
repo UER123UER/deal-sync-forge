@@ -622,6 +622,7 @@ export type Database = {
           email_message: string | null
           expiration_date: string | null
           id: string
+          role_assignments: Json
           reminder_interval_days: number | null
           session_name: string
           signing_order_enabled: boolean | null
@@ -636,6 +637,7 @@ export type Database = {
           email_message?: string | null
           expiration_date?: string | null
           id?: string
+          role_assignments?: Json
           reminder_interval_days?: number | null
           session_name?: string
           signing_order_enabled?: boolean | null
@@ -650,6 +652,7 @@ export type Database = {
           email_message?: string | null
           expiration_date?: string | null
           id?: string
+          role_assignments?: Json
           reminder_interval_days?: number | null
           session_name?: string
           signing_order_enabled?: boolean | null

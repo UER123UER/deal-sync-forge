@@ -1,6 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
+export interface SessionRoleAssignment {
+  id: string;
+  role_name: string;
+  recipient_id: string | null;
+}
+
 export interface SigningSession {
   id: string;
   deal_id: string;
@@ -10,6 +16,7 @@ export interface SigningSession {
   created_by: string | null;
   date_sent: string | null;
   expiration_date: string | null;
+  role_assignments: SessionRoleAssignment[] | null;
   reminder_interval_days: number | null;
   signing_order_enabled: boolean | null;
   created_at: string | null;
@@ -142,7 +149,15 @@ export function useSessionFields(sessionId: string | undefined) {
 export function useCreateSigningSession() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (input: { deal_id: string; session_name: string; email_message?: string; signing_order_enabled?: boolean; reminder_interval_days?: number; expiration_date?: string }) => {
+    mutationFn: async (input: {
+      deal_id: string;
+      session_name: string;
+      email_message?: string;
+      signing_order_enabled?: boolean;
+      reminder_interval_days?: number;
+      expiration_date?: string;
+      role_assignments?: SessionRoleAssignment[];
+    }) => {
       const { data, error } = await supabase.from('signing_sessions').insert(input).select().single();
       if (error) throw error;
       return data as SigningSession;
