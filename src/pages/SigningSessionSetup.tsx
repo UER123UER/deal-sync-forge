@@ -351,8 +351,8 @@ export default function SigningSessionSetup() {
   const haveHydratedRolesRef = useRef(false);
 
   const targetSessionId = isNew ? draftSessionId : sessionId || null;
-  const isDraftCreationInProgress =
-    isNew && !targetSessionId && (createSession.isPending || autosaveStatus === 'saving');
+  const isFinalStep = step === STEPS.length - 1;
+  const isDraftCreationInProgress = isNew && !targetSessionId && createSession.isPending;
 
   const dealPeople: DealPerson[] = (deal?.deal_contacts || [])
     .map((dealContact) => ({
@@ -1099,21 +1099,24 @@ export default function SigningSessionSetup() {
           <Button
             onClick={handleContinue}
             disabled={
-              documentsLoading ||
-              isDraftCreationInProgress ||
-              createSession.isPending ||
-              updateSession.isPending ||
-              addRecipient.isPending ||
-              updateRecipient.isPending ||
-              removeRecipient.isPending
+              isFinalStep &&
+              (
+                documentsLoading ||
+                isDraftCreationInProgress ||
+                createSession.isPending ||
+                updateSession.isPending ||
+                addRecipient.isPending ||
+                updateRecipient.isPending ||
+                removeRecipient.isPending
+              )
             }
           >
-            {isDraftCreationInProgress
+            {!isFinalStep
+              ? 'Next'
+              : isDraftCreationInProgress
               ? 'Preparing session...'
-              : !targetSessionId && step === STEPS.length - 1
+              : !targetSessionId
                 ? 'Create Session and Continue'
-              : step < STEPS.length - 1
-                ? 'Next'
                 : 'Continue to Field Editor'}
           </Button>
         </div>
