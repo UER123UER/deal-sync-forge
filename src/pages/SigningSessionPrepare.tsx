@@ -247,10 +247,43 @@ export default function SigningSessionPrepare() {
         date_sent: new Date().toISOString(),
       });
 
+      // Send emails via Edge Function
       if (recipients?.length) {
-        const urls = recipients.map((recipient) => `${window.location.origin}/sign/${recipient.token}`);
-        await navigator.clipboard.writeText(urls.join('\n'));
-        toast.success(`Session sent! ${urls.length} signing link(s) copied to clipboard.`);
+        const emailRecipients = recipients
+          .filter((r) => r.type === 'signer' || r.type === 'reviewer')
+          .map((r) => ({
+            email: r.email,
+            firstName: r.first_name,
+            lastName: r.last_name,
+            signingUrl: `${window.location.origin}/sign/${r.token}`,
+          }));
+
+        if (emailRecipients.length > 0) {
+          const { error } = await supabase.functions.invoke('send-signing-email', {
+            body: {
+              recipients: emailRecipients,
+              subject: session?.session_name ? `Signature Required: ${session.session_name}` : 'Signature Required',
+              sessionName: session?.session_name || 'Signing Session',
+              signingLinks: true,
+              emailMessage: session?.email_message || 'You have been requested to review and sign documents.',
+            },
+          });
+
+          if (error) {
+            console.error('Email send error:', error);
+            toast.warning('Session sent but emails may not have been delivered. Signing links copied to clipboard.');
+          } else {
+            toast.success(`Session sent! Signing emails delivered to ${emailRecipients.length} recipient(s).`);
+          }
+        }
+
+        // Also copy links to clipboard as backup
+        const urls = recipients.map((r) => `${window.location.origin}/sign/${r.token}`);
+        try {
+          await navigator.clipboard.writeText(urls.join('\n'));
+        } catch {
+          // Clipboard not available, that's OK
+        }
       }
 
       navigate(`/transactions/${dealId}/signing-sessions`);
