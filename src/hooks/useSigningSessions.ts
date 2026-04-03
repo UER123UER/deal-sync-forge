@@ -335,8 +335,9 @@ export function useSessionByToken(token: string | undefined) {
         .from('session_recipients')
         .select('*')
         .eq('token', token!)
-        .single();
+        .maybeSingle();
       if (error) throw error;
+      if (!recipient) return null;
       
       const { data: session } = await supabase
         .from('signing_sessions')
