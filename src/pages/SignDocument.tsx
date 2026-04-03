@@ -34,10 +34,18 @@ function getFieldsForRole(role: string | null | undefined): SignField[] {
 // ─── Session-based signing view ───
 function SessionSigningView({ token }: { token: string }) {
   const { data, isLoading } = useSessionByToken(token);
-  const [pages, setPages] = useState<{ url: string; width: number; height: number }[]>([]);
+  // pages[i] = { url, width, height } — rendered at 1.5x scale, displayed at natural CSS px
+  const [pages, setPages] = useState<{ url: string; renderScale: number; naturalW: number; naturalH: number }[]>([]);
   const [pdfLoading, setPdfLoading] = useState(false);
-  const [fields, setFields] = useState<SignField[]>([]);
-  const [activeIndex, setActiveIndex] = useState(0);
+  // fields with their position data
+  interface PositionedField extends SignField {
+    page: number;   // 0-indexed page number
+    x: number;      // left in PDF-natural pixels (at renderScale)
+    y: number;      // top  in PDF-natural pixels (at renderScale)
+    w: number;      // width
+    h: number;      // height
+  }
+  const [fields, setFields] = useState<PositionedField[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [modalFieldIndex, setModalFieldIndex] = useState<number | null>(null);
   const [signMode, setSignMode] = useState<'draw' | 'type'>('type');
@@ -47,14 +55,14 @@ function SessionSigningView({ token }: { token: string }) {
   const [finished, setFinished] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const isDrawing = useRef(false);
-  const fieldRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const RENDER_SCALE = 1.5; // must match AdminPdfEditor's scale
 
   // Load PDF pages
   useEffect(() => {
     if (!data?.documents?.length) return;
     const loadAll = async () => {
       setPdfLoading(true);
-      const allPages: { url: string; width: number; height: number }[] = [];
+      const allPages: { url: string; renderScale: number; naturalW: number; naturalH: number }[] = [];
       for (const doc of data.documents) {
         if (!doc.storage_path) continue;
         try {
@@ -62,14 +70,19 @@ function SessionSigningView({ token }: { token: string }) {
           const pdf = await pdfjsLib.getDocument(urlData.publicUrl).promise;
           for (let i = 1; i <= pdf.numPages; i++) {
             const page = await pdf.getPage(i);
-            const vp = page.getViewport({ scale: 2.0 });
+            const vp = page.getViewport({ scale: RENDER_SCALE });
             const canvas = document.createElement('canvas');
             canvas.width = vp.width;
             canvas.height = vp.height;
             const ctx = canvas.getContext('2d');
             if (!ctx) continue;
             await page.render({ canvasContext: ctx, viewport: vp }).promise;
-            allPages.push({ url: canvas.toDataURL(), width: vp.width / 2, height: vp.height / 2 });
+            allPages.push({
+              url: canvas.toDataURL(),
+              renderScale: RENDER_SCALE,
+              naturalW: vp.width,   // px at renderScale
+              naturalH: vp.height,
+            });
           }
         } catch (err) {
           console.error('Failed to load PDF:', err);
@@ -81,24 +94,41 @@ function SessionSigningView({ token }: { token: string }) {
     loadAll();
   }, [data?.documents]);
 
-  // Build fields from session_fields for this recipient
+  // Build positioned fields from session_fields data
   useEffect(() => {
-    if (!data?.fields?.length || fields.length > 0) return;
-    const mapped: SignField[] = data.fields.map((f, i) => ({
-      id: f.id || `field-${i}`,
-      type: (f.type === 'signature' || f.type === 'initials' || f.type === 'date') ? f.type : 'signature',
-      label: f.type === 'signature' ? 'Sign Here' : f.type === 'initials' ? 'Initial' : f.type === 'date' ? 'Date Signed' : f.type,
-      value: f.value || '',
-      status: 'empty' as const,
-    }));
-    if (mapped.length === 0) {
-      // No fields placed — create default signature + date
-      mapped.push(
-        { id: 'default-sig', type: 'signature', label: 'Sign Here', value: '', status: 'empty' },
-        { id: 'default-date', type: 'date', label: 'Date Signed', value: '', status: 'empty' },
-      );
+    if (!data?.fields || fields.length > 0) return;
+
+    const rawFields = data.fields;
+
+    if (rawFields.length === 0) {
+      // No fields placed — show defaults without position (below-doc fallback)
+      const defaults: PositionedField[] = [
+        { id: 'default-sig', type: 'signature', label: 'Sign Here', value: '', status: 'active', page: 0, x: 0, y: 0, w: 0, h: 0 },
+        { id: 'default-date', type: 'date', label: 'Date Signed', value: '', status: 'empty', page: 0, x: 0, y: 0, w: 0, h: 0 },
+      ];
+      setFields(defaults);
+      return;
     }
-    mapped[0].status = 'active';
+
+    const mapped: PositionedField[] = rawFields.map((f, i) => {
+      const ftype = (f.type === 'signature' || f.type === 'initials' || f.type === 'date') ? f.type : 'signature';
+      const label = ftype === 'signature' ? 'Sign Here' : ftype === 'initials' ? 'Initial' : 'Date Signed';
+      return {
+        id: f.id || `field-${i}`,
+        type: ftype,
+        label,
+        value: f.value || '',
+        status: 'empty' as const,
+        page: typeof f.page === 'number' ? f.page : 0,
+        x: typeof f.x === 'number' ? f.x : 0,
+        y: typeof f.y === 'number' ? f.y : 0,
+        w: typeof f.width === 'number' ? f.width : 160,
+        h: typeof f.height === 'number' ? f.height : 40,
+      };
+    });
+    // Set first unsigned field as active
+    const firstUnsigned = mapped.findIndex(f => !f.value);
+    if (firstUnsigned !== -1) mapped[firstUnsigned].status = 'active';
     setFields(mapped);
   }, [data?.fields, fields.length]);
 
@@ -109,7 +139,6 @@ function SessionSigningView({ token }: { token: string }) {
     const next = fields.findIndex((f, i) => i > currentIdx && f.status !== 'completed');
     if (next !== -1) {
       setFields(prev => prev.map((f, i) => (i === next ? { ...f, status: 'active' } : f)));
-      setActiveIndex(next);
     }
   };
 
@@ -225,28 +254,18 @@ function SessionSigningView({ token }: { token: string }) {
         })
         .eq('id', data.recipient.id);
 
-      // Update field values
+      // Persist field values back to DB
       for (const f of fields) {
-        if (f.value) {
-          await supabase
-            .from('session_fields')
-            .update({ value: f.value })
-            .eq('id', f.id);
+        if (f.value && !f.id.startsWith('default-')) {
+          await supabase.from('session_fields').update({ value: f.value }).eq('id', f.id);
         }
       }
 
       // Check if all recipients signed → mark session completed
       const { data: allRecipients } = await supabase
-        .from('session_recipients')
-        .select('status')
-        .eq('session_id', data.session.id);
-      
-      const allSigned = allRecipients?.every(r => r.status === 'signed');
-      if (allSigned) {
-        await supabase
-          .from('signing_sessions')
-          .update({ status: 'completed' })
-          .eq('id', data.session.id);
+        .from('session_recipients').select('status').eq('session_id', data.session.id);
+      if (allRecipients?.every(r => r.status === 'signed')) {
+        await supabase.from('signing_sessions').update({ status: 'completed' }).eq('id', data.session.id);
       }
 
       setFinished(true);
@@ -260,7 +279,7 @@ function SessionSigningView({ token }: { token: string }) {
     if (val.startsWith('typed:')) {
       return <span className={small ? 'text-lg' : 'text-2xl'} style={{ fontFamily: "'Dancing Script', cursive" }}>{val.replace('typed:', '')}</span>;
     }
-    return <img src={val} alt="Signature" className={small ? 'h-8' : 'h-12'} />;
+    return <img src={val} alt="Signature" className={small ? 'h-8 max-w-full object-contain' : 'h-12 max-w-full object-contain'} />;
   };
 
   if (isLoading || pdfLoading) {
@@ -283,6 +302,10 @@ function SessionSigningView({ token }: { token: string }) {
       </div>
     );
   }
+
+  // Fields with no position (x===0 && y===0 && w===0) go in below-doc fallback list
+  const positionedFields = fields.filter(f => f.w > 0);
+  const fallbackFields = fields.filter(f => f.w === 0);
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -309,54 +332,105 @@ function SessionSigningView({ token }: { token: string }) {
       )}
 
       <div className="max-w-4xl mx-auto py-8 px-4">
-        {/* PDF pages */}
+        {/* PDF pages with overlaid signing fields */}
         <div className="space-y-4">
-          {pages.map((page, idx) => (
-            <div key={idx} className="bg-white shadow-lg border rounded-sm relative">
-              <img src={page.url} alt={`Page ${idx + 1}`} className="w-full" />
-            </div>
-          ))}
           {pages.length === 0 && (
             <div className="bg-white shadow-lg border rounded-sm p-16 text-center text-muted-foreground">
               No document pages available.
             </div>
           )}
+          {pages.map((page, pageIdx) => {
+            // Fields that belong to this page
+            const pageFields = positionedFields.filter(f => f.page === pageIdx);
+            // The image renders at naturalW × naturalH px (renderScale already applied)
+            return (
+              <div key={pageIdx} className="bg-white shadow-lg border rounded-sm relative" style={{ width: page.naturalW, maxWidth: '100%' }}>
+                <img src={page.url} alt={`Page ${pageIdx + 1}`} style={{ width: page.naturalW, maxWidth: '100%', display: 'block' }} />
+                {/* Overlaid signing field boxes at their exact admin-placed positions */}
+                {pageFields.map((field) => {
+                  const fieldIdx = fields.indexOf(field);
+                  const isCompleted = field.status === 'completed';
+                  const isActive = field.status === 'active';
+                  return (
+                    <div
+                      key={field.id}
+                      onClick={() => handleFieldClick(fieldIdx)}
+                      title={field.label}
+                      style={{
+                        position: 'absolute',
+                        left: field.x,
+                        top: field.y,
+                        width: field.w,
+                        height: field.h,
+                        cursor: isCompleted ? 'default' : 'pointer',
+                        boxSizing: 'border-box',
+                      }}
+                      className={`transition-all duration-200 rounded flex items-center justify-center overflow-hidden
+                        ${isCompleted
+                          ? 'bg-green-50 border-2 border-green-400'
+                          : isActive
+                            ? 'bg-amber-100/90 border-2 border-amber-500 shadow-lg ring-2 ring-amber-400 animate-pulse'
+                            : 'bg-amber-50/80 border-2 border-dashed border-amber-400 hover:bg-amber-100/80'
+                        }`}
+                    >
+                      {isCompleted ? (
+                        <div className="flex items-center gap-1 px-1 w-full justify-center">
+                          {field.type === 'date'
+                            ? <span className="text-xs font-semibold text-green-700 truncate">{field.value}</span>
+                            : renderSigValue(field.value, true)
+                          }
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1 px-1">
+                          {field.type === 'signature' && <Pen className="w-3 h-3 text-amber-600 shrink-0" />}
+                          {field.type === 'initials' && <Type className="w-3 h-3 text-amber-600 shrink-0" />}
+                          <span className="text-xs font-semibold text-amber-700 truncate">{field.label}</span>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })}
         </div>
 
-        {/* Signing fields */}
-        <div className="mt-8 bg-white shadow-lg border rounded-sm p-8">
-          <h2 className="text-lg font-semibold mb-4">Complete Your Signature</h2>
-          <div className="space-y-3">
-            {fields.map((field, index) => {
-              const isActive = field.status === 'active';
-              const isCompleted = field.status === 'completed';
-              return (
-                <div
-                  key={field.id}
-                  ref={(el) => { fieldRefs.current[field.id] = el; }}
-                  onClick={() => handleFieldClick(index)}
-                  className={`relative cursor-pointer transition-all duration-300 rounded-md border-2 px-4 py-3
-                    ${isCompleted ? 'bg-white border-green-400 cursor-default' : isActive ? 'bg-amber-100 border-amber-500 ring-2 ring-amber-400 shadow-lg' : 'bg-amber-50 border-amber-300 border-dashed'}`}
-                  style={{ minHeight: 56 }}
-                >
-                  {isCompleted ? (
-                    <div className="flex items-center gap-2">
-                      {field.type === 'date' ? <span className="text-sm font-medium">{field.value}</span> : renderSigValue(field.value, true)}
-                      <Check className="w-4 h-4 text-green-600 ml-auto flex-shrink-0" />
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-2">
-                      {field.type === 'signature' && <Pen className="w-4 h-4 text-amber-600" />}
-                      {field.type === 'initials' && <Type className="w-4 h-4 text-amber-600" />}
-                      <span className="text-sm font-semibold text-amber-700">{field.label}</span>
-                      {isActive && <ChevronDown className="w-4 h-4 text-amber-600 animate-bounce ml-auto" />}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+        {/* Fallback: fields with no position data (below doc) */}
+        {fallbackFields.length > 0 && (
+          <div className="mt-8 bg-white shadow-lg border rounded-sm p-8">
+            <h2 className="text-lg font-semibold mb-4">Complete Your Signature</h2>
+            <div className="space-y-3">
+              {fallbackFields.map((field) => {
+                const fieldIdx = fields.indexOf(field);
+                const isActive = field.status === 'active';
+                const isCompleted = field.status === 'completed';
+                return (
+                  <div
+                    key={field.id}
+                    onClick={() => handleFieldClick(fieldIdx)}
+                    className={`relative cursor-pointer transition-all duration-300 rounded-md border-2 px-4 py-3
+                      ${isCompleted ? 'bg-white border-green-400 cursor-default' : isActive ? 'bg-amber-100 border-amber-500 ring-2 ring-amber-400 shadow-lg' : 'bg-amber-50 border-amber-300 border-dashed'}`}
+                    style={{ minHeight: 56 }}
+                  >
+                    {isCompleted ? (
+                      <div className="flex items-center gap-2">
+                        {field.type === 'date' ? <span className="text-sm font-medium">{field.value}</span> : renderSigValue(field.value, true)}
+                        <Check className="w-4 h-4 text-green-600 ml-auto flex-shrink-0" />
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        {field.type === 'signature' && <Pen className="w-4 h-4 text-amber-600" />}
+                        {field.type === 'initials' && <Type className="w-4 h-4 text-amber-600" />}
+                        <span className="text-sm font-semibold text-amber-700">{field.label}</span>
+                        {isActive && <ChevronDown className="w-4 h-4 text-amber-600 animate-bounce ml-auto" />}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
-        </div>
+        )}
 
         {allFieldsDone && (
           <div className="flex justify-center mt-8">

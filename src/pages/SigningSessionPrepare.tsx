@@ -126,10 +126,11 @@ export default function SigningSessionPrepare() {
           .getPublicUrl(currentDocument.storage_path);
         const pdf = await pdfjsLib.getDocument(data.publicUrl).promise;
         const renderedPages: PageData[] = [];
+        const RENDER_SCALE = 1.5; // must match SessionSigningView so x/y positions align
 
         for (let i = 1; i <= pdf.numPages; i += 1) {
           const page = await pdf.getPage(i);
-          const viewport = page.getViewport({ scale: 2.0 });
+          const viewport = page.getViewport({ scale: RENDER_SCALE });
           const canvas = document.createElement('canvas');
           canvas.width = viewport.width;
           canvas.height = viewport.height;
@@ -139,8 +140,8 @@ export default function SigningSessionPrepare() {
           await page.render({ canvasContext: context, viewport }).promise;
           renderedPages.push({
             imageUrl: canvas.toDataURL(),
-            width: viewport.width / 2,
-            height: viewport.height / 2,
+            width: viewport.width,   // canvas IS the natural display size at RENDER_SCALE
+            height: viewport.height,
           });
         }
 
@@ -210,13 +211,15 @@ export default function SigningSessionPrepare() {
           if (!parsed.objects) continue;
 
           for (const object of parsed.objects) {
-            if (!object.designatedField) continue;
+            // Support both `fieldType` (PdfCanvas convention) and legacy `designatedField`
+            const fieldType = object.fieldType || object.designatedField;
+            if (!fieldType) continue;
 
             fields.push({
               session_id: sessionId!,
               document_id: document.id,
               recipient_id: object.recipientId || selectedSigner,
-              type: object.designatedField,
+              type: fieldType,
               page: parseInt(pageKey, 10),
               x: object.left || 0,
               y: object.top || 0,

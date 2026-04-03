@@ -345,11 +345,11 @@ export function useSessionByToken(token: string | undefined) {
         .eq('id', recipient.session_id)
         .single();
       
+      // Load ALL fields for this session (not filtered by recipient — fields may be unassigned or shared)
       const { data: fields } = await supabase
         .from('session_fields')
         .select('*')
-        .eq('session_id', recipient.session_id)
-        .eq('recipient_id', recipient.id);
+        .eq('session_id', recipient.session_id);
       
       const { data: documents } = await supabase
         .from('session_documents')
