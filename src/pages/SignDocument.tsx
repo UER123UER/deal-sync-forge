@@ -3,11 +3,17 @@ import { useParams, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { useSignatureRequestByToken, useSignDocument } from '@/hooks/useSignatureRequests';
+import { useSessionByToken } from '@/hooks/useSigningSessions';
+import { supabase } from '@/integrations/supabase/client';
 import { Check, Pen, Type, ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
 import { Progress } from '@/components/ui/progress';
 import { ListingAgreementDocument, ListingAgreementFields, DEFAULT_FIELDS } from '@/components/deal/ListingAgreementDocument';
+import * as pdfjsLib from 'pdfjs-dist';
 
+pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
+
+// ─── Shared types ───
 interface SignField {
   id: string;
   type: 'signature' | 'initials' | 'date';
@@ -25,6 +31,390 @@ function getFieldsForRole(role: string | null | undefined): SignField[] {
   ];
 }
 
+// ─── Session-based signing view ───
+function SessionSigningView({ token }: { token: string }) {
+  const { data, isLoading } = useSessionByToken(token);
+  const [pages, setPages] = useState<{ url: string; width: number; height: number }[]>([]);
+  const [pdfLoading, setPdfLoading] = useState(false);
+  const [fields, setFields] = useState<SignField[]>([]);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalFieldIndex, setModalFieldIndex] = useState<number | null>(null);
+  const [signMode, setSignMode] = useState<'draw' | 'type'>('type');
+  const [typedName, setTypedName] = useState('');
+  const [savedSignature, setSavedSignature] = useState<string | null>(null);
+  const [savedInitials, setSavedInitials] = useState<string | null>(null);
+  const [finished, setFinished] = useState(false);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const isDrawing = useRef(false);
+  const fieldRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
+  // Load PDF pages
+  useEffect(() => {
+    if (!data?.documents?.length) return;
+    const loadAll = async () => {
+      setPdfLoading(true);
+      const allPages: { url: string; width: number; height: number }[] = [];
+      for (const doc of data.documents) {
+        if (!doc.storage_path) continue;
+        try {
+          const { data: urlData } = supabase.storage.from('admin-documents').getPublicUrl(doc.storage_path);
+          const pdf = await pdfjsLib.getDocument(urlData.publicUrl).promise;
+          for (let i = 1; i <= pdf.numPages; i++) {
+            const page = await pdf.getPage(i);
+            const vp = page.getViewport({ scale: 2.0 });
+            const canvas = document.createElement('canvas');
+            canvas.width = vp.width;
+            canvas.height = vp.height;
+            const ctx = canvas.getContext('2d');
+            if (!ctx) continue;
+            await page.render({ canvasContext: ctx, viewport: vp }).promise;
+            allPages.push({ url: canvas.toDataURL(), width: vp.width / 2, height: vp.height / 2 });
+          }
+        } catch (err) {
+          console.error('Failed to load PDF:', err);
+        }
+      }
+      setPages(allPages);
+      setPdfLoading(false);
+    };
+    loadAll();
+  }, [data?.documents]);
+
+  // Build fields from session_fields for this recipient
+  useEffect(() => {
+    if (!data?.fields?.length || fields.length > 0) return;
+    const mapped: SignField[] = data.fields.map((f, i) => ({
+      id: f.id || `field-${i}`,
+      type: (f.type === 'signature' || f.type === 'initials' || f.type === 'date') ? f.type : 'signature',
+      label: f.type === 'signature' ? 'Sign Here' : f.type === 'initials' ? 'Initial' : f.type === 'date' ? 'Date Signed' : f.type,
+      value: f.value || '',
+      status: 'empty' as const,
+    }));
+    if (mapped.length === 0) {
+      // No fields placed — create default signature + date
+      mapped.push(
+        { id: 'default-sig', type: 'signature', label: 'Sign Here', value: '', status: 'empty' },
+        { id: 'default-date', type: 'date', label: 'Date Signed', value: '', status: 'empty' },
+      );
+    }
+    mapped[0].status = 'active';
+    setFields(mapped);
+  }, [data?.fields, fields.length]);
+
+  const completedCount = fields.filter(f => f.status === 'completed').length;
+  const allFieldsDone = fields.length > 0 && completedCount === fields.length;
+
+  const advanceToNext = (currentIdx: number) => {
+    const next = fields.findIndex((f, i) => i > currentIdx && f.status !== 'completed');
+    if (next !== -1) {
+      setFields(prev => prev.map((f, i) => (i === next ? { ...f, status: 'active' } : f)));
+      setActiveIndex(next);
+    }
+  };
+
+  const handleFieldClick = (index: number) => {
+    const field = fields[index];
+    if (field.status === 'completed') return;
+    if (field.type === 'date') {
+      const today = new Date().toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' });
+      setFields(prev => prev.map((f, i) => (i === index ? { ...f, value: today, status: 'completed' } : f)));
+      advanceToNext(index);
+      return;
+    }
+    if (field.type === 'signature' && savedSignature) {
+      setFields(prev => prev.map((f, i) => (i === index ? { ...f, value: savedSignature, status: 'completed' } : f)));
+      advanceToNext(index);
+      return;
+    }
+    if (field.type === 'initials' && savedInitials) {
+      setFields(prev => prev.map((f, i) => (i === index ? { ...f, value: savedInitials, status: 'completed' } : f)));
+      advanceToNext(index);
+      return;
+    }
+    setModalFieldIndex(index);
+    setModalOpen(true);
+    setTypedName('');
+    setSignMode('type');
+  };
+
+  const initCanvas = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.strokeStyle = '#1a1a2e';
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+  }, []);
+
+  useEffect(() => {
+    if (modalOpen && signMode === 'draw') setTimeout(initCanvas, 100);
+  }, [modalOpen, signMode, initCanvas]);
+
+  const getPos = (e: React.MouseEvent | React.TouchEvent) => {
+    const canvas = canvasRef.current!;
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    if ('touches' in e) {
+      return { x: (e.touches[0].clientX - rect.left) * scaleX, y: (e.touches[0].clientY - rect.top) * scaleY };
+    }
+    return { x: ((e as React.MouseEvent).clientX - rect.left) * scaleX, y: ((e as React.MouseEvent).clientY - rect.top) * scaleY };
+  };
+
+  const startDraw = (e: React.MouseEvent | React.TouchEvent) => {
+    isDrawing.current = true;
+    const ctx = canvasRef.current?.getContext('2d');
+    if (!ctx) return;
+    const pos = getPos(e);
+    ctx.beginPath();
+    ctx.moveTo(pos.x, pos.y);
+  };
+  const draw = (e: React.MouseEvent | React.TouchEvent) => {
+    if (!isDrawing.current) return;
+    const ctx = canvasRef.current?.getContext('2d');
+    if (!ctx) return;
+    const pos = getPos(e);
+    ctx.lineTo(pos.x, pos.y);
+    ctx.stroke();
+  };
+  const stopDraw = () => { isDrawing.current = false; };
+  const clearCanvas = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  };
+
+  const handleAdoptSign = () => {
+    if (modalFieldIndex === null) return;
+    const field = fields[modalFieldIndex];
+    let sigData = '';
+    if (signMode === 'draw') {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      sigData = canvas.toDataURL('image/png');
+    } else {
+      if (!typedName.trim()) { toast.error('Please type your name'); return; }
+      sigData = `typed:${typedName.trim()}`;
+    }
+    if (field.type === 'signature') setSavedSignature(sigData);
+    if (field.type === 'initials') setSavedInitials(sigData);
+    setFields(prev => prev.map((f, i) => (i === modalFieldIndex ? { ...f, value: sigData, status: 'completed' } : f)));
+    setModalOpen(false);
+    setModalFieldIndex(null);
+    advanceToNext(modalFieldIndex);
+  };
+
+  const handleFinish = async () => {
+    if (!data?.recipient) return;
+    const sigField = fields.find(f => f.type === 'signature');
+    try {
+      await supabase
+        .from('session_recipients')
+        .update({
+          status: 'signed',
+          signed_at: new Date().toISOString(),
+          signature_data: sigField?.value || '',
+        })
+        .eq('id', data.recipient.id);
+
+      // Update field values
+      for (const f of fields) {
+        if (f.value) {
+          await supabase
+            .from('session_fields')
+            .update({ value: f.value })
+            .eq('id', f.id);
+        }
+      }
+
+      // Check if all recipients signed → mark session completed
+      const { data: allRecipients } = await supabase
+        .from('session_recipients')
+        .select('status')
+        .eq('session_id', data.session.id);
+      
+      const allSigned = allRecipients?.every(r => r.status === 'signed');
+      if (allSigned) {
+        await supabase
+          .from('signing_sessions')
+          .update({ status: 'completed' })
+          .eq('id', data.session.id);
+      }
+
+      setFinished(true);
+      toast.success('Document signed successfully!');
+    } catch {
+      toast.error('Failed to sign document');
+    }
+  };
+
+  const renderSigValue = (val: string, small = false) => {
+    if (val.startsWith('typed:')) {
+      return <span className={small ? 'text-lg' : 'text-2xl'} style={{ fontFamily: "'Dancing Script', cursive" }}>{val.replace('typed:', '')}</span>;
+    }
+    return <img src={val} alt="Signature" className={small ? 'h-8' : 'h-12'} />;
+  };
+
+  if (isLoading || pdfLoading) {
+    return <div className="min-h-screen bg-gray-100 flex items-center justify-center"><p className="text-muted-foreground">Loading document...</p></div>;
+  }
+
+  if (!data) {
+    return <div className="min-h-screen bg-gray-100 flex items-center justify-center"><div className="text-center"><h1 className="text-xl font-semibold mb-2">Document Not Found</h1><p className="text-muted-foreground">This signing link is invalid or has expired.</p></div></div>;
+  }
+
+  if (finished || data.recipient.status === 'signed') {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="text-center max-w-md mx-auto p-8">
+          <div className="w-16 h-16 rounded-full bg-green-100 text-green-600 flex items-center justify-center mx-auto mb-4"><Check className="w-8 h-8" /></div>
+          <h1 className="text-2xl font-semibold mb-2">Document Signed!</h1>
+          <p className="text-muted-foreground mb-2">You have successfully signed the document.</p>
+          <p className="text-sm text-muted-foreground">You may close this window.</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-100">
+      <div className="sticky top-0 z-50" style={{ backgroundColor: '#4C00C2' }}>
+        <div className="max-w-5xl mx-auto px-6 py-3 flex items-center justify-between text-white">
+          <div>
+            <h1 className="text-base font-semibold">{data.session.session_name}</h1>
+            <p className="text-xs opacity-80">Please review and sign</p>
+          </div>
+          <div className="text-right">
+            <p className="text-sm font-medium">Signing as: {data.recipient.first_name} {data.recipient.last_name}</p>
+            <div className="flex items-center gap-2 mt-1">
+              <span className="text-xs opacity-80">{completedCount} of {fields.length} completed</span>
+              <Progress value={(completedCount / Math.max(fields.length, 1)) * 100} className="w-24 h-1.5 bg-white/30" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {data.session.email_message && (
+        <div className="max-w-5xl mx-auto px-6 py-2 bg-blue-50 border-b border-blue-100">
+          <p className="text-sm text-blue-800">{data.session.email_message}</p>
+        </div>
+      )}
+
+      <div className="max-w-4xl mx-auto py-8 px-4">
+        {/* PDF pages */}
+        <div className="space-y-4">
+          {pages.map((page, idx) => (
+            <div key={idx} className="bg-white shadow-lg border rounded-sm relative">
+              <img src={page.url} alt={`Page ${idx + 1}`} className="w-full" />
+            </div>
+          ))}
+          {pages.length === 0 && (
+            <div className="bg-white shadow-lg border rounded-sm p-16 text-center text-muted-foreground">
+              No document pages available.
+            </div>
+          )}
+        </div>
+
+        {/* Signing fields */}
+        <div className="mt-8 bg-white shadow-lg border rounded-sm p-8">
+          <h2 className="text-lg font-semibold mb-4">Complete Your Signature</h2>
+          <div className="space-y-3">
+            {fields.map((field, index) => {
+              const isActive = field.status === 'active';
+              const isCompleted = field.status === 'completed';
+              return (
+                <div
+                  key={field.id}
+                  ref={(el) => { fieldRefs.current[field.id] = el; }}
+                  onClick={() => handleFieldClick(index)}
+                  className={`relative cursor-pointer transition-all duration-300 rounded-md border-2 px-4 py-3
+                    ${isCompleted ? 'bg-white border-green-400 cursor-default' : isActive ? 'bg-amber-100 border-amber-500 ring-2 ring-amber-400 shadow-lg' : 'bg-amber-50 border-amber-300 border-dashed'}`}
+                  style={{ minHeight: 56 }}
+                >
+                  {isCompleted ? (
+                    <div className="flex items-center gap-2">
+                      {field.type === 'date' ? <span className="text-sm font-medium">{field.value}</span> : renderSigValue(field.value, true)}
+                      <Check className="w-4 h-4 text-green-600 ml-auto flex-shrink-0" />
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      {field.type === 'signature' && <Pen className="w-4 h-4 text-amber-600" />}
+                      {field.type === 'initials' && <Type className="w-4 h-4 text-amber-600" />}
+                      <span className="text-sm font-semibold text-amber-700">{field.label}</span>
+                      {isActive && <ChevronDown className="w-4 h-4 text-amber-600 animate-bounce ml-auto" />}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {allFieldsDone && (
+          <div className="flex justify-center mt-8">
+            <Button onClick={handleFinish} className="px-12 py-6 text-lg font-semibold rounded-lg shadow-xl" style={{ backgroundColor: '#F5C518', color: '#1a1a2e' }}>
+              <Check className="w-5 h-5 mr-2" /> Finish Signing
+            </Button>
+          </div>
+        )}
+
+        <p className="text-center text-xs text-muted-foreground mt-6 max-w-lg mx-auto">
+          By clicking "Finish Signing", you agree that your electronic signature is the legal equivalent of your manual signature on this document.
+        </p>
+      </div>
+
+      <Dialog open={modalOpen} onOpenChange={setModalOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">
+              {modalFieldIndex !== null && fields[modalFieldIndex]?.type === 'initials' ? 'Add Your Initials' : 'Adopt Your Signature'}
+            </h3>
+            <p className="text-sm text-muted-foreground">
+              Create your {modalFieldIndex !== null && fields[modalFieldIndex]?.type === 'initials' ? 'initials' : 'signature'} below.
+            </p>
+            <div className="flex gap-2 border-b pb-2">
+              <button onClick={() => setSignMode('type')} className={`px-4 py-1.5 text-sm rounded-t font-medium transition-colors ${signMode === 'type' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}>
+                <Type className="w-3.5 h-3.5 inline mr-1.5" /> Type
+              </button>
+              <button onClick={() => setSignMode('draw')} className={`px-4 py-1.5 text-sm rounded-t font-medium transition-colors ${signMode === 'draw' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}>
+                <Pen className="w-3.5 h-3.5 inline mr-1.5" /> Draw
+              </button>
+            </div>
+            {signMode === 'type' ? (
+              <div>
+                <input value={typedName} onChange={(e) => setTypedName(e.target.value)} placeholder={modalFieldIndex !== null && fields[modalFieldIndex]?.type === 'initials' ? 'Your initials' : 'Your full name'} className="w-full border rounded-md px-4 py-3 text-2xl outline-none focus:ring-2 focus:ring-primary" style={{ fontFamily: "'Dancing Script', cursive" }} autoFocus />
+                {typedName && (
+                  <div className="mt-3 p-4 bg-muted/30 border rounded-md text-center">
+                    <p className="text-xs text-muted-foreground mb-1">Preview</p>
+                    <p className="text-3xl" style={{ fontFamily: "'Dancing Script', cursive" }}>{typedName}</p>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div>
+                <canvas ref={canvasRef} width={460} height={140} className="border rounded-md cursor-crosshair w-full bg-white" style={{ touchAction: 'none' }} onMouseDown={startDraw} onMouseMove={draw} onMouseUp={stopDraw} onMouseLeave={stopDraw} onTouchStart={startDraw} onTouchMove={draw} onTouchEnd={stopDraw} />
+                <Button variant="ghost" size="sm" onClick={clearCanvas} className="mt-1 text-xs">Clear</Button>
+              </div>
+            )}
+            <Button onClick={handleAdoptSign} className="w-full" style={{ backgroundColor: '#F5C518', color: '#1a1a2e' }}>Adopt and Sign</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&display=swap" rel="stylesheet" />
+    </div>
+  );
+}
+
+// ─── Legacy signature-request signing view ───
 export default function SignDocument() {
   const { token } = useParams<{ token: string }>();
   const [searchParams] = useSearchParams();
@@ -200,10 +590,17 @@ export default function SignDocument() {
     return <img src={val} alt="Signature" className={small ? 'h-8' : 'h-12'} />;
   };
 
-  // --- RENDER ---
-  if (isLoading) {
+  // --- LOADING ---
+  if (legacyLoading || sessionLoading) {
     return <div className="min-h-screen bg-gray-100 flex items-center justify-center"><p className="text-muted-foreground">Loading document...</p></div>;
   }
+
+  // --- SESSION TOKEN MATCH → render session signing view ---
+  if (sessionData && !request) {
+    return <SessionSigningView token={token!} />;
+  }
+
+  // --- LEGACY NOT FOUND ---
   if (!request) {
     return <div className="min-h-screen bg-gray-100 flex items-center justify-center"><div className="text-center"><h1 className="text-xl font-semibold mb-2">Document Not Found</h1><p className="text-muted-foreground">This signing link is invalid or has expired.</p></div></div>;
   }
@@ -277,16 +674,13 @@ export default function SignDocument() {
     );
   };
 
-  // Read-only field renderer for the document
   const renderField = (key: keyof ListingAgreementFields) => (
     <span className="border-b-2 border-foreground/30 px-1">{docFields[key] || '___'}</span>
   );
 
-  // Signature section with interactive overlays
   const signatureSection = (
     <div className="space-y-8">
       <div className="grid grid-cols-2 gap-8">
-        {/* Seller column */}
         <div>
           <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wider" style={{ fontFamily: 'sans-serif' }}>Seller</p>
           <div className="space-y-3">
@@ -314,8 +708,6 @@ export default function SignDocument() {
             </div>
           </div>
         </div>
-
-        {/* Broker column */}
         <div>
           <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wider" style={{ fontFamily: 'sans-serif' }}>Broker / Agent</p>
           <div className="space-y-3">
@@ -349,7 +741,6 @@ export default function SignDocument() {
 
   return (
     <div className="min-h-screen bg-gray-100">
-      {/* DocuSign header */}
       <div className="sticky top-0 z-50" style={{ backgroundColor: '#4C00C2' }}>
         <div className="max-w-5xl mx-auto px-6 py-3 flex items-center justify-between text-white">
           <div>
@@ -372,7 +763,6 @@ export default function SignDocument() {
         </div>
       )}
 
-      {/* Document */}
       <div className="max-w-4xl mx-auto py-8 px-4">
         <div className="bg-white shadow-lg border rounded-sm px-16 py-14">
           <ListingAgreementDocument
@@ -382,7 +772,6 @@ export default function SignDocument() {
           />
         </div>
 
-        {/* Finish CTA */}
         {allFieldsDone && (
           <div className="flex justify-center mt-8">
             <Button onClick={handleFinish} disabled={signMutation.isPending} className="px-12 py-6 text-lg font-semibold rounded-lg shadow-xl" style={{ backgroundColor: '#F5C518', color: '#1a1a2e' }}>
@@ -397,7 +786,6 @@ export default function SignDocument() {
         </p>
       </div>
 
-      {/* Signature Modal */}
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
         <DialogContent className="sm:max-w-lg">
           <div className="space-y-4">
