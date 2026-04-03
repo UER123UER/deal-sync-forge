@@ -419,7 +419,11 @@ export default function SignDocument() {
   const { token } = useParams<{ token: string }>();
   const [searchParams] = useSearchParams();
   const recipientToken = searchParams.get('recipient');
-  const { data: request, isLoading } = useSignatureRequestByToken(token);
+  const { data: request, isLoading: legacyLoading } = useSignatureRequestByToken(token);
+  const { data: sessionData, isLoading: sessionLoading } = useSessionByToken(
+    // Only try session lookup if no legacy request found yet and no recipient param
+    !request && !recipientToken ? token : undefined
+  );
   const signMutation = useSignDocument();
 
   const [fields, setFields] = useState<SignField[]>([]);
