@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { useSignatureRequestByToken, useSignDocument } from '@/hooks/useSignatureRequests';
@@ -27,6 +27,8 @@ function getFieldsForRole(role: string | null | undefined): SignField[] {
 
 export default function SignDocument() {
   const { token } = useParams<{ token: string }>();
+  const [searchParams] = useSearchParams();
+  const recipientToken = searchParams.get('recipient');
   const { data: request, isLoading } = useSignatureRequestByToken(token);
   const signMutation = useSignDocument();
 
@@ -44,7 +46,10 @@ export default function SignDocument() {
   const isDrawing = useRef(false);
   const fieldRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
-  const currentRecipient = request?.signature_recipients?.find((r) => r.status === 'pending');
+  // Find THIS recipient: by their unique token if present, else fall back to first pending
+  const currentRecipient = request?.signature_recipients?.find((r) =>
+    recipientToken ? (r as any).recipient_token === recipientToken : r.status === 'pending'
+  );
   const allSigned = request?.signature_recipients?.every((r) => r.status === 'signed');
 
   useEffect(() => {
@@ -202,13 +207,31 @@ export default function SignDocument() {
   if (!request) {
     return <div className="min-h-screen bg-gray-100 flex items-center justify-center"><div className="text-center"><h1 className="text-xl font-semibold mb-2">Document Not Found</h1><p className="text-muted-foreground">This signing link is invalid or has expired.</p></div></div>;
   }
-  if (finished || allSigned) {
+  const alreadySigned = currentRecipient?.status === 'signed';
+
+  if (finished || alreadySigned) {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
         <div className="text-center max-w-md mx-auto p-8">
           <div className="w-16 h-16 rounded-full bg-green-100 text-green-600 flex items-center justify-center mx-auto mb-4"><Check className="w-8 h-8" /></div>
           <h1 className="text-2xl font-semibold mb-2">Document Signed!</h1>
-          <p className="text-muted-foreground mb-2">You have successfully signed <strong>{request.document_name}</strong>.</p>
+          <p className="text-muted-foreground mb-2">
+            {alreadySigned && !finished ? 'You have already signed ' : 'You have successfully signed '}
+            <strong>{request.document_name}</strong>.
+          </p>
+          <p className="text-sm text-muted-foreground">You may close this window.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (allSigned) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="text-center max-w-md mx-auto p-8">
+          <div className="w-16 h-16 rounded-full bg-green-100 text-green-600 flex items-center justify-center mx-auto mb-4"><Check className="w-8 h-8" /></div>
+          <h1 className="text-2xl font-semibold mb-2">All Signatures Complete</h1>
+          <p className="text-muted-foreground mb-2"><strong>{request.document_name}</strong> has been fully signed.</p>
           <p className="text-sm text-muted-foreground">You may close this window.</p>
         </div>
       </div>

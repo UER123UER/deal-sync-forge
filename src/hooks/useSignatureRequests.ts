@@ -26,6 +26,7 @@ export interface SignatureRecipient {
   status: string;
   signed_at: string | null;
   signature_data: string | null;
+  recipient_token: string | null;
 }
 
 export function useSignatureRequests(dealId: string | undefined) {
@@ -94,7 +95,9 @@ export function useCreateSignatureRequest() {
         .single();
       if (reqErr) throw reqErr;
 
+      const recipientsWithTokens: (typeof req.recipients[0] & { recipient_token: string })[] = [];
       for (const r of req.recipients) {
+        const recipient_token = crypto.randomUUID();
         const { error: recErr } = await (supabase as any)
           .from('signature_recipients')
           .insert({
@@ -103,11 +106,13 @@ export function useCreateSignatureRequest() {
             name: r.name,
             email: r.email,
             role: r.role,
+            recipient_token,
           });
         if (recErr) throw recErr;
+        recipientsWithTokens.push({ ...r, recipient_token });
       }
 
-      return sigReq as SignatureRequest;
+      return { ...sigReq, recipientsWithTokens } as SignatureRequest & { recipientsWithTokens: typeof recipientsWithTokens };
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['signature_requests'] }),
   });

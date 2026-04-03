@@ -509,8 +509,16 @@ export default function AdminPdfEditor() {
           <Button variant="ghost" size="icon" className="h-8 w-8" title="Download">
             <Download className="w-4 h-4" />
           </Button>
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleSave} disabled={isSaving} title="Save">
-            <Save className="w-4 h-4" />
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 gap-1.5 px-3 font-medium"
+            onClick={handleSave}
+            disabled={isSaving}
+            title="Save (Ctrl+S)"
+          >
+            <Save className="w-3.5 h-3.5" />
+            {isSaving ? 'Saving...' : 'Save'}
           </Button>
           <Button
             variant="ghost"
@@ -522,7 +530,13 @@ export default function AdminPdfEditor() {
           >
             <Trash2 className="w-4 h-4" />
           </Button>
-          <Button size="sm" className="ml-2 bg-[#2D5F2B] hover:bg-[#234A22] text-white gap-1">
+          <Button
+            size="sm"
+            className="ml-2 bg-[#2D5F2B] hover:bg-[#234A22] text-white gap-1"
+            disabled={!storagePath || isSaving}
+            onClick={handleSave}
+            title="Save document and prepare to send"
+          >
             Next <ChevronRight className="w-3.5 h-3.5" />
           </Button>
         </div>

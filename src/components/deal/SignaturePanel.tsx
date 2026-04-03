@@ -34,7 +34,7 @@ interface SignaturePanelProps {
 
 export function SignaturePanel({ open, onClose, documentName, contacts, dealId, checklistItemId, formData, designatedFields, mode = 'send', onContinue }: SignaturePanelProps) {
   const [to, setTo] = useState<string[]>([]);
-  const [subject, setSubject] = useState('Please DocuSign');
+  const [subject, setSubject] = useState('Please sign your document');
   const [message, setMessage] = useState('Please review and sign the attached document.');
   const [attachments, setAttachments] = useState([documentName]);
   const createSignatureRequest = useCreateSignatureRequest();
@@ -82,22 +82,27 @@ export function SignaturePanel({ open, onClose, documentName, contacts, dealId, 
         designated_fields: designatedFields,
       });
 
-      // Build signing URL and open mailto with all recipients
       const baseUrl = window.location.origin;
-      const signUrl = `${baseUrl}/sign/${sigReq.token}`;
-      const allEmails = recipients.map((r) => r.email).join(',');
-      const emailBody = `${message}\n\nPlease sign the document here:\n${signUrl}`;
-      const mailto = `mailto:${allEmails}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(emailBody)}`;
-      
-      // Use location.href to avoid popup blockers
-      window.location.href = mailto;
+      const recipientsWithTokens = (sigReq as any).recipientsWithTokens as { name: string; email: string; recipient_token: string }[];
 
-      // Also copy signing link to clipboard for easy sharing
+      // Open a separate mailto for each recipient with their unique signing link
+      for (const r of recipientsWithTokens) {
+        const signUrl = `${baseUrl}/sign/${sigReq.token}?recipient=${r.recipient_token}`;
+        const emailBody = `Hi ${r.name},\n\n${message}\n\nPlease sign the document here:\n${signUrl}`;
+        const mailto = `mailto:${r.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(emailBody)}`;
+        window.open(mailto, '_blank');
+      }
+
+      // Copy first signing link to clipboard for easy sharing
+      const firstToken = recipientsWithTokens[0]?.recipient_token;
+      const firstSignUrl = firstToken
+        ? `${baseUrl}/sign/${sigReq.token}?recipient=${firstToken}`
+        : `${baseUrl}/sign/${sigReq.token}`;
       try {
-        await navigator.clipboard.writeText(signUrl);
-        toast.success('Signature request created! Signing link copied to clipboard. Your email app should open — just hit Send.', { duration: 8000 });
+        await navigator.clipboard.writeText(firstSignUrl);
+        toast.success('Signature request created! Individual links sent to each recipient. First link copied to clipboard.', { duration: 8000 });
       } catch {
-        toast.success(`Signature request created! Signing link: ${signUrl}`, { duration: 8000 });
+        toast.success(`Signature request created! Signing links opened in your email client.`, { duration: 8000 });
       }
       onClose();
     } catch {
