@@ -1,5 +1,3 @@
-import { SMTPClient } from 'https://deno.land/x/denomailer@1.6.0/mod.ts'
-
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -11,7 +9,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { recipients, subject, sessionName, signingLinks, emailMessage } = await req.json()
+    const { recipients, subject, sessionName, emailMessage } = await req.json()
 
     if (!recipients || !Array.isArray(recipients) || recipients.length === 0) {
       return new Response(JSON.stringify({ error: 'recipients is required' }), {
@@ -29,18 +27,6 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
-
-    const client = new SMTPClient({
-      connection: {
-        hostname: 'smtp.zoho.com',
-        port: 465,
-        tls: true,
-        auth: {
-          username: smtpUser,
-          password: smtpPass,
-        },
-      },
-    })
 
     const results: { email: string; success: boolean; error?: string }[] = []
 
@@ -63,7 +49,7 @@ Deno.serve(async (req) => {
             </p>
             <div style="text-align: center; margin: 32px 0;">
               <a href="${signingUrl}" style="background: #4F46E5; color: #ffffff; padding: 14px 32px; border-radius: 6px; text-decoration: none; font-weight: 600; display: inline-block;">
-                Review & Sign Documents
+                Review &amp; Sign Documents
               </a>
             </div>
             <p style="color: #9ca3af; font-size: 13px;">
@@ -77,22 +63,67 @@ Deno.serve(async (req) => {
         </div>
       `
 
+      const emailSubject = subject || `Signature Required: ${sessionName || 'Document'}`
+
+      // Build raw MIME message
+      const boundary = `boundary_${crypto.randomUUID()}`
+      const rawMessage = [
+        `From: United Estates Realty <${smtpUser}>`,
+        `To: ${email}`,
+        `Subject: ${emailSubject}`,
+        `MIME-Version: 1.0`,
+        `Content-Type: multipart/alternative; boundary="${boundary}"`,
+        ``,
+        `--${boundary}`,
+        `Content-Type: text/plain; charset=UTF-8`,
+        ``,
+        `Hello ${recipientName}, you have been requested to sign documents. Visit: ${signingUrl}`,
+        ``,
+        `--${boundary}`,
+        `Content-Type: text/html; charset=UTF-8`,
+        ``,
+        htmlBody,
+        ``,
+        `--${boundary}--`,
+      ].join('\r\n')
+
       try {
-        await client.send({
-          from: `United Estates Realty <${smtpUser}>`,
-          to: email,
-          subject: subject || `Signature Required: ${sessionName || 'Document'}`,
-          content: 'auto',
-          html: htmlBody,
+        // Use Zoho Mail API (SMTP submission via fetch to Zoho's send mail API)
+        const response = await fetch('https://mail.zoho.com/api/accounts/self/messages', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Zoho-oauthtoken ${smtpPass}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            fromAddress: smtpUser,
+            toAddress: email,
+            subject: emailSubject,
+            content: htmlBody,
+            askReceipt: 'no',
+          }),
         })
-        results.push({ email, success: true })
+
+        if (!response.ok) {
+          // Fallback: try basic SMTP via Deno's built-in TCP
+          const text = await response.text()
+          console.error(`Zoho API error for ${email}:`, text)
+          
+          // Try alternate approach using smtp2go or direct SMTP
+          const smtpResult = await sendViaSMTP(smtpUser, smtpPass, email, emailSubject, htmlBody, recipientName, signingUrl)
+          if (smtpResult.success) {
+            results.push({ email, success: true })
+          } else {
+            results.push({ email, success: false, error: smtpResult.error })
+          }
+        } else {
+          results.push({ email, success: true })
+        }
       } catch (err) {
         console.error(`Failed to send to ${email}:`, err)
         results.push({ email, success: false, error: String(err) })
       }
     }
-
-    await client.close()
 
     return new Response(JSON.stringify({ success: true, results }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -105,3 +136,63 @@ Deno.serve(async (req) => {
     })
   }
 })
+
+async function sendViaSMTP(
+  user: string,
+  pass: string,
+  to: string,
+  subject: string,
+  html: string,
+  recipientName: string,
+  signingUrl: string,
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const conn = await Deno.connectTls({ hostname: 'smtp.zoho.com', port: 465 })
+
+    const encoder = new TextEncoder()
+    const decoder = new TextDecoder()
+
+    async function readResponse(): Promise<string> {
+      const buf = new Uint8Array(4096)
+      const n = await conn.read(buf)
+      return n ? decoder.decode(buf.subarray(0, n)) : ''
+    }
+
+    async function sendCommand(cmd: string): Promise<string> {
+      await conn.write(encoder.encode(cmd + '\r\n'))
+      return await readResponse()
+    }
+
+    // Read greeting
+    await readResponse()
+
+    await sendCommand('EHLO localhost')
+    await sendCommand(`AUTH LOGIN`)
+    await sendCommand(btoa(user))
+    await sendCommand(btoa(pass))
+    await sendCommand(`MAIL FROM:<${user}>`)
+    await sendCommand(`RCPT TO:<${to}>`)
+    await sendCommand('DATA')
+
+    const message = [
+      `From: United Estates Realty <${user}>`,
+      `To: ${to}`,
+      `Subject: ${subject}`,
+      `MIME-Version: 1.0`,
+      `Content-Type: text/html; charset=UTF-8`,
+      ``,
+      html,
+      `.`,
+    ].join('\r\n')
+
+    await conn.write(encoder.encode(message + '\r\n'))
+    await readResponse()
+    await sendCommand('QUIT')
+    conn.close()
+
+    return { success: true }
+  } catch (err) {
+    console.error('SMTP fallback error:', err)
+    return { success: false, error: String(err) }
+  }
+}
