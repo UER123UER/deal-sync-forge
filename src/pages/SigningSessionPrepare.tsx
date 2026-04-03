@@ -158,6 +158,9 @@ export default function SigningSessionPrepare() {
     loadPdf();
   }, [currentDocument]);
 
+  // Custom props that Fabric.js won't serialize unless explicitly listed
+  const FABRIC_CUSTOM_PROPS = ['fieldType', 'customType', 'recipientId'];
+
   const saveCurrentAnnotations = useCallback(() => {
     if (!fabricCanvasRef.current || !currentDocumentId) return;
 
@@ -165,8 +168,9 @@ export default function SigningSessionPrepare() {
       annotationsByDocument.current[currentDocumentId] = {};
     }
 
+    // Pass custom property names so Fabric includes fieldType/customType in the JSON
     annotationsByDocument.current[currentDocumentId][currentPage] = JSON.stringify(
-      fabricCanvasRef.current.toJSON()
+      fabricCanvasRef.current.toJSON(FABRIC_CUSTOM_PROPS)
     );
   }, [currentDocumentId, currentPage]);
 
