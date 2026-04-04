@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, ZoomIn, ZoomOut, Send } from 'lucide-react';
+import { ArrowLeft, Redo2, Undo2, ZoomIn, ZoomOut, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { PdfCanvas } from '@/components/admin/PdfCanvas';
@@ -24,6 +24,7 @@ import type { Canvas as FabricCanvas } from 'fabric';
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
 
 const SIGNER_COLORS = ['#4F46E5', '#DC2626', '#059669', '#D97706', '#7C3AED', '#DB2777'];
+const EMPTY_CANVAS_SNAPSHOT = JSON.stringify({ version: '6.7.1', objects: [] });
 
 interface PageData {
   imageUrl: string;
@@ -274,6 +275,7 @@ export default function SigningSessionPrepare() {
   const [zoomScale, setZoomScale] = useState(1);
   const [showPreview, setShowPreview] = useState(false);
   const [previewSaving, setPreviewSaving] = useState(false);
+  const [historyState, setHistoryState] = useState({ canUndo: false, canRedo: false });
 
   const [activeTab, setActiveTab] = useState<SidebarTab>('signers');
   const [signers, setSigners] = useState<Signer[]>([]);
@@ -286,7 +288,11 @@ export default function SigningSessionPrepare() {
 
   const fabricCanvasRef = useRef<FabricCanvas | null>(null);
   const annotationsByDocument = useRef<Record<string, Record<number, string>>>({});
+  const historyByDocument = useRef<
+    Record<string, Record<number, { snapshots: string[]; index: number }>>
+  >({});
   const hydratedSavedFieldsRef = useRef(false);
+  const isApplyingHistoryRef = useRef(false);
 
   const currentDocument =
     sessionDocs?.find((doc) => doc.id === currentDocumentId) || sessionDocs?.[0] || null;
@@ -389,18 +395,82 @@ export default function SigningSessionPrepare() {
   // Custom props that Fabric.js won't serialize unless explicitly listed
   const FABRIC_CUSTOM_PROPS = ['fieldType', 'customType', 'recipientId'];
 
+  const updateHistoryControls = useCallback((documentId?: string | null, pageIndex?: number) => {
+    if (!documentId && !currentDocumentId) {
+      setHistoryState({ canUndo: false, canRedo: false });
+      return;
+    }
+
+    const resolvedDocumentId = documentId || currentDocumentId;
+    const resolvedPageIndex = pageIndex ?? currentPage;
+    const entry = resolvedDocumentId
+      ? historyByDocument.current[resolvedDocumentId]?.[resolvedPageIndex]
+      : null;
+
+    setHistoryState({
+      canUndo: !!entry && entry.index > 0,
+      canRedo: !!entry && entry.index < entry.snapshots.length - 1,
+    });
+  }, [currentDocumentId, currentPage]);
+
+  const ensureHistoryEntry = useCallback((documentId: string, pageIndex: number, initialSnapshot: string) => {
+    if (!historyByDocument.current[documentId]) {
+      historyByDocument.current[documentId] = {};
+    }
+
+    if (!historyByDocument.current[documentId][pageIndex]) {
+      historyByDocument.current[documentId][pageIndex] = {
+        snapshots: [initialSnapshot],
+        index: 0,
+      };
+    }
+
+    return historyByDocument.current[documentId][pageIndex];
+  }, []);
+
+  const getCanvasSnapshot = useCallback(() => {
+    if (!fabricCanvasRef.current) return EMPTY_CANVAS_SNAPSHOT;
+    return JSON.stringify(fabricCanvasRef.current.toJSON(FABRIC_CUSTOM_PROPS));
+  }, []);
+
   const saveCurrentAnnotations = useCallback(() => {
-    if (!fabricCanvasRef.current || !currentDocumentId) return;
+    if (!currentDocumentId) return;
 
     if (!annotationsByDocument.current[currentDocumentId]) {
       annotationsByDocument.current[currentDocumentId] = {};
     }
 
-    // Pass custom property names so Fabric includes fieldType/customType in the JSON
-    annotationsByDocument.current[currentDocumentId][currentPage] = JSON.stringify(
-      fabricCanvasRef.current.toJSON(FABRIC_CUSTOM_PROPS)
-    );
-  }, [currentDocumentId, currentPage]);
+    annotationsByDocument.current[currentDocumentId][currentPage] = getCanvasSnapshot();
+  }, [currentDocumentId, currentPage, getCanvasSnapshot]);
+
+  const pushHistorySnapshot = useCallback((snapshot: string, documentId?: string | null, pageIndex?: number) => {
+    const resolvedDocumentId = documentId || currentDocumentId;
+    if (!resolvedDocumentId) return;
+
+    const resolvedPageIndex = pageIndex ?? currentPage;
+    const entry = ensureHistoryEntry(resolvedDocumentId, resolvedPageIndex, snapshot);
+    const currentSnapshot = entry.snapshots[entry.index];
+
+    if (currentSnapshot === snapshot) {
+      updateHistoryControls(resolvedDocumentId, resolvedPageIndex);
+      return;
+    }
+
+    entry.snapshots = entry.snapshots.slice(0, entry.index + 1);
+    entry.snapshots.push(snapshot);
+    entry.index = entry.snapshots.length - 1;
+    updateHistoryControls(resolvedDocumentId, resolvedPageIndex);
+  }, [currentDocumentId, currentPage, ensureHistoryEntry, updateHistoryControls]);
+
+  const loadSnapshotIntoCanvas = useCallback((snapshot: string) => {
+    if (!fabricCanvasRef.current) return;
+
+    isApplyingHistoryRef.current = true;
+    fabricCanvasRef.current.loadFromJSON(snapshot, () => {
+      fabricCanvasRef.current?.renderAll();
+      isApplyingHistoryRef.current = false;
+    });
+  }, []);
 
   const changePage = (newPage: number) => {
     if (newPage < 0 || newPage >= pages.length) return;
@@ -417,17 +487,64 @@ export default function SigningSessionPrepare() {
   const handleCanvasReady = useCallback(() => {
     if (!fabricCanvasRef.current || !currentDocumentId) return;
 
-    const pageAnnotations = annotationsByDocument.current[currentDocumentId]?.[currentPage];
-    if (!pageAnnotations) return;
+    const pageAnnotations =
+      annotationsByDocument.current[currentDocumentId]?.[currentPage] || EMPTY_CANVAS_SNAPSHOT;
+    ensureHistoryEntry(currentDocumentId, currentPage, pageAnnotations);
+    updateHistoryControls(currentDocumentId, currentPage);
 
-    fabricCanvasRef.current.loadFromJSON(pageAnnotations, () => {
-      fabricCanvasRef.current?.renderAll();
-    });
-  }, [currentDocumentId, currentPage]);
+    if (pageAnnotations === EMPTY_CANVAS_SNAPSHOT) return;
+
+    loadSnapshotIntoCanvas(pageAnnotations);
+  }, [currentDocumentId, currentPage, ensureHistoryEntry, loadSnapshotIntoCanvas, updateHistoryControls]);
 
   const handleCanvasChange = useCallback(() => {
-    saveCurrentAnnotations();
-  }, [saveCurrentAnnotations]);
+    if (isApplyingHistoryRef.current || !currentDocumentId) return;
+
+    const snapshot = getCanvasSnapshot();
+
+    if (!annotationsByDocument.current[currentDocumentId]) {
+      annotationsByDocument.current[currentDocumentId] = {};
+    }
+
+    annotationsByDocument.current[currentDocumentId][currentPage] = snapshot;
+    pushHistorySnapshot(snapshot, currentDocumentId, currentPage);
+  }, [currentDocumentId, currentPage, getCanvasSnapshot, pushHistorySnapshot]);
+
+  const handleUndo = useCallback(() => {
+    if (!currentDocumentId) return;
+
+    const entry = historyByDocument.current[currentDocumentId]?.[currentPage];
+    if (!entry || entry.index === 0) return;
+
+    entry.index -= 1;
+    const snapshot = entry.snapshots[entry.index];
+
+    if (!annotationsByDocument.current[currentDocumentId]) {
+      annotationsByDocument.current[currentDocumentId] = {};
+    }
+
+    annotationsByDocument.current[currentDocumentId][currentPage] = snapshot;
+    loadSnapshotIntoCanvas(snapshot);
+    updateHistoryControls(currentDocumentId, currentPage);
+  }, [currentDocumentId, currentPage, loadSnapshotIntoCanvas, updateHistoryControls]);
+
+  const handleRedo = useCallback(() => {
+    if (!currentDocumentId) return;
+
+    const entry = historyByDocument.current[currentDocumentId]?.[currentPage];
+    if (!entry || entry.index >= entry.snapshots.length - 1) return;
+
+    entry.index += 1;
+    const snapshot = entry.snapshots[entry.index];
+
+    if (!annotationsByDocument.current[currentDocumentId]) {
+      annotationsByDocument.current[currentDocumentId] = {};
+    }
+
+    annotationsByDocument.current[currentDocumentId][currentPage] = snapshot;
+    loadSnapshotIntoCanvas(snapshot);
+    updateHistoryControls(currentDocumentId, currentPage);
+  }, [currentDocumentId, currentPage, loadSnapshotIntoCanvas, updateHistoryControls]);
 
   useEffect(() => {
     if (hydratedSavedFieldsRef.current) return;
@@ -461,11 +578,13 @@ export default function SigningSessionPrepare() {
       : null;
 
     if (currentPageAnnotations && fabricCanvasRef.current) {
-      fabricCanvasRef.current.loadFromJSON(currentPageAnnotations, () => {
-        fabricCanvasRef.current?.renderAll();
-      });
+      loadSnapshotIntoCanvas(currentPageAnnotations);
     }
-  }, [currentDocumentId, currentPage, sessionDocs, sessionFields]);
+  }, [currentDocumentId, currentPage, loadSnapshotIntoCanvas, sessionDocs, sessionFields]);
+
+  useEffect(() => {
+    updateHistoryControls();
+  }, [currentDocumentId, currentPage, updateHistoryControls]);
 
   const collectFields = () => {
     saveCurrentAnnotations();
@@ -718,6 +837,29 @@ export default function SigningSessionPrepare() {
         )}
 
         <div className="flex items-center gap-1 border rounded px-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7"
+            onClick={handleUndo}
+            disabled={!historyState.canUndo}
+            aria-label="Undo"
+            title="Undo"
+          >
+            <Undo2 className="w-3 h-3" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7"
+            onClick={handleRedo}
+            disabled={!historyState.canRedo}
+            aria-label="Redo"
+            title="Redo"
+          >
+            <Redo2 className="w-3 h-3" />
+          </Button>
+          <div className="mx-1 h-4 w-px bg-border" />
           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setZoomScale((value) => Math.max(0.25, value - 0.25))}>
             <ZoomOut className="w-3 h-3" />
           </Button>
