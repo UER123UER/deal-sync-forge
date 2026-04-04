@@ -10,6 +10,7 @@ import {
   useSigningSession,
   useSessionRecipients,
   useSessionDocuments,
+  useSessionFields,
   useUpdateSigningSession,
   useSaveSessionFields,
   type SessionField,
@@ -30,12 +31,196 @@ interface PageData {
   height: number;
 }
 
+const INTERACTIVE_FIELD_TYPES = new Set(['signature', 'initials', 'date', 'fullname', 'email', 'time']);
+const MARKUP_TYPE_PREFIX = 'markup:';
+
+const isInteractiveFieldType = (type: string | null | undefined) =>
+  !!type && INTERACTIVE_FIELD_TYPES.has(type);
+
+const isMarkupFieldType = (type: string | null | undefined) =>
+  !!type && type.startsWith(MARKUP_TYPE_PREFIX);
+
+const getDesignatedFieldLabel = (type: string) => {
+  switch (type) {
+    case 'signature':
+      return 'SIGN HERE';
+    case 'initials':
+      return 'INITIALS';
+    case 'date':
+      return 'MM/DD/YYYY';
+    case 'time':
+      return 'HH:MM AM/PM';
+    default:
+      return type;
+  }
+};
+
+const getDesignatedFieldColors = (type: string) => {
+  switch (type) {
+    case 'signature':
+      return {
+        bgColor: 'rgba(255, 200, 0, 0.3)',
+        textColor: '#b45309',
+      };
+    case 'initials':
+      return {
+        bgColor: 'rgba(59, 130, 246, 0.3)',
+        textColor: '#1d4ed8',
+      };
+    case 'date':
+      return {
+        bgColor: 'rgba(34, 197, 94, 0.3)',
+        textColor: '#15803d',
+      };
+    case 'time':
+      return {
+        bgColor: 'rgba(249, 115, 22, 0.3)',
+        textColor: '#c2410c',
+      };
+    default:
+      return {
+        bgColor: 'rgba(209, 213, 219, 0.3)',
+        textColor: '#374151',
+      };
+  }
+};
+
+const buildInteractiveCanvasObject = (field: SessionField) => {
+  if (field.type === 'fullname' || field.type === 'email') {
+    const label = field.type === 'fullname' ? 'Full Name' : 'Email';
+    const color = field.type === 'fullname' ? '#1e40af' : '#7c3aed';
+    const fill = field.type === 'fullname' ? 'rgba(30,64,175,0.08)' : 'rgba(124,58,237,0.08)';
+
+    return {
+      type: 'group',
+      left: field.x,
+      top: field.y,
+      width: field.width,
+      height: field.height,
+      scaleX: 1,
+      scaleY: 1,
+      customType: `designated-${field.type}`,
+      fieldType: field.type,
+      recipientId: field.recipient_id,
+      objects: [
+        {
+          type: 'rect',
+          left: 0,
+          top: 0,
+          width: field.width,
+          height: field.height,
+          fill,
+          stroke: color,
+          strokeWidth: 1.5,
+          rx: 4,
+          ry: 4,
+        },
+        {
+          type: 'i-text',
+          left: 6,
+          top: 6,
+          text: `${label}: `,
+          fontSize: 11,
+          fontFamily: 'Arial',
+          fill: color,
+          fontWeight: 'bold',
+          editable: false,
+          selectable: false,
+          evented: false,
+        },
+        {
+          type: 'i-text',
+          left: field.type === 'email' ? 52 : 60,
+          top: 7,
+          text: field.type === 'email' ? 'email@example.com' : 'Enter full name...',
+          fontSize: 11,
+          fontFamily: 'Arial',
+          fill: '#6b7280',
+          fontStyle: 'italic',
+          editable: true,
+          selectable: false,
+          evented: false,
+        },
+      ],
+    };
+  }
+
+  const { bgColor, textColor } = getDesignatedFieldColors(field.type);
+
+  return {
+    type: 'group',
+    left: field.x,
+    top: field.y,
+    width: field.width,
+    height: field.height,
+    scaleX: 1,
+    scaleY: 1,
+    customType: `designated-${field.type}`,
+    fieldType: field.type,
+    recipientId: field.recipient_id,
+    objects: [
+      {
+        type: 'rect',
+        left: 0,
+        top: 0,
+        width: field.width,
+        height: field.height,
+        fill: bgColor,
+        stroke: textColor,
+        strokeWidth: 1.5,
+        rx: 4,
+        ry: 4,
+      },
+      {
+        type: 'i-text',
+        left: 8,
+        top: 6,
+        text: getDesignatedFieldLabel(field.type),
+        fontSize: 13,
+        fontFamily: 'Arial',
+        fill: textColor,
+        fontWeight: 'bold',
+        editable: false,
+        selectable: false,
+        evented: false,
+      },
+    ],
+  };
+};
+
+const buildCanvasSnapshotFromFields = (fields: SessionField[]) => {
+  const objects = fields
+    .map((field) => {
+      if (isMarkupFieldType(field.type)) {
+        if (!field.value) return null;
+        try {
+          return JSON.parse(field.value);
+        } catch {
+          return null;
+        }
+      }
+
+      if (isInteractiveFieldType(field.type)) {
+        return buildInteractiveCanvasObject(field);
+      }
+
+      return null;
+    })
+    .filter(Boolean);
+
+  return JSON.stringify({
+    version: '6.7.1',
+    objects,
+  });
+};
+
 export default function SigningSessionPrepare() {
   const { id: dealId, sessionId } = useParams<{ id: string; sessionId: string }>();
   const navigate = useNavigate();
   const { data: session } = useSigningSession(sessionId);
   const { data: recipients } = useSessionRecipients(sessionId);
   const { data: sessionDocs } = useSessionDocuments(sessionId);
+  const { data: sessionFields } = useSessionFields(sessionId);
   const updateSession = useUpdateSigningSession();
   const saveFields = useSaveSessionFields();
 
@@ -47,6 +232,7 @@ export default function SigningSessionPrepare() {
   const [activeTool, setActiveTool] = useState<ToolMode>('select');
   const [zoomScale, setZoomScale] = useState(1);
   const [showPreview, setShowPreview] = useState(false);
+  const [previewSaving, setPreviewSaving] = useState(false);
 
   const [activeTab, setActiveTab] = useState<SidebarTab>('signers');
   const [signers, setSigners] = useState<Signer[]>([]);
@@ -59,6 +245,7 @@ export default function SigningSessionPrepare() {
 
   const fabricCanvasRef = useRef<FabricCanvas | null>(null);
   const annotationsByDocument = useRef<Record<string, Record<number, string>>>({});
+  const hydratedSavedFieldsRef = useRef(false);
 
   const currentDocument =
     sessionDocs?.find((doc) => doc.id === currentDocumentId) || sessionDocs?.[0] || null;
@@ -201,6 +388,44 @@ export default function SigningSessionPrepare() {
     saveCurrentAnnotations();
   }, [saveCurrentAnnotations]);
 
+  useEffect(() => {
+    if (hydratedSavedFieldsRef.current) return;
+    if (!sessionDocs?.length || !sessionFields) return;
+
+    const nextAnnotations: Record<string, Record<number, string>> = {};
+
+    for (const document of sessionDocs) {
+      const fieldsForDocument = sessionFields.filter((field) => field.document_id === document.id);
+      if (!fieldsForDocument.length) continue;
+
+      const pageMap: Record<number, string> = {};
+      const pagesForDocument = Array.from(new Set(fieldsForDocument.map((field) => field.page)));
+
+      for (const page of pagesForDocument) {
+        const fieldsForPage = fieldsForDocument.filter((field) => field.page === page);
+        if (!fieldsForPage.length) continue;
+        pageMap[page] = buildCanvasSnapshotFromFields(fieldsForPage);
+      }
+
+      if (Object.keys(pageMap).length) {
+        nextAnnotations[document.id] = pageMap;
+      }
+    }
+
+    annotationsByDocument.current = nextAnnotations;
+    hydratedSavedFieldsRef.current = true;
+
+    const currentPageAnnotations = currentDocumentId
+      ? nextAnnotations[currentDocumentId]?.[currentPage]
+      : null;
+
+    if (currentPageAnnotations && fabricCanvasRef.current) {
+      fabricCanvasRef.current.loadFromJSON(currentPageAnnotations, () => {
+        fabricCanvasRef.current?.renderAll();
+      });
+    }
+  }, [currentDocumentId, currentPage, sessionDocs, sessionFields]);
+
   const collectFields = () => {
     saveCurrentAnnotations();
     const fields: Omit<SessionField, 'id' | 'created_at'>[] = [];
@@ -215,21 +440,33 @@ export default function SigningSessionPrepare() {
           if (!parsed.objects) continue;
 
           for (const object of parsed.objects) {
-            // Support both `fieldType` (PdfCanvas convention) and legacy `designatedField`
             const fieldType = object.fieldType || object.designatedField;
-            if (!fieldType) continue;
-
-            fields.push({
+            const objectType = object.customType || object.type || 'object';
+            const baseField = {
               session_id: sessionId!,
               document_id: document.id,
-              recipient_id: object.recipientId || selectedSigner,
-              type: fieldType,
               page: parseInt(pageKey, 10),
               x: object.left || 0,
               y: object.top || 0,
               width: (object.width || 150) * (object.scaleX || 1),
               height: (object.height || 40) * (object.scaleY || 1),
-              value: null,
+            };
+
+            if (fieldType) {
+              fields.push({
+                ...baseField,
+                recipient_id: object.recipientId || selectedSigner,
+                type: fieldType,
+                value: null,
+              });
+              continue;
+            }
+
+            fields.push({
+              ...baseField,
+              recipient_id: null,
+              type: `${MARKUP_TYPE_PREFIX}${objectType}`,
+              value: JSON.stringify(object),
             });
           }
         } catch {
@@ -241,12 +478,27 @@ export default function SigningSessionPrepare() {
     return fields;
   };
 
+  const saveFieldsToSession = useCallback(async () => {
+    const fields = collectFields();
+    await saveFields.mutateAsync({ session_id: sessionId!, fields });
+    return fields;
+  }, [collectFields, saveFields, sessionId]);
+
+  const handleNext = async () => {
+    try {
+      setPreviewSaving(true);
+      await saveFieldsToSession();
+      setShowPreview(true);
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to save fields');
+    } finally {
+      setPreviewSaving(false);
+    }
+  };
+
   const handleSend = async () => {
     try {
-      const fields = collectFields();
-      if (fields.length > 0) {
-        await saveFields.mutateAsync({ session_id: sessionId!, fields });
-      }
+      const fields = await saveFieldsToSession();
 
       await updateSession.mutateAsync({
         id: sessionId!,
@@ -419,7 +671,12 @@ export default function SigningSessionPrepare() {
           </Button>
         </div>
 
-        <Button variant="default" size="sm" onClick={() => setShowPreview(true)}>
+        <Button
+          variant="default"
+          size="sm"
+          onClick={handleNext}
+          disabled={previewSaving || saveFields.isPending}
+        >
           Next &gt;
         </Button>
       </div>

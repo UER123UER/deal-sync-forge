@@ -45,7 +45,13 @@ function SessionSigningView({ token }: { token: string }) {
     w: number;      // width
     h: number;      // height
   }
+  interface PassiveOverlay {
+    id: string;
+    page: number;
+    object: any;
+  }
   const [fields, setFields] = useState<PositionedField[]>([]);
+  const [overlays, setOverlays] = useState<PassiveOverlay[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [modalFieldIndex, setModalFieldIndex] = useState<number | null>(null);
   const [signMode, setSignMode] = useState<'draw' | 'type'>('type');
@@ -96,7 +102,7 @@ function SessionSigningView({ token }: { token: string }) {
 
   // Build positioned fields from session_fields data
   useEffect(() => {
-    if (!data?.fields || fields.length > 0) return;
+    if (!data?.fields || fields.length > 0 || overlays.length > 0) return;
 
     const rawFields = data.fields;
 
@@ -110,10 +116,27 @@ function SessionSigningView({ token }: { token: string }) {
       return;
     }
 
-    const mapped: PositionedField[] = rawFields.map((f, i) => {
+    const mapped: PositionedField[] = [];
+    const nextOverlays: PassiveOverlay[] = [];
+
+    rawFields.forEach((f, i) => {
+      if (f.type?.startsWith('markup:')) {
+        if (!f.value) return;
+        try {
+          nextOverlays.push({
+            id: f.id || `overlay-${i}`,
+            page: typeof f.page === 'number' ? f.page : 0,
+            object: JSON.parse(f.value),
+          });
+        } catch {
+          // Ignore malformed overlay payloads
+        }
+        return;
+      }
+
       const ftype = (f.type === 'signature' || f.type === 'initials' || f.type === 'date') ? f.type : 'signature';
       const label = ftype === 'signature' ? 'Sign Here' : ftype === 'initials' ? 'Initial' : 'Date Signed';
-      return {
+      mapped.push({
         id: f.id || `field-${i}`,
         type: ftype,
         label,
@@ -124,13 +147,14 @@ function SessionSigningView({ token }: { token: string }) {
         y: typeof f.y === 'number' ? f.y : 0,
         w: typeof f.width === 'number' ? f.width : 160,
         h: typeof f.height === 'number' ? f.height : 40,
-      };
+      });
     });
     // Set first unsigned field as active
     const firstUnsigned = mapped.findIndex(f => !f.value);
     if (firstUnsigned !== -1) mapped[firstUnsigned].status = 'active';
     setFields(mapped);
-  }, [data?.fields, fields.length]);
+    setOverlays(nextOverlays);
+  }, [data?.fields, fields.length, overlays.length]);
 
   const completedCount = fields.filter(f => f.status === 'completed').length;
   const allFieldsDone = fields.length > 0 && completedCount === fields.length;
@@ -306,6 +330,153 @@ function SessionSigningView({ token }: { token: string }) {
   // Fields with no position (x===0 && y===0 && w===0) go in below-doc fallback list
   const positionedFields = fields.filter(f => f.w > 0);
   const fallbackFields = fields.filter(f => f.w === 0);
+  const overlaysByPage = overlays.reduce<Record<number, PassiveOverlay[]>>((acc, overlay) => {
+    if (!acc[overlay.page]) acc[overlay.page] = [];
+    acc[overlay.page].push(overlay);
+    return acc;
+  }, {});
+
+  const renderOverlay = (overlay: PassiveOverlay) => {
+    const object = overlay.object;
+    const commonStyle: React.CSSProperties = {
+      position: 'absolute',
+      left: object.left || 0,
+      top: object.top || 0,
+      pointerEvents: 'none',
+      transform: object.angle ? `rotate(${object.angle}deg)` : undefined,
+      transformOrigin: 'top left',
+    };
+
+    if (object.type === 'path' && Array.isArray(object.path)) {
+      const d = object.path
+        .map((segment: any[]) => {
+          const [command, ...values] = segment;
+          return `${command} ${values.join(' ')}`;
+        })
+        .join(' ');
+
+      return (
+        <svg
+          key={overlay.id}
+          style={commonStyle}
+          width={(object.width || 0) * (object.scaleX || 1)}
+          height={(object.height || 0) * (object.scaleY || 1)}
+          viewBox={`0 0 ${object.width || 1} ${object.height || 1}`}
+        >
+          <path
+            d={d}
+            fill="none"
+            stroke={object.stroke || '#000000'}
+            strokeWidth={object.strokeWidth || 2}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      );
+    }
+
+    if (object.type === 'line') {
+      const x1 = object.x1 ?? 0;
+      const y1 = object.y1 ?? 0;
+      const x2 = object.x2 ?? 0;
+      const y2 = object.y2 ?? 0;
+      const minX = Math.min(x1, x2);
+      const minY = Math.min(y1, y2);
+      const width = Math.max(Math.abs(x2 - x1), 1);
+      const height = Math.max(Math.abs(y2 - y1), 1);
+
+      return (
+        <svg
+          key={overlay.id}
+          style={{ ...commonStyle, left: (object.left || 0) + minX, top: (object.top || 0) + minY }}
+          width={width}
+          height={height}
+          viewBox={`0 0 ${width} ${height}`}
+        >
+          <line
+            x1={x1 - minX}
+            y1={y1 - minY}
+            x2={x2 - minX}
+            y2={y2 - minY}
+            stroke={object.stroke || '#000000'}
+            strokeWidth={object.strokeWidth || 2}
+            strokeLinecap="round"
+          />
+        </svg>
+      );
+    }
+
+    if (object.type === 'ellipse') {
+      const width = (object.rx || 0) * 2;
+      const height = (object.ry || 0) * 2;
+      return (
+        <div
+          key={overlay.id}
+          style={{
+            ...commonStyle,
+            width,
+            height,
+            border: `${object.strokeWidth || 2}px solid ${object.stroke || '#ef4444'}`,
+            borderRadius: '9999px',
+            background: object.fill && object.fill !== 'transparent' ? object.fill : 'transparent',
+          }}
+        />
+      );
+    }
+
+    if (object.type === 'rect') {
+      return (
+        <div
+          key={overlay.id}
+          style={{
+            ...commonStyle,
+            width: (object.width || 0) * (object.scaleX || 1),
+            height: (object.height || 0) * (object.scaleY || 1),
+            background: object.fill || 'transparent',
+            border: object.stroke ? `${object.strokeWidth || 0}px solid ${object.stroke}` : undefined,
+          }}
+        />
+      );
+    }
+
+    if (object.type === 'image' && object.src) {
+      return (
+        <img
+          key={overlay.id}
+          src={object.src}
+          alt=""
+          style={{
+            ...commonStyle,
+            width: (object.width || 0) * (object.scaleX || 1),
+            height: (object.height || 0) * (object.scaleY || 1),
+            objectFit: 'contain',
+          }}
+        />
+      );
+    }
+
+    if ((object.type === 'i-text' || object.type === 'text' || object.type === 'textbox') && object.text) {
+      return (
+        <div
+          key={overlay.id}
+          style={{
+            ...commonStyle,
+            color: object.fill || '#000000',
+            fontSize: object.fontSize || 14,
+            fontFamily: object.fontFamily || 'Arial',
+            fontWeight: object.fontWeight || 'normal',
+            fontStyle: object.fontStyle || 'normal',
+            textDecoration: object.underline ? 'underline' : undefined,
+            whiteSpace: 'pre-wrap',
+          }}
+        >
+          {object.text}
+        </div>
+      );
+    }
+
+    return null;
+  };
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -342,10 +513,12 @@ function SessionSigningView({ token }: { token: string }) {
           {pages.map((page, pageIdx) => {
             // Fields that belong to this page
             const pageFields = positionedFields.filter(f => f.page === pageIdx);
+            const pageOverlays = overlaysByPage[pageIdx] || [];
             // The image renders at naturalW × naturalH px (renderScale already applied)
             return (
               <div key={pageIdx} className="bg-white shadow-lg border rounded-sm relative" style={{ width: page.naturalW, maxWidth: '100%' }}>
                 <img src={page.url} alt={`Page ${pageIdx + 1}`} style={{ width: page.naturalW, maxWidth: '100%', display: 'block' }} />
+                {pageOverlays.map(renderOverlay)}
                 {/* Overlaid signing field boxes at their exact admin-placed positions */}
                 {pageFields.map((field) => {
                   const fieldIdx = fields.indexOf(field);
