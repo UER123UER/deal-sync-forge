@@ -93,7 +93,7 @@ function getFieldsForRole(role: string | null | undefined): SignField[] {
 
 // ─── Session-based signing view ───
 function SessionSigningView({ token }: { token: string }) {
-  const { data, isLoading } = useSessionByToken(token);
+  const { data, isLoading, error } = useSessionByToken(token);
   // pages[i] = { url, width, height } — rendered at 1.5x scale, displayed at natural CSS px
   const [pages, setPages] = useState<{ url: string; renderScale: number; naturalW: number; naturalH: number }[]>([]);
   const [pdfLoading, setPdfLoading] = useState(false);
@@ -391,6 +391,19 @@ function SessionSigningView({ token }: { token: string }) {
 
   if (isLoading || pdfLoading) {
     return <div className="min-h-screen bg-gray-100 flex items-center justify-center"><p className="text-muted-foreground">Loading document...</p></div>;
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="text-center max-w-md mx-auto p-8">
+          <h1 className="text-xl font-semibold mb-2">Signing Data Unavailable</h1>
+          <p className="text-muted-foreground">
+            The signing link could not load its saved fields. Please return to the deal and send again.
+          </p>
+        </div>
+      </div>
+    );
   }
 
   if (!data) {

@@ -65,6 +65,13 @@ export interface SessionField {
   created_at: string | null;
 }
 
+export interface SigningSessionByTokenResult {
+  session: SigningSession;
+  recipient: SessionRecipient;
+  fields: SessionField[];
+  documents: SessionDocument[];
+}
+
 const isMissingRoleAssignmentsColumnError = (error: unknown) => {
   if (!error || typeof error !== 'object') return false;
 
@@ -79,6 +86,79 @@ const isMissingRoleAssignmentsColumnError = (error: unknown) => {
     values.includes('could not find')
   );
 };
+
+const isFunctionMissingError = (error: unknown) => {
+  if (!error || typeof error !== 'object') return false;
+
+  const values = Object.values(error as Record<string, unknown>)
+    .filter((value) => typeof value === 'string')
+    .join(' ')
+    .toLowerCase();
+
+  return (
+    values.includes('function') &&
+    (values.includes('not found') || values.includes('404') || values.includes('does not exist'))
+  );
+};
+
+export async function fetchSigningSessionByToken(
+  token: string
+): Promise<SigningSessionByTokenResult | null> {
+  let functionError: unknown = null;
+
+  const { data: functionData, error: invokeError } = await supabase.functions.invoke(
+    'get-signing-session',
+    {
+      body: { token },
+    }
+  );
+
+  if (!invokeError && functionData) {
+    return functionData as SigningSessionByTokenResult;
+  }
+
+  functionError = invokeError;
+
+  const { data: recipient, error: recipientError } = await supabase
+    .from('session_recipients')
+    .select('*')
+    .eq('token', token)
+    .maybeSingle();
+  if (recipientError) throw recipientError;
+  if (!recipient) return null;
+
+  const { data: session, error: sessionError } = await supabase
+    .from('signing_sessions')
+    .select('*')
+    .eq('id', recipient.session_id)
+    .single();
+  if (sessionError) throw sessionError;
+
+  const { data: fields, error: fieldsError } = await supabase
+    .from('session_fields')
+    .select('*')
+    .eq('session_id', recipient.session_id);
+  if (fieldsError) {
+    if (functionError && !isFunctionMissingError(functionError)) {
+      throw functionError;
+    }
+    throw fieldsError;
+  }
+
+  const { data: documents, error: documentsError } = await supabase
+    .from('session_documents')
+    .select('*')
+    .eq('session_id', recipient.session_id)
+    .order('sort_order');
+  if (documentsError) throw documentsError;
+
+  return {
+    session: session as unknown as SigningSession,
+    recipient: recipient as SessionRecipient,
+    fields: (fields || []) as SessionField[],
+    documents: (documents || []) as SessionDocument[],
+  };
+}
 
 // Fetch all sessions for a deal
 export function useSigningSessions(dealId: string | undefined) {
@@ -315,10 +395,21 @@ export function useSaveSessionFields() {
   return useMutation({
     mutationFn: async ({ session_id, fields }: { session_id: string; fields: Omit<SessionField, 'id' | 'created_at'>[] }) => {
       // Delete existing fields then insert new ones
-      await supabase.from('session_fields').delete().eq('session_id', session_id);
+      const { error: deleteError } = await supabase
+        .from('session_fields')
+        .delete()
+        .eq('session_id', session_id);
+      if (deleteError) throw deleteError;
+
       if (fields.length > 0) {
-        const { error } = await supabase.from('session_fields').insert(fields);
+        const { data, error } = await supabase
+          .from('session_fields')
+          .insert(fields)
+          .select('id');
         if (error) throw error;
+        if (!data || data.length !== fields.length) {
+          throw new Error(`Expected to save ${fields.length} fields but saved ${data?.length || 0}`);
+        }
       }
     },
     onSuccess: (_, v) => { qc.invalidateQueries({ queryKey: ['session_fields', v.session_id] }); },
@@ -330,39 +421,6 @@ export function useSessionByToken(token: string | undefined) {
   return useQuery({
     queryKey: ['session_by_token', token],
     enabled: !!token,
-    queryFn: async () => {
-      const { data: recipient, error } = await supabase
-        .from('session_recipients')
-        .select('*')
-        .eq('token', token!)
-        .maybeSingle();
-      if (error) throw error;
-      if (!recipient) return null;
-      
-      const { data: session } = await supabase
-        .from('signing_sessions')
-        .select('*')
-        .eq('id', recipient.session_id)
-        .single();
-      
-      // Load ALL fields for this session (not filtered by recipient — fields may be unassigned or shared)
-      const { data: fields } = await supabase
-        .from('session_fields')
-        .select('*')
-        .eq('session_id', recipient.session_id);
-      
-      const { data: documents } = await supabase
-        .from('session_documents')
-        .select('*')
-        .eq('session_id', recipient.session_id)
-        .order('sort_order');
-
-      return {
-        session: session as unknown as SigningSession,
-        recipient: recipient as SessionRecipient,
-        fields: (fields || []) as SessionField[],
-        documents: (documents || []) as SessionDocument[],
-      };
-    },
+    queryFn: async () => fetchSigningSessionByToken(token!),
   });
 }

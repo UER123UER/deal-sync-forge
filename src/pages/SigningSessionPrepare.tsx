@@ -7,6 +7,7 @@ import { PdfCanvas } from '@/components/admin/PdfCanvas';
 import { PdfEditorSidebar, type Signer, type SidebarTab } from '@/components/admin/PdfEditorSidebar';
 import { SignatureStampModal } from '@/components/admin/SignatureStampModal';
 import {
+  fetchSigningSessionByToken,
   useSigningSession,
   useSessionRecipients,
   useSessionDocuments,
@@ -262,7 +263,7 @@ export default function SigningSessionPrepare() {
   const { data: session } = useSigningSession(sessionId);
   const { data: recipients } = useSessionRecipients(sessionId);
   const { data: sessionDocs } = useSessionDocuments(sessionId);
-  const { data: sessionFields } = useSessionFields(sessionId);
+  const { data: sessionFields, refetch: refetchSessionFields } = useSessionFields(sessionId);
   const updateSession = useUpdateSigningSession();
   const saveFields = useSaveSessionFields();
 
@@ -662,7 +663,17 @@ export default function SigningSessionPrepare() {
   const handleNext = async () => {
     try {
       setPreviewSaving(true);
-      await saveFieldsToSession();
+      const fields = await saveFieldsToSession();
+      const persistedFields = await refetchSessionFields();
+      const interactiveFieldCount = fields.filter((field) => INTERACTIVE_FIELD_TYPES.has(field.type)).length;
+      const persistedInteractiveFieldCount = (persistedFields.data || []).filter((field) =>
+        INTERACTIVE_FIELD_TYPES.has(field.type)
+      ).length;
+
+      if (interactiveFieldCount > 0 && persistedInteractiveFieldCount === 0) {
+        throw new Error('Fields were not saved to Supabase');
+      }
+
       setShowPreview(true);
     } catch (error: any) {
       toast.error(error.message || 'Failed to save fields');
@@ -674,6 +685,19 @@ export default function SigningSessionPrepare() {
   const handleSend = async () => {
     try {
       const fields = await saveFieldsToSession();
+
+      const publicRecipient = recipients?.find((recipient) => recipient.type === 'signer' || recipient.type === 'reviewer') || recipients?.[0] || null;
+      if (publicRecipient?.token) {
+        const publicSession = await fetchSigningSessionByToken(publicRecipient.token);
+        const interactiveFieldCount = fields.filter((field) => INTERACTIVE_FIELD_TYPES.has(field.type)).length;
+        const publicInteractiveFieldCount = (publicSession?.fields || []).filter((field) =>
+          INTERACTIVE_FIELD_TYPES.has(field.type)
+        ).length;
+
+        if (interactiveFieldCount > 0 && publicInteractiveFieldCount === 0) {
+          throw new Error('Signing fields were not readable from the public signing link');
+        }
+      }
 
       await updateSession.mutateAsync({
         id: sessionId!,
