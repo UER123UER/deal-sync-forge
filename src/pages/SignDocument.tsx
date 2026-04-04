@@ -22,6 +22,66 @@ interface SignField {
   status: 'empty' | 'active' | 'completed';
 }
 
+interface StoredSessionFieldPayload {
+  schemaVersion: 1;
+  kind: 'interactive' | 'markup';
+  tool: string;
+  recipientId: string | null;
+  object: Record<string, any> | null;
+  signedValue: string | null;
+}
+
+const parseStoredSessionFieldValue = (value: string | null): StoredSessionFieldPayload | null => {
+  if (!value) return null;
+
+  try {
+    const parsed = JSON.parse(value);
+    if (!parsed || typeof parsed !== 'object') return null;
+
+    if ('object' in parsed || 'signedValue' in parsed || 'tool' in parsed || 'kind' in parsed) {
+      return {
+        schemaVersion: 1,
+        kind: parsed.kind === 'interactive' ? 'interactive' : 'markup',
+        tool: typeof parsed.tool === 'string' ? parsed.tool : 'object',
+        recipientId: typeof parsed.recipientId === 'string' ? parsed.recipientId : null,
+        object:
+          parsed.object && typeof parsed.object === 'object' ? parsed.object as Record<string, any> : null,
+        signedValue: typeof parsed.signedValue === 'string' ? parsed.signedValue : null,
+      };
+    }
+
+    return {
+      schemaVersion: 1,
+      kind: 'markup',
+      tool: typeof (parsed as any).customType === 'string' ? (parsed as any).customType : typeof (parsed as any).type === 'string' ? (parsed as any).type : 'object',
+      recipientId: typeof (parsed as any).recipientId === 'string' ? (parsed as any).recipientId : null,
+      object: parsed as Record<string, any>,
+      signedValue: null,
+    };
+  } catch {
+    return null;
+  }
+};
+
+const buildSignedSessionFieldValue = (existingValue: string | null, signedValue: string) => {
+  const payload = parseStoredSessionFieldValue(existingValue);
+  if (payload) {
+    return JSON.stringify({
+      ...payload,
+      signedValue,
+    });
+  }
+
+  return JSON.stringify({
+    schemaVersion: 1,
+    kind: 'interactive',
+    tool: 'signature',
+    recipientId: null,
+    object: null,
+    signedValue,
+  } satisfies StoredSessionFieldPayload);
+};
+
 function getFieldsForRole(role: string | null | undefined): SignField[] {
   const isSeller = role?.toLowerCase().includes('seller');
   return [
@@ -120,38 +180,57 @@ function SessionSigningView({ token }: { token: string }) {
     const nextOverlays: PassiveOverlay[] = [];
 
     rawFields.forEach((f, i) => {
+      const storedPayload = parseStoredSessionFieldValue(f.value);
+
       if (f.type?.startsWith('markup:')) {
-        if (!f.value) return;
-        try {
-          nextOverlays.push({
-            id: f.id || `overlay-${i}`,
-            page: typeof f.page === 'number' ? f.page : 0,
-            object: JSON.parse(f.value),
-          });
-        } catch {
-          // Ignore malformed overlay payloads
-        }
+        const overlayObject = storedPayload?.object;
+        if (!overlayObject) return;
+        nextOverlays.push({
+          id: f.id || `overlay-${i}`,
+          page: typeof f.page === 'number' ? f.page : 0,
+          object: overlayObject,
+        });
         return;
       }
 
-      const ftype = (f.type === 'signature' || f.type === 'initials' || f.type === 'date') ? f.type : 'signature';
+      const fieldRecipientId = storedPayload?.recipientId || f.recipient_id;
+      if (fieldRecipientId && fieldRecipientId !== data.recipient.id) {
+        return;
+      }
+
+      const storedObject = storedPayload?.object;
+      const storedSignedValue =
+        storedPayload?.signedValue ||
+        (f.value && !f.value.trim().startsWith('{') ? f.value : '');
+      const rawType = storedPayload?.tool || f.type;
+      const ftype = (rawType === 'signature' || rawType === 'initials' || rawType === 'date') ? rawType : 'signature';
       const label = ftype === 'signature' ? 'Sign Here' : ftype === 'initials' ? 'Initial' : 'Date Signed';
       mapped.push({
         id: f.id || `field-${i}`,
         type: ftype,
         label,
-        value: f.value || '',
-        status: 'empty' as const,
+        value: storedSignedValue,
+        status: storedSignedValue ? 'completed' as const : 'empty' as const,
         page: typeof f.page === 'number' ? f.page : 0,
-        x: typeof f.x === 'number' ? f.x : 0,
-        y: typeof f.y === 'number' ? f.y : 0,
-        w: typeof f.width === 'number' ? f.width : 160,
-        h: typeof f.height === 'number' ? f.height : 40,
+        x: typeof storedObject?.left === 'number' ? storedObject.left : typeof f.x === 'number' ? f.x : 0,
+        y: typeof storedObject?.top === 'number' ? storedObject.top : typeof f.y === 'number' ? f.y : 0,
+        w: storedObject
+          ? (storedObject.width || f.width || 160) * (storedObject.scaleX || 1)
+          : typeof f.width === 'number'
+            ? f.width
+            : 160,
+        h: storedObject
+          ? (storedObject.height || f.height || 40) * (storedObject.scaleY || 1)
+          : typeof f.height === 'number'
+            ? f.height
+            : 40,
       });
     });
     // Set first unsigned field as active
     const firstUnsigned = mapped.findIndex(f => !f.value);
-    if (firstUnsigned !== -1) mapped[firstUnsigned].status = 'active';
+    if (firstUnsigned !== -1) {
+      mapped[firstUnsigned].status = 'active';
+    }
     setFields(mapped);
     setOverlays(nextOverlays);
   }, [data?.fields, fields.length, overlays.length]);
@@ -281,7 +360,11 @@ function SessionSigningView({ token }: { token: string }) {
       // Persist field values back to DB
       for (const f of fields) {
         if (f.value && !f.id.startsWith('default-')) {
-          await supabase.from('session_fields').update({ value: f.value }).eq('id', f.id);
+          const existingField = data.fields.find((sessionField) => sessionField.id === f.id);
+          await supabase
+            .from('session_fields')
+            .update({ value: buildSignedSessionFieldValue(existingField?.value || null, f.value) })
+            .eq('id', f.id);
         }
       }
 

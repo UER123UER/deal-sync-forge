@@ -21,6 +21,7 @@ interface PdfCanvasProps {
   initialsDataUrl: string | null;
   onRequestSignature: () => void;
   onRequestInitials: () => void;
+  assignedRecipientId?: string | null;
   zoomScale?: number;
   onCanvasReady?: () => void;
   onCanvasChange?: () => void;
@@ -38,6 +39,7 @@ export function PdfCanvas({
   initialsDataUrl,
   onRequestSignature,
   onRequestInitials,
+  assignedRecipientId,
   onCanvasReady,
   onCanvasChange,
 }: PdfCanvasProps) {
@@ -264,32 +266,32 @@ export function PdfCanvas({
       fc.setActiveObject(line);
     } else if (activeTool === 'sign') {
       if (signatureDataUrl) {
-        addImageStamp(fc, signatureDataUrl, x, y, 150, 50);
+        addImageStamp(fc, signatureDataUrl, x, y, 150, 50, assignedRecipientId);
       } else {
         onRequestSignature();
       }
     } else if (activeTool === 'initials') {
       if (initialsDataUrl) {
-        addImageStamp(fc, initialsDataUrl, x, y, 80, 40);
+        addImageStamp(fc, initialsDataUrl, x, y, 80, 40, assignedRecipientId);
       } else {
         onRequestInitials();
       }
     } else if (activeTool === 'designate-signature') {
-      addDesignatedField(fc, x, y, 'SIGN HERE', 'rgba(255, 200, 0, 0.3)', '#b45309', 'signature', onCanvasChange);
+      addDesignatedField(fc, x, y, 'SIGN HERE', 'rgba(255, 200, 0, 0.3)', '#b45309', 'signature', assignedRecipientId, onCanvasChange);
     } else if (activeTool === 'designate-initials') {
-      addDesignatedField(fc, x, y, 'INITIALS', 'rgba(59, 130, 246, 0.3)', '#1d4ed8', 'initials', onCanvasChange);
+      addDesignatedField(fc, x, y, 'INITIALS', 'rgba(59, 130, 246, 0.3)', '#1d4ed8', 'initials', assignedRecipientId, onCanvasChange);
     } else if (activeTool === 'designate-date') {
-      addDesignatedField(fc, x, y, 'MM/DD/YYYY', 'rgba(34, 197, 94, 0.3)', '#15803d', 'date', onCanvasChange);
+      addDesignatedField(fc, x, y, 'MM/DD/YYYY', 'rgba(34, 197, 94, 0.3)', '#15803d', 'date', assignedRecipientId, onCanvasChange);
     } else if (activeTool === 'designate-fullname') {
-      addPresetTextField(fc, x, y, 'Full Name', 'Enter full name...', '#1e40af', onCanvasChange);
+      addPresetTextField(fc, x, y, 'Full Name', 'Enter full name...', '#1e40af', assignedRecipientId, onCanvasChange);
     } else if (activeTool === 'designate-email') {
-      addPresetTextField(fc, x, y, 'Email', 'email@example.com', '#7c3aed', onCanvasChange);
+      addPresetTextField(fc, x, y, 'Email', 'email@example.com', '#7c3aed', assignedRecipientId, onCanvasChange);
     } else if (activeTool === 'designate-time') {
-      addDesignatedField(fc, x, y, 'HH:MM AM/PM', 'rgba(249, 115, 22, 0.3)', '#c2410c', 'time', onCanvasChange);
+      addDesignatedField(fc, x, y, 'HH:MM AM/PM', 'rgba(249, 115, 22, 0.3)', '#c2410c', 'time', assignedRecipientId, onCanvasChange);
     }
 
     fc.renderAll();
-  }, [activeTool, signatureDataUrl, initialsDataUrl, onRequestSignature, onRequestInitials]);
+}, [activeTool, assignedRecipientId, signatureDataUrl, initialsDataUrl, onRequestSignature, onRequestInitials]);
 
   return (
     <div
@@ -304,12 +306,21 @@ export function PdfCanvas({
   );
 }
 
-function addImageStamp(fc: FabricCanvas, dataUrl: string, x: number, y: number, w: number, h: number) {
+function addImageStamp(
+  fc: FabricCanvas,
+  dataUrl: string,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  recipientId?: string | null
+) {
   const imgEl = new Image();
   imgEl.onload = () => {
     const fImg = new FabricImage(imgEl, {
       left: x, top: y, scaleX: w / imgEl.width, scaleY: h / imgEl.height,
     });
+    (fImg as any).recipientId = recipientId || null;
     applySelectionStyles(fImg);
     fc.add(fImg);
     fc.setActiveObject(fImg);
@@ -320,7 +331,7 @@ function addImageStamp(fc: FabricCanvas, dataUrl: string, x: number, y: number, 
 
 function addPresetTextField(
   fc: FabricCanvas, x: number, y: number,
-  label: string, placeholder: string, color: string, onCanvasChange?: () => void
+  label: string, placeholder: string, color: string, recipientId?: string | null, onCanvasChange?: () => void
 ) {
   const w = label === 'Email' ? 200 : 220;
   const h = 32;
@@ -351,6 +362,7 @@ function addPresetTextField(
   applySelectionStyles(group);
   (group as any).customType = `designated-${label.toLowerCase().replace(' ', '')}`;
   (group as any).fieldType = label.toLowerCase().replace(' ', '');
+  (group as any).recipientId = recipientId || null;
 
   fc.add(group);
   fc.setActiveObject(group);
@@ -360,7 +372,12 @@ function addPresetTextField(
 
 function addDesignatedField(
   fc: FabricCanvas, x: number, y: number,
-  label: string, bgColor: string, textColor: string, fieldType: string, onCanvasChange?: () => void
+  label: string,
+  bgColor: string,
+  textColor: string,
+  fieldType: string,
+  recipientId?: string | null,
+  onCanvasChange?: () => void
 ) {
   const w = fieldType === 'date' ? 120 : fieldType === 'initials' ? 100 : 160;
   const h = 30;
@@ -385,6 +402,7 @@ function addDesignatedField(
   applySelectionStyles(group);
   (group as any).customType = `designated-${fieldType}`;
   (group as any).fieldType = fieldType;
+  (group as any).recipientId = recipientId || null;
 
   fc.add(group);
   fc.setActiveObject(group);

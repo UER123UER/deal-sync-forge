@@ -31,6 +31,15 @@ interface PageData {
   height: number;
 }
 
+interface StoredSessionFieldPayload {
+  schemaVersion: 1;
+  kind: 'interactive' | 'markup';
+  tool: string;
+  recipientId: string | null;
+  object: Record<string, any> | null;
+  signedValue: string | null;
+}
+
 const INTERACTIVE_FIELD_TYPES = new Set(['signature', 'initials', 'date', 'fullname', 'email', 'time']);
 const MARKUP_TYPE_PREFIX = 'markup:';
 
@@ -39,6 +48,41 @@ const isInteractiveFieldType = (type: string | null | undefined) =>
 
 const isMarkupFieldType = (type: string | null | undefined) =>
   !!type && type.startsWith(MARKUP_TYPE_PREFIX);
+
+const parseStoredSessionFieldValue = (value: string | null): StoredSessionFieldPayload | null => {
+  if (!value) return null;
+
+  try {
+    const parsed = JSON.parse(value);
+    if (!parsed || typeof parsed !== 'object') return null;
+
+    if ('object' in parsed || 'signedValue' in parsed || 'tool' in parsed || 'kind' in parsed) {
+      return {
+        schemaVersion: 1,
+        kind: parsed.kind === 'interactive' ? 'interactive' : 'markup',
+        tool: typeof parsed.tool === 'string' ? parsed.tool : 'object',
+        recipientId: typeof parsed.recipientId === 'string' ? parsed.recipientId : null,
+        object:
+          parsed.object && typeof parsed.object === 'object' ? parsed.object as Record<string, any> : null,
+        signedValue: typeof parsed.signedValue === 'string' ? parsed.signedValue : null,
+      };
+    }
+
+    return {
+      schemaVersion: 1,
+      kind: 'markup',
+      tool: typeof (parsed as any).customType === 'string' ? (parsed as any).customType : typeof (parsed as any).type === 'string' ? (parsed as any).type : 'object',
+      recipientId: typeof (parsed as any).recipientId === 'string' ? (parsed as any).recipientId : null,
+      object: parsed as Record<string, any>,
+      signedValue: null,
+    };
+  } catch {
+    return null;
+  }
+};
+
+const buildStoredSessionFieldValue = (payload: StoredSessionFieldPayload) =>
+  JSON.stringify(payload);
 
 const getDesignatedFieldLabel = (type: string) => {
   switch (type) {
@@ -191,13 +235,10 @@ const buildInteractiveCanvasObject = (field: SessionField) => {
 const buildCanvasSnapshotFromFields = (fields: SessionField[]) => {
   const objects = fields
     .map((field) => {
-      if (isMarkupFieldType(field.type)) {
-        if (!field.value) return null;
-        try {
-          return JSON.parse(field.value);
-        } catch {
-          return null;
-        }
+      const storedPayload = parseStoredSessionFieldValue(field.value);
+
+      if (storedPayload?.object) {
+        return storedPayload.object;
       }
 
       if (isInteractiveFieldType(field.type)) {
@@ -453,11 +494,19 @@ export default function SigningSessionPrepare() {
             };
 
             if (fieldType) {
+              const recipientId = object.recipientId || selectedSigner || null;
               fields.push({
                 ...baseField,
-                recipient_id: object.recipientId || selectedSigner,
+                recipient_id: recipientId,
                 type: fieldType,
-                value: null,
+                value: buildStoredSessionFieldValue({
+                  schemaVersion: 1,
+                  kind: 'interactive',
+                  tool: fieldType,
+                  recipientId,
+                  object,
+                  signedValue: null,
+                }),
               });
               continue;
             }
@@ -466,7 +515,14 @@ export default function SigningSessionPrepare() {
               ...baseField,
               recipient_id: null,
               type: `${MARKUP_TYPE_PREFIX}${objectType}`,
-              value: JSON.stringify(object),
+              value: buildStoredSessionFieldValue({
+                schemaVersion: 1,
+                kind: 'markup',
+                tool: objectType,
+                recipientId: null,
+                object,
+                signedValue: null,
+              }),
             });
           }
         } catch {
@@ -715,6 +771,7 @@ export default function SigningSessionPrepare() {
                         setStampType('initials');
                         setStampModalOpen(true);
                       }}
+                      assignedRecipientId={selectedSigner}
                       zoomScale={zoomScale}
                       onCanvasReady={handleCanvasReady}
                       onCanvasChange={handleCanvasChange}
