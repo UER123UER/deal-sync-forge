@@ -275,9 +275,9 @@ export function PdfCanvas({
         onRequestInitials();
       }
     } else if (activeTool === 'designate-signature') {
-      addDesignatedField(fc, x, y, 'SIGN HERE', 'rgba(255, 200, 0, 0.3)', '#b45309', 'signature');
+      addDesignatedField(fc, x, y, 'SIGN HERE', 'rgba(255, 200, 0, 0.3)', '#b45309', 'signature', onCanvasChange);
     } else if (activeTool === 'designate-initials') {
-      addDesignatedField(fc, x, y, 'INITIALS', 'rgba(59, 130, 246, 0.3)', '#1d4ed8', 'initials');
+      addDesignatedField(fc, x, y, 'INITIALS', 'rgba(59, 130, 246, 0.3)', '#1d4ed8', 'initials', onCanvasChange);
     } else if (activeTool === 'designate-date') {
       addDesignatedField(fc, x, y, 'MM/DD/YYYY', 'rgba(34, 197, 94, 0.3)', '#15803d', 'date', onCanvasChange);
     } else if (activeTool === 'designate-fullname') {
@@ -360,7 +360,7 @@ function addPresetTextField(
 
 function addDesignatedField(
   fc: FabricCanvas, x: number, y: number,
-  label: string, bgColor: string, textColor: string, fieldType: string, _onCanvasChange?: () => void
+  label: string, bgColor: string, textColor: string, fieldType: string, onCanvasChange?: () => void
 ) {
   const w = fieldType === 'date' ? 120 : fieldType === 'initials' ? 100 : 160;
   const h = 30;
@@ -389,6 +389,7 @@ function addDesignatedField(
   fc.add(group);
   fc.setActiveObject(group);
   fc.renderAll();
+  onCanvasChange?.();  // notify parent so annotations are saved immediately
 }
 
 function applySelectionStyles(obj: FabricObject) {
