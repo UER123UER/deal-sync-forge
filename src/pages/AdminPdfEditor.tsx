@@ -152,7 +152,7 @@ export default function AdminPdfEditor() {
   const saveCurrentPageAnnotations = useCallback(() => {
     const fc = fabricCanvasRef.current;
     if (fc && pages.length > 0) {
-      annotationsPerPage.current[currentPage] = JSON.stringify(fc.toJSON(FABRIC_CUSTOM_PROPS));
+      annotationsPerPage.current[currentPage] = JSON.stringify(fc.toObject(FABRIC_CUSTOM_PROPS));
     }
   }, [currentPage, pages.length]);
 
@@ -278,14 +278,14 @@ export default function AdminPdfEditor() {
     setHasSelection(false);
 
     if (pages.length > 0) {
-      annotationsPerPage.current[currentPage] = JSON.stringify(fc.toJSON(FABRIC_CUSTOM_PROPS));
+      annotationsPerPage.current[currentPage] = JSON.stringify(fc.toObject(FABRIC_CUSTOM_PROPS));
     }
   }, [currentPage, pages.length]);
 
   const registerCanvasChange = useCallback((pageIdx: number) => {
     const fc = fabricCanvasRef.current;
     if (fc && pages.length > 0) {
-      annotationsPerPage.current[pageIdx] = JSON.stringify(fc.toJSON(FABRIC_CUSTOM_PROPS));
+      annotationsPerPage.current[pageIdx] = JSON.stringify(fc.toObject(FABRIC_CUSTOM_PROPS));
     }
   }, [pages.length]);
 

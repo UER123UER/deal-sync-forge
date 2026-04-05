@@ -431,7 +431,7 @@ export default function SigningSessionPrepare() {
 
   const getCanvasSnapshot = useCallback(() => {
     if (!fabricCanvasRef.current) return EMPTY_CANVAS_SNAPSHOT;
-    return JSON.stringify(fabricCanvasRef.current.toJSON(FABRIC_CUSTOM_PROPS));
+    return JSON.stringify(fabricCanvasRef.current.toObject(FABRIC_CUSTOM_PROPS));
   }, []);
 
   const saveCurrentAnnotations = useCallback(() => {

@@ -114,6 +114,8 @@ export function PdfCanvas({
     const handleCanvasChange = () => onCanvasChangeRef.current?.();
     fc.on('path:created', handleCanvasChange);
     fc.on('object:modified', handleCanvasChange);
+    fc.on('object:added', handleCanvasChange);
+    fc.on('object:removed', handleCanvasChange);
     fc.on('text:changed', handleCanvasChange);
 
     return () => {
