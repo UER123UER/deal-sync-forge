@@ -285,7 +285,7 @@ export default function AdminPdfEditor() {
   const registerCanvasChange = useCallback((pageIdx: number) => {
     const fc = fabricCanvasRef.current;
     if (fc && pages.length > 0) {
-      annotationsPerPage.current[pageIdx] = JSON.stringify(fc.toJSON(FABRIC_CUSTOM_PROPS));
+      annotationsPerPage.current[pageIdx] = JSON.stringify(fc.toObject(FABRIC_CUSTOM_PROPS));
     }
   }, [pages.length]);
 
