@@ -467,11 +467,26 @@ export default function SigningSessionPrepare() {
     if (!fabricCanvasRef.current) return;
 
     isApplyingHistoryRef.current = true;
-    fabricCanvasRef.current.loadFromJSON(snapshot, () => {
+    fabricCanvasRef.current.loadFromJSON(snapshot).then(() => {
       fabricCanvasRef.current?.renderAll();
+      isApplyingHistoryRef.current = false;
+    }).catch(() => {
       isApplyingHistoryRef.current = false;
     });
   }, []);
+
+  // Persist current canvas state to DB (non-destructive: insert first, then delete old)
+  const persistFieldsToDb = useCallback(async () => {
+    if (!sessionId || !sessionDocs?.length) return;
+    saveCurrentAnnotations();
+    const fields = collectFieldsFromAnnotations();
+    if (fields.length === 0) return;
+    try {
+      await saveFields.mutateAsync({ session_id: sessionId, fields });
+    } catch (err) {
+      console.error('Auto-persist failed:', err);
+    }
+  }, [sessionId, sessionDocs, saveCurrentAnnotations]);
 
   const changePage = (newPage: number) => {
     if (newPage < 0 || newPage >= pages.length) return;
