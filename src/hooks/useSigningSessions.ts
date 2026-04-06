@@ -389,18 +389,19 @@ export function useAddSessionDocument() {
   });
 }
 
-// Fields
+// Fields - insert-first, then delete old rows to prevent data loss
 export function useSaveSessionFields() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ session_id, fields }: { session_id: string; fields: Omit<SessionField, 'id' | 'created_at'>[] }) => {
-      // Delete existing fields then insert new ones
-      const { error: deleteError } = await supabase
+      // 1. Fetch existing field IDs to delete later
+      const { data: existingFields } = await supabase
         .from('session_fields')
-        .delete()
+        .select('id')
         .eq('session_id', session_id);
-      if (deleteError) throw deleteError;
+      const oldIds = (existingFields || []).map((f) => f.id);
 
+      // 2. Insert new fields first
       if (fields.length > 0) {
         const { data, error } = await supabase
           .from('session_fields')
@@ -409,6 +410,18 @@ export function useSaveSessionFields() {
         if (error) throw error;
         if (!data || data.length !== fields.length) {
           throw new Error(`Expected to save ${fields.length} fields but saved ${data?.length || 0}`);
+        }
+      }
+
+      // 3. Only after successful insert, delete old rows
+      if (oldIds.length > 0) {
+        const { error: deleteError } = await supabase
+          .from('session_fields')
+          .delete()
+          .in('id', oldIds);
+        if (deleteError) {
+          console.error('Failed to clean up old fields:', deleteError);
+          // Not fatal — new fields are already saved
         }
       }
     },

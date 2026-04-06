@@ -669,78 +669,43 @@ export default function SigningSessionPrepare() {
     updateHistoryControls();
   }, [currentDocumentId, currentPage, updateHistoryControls]);
 
-  const collectFields = () => {
+  const collectFields = useCallback(() => {
     saveCurrentAnnotations();
-    const fields: Omit<SessionField, 'id' | 'created_at'>[] = [];
-
-    for (const document of sessionDocs || []) {
-      const documentAnnotations = annotationsByDocument.current[document.id];
-      if (!documentAnnotations) continue;
-
-      for (const [pageKey, json] of Object.entries(documentAnnotations)) {
-        try {
-          const parsed = JSON.parse(json);
-          if (!parsed.objects) continue;
-
-          for (const object of parsed.objects) {
-            const fieldType = object.fieldType || object.designatedField;
-            const objectType = object.customType || object.type || 'object';
-            const baseField = {
-              session_id: sessionId!,
-              document_id: document.id,
-              page: parseInt(pageKey, 10),
-              x: object.left || 0,
-              y: object.top || 0,
-              width: (object.width || 150) * (object.scaleX || 1),
-              height: (object.height || 40) * (object.scaleY || 1),
-            };
-
-            if (fieldType) {
-              const recipientId = object.recipientId || selectedSigner || null;
-              fields.push({
-                ...baseField,
-                recipient_id: recipientId,
-                type: fieldType,
-                value: buildStoredSessionFieldValue({
-                  schemaVersion: 1,
-                  kind: 'interactive',
-                  tool: fieldType,
-                  recipientId,
-                  object,
-                  signedValue: null,
-                }),
-              });
-              continue;
-            }
-
-            fields.push({
-              ...baseField,
-              recipient_id: null,
-              type: `${MARKUP_TYPE_PREFIX}${objectType}`,
-              value: buildStoredSessionFieldValue({
-                schemaVersion: 1,
-                kind: 'markup',
-                tool: objectType,
-                recipientId: null,
-                object,
-                signedValue: null,
-              }),
-            });
-          }
-        } catch {
-          // Ignore invalid annotation snapshots.
-        }
-      }
-    }
-
-    return fields;
-  };
+    return collectFieldsFromAnnotations();
+  }, [saveCurrentAnnotations, collectFieldsFromAnnotations]);
 
   const saveFieldsToSession = useCallback(async () => {
     const fields = collectFields();
     await saveFields.mutateAsync({ session_id: sessionId!, fields });
     return fields;
   }, [collectFields, saveFields, sessionId]);
+
+  // Auto-persist to DB when user navigates away (back button, browser close)
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      saveCurrentAnnotations();
+      const fields = collectFieldsFromAnnotations();
+      if (fields.length > 0 && sessionId) {
+        // Use sendBeacon for reliable save on page unload
+        const payload = JSON.stringify({ session_id: sessionId, fields });
+        navigator.sendBeacon?.('/api/save-fields', payload);
+        // Also attempt normal save (may not complete)
+        saveFields.mutate({ session_id: sessionId, fields });
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [sessionId, saveCurrentAnnotations, collectFieldsFromAnnotations, saveFields]);
+
+  // Save when navigating back
+  const handleBack = useCallback(async () => {
+    try {
+      await persistFieldsToDb();
+    } catch {
+      // Best effort
+    }
+    navigate(`/transactions/${dealId}/signing-session/${sessionId}/setup`);
+  }, [persistFieldsToDb, navigate, dealId, sessionId]);
 
   const handleNext = async () => {
     try {
