@@ -475,7 +475,74 @@ export default function SigningSessionPrepare() {
     });
   }, []);
 
-  // Persist current canvas state to DB (non-destructive: insert first, then delete old)
+  // Collect fields from in-memory annotations (without calling saveCurrentAnnotations first)
+  const collectFieldsFromAnnotations = useCallback(() => {
+    const fields: Omit<SessionField, 'id' | 'created_at'>[] = [];
+
+    for (const document of sessionDocs || []) {
+      const documentAnnotations = annotationsByDocument.current[document.id];
+      if (!documentAnnotations) continue;
+
+      for (const [pageKey, json] of Object.entries(documentAnnotations)) {
+        try {
+          const parsed = JSON.parse(json);
+          if (!parsed.objects) continue;
+
+          for (const object of parsed.objects) {
+            const fieldType = object.fieldType || object.designatedField;
+            const objectType = object.customType || object.type || 'object';
+            const baseField = {
+              session_id: sessionId!,
+              document_id: document.id,
+              page: parseInt(pageKey, 10),
+              x: object.left || 0,
+              y: object.top || 0,
+              width: (object.width || 150) * (object.scaleX || 1),
+              height: (object.height || 40) * (object.scaleY || 1),
+            };
+
+            if (fieldType) {
+              const recipientId = object.recipientId || null;
+              fields.push({
+                ...baseField,
+                recipient_id: recipientId,
+                type: fieldType,
+                value: buildStoredSessionFieldValue({
+                  schemaVersion: 1,
+                  kind: 'interactive',
+                  tool: fieldType,
+                  recipientId,
+                  object,
+                  signedValue: null,
+                }),
+              });
+              continue;
+            }
+
+            fields.push({
+              ...baseField,
+              recipient_id: null,
+              type: `${MARKUP_TYPE_PREFIX}${objectType}`,
+              value: buildStoredSessionFieldValue({
+                schemaVersion: 1,
+                kind: 'markup',
+                tool: objectType,
+                recipientId: null,
+                object,
+                signedValue: null,
+              }),
+            });
+          }
+        } catch {
+          // Ignore invalid annotation snapshots.
+        }
+      }
+    }
+
+    return fields;
+  }, [sessionDocs, sessionId]);
+
+  // Persist current canvas state to DB
   const persistFieldsToDb = useCallback(async () => {
     if (!sessionId || !sessionDocs?.length) return;
     saveCurrentAnnotations();
@@ -486,7 +553,7 @@ export default function SigningSessionPrepare() {
     } catch (err) {
       console.error('Auto-persist failed:', err);
     }
-  }, [sessionId, sessionDocs, saveCurrentAnnotations]);
+  }, [sessionId, sessionDocs, saveCurrentAnnotations, collectFieldsFromAnnotations, saveFields]);
 
   const changePage = (newPage: number) => {
     if (newPage < 0 || newPage >= pages.length) return;
