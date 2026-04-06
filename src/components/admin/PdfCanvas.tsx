@@ -118,6 +118,12 @@ export function PdfCanvas({
     fc.on('object:removed', handleCanvasChange);
     fc.on('text:changed', handleCanvasChange);
 
+    // Signal that the canvas is mounted and ready to receive loadFromJSON
+    // Use requestAnimationFrame to ensure the canvas is fully initialized
+    requestAnimationFrame(() => {
+      onCanvasReadyRef.current?.();
+    });
+
     return () => {
       fc.dispose();
       fabricCanvasRef.current = null;
