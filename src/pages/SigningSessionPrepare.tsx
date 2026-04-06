@@ -869,7 +869,7 @@ export default function SigningSessionPrepare() {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <div className="border-b px-4 py-2 flex items-center gap-3 shrink-0">
-        <Button variant="ghost" size="icon" onClick={() => navigate(`/transactions/${dealId}/signing-session/${sessionId}/setup`)}>
+        <Button variant="ghost" size="icon" onClick={handleBack}>
           <ArrowLeft className="w-4 h-4" />
         </Button>
         <span className="text-sm font-medium flex-1">{session?.session_name || 'Field Editor'}</span>
