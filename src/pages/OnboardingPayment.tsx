@@ -69,8 +69,8 @@ export default function OnboardingPayment() {
       return;
     }
 
-    await refreshProfile?.();
     toast({ title: 'Subscription activated!', description: 'Welcome to DealSync.' });
+    // Navigate immediately — ProtectedRoute re-fetches status from DB so no stale state issue
     navigate('/transactions');
     setLoading(false);
   };
