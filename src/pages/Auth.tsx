@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { Mail, Lock, User, Building2 } from 'lucide-react';
+import { Mail, Lock, User, Building2, Eye, EyeOff } from 'lucide-react';
 
 export default function Auth() {
   const [loading, setLoading] = useState(false);
@@ -17,11 +17,14 @@ export default function Auth() {
   // Sign In state
   const [signInEmail, setSignInEmail] = useState('');
   const [signInPassword, setSignInPassword] = useState('');
+  const [showSignInPassword, setShowSignInPassword] = useState(false);
 
   // Sign Up state
   const [signUpEmail, setSignUpEmail] = useState('');
   const [signUpPassword, setSignUpPassword] = useState('');
   const [signUpConfirmPassword, setSignUpConfirmPassword] = useState('');
+  const [showSignUpPassword, setShowSignUpPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
 
@@ -175,7 +178,10 @@ export default function Auth() {
                   <Label htmlFor="signin-password">Password</Label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input id="signin-password" type="password" placeholder="••••••••" className="pl-9" value={signInPassword} onChange={(e) => setSignInPassword(e.target.value)} required />
+                    <Input id="signin-password" type={showSignInPassword ? 'text' : 'password'} placeholder="••••••••" className="pl-9 pr-9" value={signInPassword} onChange={(e) => setSignInPassword(e.target.value)} required />
+                    <button type="button" onClick={() => setShowSignInPassword(v => !v)} className="absolute right-3 top-3 text-muted-foreground hover:text-foreground" tabIndex={-1}>
+                      {showSignInPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
                   </div>
                 </div>
                 <Button type="submit" className="w-full" disabled={loading}>
@@ -213,14 +219,20 @@ export default function Auth() {
                   <Label htmlFor="signup-password">Password</Label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input id="signup-password" type="password" placeholder="••••••••" className="pl-9" value={signUpPassword} onChange={(e) => setSignUpPassword(e.target.value)} required />
+                    <Input id="signup-password" type={showSignUpPassword ? 'text' : 'password'} placeholder="••••••••" className="pl-9 pr-9" value={signUpPassword} onChange={(e) => setSignUpPassword(e.target.value)} required />
+                    <button type="button" onClick={() => setShowSignUpPassword(v => !v)} className="absolute right-3 top-3 text-muted-foreground hover:text-foreground" tabIndex={-1}>
+                      {showSignUpPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
                   </div>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="confirm-password">Confirm Password</Label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input id="confirm-password" type="password" placeholder="••••••••" className="pl-9" value={signUpConfirmPassword} onChange={(e) => setSignUpConfirmPassword(e.target.value)} required />
+                    <Input id="confirm-password" type={showConfirmPassword ? 'text' : 'password'} placeholder="••••••••" className="pl-9 pr-9" value={signUpConfirmPassword} onChange={(e) => setSignUpConfirmPassword(e.target.value)} required />
+                    <button type="button" onClick={() => setShowConfirmPassword(v => !v)} className="absolute right-3 top-3 text-muted-foreground hover:text-foreground" tabIndex={-1}>
+                      {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
                   </div>
                 </div>
                 <Button type="submit" className="w-full" disabled={loading}>
