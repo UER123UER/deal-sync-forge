@@ -118,6 +118,87 @@ const StatPill = ({
   </div>
 );
 
+const UnitedStatesRealtyMark = () => (
+  <div
+    style={{
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      gap: 8,
+      color: '#171717',
+      userSelect: 'none',
+    }}
+  >
+    <div
+      style={{
+        fontFamily: 'Georgia, "Times New Roman", serif',
+        fontSize: 88,
+        lineHeight: 0.88,
+        letterSpacing: 3,
+        textAlign: 'center',
+      }}
+    >
+      <div>UNITED</div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 18 }}>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: '28px 68px',
+            gridTemplateRows: '18px 18px 18px',
+            gap: 4,
+            width: 96,
+            height: 62,
+          }}
+        >
+          <div
+            style={{
+              gridRow: '1 / span 3',
+              background: '#11216d',
+              borderRadius: 1,
+              position: 'relative',
+              overflow: 'hidden',
+            }}
+          >
+            {[8, 20, 32, 44].map((top) => (
+              <div
+                key={top}
+                style={{
+                  position: 'absolute',
+                  left: 5,
+                  top,
+                  width: 4,
+                  height: 4,
+                  borderRadius: '50%',
+                  background: '#ffffff',
+                  boxShadow: '9px 0 0 #ffffff',
+                }}
+              />
+            ))}
+          </div>
+          <div style={{ background: '#c32026', borderRadius: 1 }} />
+          <div style={{ background: '#ffffff', border: '1px solid rgba(17,33,109,0.08)', borderRadius: 1 }} />
+          <div style={{ background: '#c32026', borderRadius: 1 }} />
+        </div>
+        <div>STATES</div>
+      </div>
+    </div>
+    <div style={{ display: 'flex', alignItems: 'center', width: 350, gap: 16 }}>
+      <div style={{ flex: 1, height: 1, background: '#d4d4d8' }} />
+      <div
+        style={{
+          fontFamily: 'Georgia, "Times New Roman", serif',
+          fontSize: 30,
+          letterSpacing: 8,
+          color: '#5b5561',
+        }}
+      >
+        REALTY
+      </div>
+      <div style={{ flex: 1, height: 1, background: '#d4d4d8' }} />
+    </div>
+  </div>
+);
+
 export const TEMPLATES: MarketingTemplate[] = [
   // ─────────────────────────────────────────────────────────────
   // JUST LISTED — FLYER 1: "Prestige Dark"
@@ -625,6 +706,117 @@ export const TEMPLATES: MarketingTemplate[] = [
               {' · '}
               <EditableText editable={editable}>{data.agentEmail}</EditableText>
             </div>
+          </div>
+        </div>
+      </div>
+    ),
+  },
+
+  // ─────────────────────────────────────────────────────────────
+  // JUST SOLD — SOCIAL POST: "Editorial Brand"
+  // ─────────────────────────────────────────────────────────────
+  {
+    id: 'just-sold-post-2',
+    name: 'Editorial Brand Post',
+    category: 'Just Sold',
+    type: 'post',
+    width: 1080,
+    height: 1080,
+    thumbnail: 'EST',
+    render: (data, editable) => (
+      <div
+        style={{
+          width: 1080,
+          height: 1080,
+          background: '#ffffff',
+          color: '#171717',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+          fontFamily: '"Inter", system-ui, sans-serif',
+        }}
+      >
+        <div
+          style={{
+            padding: '44px 52px 28px',
+            background: '#ffffff',
+            display: 'flex',
+            justifyContent: 'center',
+          }}
+        >
+          <UnitedStatesRealtyMark />
+        </div>
+
+        <div style={{ padding: '0 52px', background: '#ffffff' }}>
+          <div
+            style={{
+              width: '100%',
+              height: 560,
+              overflow: 'hidden',
+              background: '#f3f4f6',
+            }}
+          >
+            <PhotoArea photos={data.photos} style={{ width: '100%', height: '100%', background: '#f3f4f6' }} label="Main listing photo" />
+          </div>
+        </div>
+
+        <div
+          style={{
+            flex: 1,
+            background: '#171133',
+            color: '#f8f4ea',
+            padding: '34px 72px 52px',
+            textAlign: 'center',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+          }}
+        >
+          <div
+            style={{
+              fontFamily: 'Georgia, "Times New Roman", serif',
+              fontSize: 88,
+              lineHeight: 0.95,
+              marginBottom: 18,
+              letterSpacing: -1.5,
+            }}
+          >
+            <EditableText editable={editable}>Just Sold</EditableText>
+          </div>
+
+          <div
+            style={{
+              fontSize: 58,
+              lineHeight: 1.06,
+              fontWeight: 500,
+              letterSpacing: -1.4,
+              marginBottom: 8,
+            }}
+          >
+            <EditableText editable={editable}>{data.address}</EditableText>
+          </div>
+
+          <div
+            style={{
+              fontSize: 42,
+              lineHeight: 1.15,
+              fontWeight: 400,
+              letterSpacing: -0.8,
+            }}
+          >
+            <EditableText editable={editable}>{data.city}, {data.state}</EditableText>
+          </div>
+
+          <div
+            style={{
+              marginTop: 28,
+              fontSize: 16,
+              letterSpacing: 3,
+              textTransform: 'uppercase',
+              color: 'rgba(248,244,234,0.62)',
+            }}
+          >
+            <EditableText editable={editable}>{data.agentName}</EditableText>
           </div>
         </div>
       </div>
