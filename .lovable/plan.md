@@ -1,146 +1,91 @@
 
-Deep audit focused on saving/hydration. Main conclusion: this is not one bug. It is a save pipeline problem with at least 4 high-confidence breakpoints, plus several secondary render gaps.
 
-What I believe is happening
-1. Edits are often only living in local canvas memory, not in `session_fields`.
-2. When you reopen the editor, the saved rows may exist, but the page canvas is not reliably rehydrated.
-3. When the signer link opens, the signer page only shows what made it into `session_fields`, so anything not persisted disappears.
+## Plan: Add Authentication, Profiles, and Subscription Paywall
 
-High-confidence reasons found in code
-1. `PdfCanvas` never calls `onCanvasReady`.
-   - File: `src/components/admin/PdfCanvas.tsx`
-   - Effect: `SigningSessionPrepare.handleCanvasReady()` never runs, so saved page snapshots are not reliably loaded into the canvas.
-   - Fix: call `onCanvasReadyRef.current?.()` immediately after Fabric canvas init and after the component is ready to accept `loadFromJSON`.
+### Overview
+Add sign-up/sign-in pages with Google OAuth, a profiles table for agent data, and a banking info paywall screen that gates access to the main app until subscription payment details are provided.
 
-2. Reopen/edit flow depends on `handleCanvasReady`, but that callback is currently dead.
-   - File: `src/pages/SigningSessionPrepare.tsx`
-   - Effect: even if `session_fields` were saved, reopening the session can still look blank because hydration happens before the canvas exists, then never re-runs into the mounted canvas.
-   - Fix: trigger hydration from `onCanvasReady` and also re-run load when `currentDocumentId/currentPage` changes.
+### Flow
+```text
+Unauthenticated user
+  → /auth (sign-in / sign-up tabs)
+  → Google OAuth or email/password
+  → After sign-up/sign-in, check profile.subscription_status
+  → If not "active" → /onboarding/payment (paywall)
+  → If "active" → /transactions (main app)
+```
 
-3. Leaving the field editor does not persist to Supabase unless you hit Preview or Send.
-   - File: `src/pages/SigningSessionPrepare.tsx`
-   - Effect: if you place fields, then go back to setup or leave the route, those edits were only in `annotationsByDocument` memory and are lost on reopen.
-   - Fix: save to `session_fields` before route back, before browser unload, and optionally with debounce autosave.
+### Database Changes (3 migrations)
 
-4. The current validation only checks interactive fields, not markup/freeform/text.
-   - File: `src/pages/SigningSessionPrepare.tsx`
-   - Effect: freeform overlays can silently fail to persist and the app still continues because only signature/date/initials counts are validated.
-   - Fix: verify total saved object count and compare persisted rows vs collected rows, not just interactive count.
+**Migration 1 — Profiles table:**
+- `id` (uuid, FK to auth.users, ON DELETE CASCADE)
+- `first_name`, `last_name`, `phone`, `brokerage_name`, `license_number` (text, nullable)
+- `avatar_url` (text, nullable)
+- `subscription_status` (text, default `'pending'` — values: `pending`, `active`, `cancelled`)
+- `created_at` (timestamptz)
+- RLS: users can read/update only their own row
+- Trigger: auto-create profile row on `auth.users` insert
 
-5. `useSaveSessionFields()` does destructive delete-then-insert.
-   - File: `src/hooks/useSigningSessions.ts`
-   - Effect: if insert fails after delete, all previous fields are wiped out.
-   - Fix: switch to transactional/upsert-style persistence, or write new rows first and only replace on confirmed success.
+**Migration 2 — Bank accounts table:**
+- `id` (uuid, PK)
+- `user_id` (uuid, FK to auth.users, ON DELETE CASCADE)
+- `account_holder_name` (text)
+- `routing_number` (text)
+- `account_number_last4` (text — store only last 4 digits for display)
+- `account_type` (text — `checking` or `savings`)
+- `created_at` (timestamptz)
+- RLS: users can read/insert/update only their own rows
 
-6. Race condition if Preview/Send is clicked while a late object is still being inserted.
-   - Files: `PdfCanvas.tsx`, `SigningSessionPrepare.tsx`
-   - Effect: async objects like image stamps can miss the final snapshot if the user clicks immediately.
-   - Fix: await object insertion/finalization before enabling Preview/Send, or flush the Fabric canvas after async stamp load.
+**Migration 3 — User roles table** (per security guidelines):
+- `user_roles` table with `user_id`, `role` (app_role enum: admin, user)
+- `has_role()` security definer function
 
-7. Recipient assignment can be rewritten on save.
-   - File: `SigningSessionPrepare.tsx` in `collectFields()`
-   - Effect: if an object is missing `recipientId`, it falls back to `selectedSigner`, so fields can end up assigned to the wrong signer and disappear on the signer link for the intended person.
-   - Fix: never use current UI selection as fallback for existing objects; require stored `recipientId` on designated fields.
+### New Pages & Components
 
-8. Saved data may exist but not reload when switching page/document.
-   - Files: `SigningSessionPrepare.tsx`, `PdfCanvas.tsx`
-   - Effect: page/document switch saves current page, but the destination page is not guaranteed to load its saved snapshot because ready/hydration timing is broken.
-   - Fix: explicitly load destination snapshot after canvas mount for every page/document change.
+1. **`/auth` — Auth Page** (`src/pages/Auth.tsx`)
+   - Tabs for Sign In / Sign Up
+   - Email + password fields
+   - "Sign in with Google" button using `supabase.auth.signInWithOAuth({ provider: 'google' })`
+   - Forgot password link with email reset flow
+   - Clean design matching the app's blue primary color scheme
 
-Likely secondary reasons
-9. `loadFromJSON` usage is inconsistent across files.
-   - Effect: some places use promise style, one place uses callback style. If Fabric v6 behavior differs, history/apply-state can become unreliable.
-   - Fix: standardize on one Fabric v6 pattern everywhere.
+2. **`/onboarding/payment` — Payment/Banking Paywall** (`src/pages/OnboardingPayment.tsx`)
+   - Card with heading "Set Up Your Subscription"
+   - Form fields: account holder name, routing number, account number, confirm account number, account type (checking/savings radio)
+   - Basic client-side validation (routing number = 9 digits, account numbers match)
+   - On submit: save to `bank_accounts` table, update `profiles.subscription_status` to `'active'`, redirect to `/transactions`
+   - Skip button not shown (paywall is mandatory)
 
-10. Hydration is one-shot because `hydratedSavedFieldsRef` prevents reprocessing later updates.
-   - Effect: if `sessionFields` arrive before the canvas is mounted, hydration data is cached but not applied visually.
-   - Fix: separate “data parsed” from “canvas hydrated” and only mark hydrated after the load completes.
+3. **`/reset-password` — Password Reset Page** (`src/pages/ResetPassword.tsx`)
+   - Form to set new password after clicking email link
 
-11. Preview screen shows local collected field count, not guaranteed persisted count.
-   - Effect: preview can look fine while reopen/signer link stays blank.
-   - Fix: preview should use refetched persisted rows after save, not only local memory.
+4. **Auth Context / Guard** (`src/hooks/useAuth.ts`)
+   - `useAuth()` hook wrapping `onAuthStateChange` + `getSession`
+   - Provides `user`, `session`, `profile`, `loading`, `signOut`
+   - Fetches profile and checks `subscription_status`
 
-12. Freehand/path overlays may save but render invisibly.
-   - File: `src/pages/SignDocument.tsx`
-   - Effect: path reconstruction ignores Fabric path offset/transform nuances, so saved drawing can exist in DB but not show correctly.
-   - Fix: normalize overlay rendering from Fabric object data more faithfully.
+5. **`ProtectedRoute` component** (`src/components/auth/ProtectedRoute.tsx`)
+   - If not authenticated → redirect to `/auth`
+   - If authenticated but `subscription_status !== 'active'` → redirect to `/onboarding/payment`
+   - Otherwise render children
 
-13. Some overlay renderers ignore transforms/scaling details.
-   - Effect: lines/ellipses/highlights can appear misplaced or zero-sized on signer view.
-   - Fix: centralize object-to-overlay reconstruction with Fabric-compatible geometry handling.
+### Route Changes (App.tsx)
+- Add `/auth`, `/onboarding/payment`, `/reset-password` as public routes
+- Wrap the `<AppLayout />` route in `<ProtectedRoute />`
+- Keep `/sign/:token` public (signer links must work without auth)
 
-14. Non-supported interactive types are coerced badly on signer page.
-   - File: `SignDocument.tsx`
-   - Effect: `fullname`, `email`, `time` are not mapped properly for interaction and can appear wrong or vanish from intended flow.
-   - Fix: support all interactive field types explicitly or exclude them from signer flow until supported.
+### Google OAuth Setup
+- Code will use `supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin } })`
+- The user will need to configure Google OAuth in their Supabase dashboard (Authentication → Providers → Google) with their Google Cloud client ID and secret
 
-15. Group-based objects are only partly supported in reconstruction.
-   - Effect: grouped objects without expected metadata may disappear on signer page.
-   - Fix: preserve group metadata and add group render support where needed.
+### Security Notes
+- Bank account numbers are stored with only last 4 digits visible after initial save
+- Full account/routing numbers should ideally be sent to a payment processor — for now they'll be stored encrypted or as-is in the DB since this is an MVP
+- All RLS policies scope to `auth.uid()`
+- Roles stored in separate `user_roles` table per security guidelines
 
-16. Async stamp placement can appear “placed” to the user but still miss the save snapshot.
-   - Effect: especially for signature/initial image stamps.
-   - Fix: on image `onload`, trigger a guaranteed parent save notification and disable navigation until it lands.
+### Technical Details
+- No edge functions needed for this step (all client-side Supabase Auth)
+- Existing RLS policies on all tables currently allow public access (`true`) — these should eventually be scoped to authenticated users, but that's a separate task to avoid breaking existing functionality
+- Profile auto-creation trigger ensures a profile row exists immediately after sign-up
 
-17. No DB-side save timestamp/version for fields.
-   - Effect: hard to know whether reopen is loading old rows or no rows.
-   - Fix: log save version/count in the client and optionally add a persisted checksum/debug field in the payload.
-
-18. Delete/insert persistence can lose data on repeated clicks or double submission.
-   - Effect: intermittent blank session after send.
-   - Fix: lock send/preview actions during save and make save idempotent.
-
-19. `get-signing-session` does not look like the main save bug.
-   - Audit result: it returns `fields` with `value` intact and does not appear to strip metadata.
-   - Fix: keep it aligned, but focus effort on frontend persistence first.
-
-20. Email function is unrelated to field loss.
-   - Audit result: it may have build/runtime issues, but it does not control whether `session_fields` were saved.
-   - Fix: treat separately.
-
-Recommended fix order
-1. Fix `PdfCanvas` lifecycle:
-   - call `onCanvasReady`
-   - guarantee `onCanvasChange` after every insert/finalization
-   - flush async image stamp insertions
-
-2. Fix persistence triggers in `SigningSessionPrepare`:
-   - save current canvas before preview/send/page switch/document switch/back navigation
-   - add route-leave autosave
-   - validate total persisted object count, not only interactive fields
-
-3. Fix data integrity:
-   - stop delete-then-insert data loss pattern
-   - preserve `fieldType`, `customType`, `recipientId` for every object
-   - remove `selectedSigner` fallback for existing objects
-
-4. Fix hydration/reopen behavior:
-   - apply saved snapshot after canvas mount every time
-   - make hydration rerunnable, not one-shot-before-canvas
-
-5. Fix signer reconstruction:
-   - render from `storedPayload.object` consistently
-   - keep passive markup visible to everyone
-   - filter only interactive signer-assigned fields by recipient
-
-Expected result after these fixes
-- Place a field or markup
-- Leave and reopen the session
-- The PDF editor still shows the placed objects
-- Preview uses persisted data, not just local memory
-- Send writes the same objects into `session_fields`
-- Signer link shows clickable signer fields and read-only freeform/markup overlays
-
-Implementation plan
-1. Patch `PdfCanvas` so mount/finalization events are complete and deterministic.
-2. Patch `SigningSessionPrepare` so every exit path persists the live canvas first.
-3. Replace fragile session field save logic with non-destructive persistence.
-4. Rework reopen hydration to load saved snapshots after the canvas is actually mounted.
-5. Tighten signer-page reconstruction so saved objects render from stored payloads exactly.
-
-Technical note
-Based on the code audit, the two strongest root causes are:
-- missing `onCanvasReady` invocation, which breaks reload/hydration
-- edits only being saved to memory until Preview/Send, which breaks reopen/back-edit behavior
-
-Those two alone can fully explain: “I placed fields, sent/reopened, and nothing was there.”
