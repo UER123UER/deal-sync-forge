@@ -23,6 +23,7 @@ import Finances from "@/pages/Finances";
 import Referral from "@/pages/Referral";
 import ContactBrokerage from "@/pages/ContactBrokerage";
 import AdminPdfEditor from "@/pages/AdminPdfEditor";
+import Profile from "@/pages/Profile";
 import SigningSessions from "@/pages/SigningSessions";
 import SigningSessionSetup from "@/pages/SigningSessionSetup";
 import SigningSessionPrepare from "@/pages/SigningSessionPrepare";
@@ -64,6 +65,7 @@ const App = () => (
             <Route path="/contact-brokerage" element={<ContactBrokerage />} />
             <Route path="/admin/pdf-editor" element={<AdminPdfEditor />} />
             <Route path="/admin/pdf-editor/:documentId" element={<AdminPdfEditor />} />
+            <Route path="/profile" element={<Profile />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>

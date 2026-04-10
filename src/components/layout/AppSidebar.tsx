@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Building2, Home, Plus, Users, DollarSign, Mail, CheckSquare, Calendar, Gift, Phone, Shield } from 'lucide-react';
+import { Building2, Home, Plus, Users, DollarSign, Mail, CheckSquare, Calendar, Gift, Phone, Shield, UserCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useState, useRef, useEffect } from 'react';
 
@@ -12,6 +12,7 @@ const navItems = [
   { icon: Gift, label: 'Referral', path: '/referral' },
   { icon: Phone, label: 'Brokerage', path: '/contact-brokerage' },
   { icon: Shield, label: 'Admin', path: '/admin/pdf-editor' },
+  { icon: UserCircle, label: 'Profile', path: '/profile' },
 ];
 
 const peopleSubmenu = [
