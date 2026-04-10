@@ -44,6 +44,36 @@ export type Database = {
         }
         Relationships: []
       }
+      bank_accounts: {
+        Row: {
+          account_holder_name: string
+          account_number_last4: string
+          account_type: string
+          created_at: string
+          id: string
+          routing_number: string
+          user_id: string
+        }
+        Insert: {
+          account_holder_name: string
+          account_number_last4: string
+          account_type?: string
+          created_at?: string
+          id?: string
+          routing_number: string
+          user_id: string
+        }
+        Update: {
+          account_holder_name?: string
+          account_number_last4?: string
+          account_type?: string
+          created_at?: string
+          id?: string
+          routing_number?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       checklist_items: {
         Row: {
           completed: boolean | null
@@ -333,6 +363,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          brokerage_name: string | null
+          created_at: string
+          first_name: string | null
+          id: string
+          last_name: string | null
+          license_number: string | null
+          phone: string | null
+          subscription_status: string
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          brokerage_name?: string | null
+          created_at?: string
+          first_name?: string | null
+          id: string
+          last_name?: string | null
+          license_number?: string | null
+          phone?: string | null
+          subscription_status?: string
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          brokerage_name?: string | null
+          created_at?: string
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          license_number?: string | null
+          phone?: string | null
+          subscription_status?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       session_documents: {
         Row: {
@@ -710,15 +779,39 @@ export type Database = {
           },
         ]
       }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "moderator" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -845,6 +938,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "moderator", "user"],
+    },
   },
 } as const

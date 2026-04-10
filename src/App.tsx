@@ -4,6 +4,10 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AppLayout } from "@/components/layout/AppLayout";
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import Auth from "@/pages/Auth";
+import OnboardingPayment from "@/pages/OnboardingPayment";
+import ResetPassword from "@/pages/ResetPassword";
 import Transactions from "@/pages/Transactions";
 import NewDeal from "@/pages/NewDeal";
 import DealDetail from "@/pages/DealDetail";
@@ -14,7 +18,6 @@ import People from "@/pages/People";
 import Tasks from "@/pages/Tasks";
 import Inbox from "@/pages/Inbox";
 import Listings from "@/pages/Listings";
-
 import CalendarPage from "@/pages/Calendar";
 import Finances from "@/pages/Finances";
 import Referral from "@/pages/Referral";
@@ -35,8 +38,14 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Navigate to="/transactions" replace />} />
+          {/* Public routes */}
+          <Route path="/auth" element={<Auth />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/sign/:token" element={<SignDocument />} />
-          <Route element={<AppLayout />}>
+          {/* Paywall route (auth required but no active subscription needed) */}
+          <Route path="/onboarding/payment" element={<ProtectedRoute><OnboardingPayment /></ProtectedRoute>} />
+          {/* Protected app routes */}
+          <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
             <Route path="/transactions" element={<Transactions />} />
             <Route path="/transactions/new" element={<NewDeal />} />
             <Route path="/transactions/:id" element={<DealDetail />} />
@@ -49,7 +58,6 @@ const App = () => (
             <Route path="/tasks" element={<Tasks />} />
             <Route path="/inbox" element={<Inbox />} />
             <Route path="/listings" element={<Listings />} />
-            
             <Route path="/calendar" element={<CalendarPage />} />
             <Route path="/finances" element={<Finances />} />
             <Route path="/referral" element={<Referral />} />

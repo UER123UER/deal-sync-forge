@@ -255,10 +255,9 @@ export function useCreateSigningSession() {
       role_assignments?: SessionRoleAssignment[];
     }) => {
       const { role_assignments, ...rest } = input;
-      const payload = { ...rest, role_assignments: role_assignments as unknown as Json };
       const { data, error } = await supabase
         .from('signing_sessions')
-        .insert(payload)
+        .insert(rest)
         .select()
         .single();
       if (error && input.role_assignments && isMissingRoleAssignmentsColumnError(error)) {
@@ -286,10 +285,9 @@ export function useUpdateSigningSession() {
   return useMutation({
     mutationFn: async ({ id, ...updates }: Partial<SigningSession> & { id: string }) => {
       const { role_assignments, ...restUpdates } = updates;
-      const payload = { ...restUpdates, ...(role_assignments !== undefined ? { role_assignments: role_assignments as unknown as Json } : {}) };
       const { data, error } = await supabase
         .from('signing_sessions')
-        .update(payload)
+        .update(restUpdates)
         .eq('id', id)
         .select()
         .single();
