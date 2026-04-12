@@ -1142,7 +1142,7 @@ export default function MarketingEditor() {
       {/* ── Top Toolbar ── */}
       <div className="h-14 border-b bg-background flex items-center justify-between px-4 shrink-0 gap-4">
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => navigate(`/transactions/${id}`)}>
+          <Button variant="ghost" size="icon" onClick={() => navigate(`/transactions/${id}?tab=Marketing`)}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div className="flex items-center gap-2">

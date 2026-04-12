@@ -158,15 +158,15 @@ export interface MarketingTemplate {
 }
 
 export const DEFAULT_TEMPLATE_VISIBILITY: TemplateVisibility = {
-  headline: true,
-  address: true,
-  price: true,
-  stats: true,
-  description: true,
-  agentName: true,
-  agentTitle: true,
-  agentPhone: true,
-  agentEmail: true,
+  headline: false,
+  address: false,
+  price: false,
+  stats: false,
+  description: false,
+  agentName: false,
+  agentTitle: false,
+  agentPhone: false,
+  agentEmail: false,
 };
 
 const DEFAULT_BLOCK_TRANSFORM: MarketingBlockTransform = {

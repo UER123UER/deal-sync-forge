@@ -2,7 +2,7 @@ import { useState, useRef } from 'react';
 import { TEMPLATES, TEMPLATE_CATEGORIES, getDefaultTemplateData, type TemplateCategory } from '@/data/marketingTemplates';
 import { type RecentEntry } from '@/pages/MarketingEditor';
 import { useSignatureRequests } from '@/hooks/useSignatureRequests';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { ChevronDown, ChevronRight, Edit, Eye, Mail, Plus, FileText, GripVertical, Download, Printer, Send, Trash2, MessageSquare, Bell, UserPlus, Check, X, Upload, Image, StickyNote, Megaphone, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -45,12 +45,16 @@ const formatPriceWithCommas = (value: string): string => {
 export default function DealDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { data: deal, isLoading } = useDeal(id);
   const updateDeal = useUpdateDeal();
   const deleteChecklist = useDeleteChecklistItem();
   const addDealContact = useAddDealContact();
   const { data: allContacts = [] } = useContacts();
-  const [activeTab, setActiveTab] = useState<typeof TABS[number]>('Checklists');
+  const initialTab = (TABS as readonly string[]).includes(searchParams.get('tab') ?? '')
+    ? (searchParams.get('tab') as typeof TABS[number])
+    : 'Checklists';
+  const [activeTab, setActiveTab] = useState<typeof TABS[number]>(initialTab);
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   const [selectedSigningItems, setSelectedSigningItems] = useState<Set<string>>(new Set());
 
