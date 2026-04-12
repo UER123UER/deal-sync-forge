@@ -19,6 +19,7 @@ import {
   Pencil,
 } from 'lucide-react';
 import { useDeal } from '@/hooks/useDeals';
+import { useDealPhotos } from '@/hooks/useDealPhotos';
 import {
   TEMPLATES,
   TEMPLATE_CATEGORIES,
@@ -49,12 +50,14 @@ export default function MarketingEditor() {
   const templateId = searchParams.get('template') || TEMPLATES[0].id;
   const navigate = useNavigate();
   const { data: deal } = useDeal(id);
+  const { data: dealPhotos = [] } = useDealPhotos(id);
   const canvasRef = useRef<HTMLDivElement>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
 
   const template = TEMPLATES.find((t) => t.id === templateId) || TEMPLATES[0];
 
   const [data, setData] = useState<TemplateData>(() => getDefaultTemplateData());
+  const [photosInitialized, setPhotosInitialized] = useState(false);
   const [zoom, setZoom] = useState(0.5);
   const [basicsOpen, setBasicsOpen] = useState(true);
   const [agentOpen, setAgentOpen] = useState(true);
@@ -69,6 +72,14 @@ export default function MarketingEditor() {
       setData((prev) => ({ ...getDefaultTemplateData(deal), photos: prev.photos }));
     }
   }, [deal]);
+
+  // Auto-populate photos from deal's uploaded photos (only on first load)
+  useEffect(() => {
+    if (!photosInitialized && dealPhotos.length > 0) {
+      setData((prev) => ({ ...prev, photos: dealPhotos.map((p) => p.url) }));
+      setPhotosInitialized(true);
+    }
+  }, [dealPhotos, photosInitialized]);
 
   const updateField = useCallback((field: keyof TemplateData, value: string) => {
     setData((prev) => ({ ...prev, [field]: value }));
@@ -254,7 +265,7 @@ export default function MarketingEditor() {
                               userSelect: 'none',
                             }}
                           >
-                            {t.render(getDefaultTemplateData(deal), false)}
+                            {t.render({ ...getDefaultTemplateData(deal), photos: data.photos }, false)}
                           </div>
                         </div>
                         {/* Label */}
@@ -276,7 +287,12 @@ export default function MarketingEditor() {
 
                 {/* Photo Upload */}
                 <div className="pb-4 border-b mb-2">
-                  <div className="text-xs font-semibold text-foreground mb-2">Property Photo</div>
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="text-xs font-semibold text-foreground">Property Photos</div>
+                    {dealPhotos.length > 0 && (
+                      <span className="text-[9px] text-muted-foreground">{dealPhotos.length} from deal</span>
+                    )}
+                  </div>
                   <input
                     ref={photoInputRef}
                     type="file"
@@ -284,35 +300,45 @@ export default function MarketingEditor() {
                     className="hidden"
                     onChange={handlePhotoUpload}
                   />
-                  <button
-                    onClick={() => photoInputRef.current?.click()}
-                    className="w-full h-24 border-2 border-dashed border-muted-foreground/30 rounded-lg flex flex-col items-center justify-center gap-1.5 text-muted-foreground hover:border-primary hover:text-primary transition-colors text-xs"
-                  >
-                    <ImagePlus className="h-5 w-5" />
-                    <span>Click to upload photo</span>
-                  </button>
-                  {data.photos.length > 0 && (
-                    <div className="mt-2 flex flex-wrap gap-1.5">
-                      {data.photos.map((src, i) => (
-                        <div key={i} className="relative group">
-                          <img
-                            src={src}
-                            alt=""
-                            className="w-16 h-16 object-cover rounded border"
-                          />
-                          <button
-                            onClick={() => removePhoto(i)}
-                            className="absolute -top-1 -right-1 w-4 h-4 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                          >
-                            <X className="h-2.5 w-2.5" />
-                          </button>
-                          {i === 0 && (
-                            <div className="absolute bottom-0 left-0 right-0 text-[8px] bg-black/60 text-white text-center py-0.5 rounded-b">
-                              Main
-                            </div>
-                          )}
-                        </div>
-                      ))}
+                  {data.photos.length === 0 ? (
+                    <button
+                      onClick={() => photoInputRef.current?.click()}
+                      className="w-full h-24 border-2 border-dashed border-muted-foreground/30 rounded-lg flex flex-col items-center justify-center gap-1.5 text-muted-foreground hover:border-primary hover:text-primary transition-colors text-xs"
+                    >
+                      <ImagePlus className="h-5 w-5" />
+                      <span>Click to add photo</span>
+                    </button>
+                  ) : (
+                    <div className="space-y-2">
+                      <div className="flex flex-wrap gap-1.5">
+                        {data.photos.map((src, i) => (
+                          <div key={i} className="relative group">
+                            <img
+                              src={src}
+                              alt=""
+                              className="w-16 h-16 object-cover rounded border"
+                            />
+                            <button
+                              onClick={() => removePhoto(i)}
+                              className="absolute -top-1 -right-1 w-4 h-4 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              <X className="h-2.5 w-2.5" />
+                            </button>
+                            {i === 0 && (
+                              <div className="absolute bottom-0 left-0 right-0 text-[8px] bg-black/60 text-white text-center py-0.5 rounded-b">
+                                Main
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                        {/* Add more button */}
+                        <button
+                          onClick={() => photoInputRef.current?.click()}
+                          className="w-16 h-16 border-2 border-dashed border-muted-foreground/30 rounded flex flex-col items-center justify-center text-muted-foreground hover:border-primary hover:text-primary transition-colors"
+                        >
+                          <ImagePlus className="h-4 w-4" />
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>
