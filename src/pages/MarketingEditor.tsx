@@ -117,29 +117,32 @@ export default function MarketingEditor() {
   const template = TEMPLATES.find((t) => t.id === templateId) || TEMPLATES[0];
 
   // ── History (undo / redo) ─────────────────────────────────────────────────
-  const [history, setHistory] = useState<TemplateData[]>([getDefaultTemplateData()]);
-  const [historyIndex, setHistoryIndex] = useState(0);
-  const data = history[historyIndex];
+  // Use a single state object so index + history update atomically (no stale closure crash)
+  const [hist, setHist] = useState<{ stack: TemplateData[]; index: number }>({
+    stack: [getDefaultTemplateData()],
+    index: 0,
+  });
+  const data = hist.stack[hist.index] ?? getDefaultTemplateData();
 
   const setData = useCallback((updater: TemplateData | ((prev: TemplateData) => TemplateData)) => {
-    setHistory((prev) => {
-      const current = prev[historyIndex];
+    setHist((h) => {
+      const current = h.stack[h.index];
       const next = typeof updater === 'function' ? updater(current) : updater;
-      return [...prev.slice(0, historyIndex + 1), next];
+      const newStack = [...h.stack.slice(0, h.index + 1), next];
+      return { stack: newStack, index: newStack.length - 1 };
     });
-    setHistoryIndex((i) => i + 1);
-  }, [historyIndex]);
+  }, []);
 
-  const canUndo = historyIndex > 0;
-  const canRedo = historyIndex < history.length - 1;
+  const canUndo = hist.index > 0;
+  const canRedo = hist.index < hist.stack.length - 1;
 
   const handleUndo = useCallback(() => {
-    if (canUndo) setHistoryIndex((i) => i - 1);
-  }, [canUndo]);
+    setHist((h) => h.index > 0 ? { ...h, index: h.index - 1 } : h);
+  }, []);
 
   const handleRedo = useCallback(() => {
-    if (canRedo) setHistoryIndex((i) => i + 1);
-  }, [canRedo]);
+    setHist((h) => h.index < h.stack.length - 1 ? { ...h, index: h.index + 1 } : h);
+  }, []);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -188,8 +191,7 @@ export default function MarketingEditor() {
       // Check if there's a saved session for the current template first
       const saved = id ? loadRecents(id).find((r) => r.templateId === templateId) : null;
       if (saved) {
-        setHistory([saved.data]);
-        setHistoryIndex(0);
+        setHist({ stack: [saved.data], index: 0 });
       } else {
         setData((prev) => ({ ...getDefaultTemplateData(deal), photos: prev.photos }));
       }
@@ -233,8 +235,7 @@ export default function MarketingEditor() {
   /** Resume a recent entry: load its saved data and switch to edit tab */
   const resumeRecent = (entry: RecentEntry) => {
     setSearchParams({ template: entry.templateId });
-    setHistory([entry.data]);
-    setHistoryIndex(0);
+    setHist({ stack: [entry.data], index: 0 });
     setLeftTab('edit');
   };
 
