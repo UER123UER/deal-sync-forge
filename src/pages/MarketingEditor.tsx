@@ -36,6 +36,10 @@ import {
   Keyboard,
   Check,
   GripVertical,
+  Lock,
+  LockOpen,
+  Link2,
+  Link2Off,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -533,6 +537,9 @@ export default function MarketingEditor() {
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
   const [selectedBlock, setSelectedBlock] = useState<MarketingBlockKey | null>(null);
+  const [lockedBlocks, setLockedBlocks] = useState<Set<MarketingBlockKey>>(new Set());
+  const [groupedBlocks, setGroupedBlocks] = useState<Set<MarketingBlockKey>>(new Set());
+  const [isDraggingBlock, setIsDraggingBlock] = useState(false); // hides toolbar while moving
   const [blockRects, setBlockRects] = useState<Partial<Record<MarketingBlockKey, MarketingBlockRect>>>({});
   // Save-status indicator
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
@@ -780,6 +787,62 @@ export default function MarketingEditor() {
     });
   }, [selectedBlock, setData]);
 
+  // ── Block action toolbar helpers ─────────────────────────────────────────
+
+  const toggleLockBlock = useCallback((block: MarketingBlockKey) => {
+    setLockedBlocks((prev) => {
+      const next = new Set(prev);
+      if (next.has(block)) { next.delete(block); toast('Block unlocked'); }
+      else { next.add(block); toast('Block locked — it can\'t be moved while locked'); }
+      return next;
+    });
+  }, []);
+
+  const duplicateBlock = useCallback((block: MarketingBlockKey) => {
+    // Duplicate = copy the current transform slightly offset so user can see both
+    const current = data.blockTransforms?.[block];
+    if (!current) return;
+    // We can't truly duplicate template blocks (they're fixed), so we nudge +16,+16
+    setData((prev) => ({
+      ...prev,
+      blockTransforms: {
+        ...prev.blockTransforms,
+        [block]: { x: (current.x ?? 0) + 16, y: (current.y ?? 0) + 16, scale: current.scale ?? 1 },
+      },
+    }));
+    toast('Position nudged — blocks are template-bound and can\'t be fully duplicated');
+  }, [data.blockTransforms, setData]);
+
+  const deleteBlock = useCallback((block: MarketingBlockKey) => {
+    // "Delete" = hide the block via visibility
+    const visibilityKey = block === 'agent' ? null : block as keyof TemplateVisibility;
+    if (!visibilityKey) return;
+    setData((prev) => ({
+      ...prev,
+      visibility: { ...prev.visibility, [visibilityKey]: false },
+    }));
+    setSelectedBlock(null);
+    toast('Block hidden', {
+      action: {
+        label: 'Undo',
+        onClick: () => setData((prev) => ({
+          ...prev,
+          visibility: { ...prev.visibility, [visibilityKey]: true },
+        })),
+      },
+      duration: 5000,
+    });
+  }, [setData]);
+
+  const toggleGroupBlock = useCallback((block: MarketingBlockKey) => {
+    setGroupedBlocks((prev) => {
+      const next = new Set(prev);
+      if (next.has(block)) { next.delete(block); toast('Removed from group'); }
+      else { next.add(block); toast(`Added to group (${next.size} blocks)`); }
+      return next;
+    });
+  }, []);
+
   // ── Photo upload — persists to Supabase storage ───────────────────────────
   const handlePhotoUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -958,6 +1021,7 @@ export default function MarketingEditor() {
       if (!interaction) return;
 
       event.preventDefault();
+      setIsDraggingBlock(true); // hide action toolbar while dragging
 
       const divisor = scaleRef.current || 1;
       const dx = (event.clientX - interaction.startClientX) / divisor;
@@ -1033,6 +1097,7 @@ export default function MarketingEditor() {
       setAlignGuides([]);
       setSpacingGuides([]);
       setDragHud(null);
+      setIsDraggingBlock(false); // re-show action toolbar
     };
 
     window.addEventListener('pointermove', handlePointerMove);
@@ -1116,6 +1181,11 @@ export default function MarketingEditor() {
     event.preventDefault();
     event.stopPropagation();
 
+    setSelectedBlock(block);
+
+    // Locked blocks can be selected but not moved/resized
+    if (lockedBlocks.has(block)) return;
+
     const currentTransform = data.blockTransforms?.[block];
     interactionRef.current = {
       block,
@@ -1130,9 +1200,7 @@ export default function MarketingEditor() {
       baseRect: blockRects[block] ?? { left: 0, top: 0, width: 220, height: 220 },
       committed: false,
     };
-
-    setSelectedBlock(block);
-  }, [blockRects, data.blockTransforms]);
+  }, [blockRects, data.blockTransforms, lockedBlocks]);
 
   const filteredTemplates =
     categoryFilter === 'All' ? TEMPLATES : TEMPLATES.filter((t) => t.category === categoryFilter);
@@ -2065,13 +2133,22 @@ export default function MarketingEditor() {
                   const block = blockKey as MarketingBlockKey;
                   const selected = selectedBlock === block;
 
+                  const isLocked = lockedBlocks.has(block);
+                  const isGrouped = groupedBlocks.has(block);
+                  const visibilityKey = block === 'agent' ? null : block as keyof TemplateVisibility;
+                  const canDelete = visibilityKey !== null;
+
                   return (
                     <div
                       key={block}
                       className={cn(
                         'absolute rounded-xl transition-all group/block',
-                        selected
+                        selected && isLocked
+                          ? 'border-2 border-amber-400 bg-amber-400/5 shadow-[0_0_0_1px_rgba(255,255,255,0.95)]'
+                          : selected
                           ? 'border-2 border-primary bg-primary/5 shadow-[0_0_0_1px_rgba(255,255,255,0.95)]'
+                          : isLocked
+                          ? 'border border-amber-400/40 hover:border-amber-400/70'
                           : 'border border-transparent hover:border-primary/50 hover:bg-primary/5'
                       )}
                       style={{
@@ -2083,32 +2160,109 @@ export default function MarketingEditor() {
                     >
                       <button
                         type="button"
-                        className="absolute inset-0 cursor-move rounded-xl"
+                        className={cn(
+                          'absolute inset-0 rounded-xl',
+                          isLocked ? 'cursor-not-allowed' : 'cursor-move',
+                        )}
                         onPointerDown={(event) => beginBlockInteraction(event, block, 'move')}
                         aria-label={`Move ${MARKETING_BLOCK_LABELS[block]}`}
                       />
 
+                      {/* ── Floating Action Toolbar — appears above selected block ── */}
+                      {selected && !isDraggingBlock && (
+                        <div
+                          className="absolute left-1/2 -translate-x-1/2 flex items-center gap-0.5 rounded-xl border bg-background/95 shadow-xl backdrop-blur-sm px-1 py-1"
+                          style={{ bottom: '100%', marginBottom: 8, zIndex: 50, pointerEvents: 'auto', whiteSpace: 'nowrap' }}
+                          onPointerDown={(e) => e.stopPropagation()} // don't start drag when clicking toolbar
+                        >
+                          {/* Block label */}
+                          <span className="px-2 text-[10px] font-semibold text-muted-foreground uppercase tracking-wide select-none">
+                            {MARKETING_BLOCK_LABELS[block]}
+                          </span>
+                          <div className="w-px h-4 bg-border mx-0.5" />
+
+                          {/* Group / Ungroup */}
+                          <button
+                            type="button"
+                            title={isGrouped ? 'Remove from group' : 'Add to group'}
+                            onClick={() => toggleGroupBlock(block)}
+                            className={cn(
+                              'flex items-center justify-center h-7 w-7 rounded-lg transition-colors',
+                              isGrouped
+                                ? 'bg-violet-100 text-violet-600 hover:bg-violet-200'
+                                : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                            )}
+                          >
+                            {isGrouped ? <Link2Off className="h-3.5 w-3.5" /> : <Link2 className="h-3.5 w-3.5" />}
+                          </button>
+
+                          {/* Lock / Unlock */}
+                          <button
+                            type="button"
+                            title={isLocked ? 'Unlock block' : 'Lock block'}
+                            onClick={() => toggleLockBlock(block)}
+                            className={cn(
+                              'flex items-center justify-center h-7 w-7 rounded-lg transition-colors',
+                              isLocked
+                                ? 'bg-amber-100 text-amber-600 hover:bg-amber-200'
+                                : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                            )}
+                          >
+                            {isLocked ? <Lock className="h-3.5 w-3.5" /> : <LockOpen className="h-3.5 w-3.5" />}
+                          </button>
+
+                          {/* Duplicate (nudge position) */}
+                          <button
+                            type="button"
+                            title="Duplicate block position"
+                            onClick={() => duplicateBlock(block)}
+                            className="flex items-center justify-center h-7 w-7 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                          >
+                            <Copy className="h-3.5 w-3.5" />
+                          </button>
+
+                          {/* Delete (hide block) */}
+                          {canDelete && (
+                            <>
+                              <div className="w-px h-4 bg-border mx-0.5" />
+                              <button
+                                type="button"
+                                title="Hide block"
+                                onClick={() => deleteBlock(block)}
+                                className="flex items-center justify-center h-7 w-7 rounded-lg text-muted-foreground hover:bg-red-50 hover:text-red-600 transition-colors"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      )}
+
                       {/* Label — visible when selected or hovered */}
                       <div className={cn(
-                        'pointer-events-none absolute left-2 top-2 rounded-full bg-background/95 px-2 py-1 text-[10px] font-semibold text-foreground shadow-sm transition-opacity',
+                        'pointer-events-none absolute left-2 top-2 rounded-full bg-background/95 px-2 py-1 text-[10px] font-semibold text-foreground shadow-sm transition-opacity flex items-center gap-1',
                         selected ? 'opacity-100' : 'opacity-0 group-hover/block:opacity-100'
                       )}>
+                        {isLocked && <Lock className="h-2.5 w-2.5 text-amber-500" />}
+                        {isGrouped && <Link2 className="h-2.5 w-2.5 text-violet-500" />}
                         {MARKETING_BLOCK_LABELS[block]}
                       </div>
 
-                      {/* Resize handle — visible on hover OR when selected */}
-                      <button
-                        type="button"
-                        className={cn(
-                          'absolute bottom-0 right-0 h-5 w-5 translate-x-1/2 translate-y-1/2 rounded-full border-2 border-background bg-primary shadow-sm transition-opacity cursor-se-resize flex items-center justify-center',
-                          selected ? 'opacity-100' : 'opacity-0 group-hover/block:opacity-100'
-                        )}
-                        onPointerDown={(event) => beginBlockInteraction(event, block, 'resize')}
-                        aria-label={`Resize ${MARKETING_BLOCK_LABELS[block]}`}
-                        title="Drag to resize"
-                      >
-                        <Maximize2 className="h-2.5 w-2.5 text-primary-foreground" />
-                      </button>
+                      {/* Resize handle — visible on hover OR when selected (disabled when locked) */}
+                      {!isLocked && (
+                        <button
+                          type="button"
+                          className={cn(
+                            'absolute bottom-0 right-0 h-5 w-5 translate-x-1/2 translate-y-1/2 rounded-full border-2 border-background bg-primary shadow-sm transition-opacity cursor-se-resize flex items-center justify-center',
+                            selected ? 'opacity-100' : 'opacity-0 group-hover/block:opacity-100'
+                          )}
+                          onPointerDown={(event) => beginBlockInteraction(event, block, 'resize')}
+                          aria-label={`Resize ${MARKETING_BLOCK_LABELS[block]}`}
+                          title="Drag to resize"
+                        >
+                          <Maximize2 className="h-2.5 w-2.5 text-primary-foreground" />
+                        </button>
+                      )}
                     </div>
                   );
                 })}
