@@ -20,6 +20,24 @@ export interface ContactRow {
   created_at: string;
 }
 
+export type ContactUpdate = {
+  id: string;
+  first_name?: string;
+  last_name?: string;
+  email?: string | null;
+  phone?: string | null;
+  company?: string | null;
+  role?: string | null;
+  current_address?: string | null;
+  tags?: string[];
+  last_touch?: string | null;
+  next_touch?: string | null;
+  commission?: string | null;
+  commission_type?: string | null;
+  mls_id?: string | null;
+  mls?: string | null;
+};
+
 export function useContacts() {
   return useQuery({
     queryKey: ['contacts'],
@@ -37,7 +55,18 @@ export function useContacts() {
 export function useCreateContact() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (contact: { first_name: string; last_name: string; email?: string | null; phone?: string | null; company?: string | null; role?: string | null; tags?: string[] }) => {
+    mutationFn: async (contact: {
+      first_name: string;
+      last_name: string;
+      email?: string | null;
+      phone?: string | null;
+      company?: string | null;
+      role?: string | null;
+      tags?: string[];
+      current_address?: string | null;
+      last_touch?: string | null;
+      next_touch?: string | null;
+    }) => {
       const { data, error } = await supabase.from('contacts').insert(contact).select().single();
       if (error) throw error;
       return data;
@@ -49,7 +78,7 @@ export function useCreateContact() {
 export function useUpdateContact() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, ...data }: { id: string; first_name?: string; last_name?: string; email?: string | null; phone?: string | null; company?: string | null; role?: string | null; tags?: string[] }) => {
+    mutationFn: async ({ id, ...data }: ContactUpdate) => {
       const { error } = await supabase.from('contacts').update(data).eq('id', id);
       if (error) throw error;
     },
