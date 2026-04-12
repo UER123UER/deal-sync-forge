@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { Mail, Lock, User, Eye, EyeOff } from 'lucide-react';
@@ -137,10 +137,9 @@ export default function Auth() {
     <div className="flex items-center justify-center min-h-screen bg-muted/30 p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="mx-auto mb-4">
-            <UERLogo size={72} />
+          <div className="mx-auto mb-2 flex justify-center">
+            <UERLogo width={220} />
           </div>
-          <CardTitle className="text-2xl font-bold">United Estates Realty</CardTitle>
           <CardDescription>Real estate transaction management</CardDescription>
         </CardHeader>
         <CardContent>

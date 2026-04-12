@@ -97,133 +97,14 @@ const PhotoArea = ({
     </div>
   );
 
-// ─── UER Logo — "UNITED STATES REALTY" with flag-E ───────────────────────────
-// Scale: designed at ~400px wide; pass scale prop to resize uniformly
-const UERBrandMark = ({ scale = 1, dark = false }: { scale?: number; dark?: boolean }) => {
-  const textColor = dark ? '#f0ede6' : '#1a1a2e';
-  const subColor = dark ? 'rgba(240,237,230,0.55)' : '#6b6b7b';
-  const divColor = dark ? 'rgba(240,237,230,0.2)' : '#d1d5db';
-
-  // Mini flag E — designed at 1x (used at various scales)
-  const FLAG_W = 52;
-  const FLAG_H = 38;
-  const STRIPE_H = FLAG_H / 3;
-
-  return (
-    <div
-      style={{
-        display: 'inline-flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: Math.round(6 * scale),
-        transform: `scale(${scale})`,
-        transformOrigin: 'top center',
-        userSelect: 'none',
-        lineHeight: 1,
-      }}
-    >
-      {/* Row 1: UNITED */}
-      <div
-        style={{
-          fontFamily: 'Georgia, "Times New Roman", serif',
-          fontSize: 52,
-          fontWeight: 400,
-          letterSpacing: 14,
-          color: textColor,
-          textTransform: 'uppercase',
-        }}
-      >
-        UNITED
-      </div>
-
-      {/* Row 2: ST[flag]TES */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 0,
-          fontFamily: 'Georgia, "Times New Roman", serif',
-          fontSize: 52,
-          fontWeight: 400,
-          letterSpacing: 14,
-          color: textColor,
-          textTransform: 'uppercase',
-        }}
-      >
-        <span>ST</span>
-
-        {/* Flag "A" block — canton + stripes */}
-        <span
-          style={{
-            display: 'inline-flex',
-            flexDirection: 'column',
-            width: FLAG_W,
-            height: FLAG_H,
-            margin: '0 2px',
-            borderRadius: 2,
-            overflow: 'hidden',
-            flexShrink: 0,
-            verticalAlign: 'middle',
-          }}
-        >
-          {/* Top stripe — canton row */}
-          <span style={{ display: 'flex', height: STRIPE_H }}>
-            {/* Canton: navy with stars */}
-            <span
-              style={{
-                width: FLAG_W * 0.4,
-                height: '100%',
-                background: '#1B3A6B',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexWrap: 'wrap',
-                gap: 2,
-                padding: 2,
-                flexShrink: 0,
-              }}
-            >
-              {[0,1,2,3,4,5].map(i => (
-                <span key={i} style={{ color: '#fff', fontSize: 4, lineHeight: 1 }}>★</span>
-              ))}
-            </span>
-            {/* Red stripe */}
-            <span style={{ flex: 1, background: '#B22234', height: '100%' }} />
-          </span>
-          {/* Middle stripe — white */}
-          <span style={{ display: 'flex', height: STRIPE_H }}>
-            <span style={{ width: FLAG_W * 0.4, background: '#1B3A6B', height: '100%', flexShrink: 0 }} />
-            <span style={{ flex: 1, background: '#fff', height: '100%', borderTop: '0.5px solid #e5e7eb', borderBottom: '0.5px solid #e5e7eb' }} />
-          </span>
-          {/* Bottom stripe — red */}
-          <span style={{ display: 'flex', height: STRIPE_H }}>
-            <span style={{ width: FLAG_W * 0.4, background: '#1B3A6B', height: '100%', flexShrink: 0 }} />
-            <span style={{ flex: 1, background: '#B22234', height: '100%' }} />
-          </span>
-        </span>
-
-        <span>TES</span>
-      </div>
-
-      {/* Divider + REALTY */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 16, width: '100%', paddingLeft: 4, paddingRight: 4 }}>
-        <div style={{ flex: 1, height: 1, background: divColor }} />
-        <span
-          style={{
-            fontFamily: 'Georgia, "Times New Roman", serif',
-            fontSize: 18,
-            letterSpacing: 10,
-            color: subColor,
-            textTransform: 'uppercase',
-          }}
-        >
-          REALTY
-        </span>
-        <div style={{ flex: 1, height: 1, background: divColor }} />
-      </div>
-    </div>
-  );
-};
+// ─── UER Logo — real image from /public/logo.jpg ─────────────────────────────
+const UERBrandMark = ({ width = 320 }: { width?: number; dark?: boolean; scale?: number }) => (
+  <img
+    src="/logo.jpg"
+    alt="United Estates Realty"
+    style={{ width, height: 'auto', objectFit: 'contain', display: 'block' }}
+  />
+);
 
 // ─── Stat chip ────────────────────────────────────────────────────────────────
 const Stat = ({
@@ -265,7 +146,7 @@ const BrandPost = (
       borderBottom: '1px solid #f0f0f0',
       flexShrink: 0,
     }}>
-      <UERBrandMark scale={0.82} dark={false} />
+      <UERBrandMark width={340} />
     </div>
 
     {/* Photo */}
@@ -359,7 +240,7 @@ const BrandFlyer = (
       borderBottom: '1px solid #f0f0f0',
       flexShrink: 0,
     }}>
-      <UERBrandMark scale={0.68} dark={false} />
+      <UERBrandMark width={280} />
     </div>
 
     {/* Photo */}
@@ -458,7 +339,7 @@ const BrandStory = (
       borderBottom: '1px solid #f0f0f0',
       flexShrink: 0,
     }}>
-      <UERBrandMark scale={0.92} dark={false} />
+      <UERBrandMark width={380} />
     </div>
 
     {/* Photo */}
@@ -548,7 +429,7 @@ const OpenHousePost = (data: TemplateData, editable: boolean | undefined) => (
       display: 'flex', justifyContent: 'center',
       borderBottom: '1px solid #f0f0f0', flexShrink: 0,
     }}>
-      <UERBrandMark scale={0.82} dark={false} />
+      <UERBrandMark width={340} />
     </div>
     <PhotoArea photos={data.photos} style={{ flex: 1, width: '100%' }} />
     <div style={{ background: '#12163a', color: '#f0ede6', padding: '32px 60px 40px', flexShrink: 0 }}>
@@ -596,7 +477,7 @@ const OpenHouseFlyer = (data: TemplateData, editable: boolean | undefined) => (
       display: 'flex', justifyContent: 'center',
       borderBottom: '1px solid #f0f0f0', flexShrink: 0,
     }}>
-      <UERBrandMark scale={0.68} dark={false} />
+      <UERBrandMark width={280} />
     </div>
     <PhotoArea photos={data.photos} style={{ flex: 1, width: '100%' }} />
     <div style={{ background: '#12163a', color: '#f0ede6', padding: '24px 48px 30px', flexShrink: 0 }}>

@@ -1,5 +1,6 @@
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Building2, Home, Plus, Users, DollarSign, Mail, CheckSquare, Calendar, Gift, Phone, Shield, UserCircle } from 'lucide-react';
+import { Home, Plus, Users, DollarSign, Mail, CheckSquare, Calendar, Gift, Phone, Shield, UserCircle } from 'lucide-react';
+import { UERLogo } from '@/components/UERLogo';
 import { cn } from '@/lib/utils';
 import { useState, useRef, useEffect } from 'react';
 
@@ -45,8 +46,8 @@ export function AppSidebar() {
   return (
     <div className="w-16 min-h-screen flex flex-col items-center py-4 gap-1 relative" style={{ backgroundColor: 'hsl(var(--sidebar-bg))' }}>
       {/* Logo */}
-      <div className="w-10 h-10 rounded-lg flex items-center justify-center mb-6" style={{ backgroundColor: 'hsl(var(--sidebar-active))' }}>
-        <Building2 className="w-5 h-5" style={{ color: 'hsl(var(--sidebar-active-fg))' }} />
+      <div className="w-14 mb-4 flex items-center justify-center">
+        <UERLogo width={48} />
       </div>
 
       {navItems.map((item) => {
