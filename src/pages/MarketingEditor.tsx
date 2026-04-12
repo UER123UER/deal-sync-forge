@@ -20,7 +20,19 @@ import {
   Undo2,
   Redo2,
   Clock,
+  MoreVertical,
+  ExternalLink,
+  Copy,
+  FolderInput,
+  Trash2,
+  PencilLine,
 } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { useDeal } from '@/hooks/useDeals';
 import { useDealPhotos } from '@/hooks/useDealPhotos';
 import {
