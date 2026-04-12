@@ -1,6 +1,7 @@
 import { useRef, useState, useCallback, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { toPng } from 'html-to-image';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
@@ -29,6 +30,9 @@ import {
   LayoutGrid,
   User,
   Users,
+  Loader2,
+  Move,
+  Maximize2,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -37,7 +41,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useDeal } from '@/hooks/useDeals';
-import { useDealPhotos } from '@/hooks/useDealPhotos';
+import { useDealPhotos, useUploadDealPhoto } from '@/hooks/useDealPhotos';
 import {
   TEMPLATES,
   TEMPLATE_CATEGORIES,
@@ -64,6 +68,7 @@ export interface RecentEntry {
 }
 
 const RECENTS_LIMIT = 20;
+const HISTORY_LIMIT = 100; // cap undo stack to prevent memory bloat
 
 function recentsKey(dealId: string) {
   return `uer_marketing_recents_${dealId}`;
@@ -112,6 +117,13 @@ const TYPE_LABELS: Record<string, string> = {
   flyer: 'Flyer',
   post: 'Social Post',
   story: 'Story',
+};
+
+// Human-readable headline style labels
+const HEADLINE_STYLE_LABELS: Record<HeadlineStyle, { name: string; desc: string }> = {
+  h1: { name: 'Serif Split', desc: 'Large italic + bold hero' },
+  h2: { name: 'Editorial', desc: 'Uppercase gold tracking' },
+  h3: { name: 'Classic', desc: 'Clean serif single line' },
 };
 
 type EditableTextField =
@@ -163,6 +175,8 @@ const MARKETING_BLOCK_LABELS: Record<MarketingBlockKey, string> = {
   description: 'Description',
   agent: 'Agent info',
 };
+
+const ZOOM_PRESETS = [0.5, 0.75, 1.0];
 
 function timeAgo(ms: number): string {
   const diff = Date.now() - ms;
@@ -223,15 +237,15 @@ function OptionCard({
       type="button"
       onClick={onClick}
       className={cn(
-        'rounded-2xl border p-4 text-left transition-all hover:border-foreground/25 hover:bg-muted/40',
-        active ? 'border-primary bg-primary/5 shadow-sm' : 'border-border bg-background'
+        'rounded-2xl border p-3 text-left transition-all hover:border-foreground/25 hover:bg-muted/40',
+        active ? 'border-primary bg-primary/5 shadow-sm ring-1 ring-primary/20' : 'border-border bg-background'
       )}
     >
-      <div className="mb-4 flex h-12 items-center justify-center rounded-xl bg-muted/40">
-        {preview ?? (Icon ? <Icon className={cn('h-6 w-6', active ? 'text-primary' : 'text-foreground')} /> : null)}
+      <div className="mb-2.5 flex h-10 items-center justify-center rounded-xl bg-muted/40">
+        {preview ?? (Icon ? <Icon className={cn('h-5 w-5', active ? 'text-primary' : 'text-foreground')} /> : null)}
       </div>
-      <div className="text-sm font-semibold text-foreground">{label}</div>
-      <div className="mt-1 text-[11px] leading-4 text-muted-foreground">{description}</div>
+      <div className="text-[11px] font-semibold text-foreground leading-tight">{label}</div>
+      <div className="mt-0.5 text-[10px] leading-3.5 text-muted-foreground">{description}</div>
     </button>
   );
 }
@@ -245,6 +259,7 @@ export default function MarketingEditor() {
   const navigate = useNavigate();
   const { data: deal } = useDeal(id);
   const { data: dealPhotos = [] } = useDealPhotos(id);
+  const uploadDealPhoto = useUploadDealPhoto();
   const canvasRef = useRef<HTMLDivElement>(null);
   const previewShellRef = useRef<HTMLDivElement>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
@@ -254,7 +269,7 @@ export default function MarketingEditor() {
   const template = TEMPLATES.find((t) => t.id === templateId) || TEMPLATES[0];
 
   // ── History (undo / redo) ─────────────────────────────────────────────────
-  // Use a single state object so index + history update atomically (no stale closure crash)
+  // Single state object so index + stack update atomically (no stale closure crash)
   const [hist, setHist] = useState<{ stack: TemplateData[]; index: number }>({
     stack: [getDefaultTemplateData(undefined, template.category)],
     index: 0,
@@ -265,7 +280,9 @@ export default function MarketingEditor() {
     setHist((h) => {
       const current = h.stack[h.index];
       const next = typeof updater === 'function' ? updater(current) : updater;
-      const newStack = [...h.stack.slice(0, h.index + 1), next];
+      // Drop any future states (overwrite forward history), cap at HISTORY_LIMIT
+      const base = h.stack.slice(0, h.index + 1);
+      const newStack = [...base, next].slice(-HISTORY_LIMIT);
       return { stack: newStack, index: newStack.length - 1 };
     });
   }, []);
@@ -315,24 +332,12 @@ export default function MarketingEditor() {
     setHist((h) => h.index < h.stack.length - 1 ? { ...h, index: h.index + 1 } : h);
   }, []);
 
-  // Keyboard shortcuts
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      const mod = e.metaKey || e.ctrlKey;
-      if (!mod) return;
-      if (e.key === 'z' && !e.shiftKey) { e.preventDefault(); handleUndo(); }
-      if ((e.key === 'z' && e.shiftKey) || e.key === 'y') { e.preventDefault(); handleRedo(); }
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [handleUndo, handleRedo]);
-
   // ── Recents state ─────────────────────────────────────────────────────────
   const [recents, setRecents] = useState<RecentEntry[]>(() =>
     id ? loadRecents(id) : []
   );
 
-  // Auto-save: debounce 600ms after any data change
+  // Auto-save: debounce 800ms after any data change
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     if (!id) return;
@@ -340,7 +345,7 @@ export default function MarketingEditor() {
     saveTimerRef.current = setTimeout(() => {
       const updated = upsertRecent(id, templateId, data);
       setRecents(updated);
-    }, 600);
+    }, 800);
     return () => {
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     };
@@ -357,6 +362,7 @@ export default function MarketingEditor() {
   const [leftTab, setLeftTab] = useState<'templates' | 'edit'>('templates');
   const [categoryFilter, setCategoryFilter] = useState<TemplateCategory | 'All'>('All');
   const [exporting, setExporting] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
   const [selectedBlock, setSelectedBlock] = useState<MarketingBlockKey | null>(null);
@@ -368,6 +374,7 @@ export default function MarketingEditor() {
     const updated = recents.filter((e) => e.templateId !== entryTemplateId);
     saveRecents(id, updated);
     setRecents(updated);
+    toast.success('Design removed');
   }, [id, recents]);
 
   const duplicateRecent = useCallback((entry: RecentEntry) => {
@@ -382,6 +389,7 @@ export default function MarketingEditor() {
     const updated = [copy, ...recents];
     saveRecents(id, updated);
     setRecents(updated);
+    toast.success('Design duplicated');
   }, [id, recents]);
 
   const renameRecent = useCallback((entryTemplateId: string, newName: string) => {
@@ -397,7 +405,7 @@ export default function MarketingEditor() {
   const downloadRecent = useCallback(async (entry: RecentEntry) => {
     const t = TEMPLATES.find((t) => t.id === entry.templateId);
     if (!t) return;
-    // Temporarily render, export, then clean up
+    const toastId = toast.loading('Preparing download…');
     const container = document.createElement('div');
     container.style.position = 'fixed';
     container.style.left = '-9999px';
@@ -415,6 +423,10 @@ export default function MarketingEditor() {
       link.download = `${(entry.customName || t.name).replace(/\s+/g, '-').toLowerCase()}.png`;
       link.href = dataUrl;
       link.click();
+      toast.success('Downloaded!', { id: toastId });
+    } catch (err) {
+      console.error(err);
+      toast.error('Download failed', { id: toastId });
     } finally {
       root.unmount();
       document.body.removeChild(container);
@@ -430,7 +442,6 @@ export default function MarketingEditor() {
   // Auto-fill from deal data (preserve existing photos)
   useEffect(() => {
     if (deal) {
-      // Check if there's a saved session for the current template first
       const saved = id ? loadRecents(id).find((r) => r.templateId === templateId) : null;
       if (saved) {
         setHist({
@@ -541,14 +552,48 @@ export default function MarketingEditor() {
     });
   }, [selectedBlock, setData]);
 
-  // Photo upload
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // ── Photo upload — persists to Supabase storage ───────────────────────────
+  const handlePhotoUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const url = URL.createObjectURL(file);
-    setData((prev) => ({ ...prev, photos: [url, ...prev.photos] }));
     e.target.value = '';
-  };
+
+    if (!id) {
+      // No deal context — fall back to temporary blob URL with a warning
+      const url = URL.createObjectURL(file);
+      setData((prev) => ({ ...prev, photos: [url, ...prev.photos] }));
+      toast.warning('Photo added locally only — open this template from a deal to save photos permanently.');
+      return;
+    }
+
+    setUploadingPhoto(true);
+    try {
+      // Upload to Supabase and get back the permanent public URL via query invalidation
+      await uploadDealPhoto.mutateAsync({ dealId: id, file });
+      // dealPhotos query will auto-refresh; we'll sync via the dealPhotos effect below
+      toast.success('Photo uploaded!');
+    } catch (err) {
+      console.error(err);
+      toast.error('Photo upload failed. Please try again.');
+    } finally {
+      setUploadingPhoto(false);
+    }
+  }, [id, uploadDealPhoto, setData]);
+
+  // Sync deal photos into editor whenever they change (covers both initial load + new uploads)
+  useEffect(() => {
+    if (!photosInitialized || dealPhotos.length === 0) return;
+    setData((prev) => {
+      // Only update if the Supabase URLs are different from what we have
+      const supabaseUrls = dealPhotos.map((p) => p.url);
+      const hasNew = supabaseUrls.some((u) => !prev.photos.includes(u));
+      if (!hasNew) return prev;
+      // Merge: Supabase photos first, then any local blob URLs not yet replaced
+      const blobUrls = prev.photos.filter((u) => u.startsWith('blob:'));
+      return { ...prev, photos: [...supabaseUrls, ...blobUrls] };
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dealPhotos]);
 
   const removePhoto = (index: number) => {
     setData((prev) => ({ ...prev, photos: prev.photos.filter((_, i) => i !== index) }));
@@ -573,6 +618,7 @@ export default function MarketingEditor() {
   const handleExport = useCallback(async () => {
     if (!canvasRef.current) return;
     setExporting(true);
+    const toastId = toast.loading('Exporting image…');
     try {
       const dataUrl = await toPng(canvasRef.current, {
         width: template.width,
@@ -583,8 +629,10 @@ export default function MarketingEditor() {
       link.download = `${template.name.replace(/\s+/g, '-').toLowerCase()}-${data.address.replace(/\s+/g, '-').toLowerCase()}.png`;
       link.href = dataUrl;
       link.click();
+      toast.success('Downloaded successfully!', { id: toastId });
     } catch (err) {
       console.error('Export failed:', err);
+      toast.error('Export failed — please try again.', { id: toastId });
     } finally {
       setExporting(false);
     }
@@ -639,7 +687,10 @@ export default function MarketingEditor() {
     const handleLoad = () => measureBlocks();
 
     images.forEach((image) => {
-      if (!image.complete) {
+      // Re-measure both on load and when already complete
+      if (image.complete) {
+        handleLoad();
+      } else {
         image.addEventListener('load', handleLoad);
       }
     });
@@ -711,6 +762,56 @@ export default function MarketingEditor() {
     setSelectedBlock(null);
   }, [templateId]);
 
+  // ── Keyboard shortcuts ────────────────────────────────────────────────────
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const mod = e.metaKey || e.ctrlKey;
+      const tag = (e.target as HTMLElement)?.tagName;
+      const isInput = tag === 'INPUT' || tag === 'TEXTAREA' || (e.target as HTMLElement)?.isContentEditable;
+
+      // Undo / Redo (always)
+      if (mod && e.key === 'z' && !e.shiftKey) { e.preventDefault(); handleUndo(); return; }
+      if ((mod && e.key === 'z' && e.shiftKey) || (mod && e.key === 'y')) { e.preventDefault(); handleRedo(); return; }
+
+      // Canvas shortcuts only when not in an input
+      if (isInput) return;
+
+      // Escape — deselect block
+      if (e.key === 'Escape') { setSelectedBlock(null); return; }
+
+      // Delete / Backspace — reset selected block position
+      if ((e.key === 'Delete' || e.key === 'Backspace') && selectedBlock) {
+        e.preventDefault();
+        resetSelectedBlock();
+        return;
+      }
+
+      // Arrow keys — nudge selected block
+      if (selectedBlock && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+        e.preventDefault();
+        const nudge = e.shiftKey ? 10 : 1;
+        const current = data.blockTransforms?.[selectedBlock];
+        const tx = current?.x ?? 0;
+        const ty = current?.y ?? 0;
+        const ts = current?.scale ?? 1;
+        let nx = tx, ny = ty;
+        if (e.key === 'ArrowUp') ny = ty - nudge;
+        if (e.key === 'ArrowDown') ny = ty + nudge;
+        if (e.key === 'ArrowLeft') nx = tx - nudge;
+        if (e.key === 'ArrowRight') nx = tx + nudge;
+        updateBlockTransform(selectedBlock, { x: nx, y: ny, scale: ts });
+        return;
+      }
+
+      // +/- — zoom
+      if (e.key === '+' || e.key === '=') { setZoom((z) => Math.min(1.5, +(z + 0.1).toFixed(2))); return; }
+      if (e.key === '-') { setZoom((z) => Math.max(0.15, +(z - 0.1).toFixed(2))); return; }
+      if (e.key === '0') { setZoom(1); return; }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [handleUndo, handleRedo, selectedBlock, resetSelectedBlock, updateBlockTransform, data.blockTransforms]);
+
   const beginBlockInteraction = useCallback((
     event: React.PointerEvent<HTMLButtonElement>,
     block: MarketingBlockKey,
@@ -762,27 +863,52 @@ export default function MarketingEditor() {
         <div className="flex items-center gap-2">
           {/* Undo / Redo */}
           <div className="flex items-center gap-0.5 border rounded-md px-1">
-            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleUndo} disabled={!canUndo} title="Undo (Ctrl+Z)">
+            <Button
+              variant="ghost" size="icon" className="h-7 w-7"
+              onClick={handleUndo} disabled={!canUndo}
+              title="Undo (Ctrl+Z)"
+            >
               <Undo2 className="h-3.5 w-3.5" />
             </Button>
-            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleRedo} disabled={!canRedo} title="Redo (Ctrl+Shift+Z)">
+            <Button
+              variant="ghost" size="icon" className="h-7 w-7"
+              onClick={handleRedo} disabled={!canRedo}
+              title="Redo (Ctrl+Shift+Z)"
+            >
               <Redo2 className="h-3.5 w-3.5" />
             </Button>
           </div>
 
-          {/* Zoom */}
+          {/* Zoom — presets + fine-tune */}
           <div className="flex items-center gap-1 border rounded-md px-1">
-            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setZoom((z) => Math.max(0.15, +(z - 0.1).toFixed(2)))}>
+            <Button variant="ghost" size="icon" className="h-7 w-7" title="Zoom out (-)" onClick={() => setZoom((z) => Math.max(0.15, +(z - 0.1).toFixed(2)))}>
               <ZoomOut className="h-3.5 w-3.5" />
             </Button>
-            <span className="text-xs text-muted-foreground w-12 text-center">{Math.round(zoom * 100)}%</span>
-            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setZoom((z) => Math.min(1.5, +(z + 0.1).toFixed(2)))}>
+            {/* Quick preset buttons */}
+            <div className="flex items-center gap-0.5">
+              {ZOOM_PRESETS.map((p) => (
+                <button
+                  key={p}
+                  onClick={() => setZoom(p)}
+                  className={cn(
+                    'h-5 px-1.5 rounded text-[10px] font-medium transition-colors',
+                    Math.abs(zoom - p) < 0.01
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                  )}
+                  title={`Set zoom to ${Math.round(p * 100)}%`}
+                >
+                  {Math.round(p * 100)}%
+                </button>
+              ))}
+            </div>
+            <Button variant="ghost" size="icon" className="h-7 w-7" title="Zoom in (+)" onClick={() => setZoom((z) => Math.min(1.5, +(z + 0.1).toFixed(2)))}>
               <ZoomIn className="h-3.5 w-3.5" />
             </Button>
           </div>
 
           <Button onClick={handleExport} size="sm" disabled={exporting} className="gap-2">
-            <Download className="h-4 w-4" />
+            {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
             {exporting ? 'Exporting…' : 'Download PNG'}
           </Button>
         </div>
@@ -881,6 +1007,7 @@ export default function MarketingEditor() {
                                       onKeyDown={(e) => {
                                         if (e.key === 'Enter') renameRecent(entry.templateId, renameValue);
                                         if (e.key === 'Escape') setRenamingId(null);
+                                        e.stopPropagation();
                                       }}
                                       onClick={(e) => e.stopPropagation()}
                                     />
@@ -1031,10 +1158,13 @@ export default function MarketingEditor() {
                   {data.photos.length === 0 ? (
                     <button
                       onClick={() => photoInputRef.current?.click()}
-                      className="w-full h-24 border-2 border-dashed border-muted-foreground/30 rounded-lg flex flex-col items-center justify-center gap-1.5 text-muted-foreground hover:border-primary hover:text-primary transition-colors text-xs"
+                      disabled={uploadingPhoto}
+                      className="w-full h-24 border-2 border-dashed border-muted-foreground/30 rounded-lg flex flex-col items-center justify-center gap-1.5 text-muted-foreground hover:border-primary hover:text-primary transition-colors text-xs disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      <ImagePlus className="h-5 w-5" />
-                      <span>Click to add photo</span>
+                      {uploadingPhoto
+                        ? <><Loader2 className="h-5 w-5 animate-spin" /><span>Uploading…</span></>
+                        : <><ImagePlus className="h-5 w-5" /><span>Click to add photo</span></>
+                      }
                     </button>
                   ) : (
                     <div className="flex flex-wrap gap-1.5">
@@ -1056,45 +1186,42 @@ export default function MarketingEditor() {
                       ))}
                       <button
                         onClick={() => photoInputRef.current?.click()}
-                        className="w-16 h-16 border-2 border-dashed border-muted-foreground/30 rounded flex flex-col items-center justify-center text-muted-foreground hover:border-primary hover:text-primary transition-colors"
+                        disabled={uploadingPhoto}
+                        className="w-16 h-16 border-2 border-dashed border-muted-foreground/30 rounded flex flex-col items-center justify-center text-muted-foreground hover:border-primary hover:text-primary transition-colors disabled:opacity-50"
                       >
-                        <ImagePlus className="h-4 w-4" />
+                        {uploadingPhoto ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4" />}
                       </button>
                     </div>
                   )}
                 </div>
 
-                {/* Property Details */}
+                {/* Style & Layout */}
                 <Collapsible open={studioBasicsOpen} onOpenChange={setStudioBasicsOpen}>
                   <CollapsibleTrigger className="flex items-center justify-between w-full py-2 text-xs font-semibold text-foreground hover:text-foreground/80 border-t">
-                    Basics
+                    Style &amp; Layout
                     <ChevronDown className={`h-3.5 w-3.5 transition-transform ${studioBasicsOpen ? 'rotate-180' : ''}`} />
                   </CollapsibleTrigger>
                   <CollapsibleContent className="space-y-3 pb-4">
                     <div className="space-y-2">
                       <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">Headline Style</div>
-                      <div className="grid grid-cols-2 gap-2">
-                        <OptionCard
-                          label="H1"
-                          description="Large serif hero headline"
-                          preview={<span className={cn('font-serif text-3xl leading-none', data.headlineStyle === 'h1' ? 'text-primary' : 'text-foreground')}>H1</span>}
-                          active={data.headlineStyle === 'h1'}
-                          onClick={() => setHeadlineStyle('h1')}
-                        />
-                        <OptionCard
-                          label="H2"
-                          description="Refined uppercase editorial"
-                          preview={<span className={cn('text-3xl font-bold uppercase tracking-[0.2em] leading-none', data.headlineStyle === 'h2' ? 'text-primary' : 'text-foreground')}>H2</span>}
-                          active={data.headlineStyle === 'h2'}
-                          onClick={() => setHeadlineStyle('h2')}
-                        />
-                        <OptionCard
-                          label="H3"
-                          description="Classic luxury headline"
-                          preview={<span className={cn('font-serif text-3xl font-medium tracking-wide leading-none', data.headlineStyle === 'h3' ? 'text-primary' : 'text-foreground')}>H3</span>}
-                          active={data.headlineStyle === 'h3'}
-                          onClick={() => setHeadlineStyle('h3')}
-                        />
+                      <div className="grid grid-cols-3 gap-1.5">
+                        {(['h1', 'h2', 'h3'] as HeadlineStyle[]).map((hs) => {
+                          const meta = HEADLINE_STYLE_LABELS[hs];
+                          return (
+                            <OptionCard
+                              key={hs}
+                              label={meta.name}
+                              description={meta.desc}
+                              preview={
+                                hs === 'h1' ? <span className={cn('font-serif text-2xl italic leading-none', data.headlineStyle === 'h1' ? 'text-primary' : 'text-foreground')}>Aa</span>
+                                : hs === 'h2' ? <span className={cn('text-sm font-bold uppercase tracking-[0.25em] leading-none', data.headlineStyle === 'h2' ? 'text-primary' : 'text-foreground')}>AA</span>
+                                : <span className={cn('font-serif text-2xl font-medium leading-none', data.headlineStyle === 'h3' ? 'text-primary' : 'text-foreground')}>Aa</span>
+                              }
+                              active={data.headlineStyle === hs}
+                              onClick={() => setHeadlineStyle(hs)}
+                            />
+                          );
+                        })}
                       </div>
                     </div>
 
@@ -1110,7 +1237,7 @@ export default function MarketingEditor() {
                         />
                         <OptionCard
                           label="Collage"
-                          description="Main image with supporting photos"
+                          description="Main + 2 supporting photos"
                           icon={LayoutGrid}
                           active={data.photoLayout === 'collage'}
                           onClick={() => setPhotoLayout('collage')}
@@ -1120,6 +1247,7 @@ export default function MarketingEditor() {
                   </CollapsibleContent>
                 </Collapsible>
 
+                {/* Agents section */}
                 <Collapsible open={studioAgentsOpen} onOpenChange={setStudioAgentsOpen}>
                   <CollapsibleTrigger className="flex items-center justify-between w-full py-2 text-xs font-semibold text-foreground hover:text-foreground/80 border-t">
                     Agents
@@ -1128,31 +1256,38 @@ export default function MarketingEditor() {
                   <CollapsibleContent className="space-y-2 pb-4">
                     <div className="grid grid-cols-2 gap-2">
                       <OptionCard
-                        label="Agent"
-                        description="Single agent footer"
+                        label="Single"
+                        description="One agent footer"
                         icon={User}
                         active={data.agentLayout === 'single'}
                         onClick={() => setAgentLayout('single')}
                       />
                       <OptionCard
-                        label="Agent Multi"
-                        description="Use multiple deal agents"
+                        label="Multi-Agent"
+                        description="All deal agents"
                         icon={Users}
                         active={data.agentLayout === 'multi'}
                         onClick={() => setAgentLayout('multi')}
                       />
                     </div>
                     <div className="rounded-xl border bg-muted/25 px-3 py-2 text-[11px] leading-4 text-muted-foreground">
-                      Agent Multi uses the agents already attached to the deal. If only one deal agent exists, the poster falls back to a single agent card.
+                      Multi-agent uses the agents attached to this deal. Falls back to single agent when only one exists.
                     </div>
                   </CollapsibleContent>
                 </Collapsible>
 
+                {/* Canvas hint + selected block */}
                 <div className="rounded-2xl border bg-muted/25 px-3 py-3 text-[11px] leading-4 text-muted-foreground">
-                  <div className="text-[10px] font-semibold uppercase tracking-wide text-foreground/70">Canvas Layout</div>
-                  <div className="mt-2">
-                    Drag the outline on the poster to move text or images. Use the corner handle to scale them up or down.
+                  <div className="text-[10px] font-semibold uppercase tracking-wide text-foreground/70 mb-2 flex items-center gap-1.5">
+                    <Move className="h-3 w-3" /> Canvas Controls
                   </div>
+                  <ul className="space-y-1 text-[10px]">
+                    <li><span className="font-medium text-foreground/80">Drag</span> a block to move it</li>
+                    <li><span className="font-medium text-foreground/80"><Maximize2 className="inline h-2.5 w-2.5 mr-0.5" />corner dot</span> to resize</li>
+                    <li><span className="font-medium text-foreground/80">Arrow keys</span> to nudge (Shift = 10px)</li>
+                    <li><span className="font-medium text-foreground/80">Delete</span> to reset position</li>
+                    <li><span className="font-medium text-foreground/80">Esc</span> to deselect</li>
+                  </ul>
                   {selectedBlock ? (
                     <div className="mt-3 flex items-center justify-between gap-2 rounded-xl border bg-background px-2.5 py-2">
                       <div>
@@ -1166,8 +1301,9 @@ export default function MarketingEditor() {
                   ) : null}
                 </div>
 
+                {/* Property Details */}
                 <Collapsible open={basicsOpen} onOpenChange={setBasicsOpen}>
-                  <CollapsibleTrigger className="flex items-center justify-between w-full py-2 text-xs font-semibold text-foreground hover:text-foreground/80">
+                  <CollapsibleTrigger className="flex items-center justify-between w-full py-2 text-xs font-semibold text-foreground hover:text-foreground/80 border-t">
                     Property Details
                     <ChevronDown className={`h-3.5 w-3.5 transition-transform ${basicsOpen ? 'rotate-180' : ''}`} />
                   </CollapsibleTrigger>
@@ -1211,7 +1347,7 @@ export default function MarketingEditor() {
                         checked={visibility.price}
                         onCheckedChange={(checked) => updateVisibility('price', checked)}
                       />
-                      <Input value={data.price} onChange={(e) => updateField('price', e.target.value)} className="mt-1 h-7 text-xs" />
+                      <Input value={data.price} onChange={(e) => updateField('price', e.target.value)} placeholder="$595,000" className="mt-1 h-7 text-xs" />
                     </div>
                     <div className="grid grid-cols-3 gap-1.5">
                       <div className="col-span-3">
@@ -1224,15 +1360,30 @@ export default function MarketingEditor() {
                       </div>
                       <div>
                         <Label className="text-[10px] text-muted-foreground uppercase tracking-wide">Beds</Label>
-                        <Input value={data.beds} onChange={(e) => updateField('beds', e.target.value)} className="mt-1 h-7 text-xs" />
+                        <Input
+                          type="number" min="0" max="99" step="1"
+                          value={data.beds}
+                          onChange={(e) => updateField('beds', e.target.value)}
+                          className="mt-1 h-7 text-xs"
+                        />
                       </div>
                       <div>
                         <Label className="text-[10px] text-muted-foreground uppercase tracking-wide">Baths</Label>
-                        <Input value={data.baths} onChange={(e) => updateField('baths', e.target.value)} className="mt-1 h-7 text-xs" />
+                        <Input
+                          type="number" min="0" max="99" step="0.5"
+                          value={data.baths}
+                          onChange={(e) => updateField('baths', e.target.value)}
+                          className="mt-1 h-7 text-xs"
+                        />
                       </div>
                       <div>
                         <Label className="text-[10px] text-muted-foreground uppercase tracking-wide">Sq Ft</Label>
-                        <Input value={data.sqft} onChange={(e) => updateField('sqft', e.target.value)} className="mt-1 h-7 text-xs" />
+                        <Input
+                          value={data.sqft}
+                          onChange={(e) => updateField('sqft', e.target.value)}
+                          placeholder="2,500"
+                          className="mt-1 h-7 text-xs"
+                        />
                       </div>
                     </div>
                     <div>
@@ -1303,11 +1454,11 @@ export default function MarketingEditor() {
                     <CollapsibleContent className="space-y-2.5 pb-4">
                       <div>
                         <Label className="text-[10px] text-muted-foreground uppercase tracking-wide">Date</Label>
-                        <Input value={data.openHouseDate} onChange={(e) => updateField('openHouseDate', e.target.value)} className="mt-1 h-7 text-xs" />
+                        <Input value={data.openHouseDate} onChange={(e) => updateField('openHouseDate', e.target.value)} placeholder="Saturday, March 22" className="mt-1 h-7 text-xs" />
                       </div>
                       <div>
                         <Label className="text-[10px] text-muted-foreground uppercase tracking-wide">Time</Label>
-                        <Input value={data.openHouseTime} onChange={(e) => updateField('openHouseTime', e.target.value)} className="mt-1 h-7 text-xs" />
+                        <Input value={data.openHouseTime} onChange={(e) => updateField('openHouseTime', e.target.value)} placeholder="1:00 PM – 4:00 PM" className="mt-1 h-7 text-xs" />
                       </div>
                     </CollapsibleContent>
                   </Collapsible>
@@ -1357,10 +1508,10 @@ export default function MarketingEditor() {
                     <div
                       key={block}
                       className={cn(
-                        'absolute rounded-xl transition-colors',
+                        'absolute rounded-xl transition-all group/block',
                         selected
                           ? 'border-2 border-primary bg-primary/5 shadow-[0_0_0_1px_rgba(255,255,255,0.95)]'
-                          : 'border border-transparent hover:border-primary/40 hover:bg-primary/5'
+                          : 'border border-transparent hover:border-primary/50 hover:bg-primary/5'
                       )}
                       style={{
                         left: rect.left,
@@ -1376,21 +1527,27 @@ export default function MarketingEditor() {
                         aria-label={`Move ${MARKETING_BLOCK_LABELS[block]}`}
                       />
 
-                      {(selected || block === 'photo') ? (
-                        <div className="pointer-events-none absolute left-2 top-2 rounded-full bg-background/95 px-2 py-1 text-[10px] font-semibold text-foreground shadow-sm">
-                          {MARKETING_BLOCK_LABELS[block]}
-                        </div>
-                      ) : null}
+                      {/* Label — visible when selected or hovered */}
+                      <div className={cn(
+                        'pointer-events-none absolute left-2 top-2 rounded-full bg-background/95 px-2 py-1 text-[10px] font-semibold text-foreground shadow-sm transition-opacity',
+                        selected ? 'opacity-100' : 'opacity-0 group-hover/block:opacity-100'
+                      )}>
+                        {MARKETING_BLOCK_LABELS[block]}
+                      </div>
 
+                      {/* Resize handle — visible on hover OR when selected */}
                       <button
                         type="button"
                         className={cn(
-                          'absolute bottom-0 right-0 h-4 w-4 translate-x-1/2 translate-y-1/2 rounded-full border-2 border-background bg-primary shadow-sm',
-                          selected ? 'opacity-100' : 'opacity-0 hover:opacity-100 focus:opacity-100'
+                          'absolute bottom-0 right-0 h-5 w-5 translate-x-1/2 translate-y-1/2 rounded-full border-2 border-background bg-primary shadow-sm transition-opacity cursor-se-resize flex items-center justify-center',
+                          selected ? 'opacity-100' : 'opacity-0 group-hover/block:opacity-100'
                         )}
                         onPointerDown={(event) => beginBlockInteraction(event, block, 'resize')}
                         aria-label={`Resize ${MARKETING_BLOCK_LABELS[block]}`}
-                      />
+                        title="Drag to resize"
+                      >
+                        <Maximize2 className="h-2.5 w-2.5 text-primary-foreground" />
+                      </button>
                     </div>
                   );
                 })}

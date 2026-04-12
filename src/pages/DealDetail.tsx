@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { TEMPLATES, TEMPLATE_CATEGORIES, type TemplateCategory } from '@/data/marketingTemplates';
+import { TEMPLATES, TEMPLATE_CATEGORIES, getDefaultTemplateData, type TemplateCategory } from '@/data/marketingTemplates';
 import { type RecentEntry } from '@/pages/MarketingEditor';
 import { useSignatureRequests } from '@/hooks/useSignatureRequests';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -801,22 +801,8 @@ export default function DealDetail() {
                       }}
                     >
                       {template.render({
-                        address: deal?.address || '123 Main Street',
-                        city: deal?.city || 'City',
-                        state: deal?.state || 'ST',
-                        zip: deal?.zip || '00000',
-                        price: deal?.price || '$595,000',
-                        beds: '4', baths: '3', sqft: '2,500', lotSize: '',
-                        photos: [],
-                        agentName: deal?.primary_agent || 'Agent Name',
-                        agentTitle: 'Real Estate Agent',
-                        agentPhone: '(555) 123-4567',
-                        agentEmail: 'agent@unitedestatesrealty.com',
-                        headline: template.category,
-                        subheadline: '',
-                        description: 'Beautiful property with modern finishes.',
-                        openHouseDate: 'Saturday, March 22',
-                        openHouseTime: '1:00 PM – 4:00 PM',
+                        ...getDefaultTemplateData(deal, template.category),
+                        photos: dealPhotos.map((p) => p.url),
                       }, false)}
                     </div>
                     {/* Hover overlay */}
