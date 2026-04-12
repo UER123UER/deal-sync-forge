@@ -1,4 +1,5 @@
-import { useRef, useState, useCallback, useEffect } from 'react';
+import { useRef, useState, useCallback, useEffect, Component } from 'react';
+import type { ErrorInfo, ReactNode } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { toPng } from 'html-to-image';
 import { toast } from 'sonner';
@@ -65,6 +66,10 @@ import {
   type TemplateVisibility,
 } from '@/data/marketingTemplates';
 import { cn } from '@/lib/utils';
+
+// ── Layout constants ─────────────────────────────────────────────────────────
+const LEFT_PANEL_WIDTH  = 260; // px — left edit panel width
+const TOP_BAR_HEIGHT    = 56;  // px — top toolbar height
 
 // ── Alignment / Snap Guide System ───────────────────────────────────────────
 
@@ -191,21 +196,23 @@ function computeSnap(
     const oB = rect.top  + rect.height;
 
     // X-axis gaps (horizontal spacing)
+    const otherCY = rect.top + rect.height / 2;
+    const otherCX = rect.left + rect.width / 2;
     if (oR <= snappedLeft) {
-      // other is to the left
-      gaps.push({ axis: 'x', from: oR, to: snappedLeft, center: (snappedCY + rect.top + rect.height / 2) / 2, value: snappedLeft - oR });
+      // other is to the left — midY = average of both block centers
+      gaps.push({ axis: 'x', from: oR, to: snappedLeft, center: (snappedCY + otherCY) / 2, value: snappedLeft - oR });
     } else if (rect.left >= snappedR) {
       // other is to the right
-      gaps.push({ axis: 'x', from: snappedR, to: rect.left, center: (snappedCY + rect.top + rect.height / 2) / 2, value: rect.left - snappedR });
+      gaps.push({ axis: 'x', from: snappedR, to: rect.left, center: (snappedCY + otherCY) / 2, value: rect.left - snappedR });
     }
 
     // Y-axis gaps (vertical spacing)
     if (oB <= snappedTop) {
-      // other is above
-      gaps.push({ axis: 'y', from: oB, to: snappedTop, center: (snappedCX + rect.left + rect.width / 2) / 2, value: snappedTop - oB });
+      // other is above — midX = average of both block centers
+      gaps.push({ axis: 'y', from: oB, to: snappedTop, center: (snappedCX + otherCX) / 2, value: snappedTop - oB });
     } else if (rect.top >= snappedB) {
       // other is below
-      gaps.push({ axis: 'y', from: snappedB, to: rect.top, center: (snappedCX + rect.left + rect.width / 2) / 2, value: rect.top - snappedB });
+      gaps.push({ axis: 'y', from: snappedB, to: rect.top, center: (snappedCX + otherCX) / 2, value: rect.top - snappedB });
     }
   }
 
@@ -245,11 +252,14 @@ function loadRecents(dealId: string): RecentEntry[] {
   }
 }
 
-function saveRecents(dealId: string, entries: RecentEntry[]) {
+function saveRecents(dealId: string, entries: RecentEntry[]): boolean {
   try {
     localStorage.setItem(recentsKey(dealId), JSON.stringify(entries.slice(0, RECENTS_LIMIT)));
-  } catch {
-    // storage full — ignore
+    return true;
+  } catch (err) {
+    // QuotaExceededError — caller should surface this to the user
+    console.warn('[Marketing] localStorage quota exceeded:', err);
+    return false;
   }
 }
 
@@ -347,7 +357,7 @@ const MARKETING_BLOCK_LABELS: Record<string, string> = {
   agent: 'Agent info',
 };
 
-function isCustomTextBlock(block: MarketingBlockKey): block is `custom-text-${string}` {
+function isCustomTextBlock(block: string): block is `custom-text-${string}` {
   return block.startsWith('custom-text-');
 }
 
@@ -438,6 +448,72 @@ function OptionCard({
       <div className="mt-0.5 text-[10px] leading-3.5 text-muted-foreground">{description}</div>
     </button>
   );
+}
+
+// ── Template Error Boundary ───────────────────────────────────────────────────
+
+class TemplateErrorBoundary extends Component<
+  { children: ReactNode },
+  { hasError: boolean; message: string }
+> {
+  constructor(props: { children: ReactNode }) {
+    super(props);
+    this.state = { hasError: false, message: '' };
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, message: error?.message ?? 'Unknown render error' };
+  }
+
+  componentDidCatch(error: Error, info: ErrorInfo) {
+    console.error('[TemplateErrorBoundary] Template render failed:', error, info);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div
+          style={{
+            width: '100%',
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: '#fef2f2',
+            color: '#991b1b',
+            fontFamily: 'system-ui, sans-serif',
+            fontSize: 13,
+            gap: 8,
+            padding: 24,
+            textAlign: 'center',
+          }}
+        >
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
+          </svg>
+          <strong>Template failed to render</strong>
+          <span style={{ fontSize: 11, color: '#b91c1c', maxWidth: 320 }}>{this.state.message}</span>
+          <button
+            onClick={() => this.setState({ hasError: false, message: '' })}
+            style={{
+              marginTop: 4,
+              padding: '4px 12px',
+              background: '#dc2626',
+              color: '#fff',
+              border: 'none',
+              borderRadius: 6,
+              cursor: 'pointer',
+              fontSize: 12,
+            }}
+          >
+            Retry
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
 }
 
 // ── Component ────────────────────────────────────────────────────────────────
@@ -540,8 +616,14 @@ export default function MarketingEditor() {
     setSaveStatus('saving');
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     saveTimerRef.current = setTimeout(() => {
-      const updated = upsertRecent(id, templateId, data);
-      setRecents(updated);
+      const entries = loadRecents(id).filter((e) => e.templateId !== templateId);
+      const updated: RecentEntry[] = [{ templateId, data, lastEdited: Date.now() }, ...entries];
+      const saved = saveRecents(id, updated);
+      if (saved) {
+        setRecents(updated);
+      } else {
+        toast.error('Auto-save failed — browser storage is full. Try clearing old designs.');
+      }
       setSaveStatus('saved');
       if (saveStatusTimerRef.current) clearTimeout(saveStatusTimerRef.current);
       saveStatusTimerRef.current = setTimeout(() => setSaveStatus('idle'), 2000);
@@ -640,6 +722,9 @@ export default function MarketingEditor() {
   const downloadRecent = useCallback(async (entry: RecentEntry) => {
     const t = TEMPLATES.find((t) => t.id === entry.templateId);
     if (!t) return;
+    // Use actual saved canvas dimensions, falling back to template defaults
+    const exportW = entry.data.canvasWidth || t.width;
+    const exportH = entry.data.canvasHeight || t.height;
     const toastId = toast.loading('Preparing download…');
     const container = document.createElement('div');
     container.style.position = 'fixed';
@@ -652,7 +737,7 @@ export default function MarketingEditor() {
     await new Promise(r => setTimeout(r, 200));
     try {
       const dataUrl = await toPng(container.firstElementChild as HTMLElement, {
-        width: t.width, height: t.height, pixelRatio: 2,
+        width: exportW, height: exportH, pixelRatio: 2,
       });
       const link = document.createElement('a');
       link.download = `${(entry.customName || t.name).replace(/\s+/g, '-').toLowerCase()}.png`;
@@ -840,25 +925,48 @@ export default function MarketingEditor() {
   const toggleLockBlock = useCallback((block: MarketingBlockKey) => {
     setLockedBlocks((prev) => {
       const next = new Set(prev);
-      if (next.has(block)) { next.delete(block); toast('Block unlocked'); }
-      else { next.add(block); toast('Block locked — it can\'t be moved while locked'); }
+      if (next.has(block)) {
+        next.delete(block);
+        toast.success('Block unlocked');
+      } else {
+        next.add(block);
+        toast('Block locked — position is frozen');
+      }
       return next;
     });
   }, []);
 
   const duplicateBlock = useCallback((block: MarketingBlockKey) => {
-    // Duplicate = copy the current transform slightly offset so user can see both
-    const current = data.blockTransforms?.[block];
-    if (!current) return;
-    // We can't truly duplicate template blocks (they're fixed), so we nudge +16,+16
-    setData((prev) => ({
-      ...prev,
-      blockTransforms: {
-        ...prev.blockTransforms,
-        [block]: { x: (current.x ?? 0) + 16, y: (current.y ?? 0) + 16, scale: current.scale ?? 1 },
-      },
-    }));
-    toast('Position nudged — blocks are template-bound and can\'t be fully duplicated');
+    if (isCustomTextBlock(block)) {
+      // Custom text blocks can actually be duplicated
+      const customTextId = getCustomTextBlockId(block);
+      if (!customTextId) return;
+      const newId = `text-${Date.now()}`;
+      const newBlockKey = `custom-text-${newId}` as MarketingBlockKey;
+      const currentTransform = data.blockTransforms?.[block];
+      setData((prev) => {
+        const original = prev.customTextBlocks.find((entry) => entry.id === customTextId);
+        if (!original) return prev;
+        return {
+          ...prev,
+          customTextBlocks: [...prev.customTextBlocks, { id: newId, text: original.text }],
+          blockTransforms: {
+            ...prev.blockTransforms,
+            [newBlockKey]: {
+              x: (currentTransform?.x ?? 0) + 24,
+              y: (currentTransform?.y ?? 0) + 24,
+              scale: currentTransform?.scale ?? 1,
+            },
+          },
+        };
+      });
+      setSelectedBlock(newBlockKey);
+      toast.success('Text box duplicated');
+      return;
+    }
+
+    // Template blocks can't be truly duplicated — reset position instead (already in toolbar via Reset)
+    toast('Template blocks can\'t be duplicated — use Reset to clear position');
   }, [data.blockTransforms, setData]);
 
   const deleteBlock = useCallback((block: MarketingBlockKey) => {
@@ -905,7 +1013,7 @@ export default function MarketingEditor() {
       },
       duration: 5000,
     });
-  }, [data.photos, setData]);
+  }, [setData]);
 
   const toggleGroupBlock = useCallback((block: MarketingBlockKey) => {
     setData((prev) => {
@@ -929,24 +1037,31 @@ export default function MarketingEditor() {
     const customTextId = `text-${Date.now()}`;
     const blockKey = `custom-text-${customTextId}` as MarketingBlockKey;
 
-    setData((prev) => ({
-      ...prev,
-      customTextBlocks: [
-        ...prev.customTextBlocks,
-        {
-          id: customTextId,
-          text: 'Custom text',
+    setData((prev) => {
+      const cw = prev.canvasWidth || 1080;
+      const ch = prev.canvasHeight || 1080;
+      // Scale the stacking offset proportionally with canvas size
+      const fontScale = cw / 1080;
+      const stackOffset = Math.round(72 * fontScale);
+      return {
+        ...prev,
+        customTextBlocks: [
+          ...prev.customTextBlocks,
+          {
+            id: customTextId,
+            text: 'Custom text',
+          },
+        ],
+        blockTransforms: {
+          ...(prev.blockTransforms ?? {}),
+          [blockKey]: {
+            x: Math.round(cw * 0.08),
+            y: Math.round(ch * 0.1) + (prev.customTextBlocks.length * stackOffset),
+            scale: 1,
+          },
         },
-      ],
-      blockTransforms: {
-        ...(prev.blockTransforms ?? {}),
-        [blockKey]: {
-          x: Math.round((prev.canvasWidth || 1080) * 0.08),
-          y: Math.round((prev.canvasHeight || 1080) * 0.1) + (prev.customTextBlocks.length * 70),
-          scale: 1,
-        },
-      },
-    }));
+      };
+    });
 
     setSelectedBlock(blockKey);
     toast.success('Custom text box added');
@@ -1061,9 +1176,9 @@ export default function MarketingEditor() {
   const canvasW = data.canvasWidth || 1080;
   const canvasH = data.canvasHeight || 1080;
 
-  // Scale canvas to viewport
-  const maxCanvasWidth = typeof window !== 'undefined' ? window.innerWidth - 680 : 600;
-  const maxCanvasHeight = typeof window !== 'undefined' ? window.innerHeight - 120 : 600;
+  // Scale canvas to viewport (subtract panel widths / header height)
+  const maxCanvasWidth  = typeof window !== 'undefined' ? window.innerWidth  - LEFT_PANEL_WIDTH - 64 : 600;
+  const maxCanvasHeight = typeof window !== 'undefined' ? window.innerHeight - TOP_BAR_HEIGHT   - 64 : 600;
   const naturalScale = Math.min(maxCanvasWidth / canvasW, maxCanvasHeight / canvasH, 1);
   const scale = naturalScale * zoom;
   scaleRef.current = scale;
@@ -1295,7 +1410,7 @@ export default function MarketingEditor() {
     const onKey = (e: KeyboardEvent) => {
       const mod = e.metaKey || e.ctrlKey;
       const tag = (e.target as HTMLElement)?.tagName;
-      const isInput = tag === 'INPUT' || tag === 'TEXTAREA' || (e.target as HTMLElement)?.isContentEditable;
+      const isInput = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || (e.target as HTMLElement)?.isContentEditable;
 
       // Undo / Redo (always)
       if (mod && e.key === 'z' && !e.shiftKey) { e.preventDefault(); handleUndo(); return; }
@@ -1380,9 +1495,6 @@ export default function MarketingEditor() {
         x: currentTransform?.x ?? 0,
         y: currentTransform?.y ?? 0,
         scale: currentTransform?.scale ?? 1,
-        // Capture current w/h for per-photo resize (defaults to measured rect size)
-        w: currentTransform?.w ?? baseRect.width,
-        h: currentTransform?.h ?? baseRect.height,
       },
       baseRect,
       targets,
@@ -1405,7 +1517,7 @@ export default function MarketingEditor() {
               {template.category}
             </span>
             <span className="text-xs text-muted-foreground">
-              {TYPE_LABELS[template.type]} · {template.width}×{template.height}
+              {TYPE_LABELS[template.type]} · {canvasW}×{canvasH}
             </span>
           </div>
         </div>
@@ -1963,7 +2075,9 @@ export default function MarketingEditor() {
                 ref={canvasRef}
                 style={{ width: canvasW, height: canvasH }}
               >
-                {template.render(data, false)}
+                <TemplateErrorBoundary>
+                  {template.render(data, false)}
+                </TemplateErrorBoundary>
               </div>
 
               {/* ── Alignment Guide Overlay ── */}
@@ -2232,15 +2346,26 @@ export default function MarketingEditor() {
                             {isLocked ? <Lock className="h-3.5 w-3.5" /> : <LockOpen className="h-3.5 w-3.5" />}
                           </button>
 
-                          {/* Duplicate (nudge position) */}
-                          <button
-                            type="button"
-                            title="Duplicate block position"
-                            onClick={() => duplicateBlock(block)}
-                            className="flex items-center justify-center h-7 w-7 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-                          >
-                            <Copy className="h-3.5 w-3.5" />
-                          </button>
+                          {/* Duplicate — only for custom text blocks; template blocks get a Reset instead */}
+                          {isCustomTextSelection ? (
+                            <button
+                              type="button"
+                              title="Duplicate text box"
+                              onClick={() => duplicateBlock(block)}
+                              className="flex items-center justify-center h-7 w-7 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                            >
+                              <Copy className="h-3.5 w-3.5" />
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              title="Reset block position"
+                              onClick={resetSelectedBlock}
+                              className="flex items-center justify-center h-7 w-7 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                            >
+                              <Undo2 className="h-3.5 w-3.5" />
+                            </button>
+                          )}
 
                           {/* Delete (hide block) */}
                           {canDelete && (
@@ -2259,10 +2384,10 @@ export default function MarketingEditor() {
                         </div>
                       )}
 
-                      {/* Label — visible when selected or hovered */}
+                      {/* Label — always visible when locked; visible on hover or select otherwise */}
                       <div className={cn(
                         'pointer-events-none absolute left-2 top-2 rounded-full bg-background/95 px-2 py-1 text-[10px] font-semibold text-foreground shadow-sm transition-opacity flex items-center gap-1',
-                        selected ? 'opacity-100' : 'opacity-0 group-hover/block:opacity-100'
+                        selected || isLocked ? 'opacity-100' : 'opacity-0 group-hover/block:opacity-100'
                       )}>
                         {isLocked && <Lock className="h-2.5 w-2.5 text-amber-500" />}
                         {isGrouped && <Link2 className="h-2.5 w-2.5 text-violet-500" />}
