@@ -322,8 +322,6 @@ type MarketingBlockInteraction = {
     x: number;
     y: number;
     scale: number;
-    w?: number;
-    h?: number;
   };
   baseRect: MarketingBlockRect;
   targets: Array<{
@@ -332,8 +330,6 @@ type MarketingBlockInteraction = {
       x: number;
       y: number;
       scale: number;
-      w?: number;
-      h?: number;
     };
     baseRect: MarketingBlockRect;
   }>;
@@ -342,10 +338,7 @@ type MarketingBlockInteraction = {
 
 const MARKETING_BLOCK_LABELS: Record<string, string> = {
   logo: 'Logo',
-  photo: 'Photo Area',
-  'photo-0': 'Photo 1',
-  'photo-1': 'Photo 2',
-  'photo-2': 'Photo 3',
+  photo: 'Photo',
   headline: 'Headline',
   address: 'Address',
   price: 'Price',
@@ -798,7 +791,7 @@ export default function MarketingEditor() {
   }, [customW, customH, setData]);
 
   const updateBlockTransforms = useCallback((
-    updates: Partial<Record<MarketingBlockKey, { x?: number; y?: number; scale?: number; w?: number; h?: number }>>,
+    updates: Partial<Record<MarketingBlockKey, { x?: number; y?: number; scale?: number }>>,
     replace = false,
   ) => {
     const applyUpdate = replace ? replaceCurrentData : setData;
@@ -823,7 +816,7 @@ export default function MarketingEditor() {
 
   const updateBlockTransform = useCallback((
     block: MarketingBlockKey,
-    nextTransform: { x: number; y: number; scale: number; w?: number; h?: number },
+    nextTransform: { x: number; y: number; scale: number },
     replace = false,
   ) => {
     updateBlockTransforms({ [block]: nextTransform }, replace);
@@ -893,32 +886,6 @@ export default function MarketingEditor() {
       return;
     }
 
-    // photo-0/1/2 → remove that photo from the photos array
-    if (block === 'photo-0' || block === 'photo-1' || block === 'photo-2') {
-      const idx = parseInt(block.split('-')[1]);
-      setData((prev) => {
-        const prevPhotos = prev.photos;
-        const nextPhotos = prevPhotos.filter((_, i) => i !== idx);
-        return {
-          ...prev,
-          photos: nextPhotos,
-          groupedBlockKeys: prev.groupedBlockKeys.filter((entry) => entry !== block),
-        };
-      });
-      setSelectedBlock(null);
-      toast('Photo removed', {
-        action: {
-          label: 'Undo',
-          onClick: () => setData((prev) => {
-            const restored = [...prev.photos];
-            restored.splice(idx, 0, data.photos[idx] ?? '');
-            return { ...prev, photos: restored };
-          }),
-        },
-        duration: 5000,
-      });
-      return;
-    }
     // Other blocks → hide via visibility toggle
     const visibilityKey = (block === 'agent' || block === 'photo') ? null : block as keyof TemplateVisibility;
     if (!visibilityKey) return;
@@ -1164,10 +1131,6 @@ export default function MarketingEditor() {
   const canvasSizeRef = useRef({ w: canvasW, h: canvasH });
   useEffect(() => { canvasSizeRef.current = { w: canvasW, h: canvasH }; }, [canvasW, canvasH]);
 
-  const isPhotoBlock = useCallback((block: MarketingBlockKey) => (
-    block === 'photo-0' || block === 'photo-1' || block === 'photo-2'
-  ), []);
-
   const getInteractionTargets = useCallback((block: MarketingBlockKey) => {
     const rects = blockRectsRef.current;
     const groupedTargetKeys = groupedBlocks.has(block)
@@ -1187,8 +1150,6 @@ export default function MarketingEditor() {
             x: currentTransform?.x ?? 0,
             y: currentTransform?.y ?? 0,
             scale: currentTransform?.scale ?? 1,
-            w: currentTransform?.w ?? baseRect.width,
-            h: currentTransform?.h ?? baseRect.height,
           },
           baseRect,
         };
@@ -1238,7 +1199,7 @@ export default function MarketingEditor() {
 
         const deltaX = snappedX - interaction.startTransform.x;
         const deltaY = snappedY - interaction.startTransform.y;
-        const updates: Partial<Record<MarketingBlockKey, { x?: number; y?: number; scale?: number; w?: number; h?: number }>> = {};
+        const updates: Partial<Record<MarketingBlockKey, { x?: number; y?: number; scale?: number }>> = {};
 
         interaction.targets.forEach((target) => {
           updates[target.block] = {
@@ -1263,30 +1224,14 @@ export default function MarketingEditor() {
       setSpacingGuides([]);
 
       const isGroupedInteraction = interaction.targets.length > 1;
-      const isIndividualPhoto = isPhotoBlock(interaction.block);
 
       if (isGroupedInteraction) {
-        const baseScaleSize = Math.max(
-          interaction.startTransform.w ?? interaction.baseRect.width,
-          interaction.startTransform.h ?? interaction.baseRect.height,
-          interaction.baseRect.width,
-          interaction.baseRect.height,
-          120,
-        );
+        const baseScaleSize = Math.max(interaction.baseRect.width, interaction.baseRect.height, 120);
         const dominantDelta = Math.abs(dx) > Math.abs(dy) ? dx : dy;
         const ratio = Math.min(3, Math.max(0.35, (baseScaleSize + dominantDelta) / baseScaleSize));
-        const updates: Partial<Record<MarketingBlockKey, { x?: number; y?: number; scale?: number; w?: number; h?: number }>> = {};
+        const updates: Partial<Record<MarketingBlockKey, { x?: number; y?: number; scale?: number }>> = {};
 
         interaction.targets.forEach((target) => {
-          if (isPhotoBlock(target.block)) {
-            updates[target.block] = {
-              ...target.startTransform,
-              w: Math.round(Math.max(80, (target.startTransform.w ?? target.baseRect.width) * ratio)),
-              h: Math.round(Math.max(60, (target.startTransform.h ?? target.baseRect.height) * ratio)),
-            };
-            return;
-          }
-
           updates[target.block] = {
             ...target.startTransform,
             scale: Number.isFinite(target.startTransform.scale * ratio)
@@ -1296,17 +1241,6 @@ export default function MarketingEditor() {
         });
 
         updateBlockTransforms(updates, interaction.committed);
-      } else if (isIndividualPhoto) {
-        // For individual photos, resize by changing explicit w/h dimensions
-        const baseW = interaction.startTransform.w ?? interaction.baseRect.width;
-        const baseH = interaction.startTransform.h ?? interaction.baseRect.height;
-        const nextW = Math.max(80, baseW + dx);
-        const nextH = Math.max(60, baseH + dy);
-        updateBlockTransform(
-          interaction.block,
-          { ...interaction.startTransform, w: Math.round(nextW), h: Math.round(nextH) },
-          interaction.committed,
-        );
       } else {
         const baseSize = Math.max(interaction.baseRect.width, interaction.baseRect.height, 120);
         const dominantDelta = Math.abs(dx) > Math.abs(dy) ? dx : dy;
@@ -1344,7 +1278,7 @@ export default function MarketingEditor() {
       window.removeEventListener('pointerup', handlePointerEnd);
       window.removeEventListener('pointercancel', handlePointerEnd);
     };
-  }, [getInteractionTargets, isPhotoBlock, updateBlockTransform, updateBlockTransforms]);
+  }, [getInteractionTargets, updateBlockTransform, updateBlockTransforms]);
 
   useEffect(() => {
     setSelectedBlock(null);
@@ -1389,7 +1323,7 @@ export default function MarketingEditor() {
         e.preventDefault();
         const nudge = e.shiftKey ? 10 : 1;
         const targets = getInteractionTargets(selectedBlock);
-        const updates: Partial<Record<MarketingBlockKey, { x?: number; y?: number; scale?: number; w?: number; h?: number }>> = {};
+        const updates: Partial<Record<MarketingBlockKey, { x?: number; y?: number; scale?: number }>> = {};
 
         targets.forEach((target) => {
           let nx = target.startTransform.x;
@@ -2219,12 +2153,11 @@ export default function MarketingEditor() {
 
                   const isLocked = lockedBlocks.has(block);
                   const isGrouped = groupedBlocks.has(block);
-                  const isPhotoBlockSelection = isPhotoBlock(block);
                   const isCustomTextSelection = isCustomTextBlock(block);
-                  const visibilityKey = (block === 'agent' || block === 'photo' || isPhotoBlockSelection || isCustomTextSelection)
+                  const visibilityKey = (block === 'agent' || block === 'photo' || isCustomTextSelection)
                     ? null
                     : block as keyof TemplateVisibility;
-                  const canDelete = visibilityKey !== null || isPhotoBlockSelection || isCustomTextSelection;
+                  const canDelete = visibilityKey !== null || isCustomTextSelection;
 
                   return (
                     <div
