@@ -79,6 +79,9 @@ export const CANVAS_DIMENSIONS: CanvasDimension[] = [
 export type MarketingBlockKey =
   | 'logo'
   | 'photo'
+  | 'photo-0'
+  | 'photo-1'
+  | 'photo-2'
   | 'headline'
   | 'address'
   | 'price'
@@ -90,6 +93,10 @@ export interface MarketingBlockTransform {
   x: number;
   y: number;
   scale: number;
+  /** Per-photo width override in canvas-px (photo-0/1/2 only) */
+  w?: number;
+  /** Per-photo height override in canvas-px (photo-0/1/2 only) */
+  h?: number;
 }
 
 export type MarketingBlockTransforms = Partial<Record<MarketingBlockKey, MarketingBlockTransform>>;
@@ -212,12 +219,17 @@ function AdjustableBlock({
   children: React.ReactNode;
 }) {
   const transform = getBlockTransform(data, block);
+  // Per-photo w/h overrides (used by photo-0/1/2 blocks)
+  const wOverride = transform.w != null ? { width: transform.w } : {};
+  const hOverride = transform.h != null ? { height: transform.h } : {};
 
   return (
     <div
       data-marketing-block={block}
       style={{
         ...style,
+        ...wOverride,
+        ...hOverride,
         position: 'relative',
         transform: `translate(${transform.x}px, ${transform.y}px) scale(${transform.scale})`,
         transformOrigin: 'top left',
@@ -438,33 +450,98 @@ function renderHeadlineBlock(
   );
 }
 
+/**
+ * Renders the photo area. Each photo gets its own AdjustableBlock so it can
+ * be dragged and resized independently in the editor.
+ *
+ * Single layout  → one full-size photo (photo-0)
+ * Collage layout → photos stacked in an absolute-positioned container so
+ *                  each one can overlap / be repositioned freely.
+ *                  Default positions mirror the old CSS-grid collage look.
+ */
 function renderPhotoBlock(data: TemplateData) {
-  // Hero layout or not enough photos for collage
-  if (data.photoLayout !== 'collage' || data.photos.length < 2) {
-    return <Photo photos={data.photos} style={{ width: '100%', height: '100%' }} />;
+  const photos = data.photos;
+
+  // ── Single / no-collage layout ─────────────────────────────────────────────
+  if (data.photoLayout !== 'collage' || photos.length < 2) {
+    return (
+      <AdjustableBlock data={data} block="photo-0" style={{ width: '100%', height: '100%' }}>
+        <PhotoFrame
+          src={photos[0]}
+          style={{ width: '100%', height: '100%' }}
+        />
+      </AdjustableBlock>
+    );
   }
 
-  const [first, second, third] = data.photos;
-  // Only 2 photos → 2-column bottom row, no duplication
-  const hasThird = data.photos.length >= 3;
+  // ── Collage layout — each photo is independently adjustable ────────────────
+  // The container is `position: relative` so child absolute divs can overflow.
+  // Default layout mimics the old grid:
+  //   photo-0: full width, top 63 % of height
+  //   photo-1: left half, bottom 35 %
+  //   photo-2: right half, bottom 35 %
+  const hasThird = photos.length >= 3;
+  const pad = 10;
+  const gap = 8;
 
+  // We render a plain wrapper; each AdjustableBlock is absolutely positioned
+  // using its stored transform (defaulting to the preset positions below).
+  // The `data-marketing-block` attribute is added by AdjustableBlock itself.
   return (
-    <div
-      style={{
-        width: '100%',
-        height: '100%',
-        background: '#0e1428',
-        padding: 10,
-        display: 'grid',
-        gridTemplateRows: '1.75fr 1fr',
-        gap: 8,
-      }}
-    >
-      <PhotoFrame src={first} style={{ width: '100%', height: '100%', borderRadius: 6 }} />
-      <div style={{ display: 'grid', gridTemplateColumns: hasThird ? '1fr 1fr' : '1fr', gap: 8 }}>
-        <PhotoFrame src={second} style={{ width: '100%', height: '100%', borderRadius: 6 }} />
-        {hasThird && <PhotoFrame src={third} style={{ width: '100%', height: '100%', borderRadius: 6 }} />}
-      </div>
+    <div style={{ width: '100%', height: '100%', position: 'relative', background: '#0e1428', overflow: 'visible' }}>
+      {/* photo-0 — main top photo */}
+      <AdjustableBlock
+        data={data}
+        block="photo-0"
+        style={{
+          position: 'absolute',
+          left: pad,
+          top: pad,
+          // Default: full width, ~63% height. Overridden by transform.w/h.
+          right: pad,
+          bottom: `calc(37% + ${gap / 2}px)`,
+          overflow: 'hidden',
+          borderRadius: 6,
+        }}
+      >
+        <PhotoFrame src={photos[0]} style={{ width: '100%', height: '100%', borderRadius: 6 }} />
+      </AdjustableBlock>
+
+      {/* photo-1 — bottom-left (or full-width bottom if only 2 photos) */}
+      <AdjustableBlock
+        data={data}
+        block="photo-1"
+        style={{
+          position: 'absolute',
+          left: pad,
+          top: `calc(63% + ${gap / 2}px)`,
+          width: hasThird ? `calc(50% - ${pad + gap / 2}px)` : `calc(100% - ${pad * 2}px)`,
+          bottom: pad,
+          overflow: 'hidden',
+          borderRadius: 6,
+        }}
+      >
+        <PhotoFrame src={photos[1]} style={{ width: '100%', height: '100%', borderRadius: 6 }} />
+      </AdjustableBlock>
+
+      {/* photo-2 — bottom-right (only when 3+ photos) */}
+      {hasThird && (
+        <AdjustableBlock
+          data={data}
+          block="photo-2"
+          style={{
+            position: 'absolute',
+            right: pad,
+            top: `calc(63% + ${gap / 2}px)`,
+            width: `calc(50% - ${pad + gap / 2}px)`,
+            bottom: pad,
+            overflow: 'hidden',
+            borderRadius: 6,
+          }}
+        >
+          <PhotoFrame src={photos[2]} style={{ width: '100%', height: '100%', borderRadius: 6 }} />
+        </AdjustableBlock>
+      )}
     </div>
   );
 }

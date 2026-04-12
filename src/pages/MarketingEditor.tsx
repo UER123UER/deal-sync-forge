@@ -323,6 +323,8 @@ type MarketingBlockInteraction = {
     x: number;
     y: number;
     scale: number;
+    w?: number;
+    h?: number;
   };
   baseRect: MarketingBlockRect;
   committed: boolean;
@@ -330,7 +332,10 @@ type MarketingBlockInteraction = {
 
 const MARKETING_BLOCK_LABELS: Record<MarketingBlockKey, string> = {
   logo: 'Logo',
-  photo: 'Photo',
+  photo: 'Photo Area',
+  'photo-0': 'Photo 1',
+  'photo-1': 'Photo 2',
+  'photo-2': 'Photo 3',
   headline: 'Headline',
   address: 'Address',
   price: 'Price',
@@ -814,8 +819,30 @@ export default function MarketingEditor() {
   }, [data.blockTransforms, setData]);
 
   const deleteBlock = useCallback((block: MarketingBlockKey) => {
-    // "Delete" = hide the block via visibility
-    const visibilityKey = block === 'agent' ? null : block as keyof TemplateVisibility;
+    // photo-0/1/2 → remove that photo from the photos array
+    if (block === 'photo-0' || block === 'photo-1' || block === 'photo-2') {
+      const idx = parseInt(block.split('-')[1]);
+      setData((prev) => {
+        const prevPhotos = prev.photos;
+        const nextPhotos = prevPhotos.filter((_, i) => i !== idx);
+        return { ...prev, photos: nextPhotos };
+      });
+      setSelectedBlock(null);
+      toast('Photo removed', {
+        action: {
+          label: 'Undo',
+          onClick: () => setData((prev) => {
+            const restored = [...prev.photos];
+            restored.splice(idx, 0, data.photos[idx] ?? '');
+            return { ...prev, photos: restored };
+          }),
+        },
+        duration: 5000,
+      });
+      return;
+    }
+    // Other blocks → hide via visibility toggle
+    const visibilityKey = (block === 'agent' || block === 'photo') ? null : block as keyof TemplateVisibility;
     if (!visibilityKey) return;
     setData((prev) => ({
       ...prev,
@@ -832,7 +859,7 @@ export default function MarketingEditor() {
       },
       duration: 5000,
     });
-  }, [setData]);
+  }, [data.photos, setData]);
 
   const toggleGroupBlock = useCallback((block: MarketingBlockKey) => {
     setGroupedBlocks((prev) => {
@@ -1073,21 +1100,38 @@ export default function MarketingEditor() {
       setAlignGuides([]);
       setSpacingGuides([]);
 
-      const baseSize = Math.max(interaction.baseRect.width, interaction.baseRect.height, 120);
-      const dominantDelta = Math.abs(dx) > Math.abs(dy) ? dx : dy;
-      const nextScale = Math.min(
-        3,
-        Math.max(0.35, interaction.startTransform.scale * ((baseSize + dominantDelta) / baseSize)),
-      );
+      const isIndividualPhoto =
+        interaction.block === 'photo-0' ||
+        interaction.block === 'photo-1' ||
+        interaction.block === 'photo-2';
 
-      updateBlockTransform(
-        interaction.block,
-        {
-          ...interaction.startTransform,
-          scale: Number.isFinite(nextScale) ? nextScale : interaction.startTransform.scale,
-        },
-        interaction.committed,
-      );
+      if (isIndividualPhoto) {
+        // For individual photos, resize by changing explicit w/h dimensions
+        const baseW = interaction.startTransform.w ?? interaction.baseRect.width;
+        const baseH = interaction.startTransform.h ?? interaction.baseRect.height;
+        const nextW = Math.max(80, baseW + dx);
+        const nextH = Math.max(60, baseH + dy);
+        updateBlockTransform(
+          interaction.block,
+          { ...interaction.startTransform, w: Math.round(nextW), h: Math.round(nextH) },
+          interaction.committed,
+        );
+      } else {
+        const baseSize = Math.max(interaction.baseRect.width, interaction.baseRect.height, 120);
+        const dominantDelta = Math.abs(dx) > Math.abs(dy) ? dx : dy;
+        const nextScale = Math.min(
+          3,
+          Math.max(0.35, interaction.startTransform.scale * ((baseSize + dominantDelta) / baseSize)),
+        );
+        updateBlockTransform(
+          interaction.block,
+          {
+            ...interaction.startTransform,
+            scale: Number.isFinite(nextScale) ? nextScale : interaction.startTransform.scale,
+          },
+          interaction.committed,
+        );
+      }
       interaction.committed = true;
     };
 
@@ -1187,6 +1231,7 @@ export default function MarketingEditor() {
     if (lockedBlocks.has(block)) return;
 
     const currentTransform = data.blockTransforms?.[block];
+    const baseRect = blockRects[block] ?? { left: 0, top: 0, width: 220, height: 220 };
     interactionRef.current = {
       block,
       mode,
@@ -1196,8 +1241,11 @@ export default function MarketingEditor() {
         x: currentTransform?.x ?? 0,
         y: currentTransform?.y ?? 0,
         scale: currentTransform?.scale ?? 1,
+        // Capture current w/h for per-photo resize (defaults to measured rect size)
+        w: currentTransform?.w ?? baseRect.width,
+        h: currentTransform?.h ?? baseRect.height,
       },
-      baseRect: blockRects[block] ?? { left: 0, top: 0, width: 220, height: 220 },
+      baseRect,
       committed: false,
     };
   }, [blockRects, data.blockTransforms, lockedBlocks]);
@@ -2135,8 +2183,9 @@ export default function MarketingEditor() {
 
                   const isLocked = lockedBlocks.has(block);
                   const isGrouped = groupedBlocks.has(block);
-                  const visibilityKey = block === 'agent' ? null : block as keyof TemplateVisibility;
-                  const canDelete = visibilityKey !== null;
+                  const isPhotoBlock = block === 'photo-0' || block === 'photo-1' || block === 'photo-2';
+                  const visibilityKey = (block === 'agent' || block === 'photo' || isPhotoBlock) ? null : block as keyof TemplateVisibility;
+                  const canDelete = visibilityKey !== null || isPhotoBlock;
 
                   return (
                     <div
