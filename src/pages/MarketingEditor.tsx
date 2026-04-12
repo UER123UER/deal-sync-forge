@@ -24,9 +24,11 @@ import {
   MoreVertical,
   ExternalLink,
   Copy,
-  FolderInput,
   Trash2,
   PencilLine,
+  LayoutGrid,
+  User,
+  Users,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -41,6 +43,9 @@ import {
   TEMPLATE_CATEGORIES,
   DEFAULT_TEMPLATE_VISIBILITY,
   getDefaultTemplateData,
+  type AgentLayout,
+  type HeadlineStyle,
+  type PhotoLayout,
   type TemplateData,
   type TemplateCategory,
   type TemplateVisibility,
@@ -164,6 +169,39 @@ function VisibilityLabel({
   );
 }
 
+function OptionCard({
+  label,
+  description,
+  active,
+  icon: Icon,
+  preview,
+  onClick,
+}: {
+  label: string;
+  description: string;
+  active: boolean;
+  icon?: React.ElementType;
+  preview?: React.ReactNode;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        'rounded-2xl border p-4 text-left transition-all hover:border-foreground/25 hover:bg-muted/40',
+        active ? 'border-primary bg-primary/5 shadow-sm' : 'border-border bg-background'
+      )}
+    >
+      <div className="mb-4 flex h-12 items-center justify-center rounded-xl bg-muted/40">
+        {preview ?? (Icon ? <Icon className={cn('h-6 w-6', active ? 'text-primary' : 'text-foreground')} /> : null)}
+      </div>
+      <div className="text-sm font-semibold text-foreground">{label}</div>
+      <div className="mt-1 text-[11px] leading-4 text-muted-foreground">{description}</div>
+    </button>
+  );
+}
+
 // ── Component ────────────────────────────────────────────────────────────────
 
 export default function MarketingEditor() {
@@ -193,6 +231,29 @@ export default function MarketingEditor() {
       const newStack = [...h.stack.slice(0, h.index + 1), next];
       return { stack: newStack, index: newStack.length - 1 };
     });
+  }, []);
+
+  const hydrateTemplateData = useCallback((base: TemplateData, incoming?: Partial<TemplateData> | null): TemplateData => {
+    const merged = {
+      ...base,
+      ...(incoming ?? {}),
+    } as TemplateData;
+
+    return {
+      ...merged,
+      visibility: {
+        ...DEFAULT_TEMPLATE_VISIBILITY,
+        ...(incoming?.visibility ?? {}),
+      },
+      agents: incoming?.agents?.length
+        ? incoming.agents
+        : [{
+            name: incoming?.agentName ?? base.agentName,
+            title: incoming?.agentTitle ?? base.agentTitle,
+            phone: incoming?.agentPhone ?? base.agentPhone,
+            email: incoming?.agentEmail ?? base.agentEmail,
+          }],
+    };
   }, []);
 
   const canUndo = hist.index > 0;
@@ -240,6 +301,8 @@ export default function MarketingEditor() {
   // ── Other UI state ────────────────────────────────────────────────────────
   const [photosInitialized, setPhotosInitialized] = useState(false);
   const [zoom, setZoom] = useState(1);
+  const [studioBasicsOpen, setStudioBasicsOpen] = useState(true);
+  const [studioAgentsOpen, setStudioAgentsOpen] = useState(true);
   const [basicsOpen, setBasicsOpen] = useState(true);
   const [agentOpen, setAgentOpen] = useState(true);
   const [ohOpen, setOhOpen] = useState(true);
@@ -321,14 +384,7 @@ export default function MarketingEditor() {
       const saved = id ? loadRecents(id).find((r) => r.templateId === templateId) : null;
       if (saved) {
         setHist({
-          stack: [{
-            ...getDefaultTemplateData(deal, template.category),
-            ...saved.data,
-            visibility: {
-              ...DEFAULT_TEMPLATE_VISIBILITY,
-              ...(saved.data.visibility ?? {}),
-            },
-          }],
+          stack: [hydrateTemplateData(getDefaultTemplateData(deal, template.category), saved.data)],
           index: 0,
         });
       } else {
@@ -336,7 +392,7 @@ export default function MarketingEditor() {
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [deal, templateId, template.category]);
+  }, [deal, templateId, template.category, hydrateTemplateData]);
 
   // Auto-populate deal photos on first load (only if no saved session)
   useEffect(() => {
@@ -350,7 +406,33 @@ export default function MarketingEditor() {
   }, [dealPhotos, photosInitialized, id, templateId]);
 
   const updateField = useCallback((field: EditableTextField, value: string) => {
-    setData((prev) => ({ ...prev, [field]: value }));
+    setData((prev) => {
+      if (!field.startsWith('agent')) {
+        return { ...prev, [field]: value };
+      }
+
+      const agents = prev.agents?.length
+        ? [...prev.agents]
+        : [{
+            name: prev.agentName,
+            title: prev.agentTitle,
+            phone: prev.agentPhone,
+            email: prev.agentEmail,
+          }];
+
+      const firstAgent = { ...agents[0] };
+      if (field === 'agentName') firstAgent.name = value;
+      if (field === 'agentTitle') firstAgent.title = value;
+      if (field === 'agentPhone') firstAgent.phone = value;
+      if (field === 'agentEmail') firstAgent.email = value;
+      agents[0] = firstAgent;
+
+      return {
+        ...prev,
+        [field]: value,
+        agents,
+      };
+    });
   }, [setData]);
 
   const visibility = {
@@ -367,6 +449,18 @@ export default function MarketingEditor() {
         [field]: checked,
       },
     }));
+  }, [setData]);
+
+  const setHeadlineStyle = useCallback((headlineStyle: HeadlineStyle) => {
+    setData((prev) => ({ ...prev, headlineStyle }));
+  }, [setData]);
+
+  const setPhotoLayout = useCallback((photoLayout: PhotoLayout) => {
+    setData((prev) => ({ ...prev, photoLayout }));
+  }, [setData]);
+
+  const setAgentLayout = useCallback((agentLayout: AgentLayout) => {
+    setData((prev) => ({ ...prev, agentLayout }));
   }, [setData]);
 
   // Photo upload
@@ -392,14 +486,7 @@ export default function MarketingEditor() {
     setSearchParams({ template: entry.templateId });
     const recentTemplate = TEMPLATES.find((t) => t.id === entry.templateId);
     setHist({
-      stack: [{
-        ...getDefaultTemplateData(deal, recentTemplate?.category ?? template.category),
-        ...entry.data,
-        visibility: {
-          ...DEFAULT_TEMPLATE_VISIBILITY,
-          ...(entry.data.visibility ?? {}),
-        },
-      }],
+      stack: [hydrateTemplateData(getDefaultTemplateData(deal, recentTemplate?.category ?? template.category), entry.data)],
       index: 0,
     });
     setLeftTab('edit');
@@ -759,6 +846,89 @@ export default function MarketingEditor() {
                 </div>
 
                 {/* Property Details */}
+                <Collapsible open={studioBasicsOpen} onOpenChange={setStudioBasicsOpen}>
+                  <CollapsibleTrigger className="flex items-center justify-between w-full py-2 text-xs font-semibold text-foreground hover:text-foreground/80 border-t">
+                    Basics
+                    <ChevronDown className={`h-3.5 w-3.5 transition-transform ${studioBasicsOpen ? 'rotate-180' : ''}`} />
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="space-y-3 pb-4">
+                    <div className="space-y-2">
+                      <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">Headline Style</div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <OptionCard
+                          label="H1"
+                          description="Large serif hero headline"
+                          preview={<span className={cn('font-serif text-3xl leading-none', data.headlineStyle === 'h1' ? 'text-primary' : 'text-foreground')}>H1</span>}
+                          active={data.headlineStyle === 'h1'}
+                          onClick={() => setHeadlineStyle('h1')}
+                        />
+                        <OptionCard
+                          label="H2"
+                          description="Refined uppercase editorial"
+                          preview={<span className={cn('text-3xl font-bold uppercase tracking-[0.2em] leading-none', data.headlineStyle === 'h2' ? 'text-primary' : 'text-foreground')}>H2</span>}
+                          active={data.headlineStyle === 'h2'}
+                          onClick={() => setHeadlineStyle('h2')}
+                        />
+                        <OptionCard
+                          label="H3"
+                          description="Classic luxury headline"
+                          preview={<span className={cn('font-serif text-3xl font-medium tracking-wide leading-none', data.headlineStyle === 'h3' ? 'text-primary' : 'text-foreground')}>H3</span>}
+                          active={data.headlineStyle === 'h3'}
+                          onClick={() => setHeadlineStyle('h3')}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">Photo Layout</div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <OptionCard
+                          label="Hero"
+                          description="Single main image"
+                          icon={ImagePlus}
+                          active={data.photoLayout === 'single'}
+                          onClick={() => setPhotoLayout('single')}
+                        />
+                        <OptionCard
+                          label="Collage"
+                          description="Main image with supporting photos"
+                          icon={LayoutGrid}
+                          active={data.photoLayout === 'collage'}
+                          onClick={() => setPhotoLayout('collage')}
+                        />
+                      </div>
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
+
+                <Collapsible open={studioAgentsOpen} onOpenChange={setStudioAgentsOpen}>
+                  <CollapsibleTrigger className="flex items-center justify-between w-full py-2 text-xs font-semibold text-foreground hover:text-foreground/80 border-t">
+                    Agents
+                    <ChevronDown className={`h-3.5 w-3.5 transition-transform ${studioAgentsOpen ? 'rotate-180' : ''}`} />
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="space-y-2 pb-4">
+                    <div className="grid grid-cols-2 gap-2">
+                      <OptionCard
+                        label="Agent"
+                        description="Single agent footer"
+                        icon={User}
+                        active={data.agentLayout === 'single'}
+                        onClick={() => setAgentLayout('single')}
+                      />
+                      <OptionCard
+                        label="Agent Multi"
+                        description="Use multiple deal agents"
+                        icon={Users}
+                        active={data.agentLayout === 'multi'}
+                        onClick={() => setAgentLayout('multi')}
+                      />
+                    </div>
+                    <div className="rounded-xl border bg-muted/25 px-3 py-2 text-[11px] leading-4 text-muted-foreground">
+                      Agent Multi uses the agents already attached to the deal. If only one deal agent exists, the poster falls back to a single agent card.
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
+
                 <Collapsible open={basicsOpen} onOpenChange={setBasicsOpen}>
                   <CollapsibleTrigger className="flex items-center justify-between w-full py-2 text-xs font-semibold text-foreground hover:text-foreground/80">
                     Property Details

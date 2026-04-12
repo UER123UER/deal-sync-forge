@@ -8,6 +8,17 @@ export type TemplateCategory =
   | 'Price Cut'
   | 'Under Contract';
 export type TemplateType = 'flyer' | 'post' | 'story';
+export type HeadlineStyle = 'h1' | 'h2' | 'h3';
+export type PhotoLayout = 'single' | 'collage';
+export type AgentLayout = 'single' | 'multi';
+
+export interface MarketingAgent {
+  id?: string;
+  name: string;
+  title: string;
+  phone: string;
+  email: string;
+}
 
 export interface TemplateData {
   address: string;
@@ -30,6 +41,10 @@ export interface TemplateData {
   openHouseDate: string;
   openHouseTime: string;
   visibility: TemplateVisibility;
+  headlineStyle: HeadlineStyle;
+  photoLayout: PhotoLayout;
+  agentLayout: AgentLayout;
+  agents: MarketingAgent[];
 }
 
 export interface TemplateVisibility {
@@ -121,6 +136,34 @@ const Photo = ({ photos, style }: { photos: string[]; style?: React.CSSPropertie
     </div>
   );
 
+const PhotoFrame = ({
+  src,
+  style,
+  label = 'Add Property Photo',
+}: {
+  src?: string;
+  style?: React.CSSProperties;
+  label?: string;
+}) =>
+  src ? (
+    <img src={src} alt="Property" style={{ ...style, objectFit: 'cover', display: 'block' }} />
+  ) : (
+    <div
+      style={{
+        ...style,
+        background: '#d1d5db',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        color: '#9ca3af',
+        fontSize: 12,
+        letterSpacing: 0.8,
+      }}
+    >
+      {label}
+    </div>
+  );
+
 // ─── Real UER logo ────────────────────────────────────────────────────────────
 const Logo = ({ width = 300 }: { width?: number }) => (
   <img
@@ -146,6 +189,143 @@ function splitHeadline(
   };
 }
 
+function getRenderableAgents(data: TemplateData): MarketingAgent[] {
+  if (data.agents?.length) {
+    return data.agents.filter((agent) => agent.name.trim()).slice(0, 3);
+  }
+
+  return [{
+    name: data.agentName,
+    title: data.agentTitle,
+    phone: data.agentPhone,
+    email: data.agentEmail,
+  }].filter((agent) => agent.name.trim());
+}
+
+function renderHeadlineBlock(
+  style: HeadlineStyle,
+  headline: string,
+  fallback: { italic: string; bold: string },
+  editable?: boolean,
+) {
+  const headlineParts = splitHeadline(headline, fallback);
+
+  if (style === 'h2') {
+    return (
+      <div style={{ marginBottom: 16 }}>
+        <div
+          style={{
+            fontFamily: '"Inter", system-ui, sans-serif',
+            fontSize: 20,
+            fontWeight: 700,
+            letterSpacing: 7,
+            textTransform: 'uppercase',
+            color: '#c9a96e',
+            marginBottom: 10,
+          }}
+        >
+          <E editable={editable}>{headline}</E>
+        </div>
+        <div
+          style={{
+            width: 112,
+            height: 1,
+            background: 'rgba(255,255,255,0.3)',
+            margin: '0 auto',
+          }}
+        />
+      </div>
+    );
+  }
+
+  if (style === 'h3') {
+    return (
+      <div style={{ marginBottom: 18 }}>
+        <div
+          style={{
+            fontFamily: 'Georgia, "Times New Roman", serif',
+            fontSize: 50,
+            fontWeight: 400,
+            letterSpacing: 1.2,
+            color: '#ffffff',
+            lineHeight: 1.04,
+          }}
+        >
+          <E editable={editable}>{headline}</E>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'baseline',
+        justifyContent: 'center',
+        gap: 14,
+        marginBottom: 18,
+        flexWrap: 'wrap',
+      }}
+    >
+      {headlineParts.italic ? (
+        <span
+          style={{
+            fontFamily: 'Georgia, "Times New Roman", serif',
+            fontStyle: 'italic',
+            fontWeight: 400,
+            fontSize: 68,
+            color: '#ffffff',
+            lineHeight: 1,
+          }}
+        >
+          <E editable={editable}>{headlineParts.italic}</E>
+        </span>
+      ) : null}
+      <span
+        style={{
+          fontFamily: 'Georgia, "Times New Roman", serif',
+          fontStyle: 'italic',
+          fontWeight: 700,
+          fontSize: 68,
+          color: '#ffffff',
+          lineHeight: 1,
+        }}
+      >
+        <E editable={editable}>{headlineParts.bold}</E>
+      </span>
+    </div>
+  );
+}
+
+function renderPhotoBlock(data: TemplateData) {
+  if (data.photoLayout !== 'collage' || data.photos.length < 2) {
+    return <Photo photos={data.photos} style={{ flex: 1, width: '100%' }} />;
+  }
+
+  const [first, second, third] = data.photos;
+
+  return (
+    <div
+      style={{
+        flex: 1,
+        width: '100%',
+        background: '#f5f5f5',
+        padding: 10,
+        display: 'grid',
+        gridTemplateRows: '1.75fr 1fr',
+        gap: 10,
+      }}
+    >
+      <PhotoFrame src={first} style={{ width: '100%', height: '100%' }} />
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+        <PhotoFrame src={second || first} style={{ width: '100%', height: '100%' }} />
+        <PhotoFrame src={third || second || first} style={{ width: '100%', height: '100%' }} />
+      </div>
+    </div>
+  );
+}
+
 // ─── Shared template builder ──────────────────────────────────────────────────
 // All templates share the same layout: white header (logo) | photo | navy footer
 function buildTemplate(
@@ -164,7 +344,7 @@ function buildTemplate(
     thumbnail: '',
     render: (data, editable) => {
       const visibility = mergeTemplateVisibility(data.visibility);
-      const headlineParts = splitHeadline(data.headline, labelParts);
+      const agents = getRenderableAgents(data);
       const showAgentBlock =
         visibility.agentName ||
         visibility.agentTitle ||
@@ -196,7 +376,7 @@ function buildTemplate(
             <Logo width={360} />
           </div>
 
-          <Photo photos={data.photos} style={{ flex: 1, width: '100%' }} />
+          {renderPhotoBlock(data)}
 
           <div
             style={{
@@ -206,45 +386,7 @@ function buildTemplate(
               textAlign: 'center',
             }}
           >
-            {visibility.headline && (
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'baseline',
-                  justifyContent: 'center',
-                  gap: 14,
-                  marginBottom: 18,
-                  flexWrap: 'wrap',
-                }}
-              >
-                {headlineParts.italic ? (
-                  <span
-                    style={{
-                      fontFamily: 'Georgia, "Times New Roman", serif',
-                      fontStyle: 'italic',
-                      fontWeight: 400,
-                      fontSize: 68,
-                      color: '#ffffff',
-                      lineHeight: 1,
-                    }}
-                  >
-                    <E editable={editable}>{headlineParts.italic}</E>
-                  </span>
-                ) : null}
-                <span
-                  style={{
-                    fontFamily: 'Georgia, "Times New Roman", serif',
-                    fontStyle: 'italic',
-                    fontWeight: 700,
-                    fontSize: 68,
-                    color: '#ffffff',
-                    lineHeight: 1,
-                  }}
-                >
-                  <E editable={editable}>{headlineParts.bold}</E>
-                </span>
-              </div>
-            )}
+            {visibility.headline && renderHeadlineBlock(data.headlineStyle, data.headline, labelParts, editable)}
 
             {(visibility.headline || visibility.address || visibility.price) && (
               <div style={{ width: 80, height: 2, background: '#c9a96e', margin: '0 auto 22px' }} />
@@ -347,7 +489,52 @@ function buildTemplate(
               </div>
             )}
 
-            {showAgentBlock && (
+            {showAgentBlock && data.agentLayout === 'multi' && agents.length > 1 ? (
+              <div
+                style={{
+                  marginTop: 24,
+                  paddingTop: 20,
+                  borderTop: '1px solid rgba(255,255,255,0.14)',
+                  display: 'grid',
+                  gridTemplateColumns: `repeat(${Math.min(agents.length, 3)}, minmax(0, 1fr))`,
+                  gap: 14,
+                  fontFamily: '"Inter", system-ui, sans-serif',
+                }}
+              >
+                {agents.map((agent) => (
+                  <div
+                    key={agent.id || `${agent.name}-${agent.email}`}
+                    style={{
+                      border: '1px solid rgba(255,255,255,0.12)',
+                      borderRadius: 16,
+                      padding: '14px 12px',
+                      background: 'rgba(255,255,255,0.04)',
+                    }}
+                  >
+                    {visibility.agentName && (
+                      <div style={{ color: '#ffffff', fontWeight: 700, fontSize: 15, marginBottom: visibility.agentTitle ? 4 : 8 }}>
+                        {agent.name}
+                      </div>
+                    )}
+                    {visibility.agentTitle && (
+                      <div style={{ color: 'rgba(255,255,255,0.55)', fontSize: 12, marginBottom: visibility.agentPhone || visibility.agentEmail ? 10 : 0 }}>
+                        {agent.title}
+                      </div>
+                    )}
+                    {visibility.agentPhone && (
+                      <div style={{ color: 'rgba(255,255,255,0.82)', fontSize: 12, marginBottom: visibility.agentEmail ? 4 : 0 }}>
+                        {agent.phone}
+                      </div>
+                    )}
+                    {visibility.agentEmail && (
+                      <div style={{ color: 'rgba(255,255,255,0.65)', fontSize: 11, wordBreak: 'break-word' }}>
+                        {agent.email}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : showAgentBlock ? (
               <div
                 style={{
                   marginTop: 24,
@@ -383,7 +570,7 @@ function buildTemplate(
                   </span>
                 )}
               </div>
-            )}
+            ) : null}
           </div>
         </div>
       );
@@ -414,9 +601,36 @@ export function getDefaultTemplateData(
   category: TemplateCategory = 'Just Listed'
 ): TemplateData {
   const contacts = deal?.deal_contacts || [];
+  const agentContacts = contacts.filter((dc: any) => {
+    const role = (dc.role || '').toLowerCase();
+    return role.includes('agent') || role.includes('broker');
+  });
+  const uniqueAgents = Array.from(new Map(
+    agentContacts
+      .filter((dc: any) => dc.contact)
+      .map((dc: any) => {
+        const contact = dc.contact;
+        const id = contact.id || `${contact.first_name}-${contact.last_name}-${dc.role}`;
+        return [id, {
+          id,
+          name: `${contact.first_name || ''} ${contact.last_name || ''}`.trim() || deal?.primary_agent || 'Agent Name',
+          title: dc.role || 'Real Estate Agent',
+          phone: contact.phone || '',
+          email: contact.email || '',
+        }];
+      })
+  ).values()) as MarketingAgent[];
   const sellerAgent = contacts.find(
     (dc: any) => dc.role === 'Seller Agent' || dc.role === 'Listing Agent'
   )?.contact;
+  const primaryAgent: MarketingAgent = uniqueAgents[0] || {
+    name: sellerAgent
+      ? `${sellerAgent.first_name} ${sellerAgent.last_name}`
+      : deal?.primary_agent || 'Agent Name',
+    title: 'Real Estate Agent',
+    phone: sellerAgent?.phone || '(555) 123-4567',
+    email: sellerAgent?.email || 'agent@unitedestatesrealty.com',
+  };
 
   return {
     address: deal?.address || '123 Main Street',
@@ -429,12 +643,10 @@ export function getDefaultTemplateData(
     sqft: '2,500',
     lotSize: '0.25 acres',
     photos: [],
-    agentName: sellerAgent
-      ? `${sellerAgent.first_name} ${sellerAgent.last_name}`
-      : deal?.primary_agent || 'Agent Name',
-    agentTitle: 'Real Estate Agent',
-    agentPhone: sellerAgent?.phone || '(555) 123-4567',
-    agentEmail: sellerAgent?.email || 'agent@unitedestatesrealty.com',
+    agentName: primaryAgent.name,
+    agentTitle: primaryAgent.title,
+    agentPhone: primaryAgent.phone,
+    agentEmail: primaryAgent.email,
     headline: category,
     subheadline: 'Your Dream Home Awaits',
     description:
@@ -442,5 +654,9 @@ export function getDefaultTemplateData(
     openHouseDate: 'Saturday, March 22',
     openHouseTime: '1:00 PM – 4:00 PM',
     visibility: { ...DEFAULT_TEMPLATE_VISIBILITY },
+    headlineStyle: 'h1',
+    photoLayout: 'single',
+    agentLayout: 'single',
+    agents: uniqueAgents.length ? uniqueAgents : [primaryAgent],
   };
 }
