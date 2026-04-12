@@ -4,7 +4,7 @@ import {
   Phone, Mail, MapPin, Tag, Calendar, Clock, Users, TrendingUp,
   Star, MoreHorizontal, Building2, Filter, LayoutGrid, List,
   CheckCircle2, AlertCircle, MessageSquare, PhoneCall, AtSign,
-  Send, Zap, FileText, Handshake,
+  Send, Zap, FileText, Handshake, Copy, Check,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -158,6 +158,45 @@ function LeadScoreBadge({ score }: { score: number }) {
     <span className={cn('inline-flex items-center text-[10px] font-bold px-1.5 py-0.5 rounded border', leadScoreColor(score))}>
       {score}
     </span>
+  );
+}
+
+function CopyInfoRow({
+  icon: Icon,
+  label,
+  value,
+  copied,
+  onCopy,
+}: {
+  icon: React.ElementType;
+  label: string;
+  value: string;
+  copied: boolean;
+  onCopy: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onCopy}
+      className="group flex w-full items-center gap-3 rounded-lg px-2 py-2.5 text-left transition-colors hover:bg-muted/50 active:bg-muted"
+    >
+      <Icon className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+      <div className="min-w-0 flex-1">
+        <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{label}</div>
+        <div className="text-xs text-foreground break-words">{value}</div>
+      </div>
+      <span
+        className={cn(
+          'inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-1 text-[10px] font-semibold transition-colors',
+          copied
+            ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+            : 'border-border bg-background text-muted-foreground group-hover:text-foreground'
+        )}
+      >
+        {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+        {copied ? 'Copied' : 'Copy'}
+      </span>
+    </button>
   );
 }
 
@@ -340,6 +379,7 @@ export default function People() {
 
   const [panelContact, setPanelContact] = useState<ContactRow | null>(null);
   const [panelMode, setPanelMode] = useState<'detail' | 'edit' | 'new'>('detail');
+  const [copiedField, setCopiedField] = useState<'email' | 'phone' | 'address' | null>(null);
 
   const emptyForm = {
     first_name: '', last_name: '', email: '', phone: '', company: '',
@@ -350,6 +390,7 @@ export default function People() {
   const [tagInput, setTagInput] = useState('');
 
   const csvInputRef = useRef<HTMLInputElement>(null);
+  const copyResetRef = useRef<number | null>(null);
   const [csvPreview, setCsvPreview] = useState<Record<string, string>[]>([]);
   const [csvDialogOpen, setCsvDialogOpen] = useState(false);
 
@@ -420,12 +461,13 @@ export default function People() {
       source: getContactSource(c) || '',
     });
     setTagInput('');
+    setCopiedField(null);
     setPanelMode('edit');
     setPanelContact(c);
   };
 
-  const openDetail = (c: ContactRow) => { setPanelContact(c); setPanelMode('detail'); setDetailTab('overview'); };
-  const closePanel = () => { setPanelContact(null); setPanelMode('detail'); };
+  const openDetail = (c: ContactRow) => { setCopiedField(null); setPanelContact(c); setPanelMode('detail'); setDetailTab('overview'); };
+  const closePanel = () => { setCopiedField(null); setPanelContact(null); setPanelMode('detail'); };
 
   const handleSave = async () => {
     if (!form.first_name.trim() || !form.last_name.trim()) { toast.error('First and last name are required'); return; }
@@ -468,6 +510,36 @@ export default function People() {
     await updateContact.mutateAsync({ id: contact.id, last_touch: today });
     toast.success('Touch logged');
     if (panelContact?.id === contact.id) setPanelContact({ ...contact, last_touch: today });
+  };
+
+  const copyValue = async (field: 'email' | 'phone' | 'address', value: string, label: string) => {
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(value);
+      } else {
+        const textarea = document.createElement('textarea');
+        textarea.value = value;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+      }
+
+      if (copyResetRef.current) {
+        window.clearTimeout(copyResetRef.current);
+      }
+
+      setCopiedField(field);
+      copyResetRef.current = window.setTimeout(() => {
+        setCopiedField((current) => (current === field ? null : current));
+      }, 1600);
+      toast.success(`${label} copied`);
+    } catch {
+      toast.error(`Couldn't copy ${label.toLowerCase()}`);
+    }
   };
 
   const addTag = () => {
@@ -839,10 +911,37 @@ export default function People() {
 
                           {/* Contact info */}
                           <div className="space-y-2.5 border rounded-xl p-4">
-                            <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-2">Contact Info</div>
-                            {panelContact.email && <div className="flex items-center gap-2.5 text-xs"><Mail className="w-3.5 h-3.5 text-muted-foreground shrink-0" />{panelContact.email}</div>}
-                            {panelContact.phone && <div className="flex items-center gap-2.5 text-xs"><Phone className="w-3.5 h-3.5 text-muted-foreground shrink-0" />{panelContact.phone}</div>}
-                            {panelContact.current_address && <div className="flex items-center gap-2.5 text-xs"><MapPin className="w-3.5 h-3.5 text-muted-foreground shrink-0" />{panelContact.current_address}</div>}
+                            <div className="flex items-center justify-between gap-3 mb-1">
+                              <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">Contact Info</div>
+                              <div className="text-[10px] text-muted-foreground">Tap to copy</div>
+                            </div>
+                            {panelContact.email && (
+                              <CopyInfoRow
+                                icon={Mail}
+                                label="Email"
+                                value={panelContact.email}
+                                copied={copiedField === 'email'}
+                                onCopy={() => copyValue('email', panelContact.email!, 'Email')}
+                              />
+                            )}
+                            {panelContact.phone && (
+                              <CopyInfoRow
+                                icon={Phone}
+                                label="Phone"
+                                value={panelContact.phone}
+                                copied={copiedField === 'phone'}
+                                onCopy={() => copyValue('phone', panelContact.phone!, 'Phone number')}
+                              />
+                            )}
+                            {panelContact.current_address && (
+                              <CopyInfoRow
+                                icon={MapPin}
+                                label="Address"
+                                value={panelContact.current_address}
+                                copied={copiedField === 'address'}
+                                onCopy={() => copyValue('address', panelContact.current_address!, 'Address')}
+                              />
+                            )}
                           </div>
 
                           {/* Pipeline stage */}
