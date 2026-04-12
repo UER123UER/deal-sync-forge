@@ -2,6 +2,7 @@ import { useRef, useState, useCallback, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { toPng } from 'html-to-image';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -38,9 +39,11 @@ import { useDealPhotos } from '@/hooks/useDealPhotos';
 import {
   TEMPLATES,
   TEMPLATE_CATEGORIES,
+  DEFAULT_TEMPLATE_VISIBILITY,
   getDefaultTemplateData,
   type TemplateData,
   type TemplateCategory,
+  type TemplateVisibility,
 } from '@/data/marketingTemplates';
 import { cn } from '@/lib/utils';
 
@@ -104,6 +107,24 @@ const TYPE_LABELS: Record<string, string> = {
   story: 'Story',
 };
 
+type EditableTextField =
+  | 'headline'
+  | 'address'
+  | 'city'
+  | 'state'
+  | 'zip'
+  | 'price'
+  | 'beds'
+  | 'baths'
+  | 'sqft'
+  | 'description'
+  | 'agentName'
+  | 'agentTitle'
+  | 'agentPhone'
+  | 'agentEmail'
+  | 'openHouseDate'
+  | 'openHouseTime';
+
 function timeAgo(ms: number): string {
   const diff = Date.now() - ms;
   const mins = Math.floor(diff / 60_000);
@@ -113,6 +134,34 @@ function timeAgo(ms: number): string {
   if (hrs < 24) return `${hrs}h ago`;
   const days = Math.floor(hrs / 24);
   return `${days}d ago`;
+}
+
+function VisibilityLabel({
+  htmlFor,
+  label,
+  checked,
+  onCheckedChange,
+}: {
+  htmlFor: string;
+  label: string;
+  checked: boolean;
+  onCheckedChange: (checked: boolean) => void;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <Label htmlFor={htmlFor} className="text-[10px] text-muted-foreground uppercase tracking-wide">
+        {label}
+      </Label>
+      <label htmlFor={htmlFor} className="inline-flex items-center gap-1.5 text-[10px] font-medium text-muted-foreground cursor-pointer">
+        <Checkbox
+          id={htmlFor}
+          checked={checked}
+          onCheckedChange={(next) => onCheckedChange(next === true)}
+        />
+        Show
+      </label>
+    </div>
+  );
 }
 
 // ── Component ────────────────────────────────────────────────────────────────
@@ -132,10 +181,10 @@ export default function MarketingEditor() {
   // ── History (undo / redo) ─────────────────────────────────────────────────
   // Use a single state object so index + history update atomically (no stale closure crash)
   const [hist, setHist] = useState<{ stack: TemplateData[]; index: number }>({
-    stack: [getDefaultTemplateData()],
+    stack: [getDefaultTemplateData(undefined, template.category)],
     index: 0,
   });
-  const data = hist.stack[hist.index] ?? getDefaultTemplateData();
+  const data = hist.stack[hist.index] ?? getDefaultTemplateData(undefined, template.category);
 
   const setData = useCallback((updater: TemplateData | ((prev: TemplateData) => TemplateData)) => {
     setHist((h) => {
@@ -271,13 +320,23 @@ export default function MarketingEditor() {
       // Check if there's a saved session for the current template first
       const saved = id ? loadRecents(id).find((r) => r.templateId === templateId) : null;
       if (saved) {
-        setHist({ stack: [saved.data], index: 0 });
+        setHist({
+          stack: [{
+            ...getDefaultTemplateData(deal, template.category),
+            ...saved.data,
+            visibility: {
+              ...DEFAULT_TEMPLATE_VISIBILITY,
+              ...(saved.data.visibility ?? {}),
+            },
+          }],
+          index: 0,
+        });
       } else {
-        setData((prev) => ({ ...getDefaultTemplateData(deal), photos: prev.photos }));
+        setData((prev) => ({ ...getDefaultTemplateData(deal, template.category), photos: prev.photos }));
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [deal, templateId]);
+  }, [deal, templateId, template.category]);
 
   // Auto-populate deal photos on first load (only if no saved session)
   useEffect(() => {
@@ -290,8 +349,24 @@ export default function MarketingEditor() {
     }
   }, [dealPhotos, photosInitialized, id, templateId]);
 
-  const updateField = useCallback((field: keyof TemplateData, value: string) => {
+  const updateField = useCallback((field: EditableTextField, value: string) => {
     setData((prev) => ({ ...prev, [field]: value }));
+  }, [setData]);
+
+  const visibility = {
+    ...DEFAULT_TEMPLATE_VISIBILITY,
+    ...(data.visibility ?? {}),
+  };
+
+  const updateVisibility = useCallback((field: keyof TemplateVisibility, checked: boolean) => {
+    setData((prev) => ({
+      ...prev,
+      visibility: {
+        ...DEFAULT_TEMPLATE_VISIBILITY,
+        ...(prev.visibility ?? {}),
+        [field]: checked,
+      },
+    }));
   }, [setData]);
 
   // Photo upload
@@ -315,7 +390,18 @@ export default function MarketingEditor() {
   /** Resume a recent entry: load its saved data and switch to edit tab */
   const resumeRecent = (entry: RecentEntry) => {
     setSearchParams({ template: entry.templateId });
-    setHist({ stack: [entry.data], index: 0 });
+    const recentTemplate = TEMPLATES.find((t) => t.id === entry.templateId);
+    setHist({
+      stack: [{
+        ...getDefaultTemplateData(deal, recentTemplate?.category ?? template.category),
+        ...entry.data,
+        visibility: {
+          ...DEFAULT_TEMPLATE_VISIBILITY,
+          ...(entry.data.visibility ?? {}),
+        },
+      }],
+      index: 0,
+    });
     setLeftTab('edit');
   };
 
@@ -608,7 +694,7 @@ export default function MarketingEditor() {
                               userSelect: 'none',
                             }}
                           >
-                            {t.render({ ...getDefaultTemplateData(deal), photos: data.photos }, false)}
+                            {t.render({ ...getDefaultTemplateData(deal, t.category), photos: data.photos }, false)}
                           </div>
                         </div>
                         <div className="px-2 py-1.5 bg-background">
@@ -680,11 +766,21 @@ export default function MarketingEditor() {
                   </CollapsibleTrigger>
                   <CollapsibleContent className="space-y-2.5 pb-4">
                     <div>
-                      <Label className="text-[10px] text-muted-foreground uppercase tracking-wide">Headline</Label>
+                      <VisibilityLabel
+                        htmlFor="marketing-show-headline"
+                        label="Headline"
+                        checked={visibility.headline}
+                        onCheckedChange={(checked) => updateVisibility('headline', checked)}
+                      />
                       <Input value={data.headline} onChange={(e) => updateField('headline', e.target.value)} className="mt-1 h-7 text-xs" />
                     </div>
                     <div>
-                      <Label className="text-[10px] text-muted-foreground uppercase tracking-wide">Address</Label>
+                      <VisibilityLabel
+                        htmlFor="marketing-show-address"
+                        label="Address"
+                        checked={visibility.address}
+                        onCheckedChange={(checked) => updateVisibility('address', checked)}
+                      />
                       <Input value={data.address} onChange={(e) => updateField('address', e.target.value)} className="mt-1 h-7 text-xs" />
                     </div>
                     <div className="grid grid-cols-3 gap-1.5">
@@ -702,10 +798,23 @@ export default function MarketingEditor() {
                       </div>
                     </div>
                     <div>
-                      <Label className="text-[10px] text-muted-foreground uppercase tracking-wide">Price</Label>
+                      <VisibilityLabel
+                        htmlFor="marketing-show-price"
+                        label="Price"
+                        checked={visibility.price}
+                        onCheckedChange={(checked) => updateVisibility('price', checked)}
+                      />
                       <Input value={data.price} onChange={(e) => updateField('price', e.target.value)} className="mt-1 h-7 text-xs" />
                     </div>
                     <div className="grid grid-cols-3 gap-1.5">
+                      <div className="col-span-3">
+                        <VisibilityLabel
+                          htmlFor="marketing-show-stats"
+                          label="Beds / Baths / Sq Ft"
+                          checked={visibility.stats}
+                          onCheckedChange={(checked) => updateVisibility('stats', checked)}
+                        />
+                      </div>
                       <div>
                         <Label className="text-[10px] text-muted-foreground uppercase tracking-wide">Beds</Label>
                         <Input value={data.beds} onChange={(e) => updateField('beds', e.target.value)} className="mt-1 h-7 text-xs" />
@@ -720,7 +829,12 @@ export default function MarketingEditor() {
                       </div>
                     </div>
                     <div>
-                      <Label className="text-[10px] text-muted-foreground uppercase tracking-wide">Description</Label>
+                      <VisibilityLabel
+                        htmlFor="marketing-show-description"
+                        label="Description"
+                        checked={visibility.description}
+                        onCheckedChange={(checked) => updateVisibility('description', checked)}
+                      />
                       <Textarea value={data.description} onChange={(e) => updateField('description', e.target.value)} className="mt-1 text-xs" rows={3} />
                     </div>
                   </CollapsibleContent>
@@ -734,19 +848,39 @@ export default function MarketingEditor() {
                   </CollapsibleTrigger>
                   <CollapsibleContent className="space-y-2.5 pb-4">
                     <div>
-                      <Label className="text-[10px] text-muted-foreground uppercase tracking-wide">Name</Label>
+                      <VisibilityLabel
+                        htmlFor="marketing-show-agent-name"
+                        label="Name"
+                        checked={visibility.agentName}
+                        onCheckedChange={(checked) => updateVisibility('agentName', checked)}
+                      />
                       <Input value={data.agentName} onChange={(e) => updateField('agentName', e.target.value)} className="mt-1 h-7 text-xs" />
                     </div>
                     <div>
-                      <Label className="text-[10px] text-muted-foreground uppercase tracking-wide">Title</Label>
+                      <VisibilityLabel
+                        htmlFor="marketing-show-agent-title"
+                        label="Title"
+                        checked={visibility.agentTitle}
+                        onCheckedChange={(checked) => updateVisibility('agentTitle', checked)}
+                      />
                       <Input value={data.agentTitle} onChange={(e) => updateField('agentTitle', e.target.value)} className="mt-1 h-7 text-xs" />
                     </div>
                     <div>
-                      <Label className="text-[10px] text-muted-foreground uppercase tracking-wide">Phone</Label>
+                      <VisibilityLabel
+                        htmlFor="marketing-show-agent-phone"
+                        label="Phone"
+                        checked={visibility.agentPhone}
+                        onCheckedChange={(checked) => updateVisibility('agentPhone', checked)}
+                      />
                       <Input value={data.agentPhone} onChange={(e) => updateField('agentPhone', e.target.value)} className="mt-1 h-7 text-xs" />
                     </div>
                     <div>
-                      <Label className="text-[10px] text-muted-foreground uppercase tracking-wide">Email</Label>
+                      <VisibilityLabel
+                        htmlFor="marketing-show-agent-email"
+                        label="Email"
+                        checked={visibility.agentEmail}
+                        onCheckedChange={(checked) => updateVisibility('agentEmail', checked)}
+                      />
                       <Input value={data.agentEmail} onChange={(e) => updateField('agentEmail', e.target.value)} className="mt-1 h-7 text-xs" />
                     </div>
                   </CollapsibleContent>

@@ -29,6 +29,19 @@ export interface TemplateData {
   description: string;
   openHouseDate: string;
   openHouseTime: string;
+  visibility: TemplateVisibility;
+}
+
+export interface TemplateVisibility {
+  headline: boolean;
+  address: boolean;
+  price: boolean;
+  stats: boolean;
+  description: boolean;
+  agentName: boolean;
+  agentTitle: boolean;
+  agentPhone: boolean;
+  agentEmail: boolean;
 }
 
 export interface MarketingTemplate {
@@ -40,6 +53,27 @@ export interface MarketingTemplate {
   height: number;
   thumbnail: string;
   render: (data: TemplateData, editable?: boolean) => React.ReactNode;
+}
+
+export const DEFAULT_TEMPLATE_VISIBILITY: TemplateVisibility = {
+  headline: true,
+  address: true,
+  price: true,
+  stats: true,
+  description: true,
+  agentName: true,
+  agentTitle: true,
+  agentPhone: true,
+  agentEmail: true,
+};
+
+export function mergeTemplateVisibility(
+  visibility?: Partial<TemplateVisibility> | null
+): TemplateVisibility {
+  return {
+    ...DEFAULT_TEMPLATE_VISIBILITY,
+    ...(visibility ?? {}),
+  };
 }
 
 // ─── Editable text ────────────────────────────────────────────────────────────
@@ -96,6 +130,22 @@ const Logo = ({ width = 300 }: { width?: number }) => (
   />
 );
 
+function splitHeadline(
+  headline: string,
+  fallback: { italic: string; bold: string }
+) {
+  const normalized = headline.trim();
+  if (!normalized) return fallback;
+  const parts = normalized.split(/\s+/);
+  if (parts.length === 1) {
+    return { italic: '', bold: parts[0] };
+  }
+  return {
+    italic: parts.slice(0, -1).join(' '),
+    bold: parts[parts.length - 1],
+  };
+}
+
 // ─── Shared template builder ──────────────────────────────────────────────────
 // All templates share the same layout: white header (logo) | photo | navy footer
 function buildTemplate(
@@ -112,119 +162,232 @@ function buildTemplate(
     width: 1080,
     height: 1080,
     thumbnail: '',
-    render: (data, editable) => (
-      <div
-        style={{
-          width: 1080,
-          height: 1080,
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden',
-          background: '#fff',
-          fontFamily: 'Georgia, "Times New Roman", serif',
-        }}
-      >
-        {/* White header — logo centred */}
+    render: (data, editable) => {
+      const visibility = mergeTemplateVisibility(data.visibility);
+      const headlineParts = splitHeadline(data.headline, labelParts);
+      const showAgentBlock =
+        visibility.agentName ||
+        visibility.agentTitle ||
+        visibility.agentPhone ||
+        visibility.agentEmail;
+
+      return (
         <div
           style={{
-            background: '#ffffff',
+            width: 1080,
+            height: 1080,
             display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '44px 60px 40px',
-            flexShrink: 0,
-          }}
-        >
-          <Logo width={360} />
-        </div>
-
-        {/* Property photo */}
-        <Photo photos={data.photos} style={{ flex: 1, width: '100%' }} />
-
-        {/* Navy footer */}
-        <div
-          style={{
-            background: '#0e1428',
-            flexShrink: 0,
-            padding: '44px 64px 52px',
-            textAlign: 'center',
+            flexDirection: 'column',
+            overflow: 'hidden',
+            background: '#fff',
+            fontFamily: 'Georgia, "Times New Roman", serif',
           }}
         >
           <div
             style={{
+              background: '#ffffff',
               display: 'flex',
-              alignItems: 'baseline',
+              alignItems: 'center',
               justifyContent: 'center',
-              gap: 14,
-              marginBottom: 22,
+              padding: '44px 60px 40px',
+              flexShrink: 0,
             }}
           >
-            <span
-              style={{
-                fontFamily: 'Georgia, "Times New Roman", serif',
-                fontStyle: 'italic',
-                fontWeight: 400,
-                fontSize: 68,
-                color: '#ffffff',
-                lineHeight: 1,
-              }}
-            >
-              {labelParts.italic}
-            </span>
-            <span
-              style={{
-                fontFamily: 'Georgia, "Times New Roman", serif',
-                fontStyle: 'italic',
-                fontWeight: 700,
-                fontSize: 68,
-                color: '#ffffff',
-                lineHeight: 1,
-              }}
-            >
-              {labelParts.bold}
-            </span>
+            <Logo width={360} />
           </div>
 
-          {/* Gold divider */}
-          <div style={{ width: 80, height: 2, background: '#c9a96e', margin: '0 auto 24px' }} />
+          <Photo photos={data.photos} style={{ flex: 1, width: '100%' }} />
 
-          {/* Address */}
           <div
             style={{
-              fontSize: 36,
-              fontWeight: 700,
-              color: '#ffffff',
-              letterSpacing: 0.5,
-              lineHeight: 1.15,
-              marginBottom: 8,
+              background: '#0e1428',
+              flexShrink: 0,
+              padding: '40px 64px 42px',
+              textAlign: 'center',
             }}
           >
-            <E editable={editable}>{data.address}</E>
-          </div>
+            {visibility.headline && (
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'baseline',
+                  justifyContent: 'center',
+                  gap: 14,
+                  marginBottom: 18,
+                  flexWrap: 'wrap',
+                }}
+              >
+                {headlineParts.italic ? (
+                  <span
+                    style={{
+                      fontFamily: 'Georgia, "Times New Roman", serif',
+                      fontStyle: 'italic',
+                      fontWeight: 400,
+                      fontSize: 68,
+                      color: '#ffffff',
+                      lineHeight: 1,
+                    }}
+                  >
+                    <E editable={editable}>{headlineParts.italic}</E>
+                  </span>
+                ) : null}
+                <span
+                  style={{
+                    fontFamily: 'Georgia, "Times New Roman", serif',
+                    fontStyle: 'italic',
+                    fontWeight: 700,
+                    fontSize: 68,
+                    color: '#ffffff',
+                    lineHeight: 1,
+                  }}
+                >
+                  <E editable={editable}>{headlineParts.bold}</E>
+                </span>
+              </div>
+            )}
 
-          {/* City, State */}
-          <div
-            style={{
-              fontSize: 22,
-              fontWeight: 400,
-              color: 'rgba(255,255,255,0.5)',
-              letterSpacing: 1,
-            }}
-          >
-            <E editable={editable}>{data.city}, {data.state}</E>
-          </div>
+            {(visibility.headline || visibility.address || visibility.price) && (
+              <div style={{ width: 80, height: 2, background: '#c9a96e', margin: '0 auto 22px' }} />
+            )}
 
-          {/* Open House date/time — only for Open House templates */}
-          {category === 'Open House' && (
-            <div style={{ marginTop: 20, fontSize: 24, color: '#c9a96e', fontStyle: 'italic' }}>
-              <E editable={editable}>{data.openHouseDate}</E>
-              <span style={{ margin: '0 12px', color: 'rgba(255,255,255,0.3)' }}>|</span>
-              <E editable={editable}>{data.openHouseTime}</E>
-            </div>
-          )}
+            {visibility.address && (
+              <>
+                <div
+                  style={{
+                    fontFamily: '"Inter", system-ui, sans-serif',
+                    fontSize: 36,
+                    fontWeight: 700,
+                    color: '#ffffff',
+                    letterSpacing: 0.3,
+                    lineHeight: 1.12,
+                    marginBottom: 8,
+                  }}
+                >
+                  <E editable={editable}>{data.address}</E>
+                </div>
+
+                <div
+                  style={{
+                    fontFamily: '"Inter", system-ui, sans-serif',
+                    fontSize: 22,
+                    fontWeight: 400,
+                    color: 'rgba(255,255,255,0.6)',
+                    letterSpacing: 0.6,
+                    marginBottom: visibility.price || visibility.stats || visibility.description ? 16 : 0,
+                  }}
+                >
+                  <E editable={editable}>{data.city}, {data.state} {data.zip}</E>
+                </div>
+              </>
+            )}
+
+            {visibility.price && (
+              <div
+                style={{
+                  fontFamily: '"Inter", system-ui, sans-serif',
+                  fontSize: 42,
+                  fontWeight: 700,
+                  color: '#c9a96e',
+                  letterSpacing: 0.4,
+                  marginBottom: visibility.stats || visibility.description ? 18 : 0,
+                }}
+              >
+                <E editable={editable}>{data.price}</E>
+              </div>
+            )}
+
+            {visibility.stats && (
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  gap: 36,
+                  marginBottom: visibility.description ? 18 : 0,
+                  flexWrap: 'wrap',
+                  fontFamily: '"Inter", system-ui, sans-serif',
+                }}
+              >
+                {[
+                  { label: 'Beds', value: data.beds },
+                  { label: 'Baths', value: data.baths },
+                  { label: 'Sq Ft', value: data.sqft },
+                ].map((item) => (
+                  <div key={item.label} style={{ minWidth: 110 }}>
+                    <div style={{ fontSize: 28, fontWeight: 700, color: '#ffffff' }}>
+                      <E editable={editable}>{item.value}</E>
+                    </div>
+                    <div style={{ fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)', marginTop: 4 }}>
+                      {item.label}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {visibility.description && (
+              <div
+                style={{
+                  maxWidth: 760,
+                  margin: '0 auto',
+                  fontFamily: '"Inter", system-ui, sans-serif',
+                  fontSize: 18,
+                  lineHeight: 1.45,
+                  color: 'rgba(255,255,255,0.72)',
+                }}
+              >
+                <E editable={editable}>{data.description}</E>
+              </div>
+            )}
+
+            {category === 'Open House' && (
+              <div style={{ marginTop: 20, fontSize: 24, color: '#c9a96e', fontStyle: 'italic' }}>
+                <E editable={editable}>{data.openHouseDate}</E>
+                <span style={{ margin: '0 12px', color: 'rgba(255,255,255,0.3)' }}>|</span>
+                <E editable={editable}>{data.openHouseTime}</E>
+              </div>
+            )}
+
+            {showAgentBlock && (
+              <div
+                style={{
+                  marginTop: 24,
+                  paddingTop: 20,
+                  borderTop: '1px solid rgba(255,255,255,0.14)',
+                  display: 'flex',
+                  justifyContent: 'center',
+                  gap: 20,
+                  flexWrap: 'wrap',
+                  fontFamily: '"Inter", system-ui, sans-serif',
+                  color: 'rgba(255,255,255,0.72)',
+                  fontSize: 16,
+                }}
+              >
+                {visibility.agentName && (
+                  <span style={{ color: '#ffffff', fontWeight: 700 }}>
+                    <E editable={editable}>{data.agentName}</E>
+                  </span>
+                )}
+                {visibility.agentTitle && (
+                  <span>
+                    <E editable={editable}>{data.agentTitle}</E>
+                  </span>
+                )}
+                {visibility.agentPhone && (
+                  <span>
+                    <E editable={editable}>{data.agentPhone}</E>
+                  </span>
+                )}
+                {visibility.agentEmail && (
+                  <span>
+                    <E editable={editable}>{data.agentEmail}</E>
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
         </div>
-      </div>
-    ),
+      );
+    },
   };
 }
 
@@ -246,7 +409,10 @@ export const TEMPLATE_CATEGORIES: TemplateCategory[] = [
   'Under Contract',
 ];
 
-export function getDefaultTemplateData(deal?: any): TemplateData {
+export function getDefaultTemplateData(
+  deal?: any,
+  category: TemplateCategory = 'Just Listed'
+): TemplateData {
   const contacts = deal?.deal_contacts || [];
   const sellerAgent = contacts.find(
     (dc: any) => dc.role === 'Seller Agent' || dc.role === 'Listing Agent'
@@ -269,11 +435,12 @@ export function getDefaultTemplateData(deal?: any): TemplateData {
     agentTitle: 'Real Estate Agent',
     agentPhone: sellerAgent?.phone || '(555) 123-4567',
     agentEmail: sellerAgent?.email || 'agent@unitedestatesrealty.com',
-    headline: 'Just Listed',
+    headline: category,
     subheadline: 'Your Dream Home Awaits',
     description:
       'Beautiful property featuring modern finishes, spacious living areas, and a stunning outdoor space. Schedule your private showing today!',
     openHouseDate: 'Saturday, March 22',
     openHouseTime: '1:00 PM – 4:00 PM',
+    visibility: { ...DEFAULT_TEMPLATE_VISIBILITY },
   };
 }
