@@ -7,7 +7,8 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { Mail, Lock, User, Building2, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, User, Eye, EyeOff } from 'lucide-react';
+import { UERLogo } from '@/components/UERLogo';
 
 export default function Auth() {
   const [loading, setLoading] = useState(false);
@@ -136,10 +137,10 @@ export default function Auth() {
     <div className="flex items-center justify-center min-h-screen bg-muted/30 p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-primary">
-            <Building2 className="h-7 w-7 text-primary-foreground" />
+          <div className="mx-auto mb-4">
+            <UERLogo size={72} />
           </div>
-          <CardTitle className="text-2xl">United Estates Realty</CardTitle>
+          <CardTitle className="text-2xl font-bold">United Estates Realty</CardTitle>
           <CardDescription>Real estate transaction management</CardDescription>
         </CardHeader>
         <CardContent>
