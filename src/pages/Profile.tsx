@@ -87,9 +87,13 @@ export default function Profile() {
     }
   };
 
-  // Change password
+  // Change password — re-authenticate with current password first
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!currentPassword) {
+      toast({ title: 'Current password required', description: 'Enter your current password to continue.', variant: 'destructive' });
+      return;
+    }
     if (newPassword.length < 6) {
       toast({ title: 'Password too short', description: 'Password must be at least 6 characters.', variant: 'destructive' });
       return;
@@ -98,7 +102,19 @@ export default function Profile() {
       toast({ title: 'Passwords do not match', variant: 'destructive' });
       return;
     }
+    if (newPassword === currentPassword) {
+      toast({ title: 'Same password', description: 'New password must be different from your current one.', variant: 'destructive' });
+      return;
+    }
     setPasswordLoading(true);
+    // Verify current password by re-signing in
+    const email = user?.email ?? '';
+    const { error: signInError } = await supabase.auth.signInWithPassword({ email, password: currentPassword });
+    if (signInError) {
+      setPasswordLoading(false);
+      toast({ title: 'Incorrect current password', description: 'Please check your current password and try again.', variant: 'destructive' });
+      return;
+    }
     const { error } = await supabase.auth.updateUser({ password: newPassword });
     setPasswordLoading(false);
     if (error) {
@@ -203,6 +219,29 @@ export default function Profile() {
             </CardHeader>
             <CardContent>
               <form onSubmit={handleChangePassword} className="space-y-4">
+                <div className="space-y-1.5">
+                  <Label htmlFor="current-password">Current Password</Label>
+                  <div className="relative">
+                    <Input
+                      id="current-password"
+                      type={showCurrent ? 'text' : 'password'}
+                      placeholder="••••••••"
+                      className="pr-9"
+                      value={currentPassword}
+                      onChange={(e) => setCurrentPassword(e.target.value)}
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowCurrent((v) => !v)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      tabIndex={-1}
+                    >
+                      {showCurrent ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                </div>
+
                 <div className="space-y-1.5">
                   <Label htmlFor="new-password">New Password</Label>
                   <div className="relative">

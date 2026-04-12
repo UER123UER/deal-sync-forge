@@ -35,11 +35,15 @@ const CONTACT_ROLES = [
 ];
 
 const formatPriceWithCommas = (value: string): string => {
-  const num = value.replace(/[^0-9.]/g, '');
-  if (!num) return '';
-  const parts = num.split('.');
-  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-  return '$' + parts.join('.');
+  // Strip everything except digits and the first decimal point
+  const stripped = value.replace(/[^0-9.]/g, '');
+  if (!stripped) return '';
+  // Keep only the first decimal point
+  const firstDot = stripped.indexOf('.');
+  const intPart = firstDot === -1 ? stripped : stripped.slice(0, firstDot);
+  const decPart = firstDot === -1 ? '' : stripped.slice(firstDot + 1).replace(/\./g, '');
+  const formatted = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  return '$' + (decPart ? `${formatted}.${decPart}` : formatted);
 };
 
 export default function DealDetail() {

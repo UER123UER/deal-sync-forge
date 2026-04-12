@@ -10,6 +10,7 @@ export interface TaskRow {
   end_date: string | null;
   assignee: string | null;
   deal_id: string | null;
+  completed: boolean;
   created_at: string;
 }
 
@@ -42,7 +43,7 @@ export function useCreateTask() {
 export function useUpdateTask() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, ...data }: { id: string; title?: string; description?: string; type?: string; due_date?: string | null; assignee?: string | null }) => {
+    mutationFn: async ({ id, ...data }: { id: string; title?: string; description?: string; type?: string; due_date?: string | null; assignee?: string | null; completed?: boolean }) => {
       const { error } = await supabase.from('tasks').update(data).eq('id', id);
       if (error) throw error;
     },

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { Copy, Check, DollarSign, Users, Gift } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,7 +7,11 @@ import { QRCodeSVG } from 'qrcode.react';
 
 export default function Referral() {
   const [copied, setCopied] = useState(false);
-  const referralCode = 'REF-' + Math.random().toString(36).substring(2, 8).toUpperCase();
+  // Stabilize the code so it doesn't regenerate on every render
+  const referralCode = useMemo(
+    () => 'REF-' + Math.random().toString(36).substring(2, 8).toUpperCase(),
+    [] // generated once per mount
+  );
   const referralLink = `${window.location.origin}/signup?ref=${referralCode}`;
 
   // Mock data
@@ -15,11 +19,15 @@ export default function Referral() {
   const earningsPerReferral = 20;
   const totalEarnings = totalReferrals * earningsPerReferral;
 
+  const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (copyTimerRef.current) clearTimeout(copyTimerRef.current); }, []);
+
   const handleCopy = () => {
-    navigator.clipboard.writeText(referralLink);
+    navigator.clipboard.writeText(referralLink).catch(() => {});
     setCopied(true);
     toast.success('Referral link copied!');
-    setTimeout(() => setCopied(false), 2000);
+    if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
+    copyTimerRef.current = setTimeout(() => setCopied(false), 2000);
   };
 
   return (

@@ -20,7 +20,7 @@ const TASK_TYPES = [
 ];
 
 export default function Tasks() {
-  const { data: tasks = [], isLoading } = useTasks();
+  const { data: tasks = [], isLoading, isError } = useTasks();
   const createTask = useCreateTask();
   const updateTask = useUpdateTask();
   const deleteTask = useDeleteTask();
@@ -31,7 +31,8 @@ export default function Tasks() {
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [newTaskDescription, setNewTaskDescription] = useState('');
   const [newTaskDueDate, setNewTaskDueDate] = useState<Date | undefined>();
-  const [completedTasks, setCompletedTasks] = useState<Set<string>>(new Set());
+  // Optimistic completion state — falls back to DB value on re-render
+  const [optimisticCompleted, setOptimisticCompleted] = useState<Record<string, boolean>>({});
 
   // Filters
   const [filterType, setFilterType] = useState<string>('all');
@@ -89,6 +90,7 @@ export default function Tasks() {
   };
 
   const handleDelete = async (id: string) => {
+    if (!window.confirm('Delete this task? This cannot be undone.')) return;
     try {
       await deleteTask.mutateAsync(id);
       toast.success('Task deleted');
@@ -97,13 +99,17 @@ export default function Tasks() {
     }
   };
 
-  const toggleComplete = (taskId: string) => {
-    setCompletedTasks((prev) => {
-      const next = new Set(prev);
-      if (next.has(taskId)) next.delete(taskId);
-      else next.add(taskId);
-      return next;
-    });
+  const toggleComplete = async (task: TaskRow) => {
+    const next = !task.completed;
+    // Optimistic update so UI is instant
+    setOptimisticCompleted((prev) => ({ ...prev, [task.id]: next }));
+    try {
+      await updateTask.mutateAsync({ id: task.id, completed: next });
+    } catch {
+      // Revert optimistic on failure
+      setOptimisticCompleted((prev) => ({ ...prev, [task.id]: task.completed }));
+      toast.error('Failed to update task');
+    }
   };
 
   return (
@@ -153,8 +159,14 @@ export default function Tasks() {
 
       {/* Content */}
       {isLoading ? (
-        <div className="flex-1 flex items-center justify-center">
-          <p className="text-sm text-muted-foreground">Loading tasks...</p>
+        <div className="flex-1 flex items-center justify-center gap-2">
+          <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+          <p className="text-sm text-muted-foreground">Loading tasks…</p>
+        </div>
+      ) : isError ? (
+        <div className="flex-1 flex flex-col items-center justify-center gap-3">
+          <p className="text-sm text-destructive font-medium">Failed to load tasks</p>
+          <p className="text-xs text-muted-foreground">Check your connection and try refreshing the page.</p>
         </div>
       ) : filtered.length === 0 ? (
         <div className="flex-1 flex flex-col items-center justify-center">
@@ -166,11 +178,11 @@ export default function Tasks() {
       ) : (
         <div className="flex-1 overflow-auto">
           {filtered.map((task) => {
-            const isComplete = completedTasks.has(task.id);
+            const isComplete = task.id in optimisticCompleted ? optimisticCompleted[task.id] : task.completed;
             return (
               <div key={task.id} className={cn('flex items-center px-6 py-3 border-b hover:bg-muted/50', isComplete && 'opacity-50')}>
                 <div className="w-8">
-                  <Checkbox checked={isComplete} onCheckedChange={() => toggleComplete(task.id)} />
+                  <Checkbox checked={isComplete} onCheckedChange={() => toggleComplete(task)} />
                 </div>
                 <div className="flex-1">
                   <p className={cn('text-sm text-foreground', isComplete && 'line-through')}>{task.title}</p>

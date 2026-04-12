@@ -5,7 +5,13 @@ import { format, parseISO } from 'date-fns';
 
 function parseDollar(s: string | null): number {
   if (!s) return 0;
-  return parseFloat(s.replace(/[^0-9.]/g, '')) || 0;
+  // Remove currency symbols, spaces, commas — keep only digits and first decimal point
+  const stripped = s.replace(/[^0-9.]/g, '');
+  const firstDot = stripped.indexOf('.');
+  const clean = firstDot === -1
+    ? stripped
+    : stripped.slice(0, firstDot + 1) + stripped.slice(firstDot + 1).replace(/\./g, '');
+  return parseFloat(clean) || 0;
 }
 
 export default function Finances() {

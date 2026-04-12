@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo } from 'react';
+import { useState, useRef, useMemo, useEffect } from 'react';
 import {
   Search, Plus, ChevronDown, Upload, X, Trash2, Edit, Download,
   Phone, Mail, MapPin, Tag, Calendar, Clock, Users, TrendingUp,
@@ -98,7 +98,7 @@ function getStage(contact: ContactRow): StageId | null {
 }
 
 function getInitials(c: ContactRow) {
-  return `${c.first_name[0] ?? ''}${c.last_name[0] ?? ''}`.toUpperCase();
+  return `${c.first_name?.charAt(0) ?? ''}${c.last_name?.charAt(0) ?? ''}`.toUpperCase();
 }
 
 function formatDate(date: string | null): string {
@@ -391,6 +391,8 @@ export default function People() {
 
   const csvInputRef = useRef<HTMLInputElement>(null);
   const copyResetRef = useRef<number | null>(null);
+  // Clean up clipboard reset timer on unmount to avoid memory leak
+  useEffect(() => () => { if (copyResetRef.current) window.clearTimeout(copyResetRef.current); }, []);
   const [csvPreview, setCsvPreview] = useState<Record<string, string>[]>([]);
   const [csvDialogOpen, setCsvDialogOpen] = useState(false);
 
@@ -561,10 +563,12 @@ export default function People() {
 
   const handleCsvImport = async () => {
     let imported = 0;
+    let skippedMissingName = 0;
+    let skippedErrors = 0;
     for (const row of csvPreview) {
       const firstName = row['first_name'] || row['First Name'] || row['firstName'] || '';
       const lastName = row['last_name'] || row['Last Name'] || row['lastName'] || '';
-      if (!firstName.trim() || !lastName.trim()) continue;
+      if (!firstName.trim() || !lastName.trim()) { skippedMissingName++; continue; }
       try {
         await createContact.mutateAsync({
           first_name: firstName.trim(), last_name: lastName.trim(),
@@ -574,9 +578,18 @@ export default function People() {
           role: (row['role'] || row['Role'] || '').trim() || null,
         });
         imported++;
-      } catch { /* skip */ }
+      } catch { skippedErrors++; }
     }
-    toast.success(`${imported} contact(s) imported`);
+    const skipped = skippedMissingName + skippedErrors;
+    if (skipped === 0) {
+      toast.success(`${imported} contact(s) imported`);
+    } else {
+      toast.success(
+        `${imported} imported` +
+        (skippedMissingName > 0 ? `, ${skippedMissingName} skipped (missing name)` : '') +
+        (skippedErrors > 0 ? `, ${skippedErrors} failed` : '')
+      );
+    }
     setCsvDialogOpen(false);
   };
 
