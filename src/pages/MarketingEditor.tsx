@@ -197,6 +197,73 @@ export default function MarketingEditor() {
   const [leftTab, setLeftTab] = useState<'templates' | 'edit'>('templates');
   const [categoryFilter, setCategoryFilter] = useState<TemplateCategory | 'All'>('All');
   const [exporting, setExporting] = useState(false);
+  const [renamingId, setRenamingId] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState('');
+
+  // ── Recent item actions ───────────────────────────────────────────────────
+  const deleteRecent = useCallback((entryTemplateId: string) => {
+    if (!id) return;
+    const updated = recents.filter((e) => e.templateId !== entryTemplateId);
+    saveRecents(id, updated);
+    setRecents(updated);
+  }, [id, recents]);
+
+  const duplicateRecent = useCallback((entry: RecentEntry) => {
+    if (!id) return;
+    const copyId = `${entry.templateId}-copy-${Date.now()}`;
+    const copy: RecentEntry = {
+      ...entry,
+      templateId: copyId,
+      customName: `${entry.customName || TEMPLATES.find(t => t.id === entry.templateId)?.name || 'Design'} (Copy)`,
+      lastEdited: Date.now(),
+    };
+    const updated = [copy, ...recents];
+    saveRecents(id, updated);
+    setRecents(updated);
+  }, [id, recents]);
+
+  const renameRecent = useCallback((entryTemplateId: string, newName: string) => {
+    if (!id) return;
+    const updated = recents.map((e) =>
+      e.templateId === entryTemplateId ? { ...e, customName: newName } : e
+    );
+    saveRecents(id, updated);
+    setRecents(updated);
+    setRenamingId(null);
+  }, [id, recents]);
+
+  const downloadRecent = useCallback(async (entry: RecentEntry) => {
+    const t = TEMPLATES.find((t) => t.id === entry.templateId);
+    if (!t) return;
+    // Temporarily render, export, then clean up
+    const container = document.createElement('div');
+    container.style.position = 'fixed';
+    container.style.left = '-9999px';
+    container.style.top = '0';
+    document.body.appendChild(container);
+    const { createRoot } = await import('react-dom/client');
+    const root = createRoot(container);
+    root.render(t.render(entry.data, false) as any);
+    await new Promise(r => setTimeout(r, 200));
+    try {
+      const dataUrl = await toPng(container.firstElementChild as HTMLElement, {
+        width: t.width, height: t.height, pixelRatio: 2,
+      });
+      const link = document.createElement('a');
+      link.download = `${(entry.customName || t.name).replace(/\s+/g, '-').toLowerCase()}.png`;
+      link.href = dataUrl;
+      link.click();
+    } finally {
+      root.unmount();
+      document.body.removeChild(container);
+    }
+  }, []);
+
+  const openRecentInNewTab = useCallback((entry: RecentEntry) => {
+    if (!id) return;
+    const url = `${window.location.origin}/transactions/${id}/marketing?template=${entry.templateId}`;
+    window.open(url, '_blank');
+  }, [id]);
 
   // Auto-fill from deal data (preserve existing photos)
   useEffect(() => {
