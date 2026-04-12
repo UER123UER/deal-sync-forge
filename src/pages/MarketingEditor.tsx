@@ -43,8 +43,10 @@ import {
   TEMPLATE_CATEGORIES,
   DEFAULT_TEMPLATE_VISIBILITY,
   getDefaultTemplateData,
+  mergeMarketingBlockTransforms,
   type AgentLayout,
   type HeadlineStyle,
+  type MarketingBlockKey,
   type PhotoLayout,
   type TemplateData,
   type TemplateCategory,
@@ -130,6 +132,38 @@ type EditableTextField =
   | 'openHouseDate'
   | 'openHouseTime';
 
+type MarketingBlockRect = {
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+};
+
+type MarketingBlockInteraction = {
+  block: MarketingBlockKey;
+  mode: 'move' | 'resize';
+  startClientX: number;
+  startClientY: number;
+  startTransform: {
+    x: number;
+    y: number;
+    scale: number;
+  };
+  baseRect: MarketingBlockRect;
+  committed: boolean;
+};
+
+const MARKETING_BLOCK_LABELS: Record<MarketingBlockKey, string> = {
+  logo: 'Logo',
+  photo: 'Photo',
+  headline: 'Headline',
+  address: 'Address',
+  price: 'Price',
+  stats: 'Beds / Baths / Sq Ft',
+  description: 'Description',
+  agent: 'Agent info',
+};
+
 function timeAgo(ms: number): string {
   const diff = Date.now() - ms;
   const mins = Math.floor(diff / 60_000);
@@ -212,7 +246,10 @@ export default function MarketingEditor() {
   const { data: deal } = useDeal(id);
   const { data: dealPhotos = [] } = useDealPhotos(id);
   const canvasRef = useRef<HTMLDivElement>(null);
+  const previewShellRef = useRef<HTMLDivElement>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
+  const scaleRef = useRef(1);
+  const interactionRef = useRef<MarketingBlockInteraction | null>(null);
 
   const template = TEMPLATES.find((t) => t.id === templateId) || TEMPLATES[0];
 
@@ -233,6 +270,16 @@ export default function MarketingEditor() {
     });
   }, []);
 
+  const replaceCurrentData = useCallback((updater: TemplateData | ((prev: TemplateData) => TemplateData)) => {
+    setHist((h) => {
+      const current = h.stack[h.index];
+      const next = typeof updater === 'function' ? updater(current) : updater;
+      const stack = [...h.stack];
+      stack[h.index] = next;
+      return { stack, index: h.index };
+    });
+  }, []);
+
   const hydrateTemplateData = useCallback((base: TemplateData, incoming?: Partial<TemplateData> | null): TemplateData => {
     const merged = {
       ...base,
@@ -245,6 +292,7 @@ export default function MarketingEditor() {
         ...DEFAULT_TEMPLATE_VISIBILITY,
         ...(incoming?.visibility ?? {}),
       },
+      blockTransforms: mergeMarketingBlockTransforms(incoming?.blockTransforms),
       agents: incoming?.agents?.length
         ? incoming.agents
         : [{
@@ -311,6 +359,8 @@ export default function MarketingEditor() {
   const [exporting, setExporting] = useState(false);
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
+  const [selectedBlock, setSelectedBlock] = useState<MarketingBlockKey | null>(null);
+  const [blockRects, setBlockRects] = useState<Partial<Record<MarketingBlockKey, MarketingBlockRect>>>({});
 
   // ── Recent item actions ───────────────────────────────────────────────────
   const deleteRecent = useCallback((entryTemplateId: string) => {
@@ -463,6 +513,34 @@ export default function MarketingEditor() {
     setData((prev) => ({ ...prev, agentLayout }));
   }, [setData]);
 
+  const updateBlockTransform = useCallback((
+    block: MarketingBlockKey,
+    nextTransform: { x: number; y: number; scale: number },
+    replace = false,
+  ) => {
+    const applyUpdate = replace ? replaceCurrentData : setData;
+    applyUpdate((prev) => ({
+      ...prev,
+      blockTransforms: {
+        ...(prev.blockTransforms ?? {}),
+        [block]: nextTransform,
+      },
+    }));
+  }, [replaceCurrentData, setData]);
+
+  const resetSelectedBlock = useCallback(() => {
+    if (!selectedBlock) return;
+
+    setData((prev) => {
+      const nextTransforms = { ...(prev.blockTransforms ?? {}) };
+      delete nextTransforms[selectedBlock];
+      return {
+        ...prev,
+        blockTransforms: nextTransforms,
+      };
+    });
+  }, [selectedBlock, setData]);
+
   // Photo upload
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -517,6 +595,147 @@ export default function MarketingEditor() {
   const maxCanvasHeight = typeof window !== 'undefined' ? window.innerHeight - 120 : 600;
   const naturalScale = Math.min(maxCanvasWidth / template.width, maxCanvasHeight / template.height, 1);
   const scale = naturalScale * zoom;
+  scaleRef.current = scale;
+
+  const measureBlocks = useCallback(() => {
+    if (!canvasRef.current) return;
+
+    const canvasRect = canvasRef.current.getBoundingClientRect();
+    const divisor = scaleRef.current || 1;
+    const nextRects: Partial<Record<MarketingBlockKey, MarketingBlockRect>> = {};
+
+    canvasRef.current.querySelectorAll<HTMLElement>('[data-marketing-block]').forEach((element) => {
+      const block = element.dataset.marketingBlock as MarketingBlockKey | undefined;
+      if (!block) return;
+
+      const rect = element.getBoundingClientRect();
+      nextRects[block] = {
+        left: (rect.left - canvasRect.left) / divisor,
+        top: (rect.top - canvasRect.top) / divisor,
+        width: rect.width / divisor,
+        height: rect.height / divisor,
+      };
+    });
+
+    setBlockRects(nextRects);
+    setSelectedBlock((current) => (current && !nextRects[current] ? null : current));
+  }, []);
+
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(measureBlocks);
+    return () => window.cancelAnimationFrame(frame);
+  }, [measureBlocks, data, templateId, scale]);
+
+  useEffect(() => {
+    const handleResize = () => measureBlocks();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [measureBlocks]);
+
+  useEffect(() => {
+    if (!canvasRef.current) return;
+
+    const images = Array.from(canvasRef.current.querySelectorAll('img'));
+    const handleLoad = () => measureBlocks();
+
+    images.forEach((image) => {
+      if (!image.complete) {
+        image.addEventListener('load', handleLoad);
+      }
+    });
+
+    return () => {
+      images.forEach((image) => image.removeEventListener('load', handleLoad));
+    };
+  }, [measureBlocks, data.photos, templateId]);
+
+  useEffect(() => {
+    const handlePointerMove = (event: PointerEvent) => {
+      const interaction = interactionRef.current;
+      if (!interaction) return;
+
+      event.preventDefault();
+
+      const divisor = scaleRef.current || 1;
+      const dx = (event.clientX - interaction.startClientX) / divisor;
+      const dy = (event.clientY - interaction.startClientY) / divisor;
+
+      if (interaction.mode === 'move') {
+        updateBlockTransform(
+          interaction.block,
+          {
+            ...interaction.startTransform,
+            x: interaction.startTransform.x + dx,
+            y: interaction.startTransform.y + dy,
+          },
+          interaction.committed,
+        );
+        interaction.committed = true;
+        return;
+      }
+
+      const baseSize = Math.max(interaction.baseRect.width, interaction.baseRect.height, 120);
+      const dominantDelta = Math.abs(dx) > Math.abs(dy) ? dx : dy;
+      const nextScale = Math.min(
+        3,
+        Math.max(0.35, interaction.startTransform.scale * ((baseSize + dominantDelta) / baseSize)),
+      );
+
+      updateBlockTransform(
+        interaction.block,
+        {
+          ...interaction.startTransform,
+          scale: Number.isFinite(nextScale) ? nextScale : interaction.startTransform.scale,
+        },
+        interaction.committed,
+      );
+      interaction.committed = true;
+    };
+
+    const handlePointerEnd = () => {
+      interactionRef.current = null;
+    };
+
+    window.addEventListener('pointermove', handlePointerMove);
+    window.addEventListener('pointerup', handlePointerEnd);
+    window.addEventListener('pointercancel', handlePointerEnd);
+
+    return () => {
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('pointerup', handlePointerEnd);
+      window.removeEventListener('pointercancel', handlePointerEnd);
+    };
+  }, [updateBlockTransform]);
+
+  useEffect(() => {
+    setSelectedBlock(null);
+  }, [templateId]);
+
+  const beginBlockInteraction = useCallback((
+    event: React.PointerEvent<HTMLButtonElement>,
+    block: MarketingBlockKey,
+    mode: 'move' | 'resize',
+  ) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const currentTransform = data.blockTransforms?.[block];
+    interactionRef.current = {
+      block,
+      mode,
+      startClientX: event.clientX,
+      startClientY: event.clientY,
+      startTransform: {
+        x: currentTransform?.x ?? 0,
+        y: currentTransform?.y ?? 0,
+        scale: currentTransform?.scale ?? 1,
+      },
+      baseRect: blockRects[block] ?? { left: 0, top: 0, width: 220, height: 220 },
+      committed: false,
+    };
+
+    setSelectedBlock(block);
+  }, [blockRects, data.blockTransforms]);
 
   const filteredTemplates =
     categoryFilter === 'All' ? TEMPLATES : TEMPLATES.filter((t) => t.category === categoryFilter);
@@ -929,6 +1148,24 @@ export default function MarketingEditor() {
                   </CollapsibleContent>
                 </Collapsible>
 
+                <div className="rounded-2xl border bg-muted/25 px-3 py-3 text-[11px] leading-4 text-muted-foreground">
+                  <div className="text-[10px] font-semibold uppercase tracking-wide text-foreground/70">Canvas Layout</div>
+                  <div className="mt-2">
+                    Drag the outline on the poster to move text or images. Use the corner handle to scale them up or down.
+                  </div>
+                  {selectedBlock ? (
+                    <div className="mt-3 flex items-center justify-between gap-2 rounded-xl border bg-background px-2.5 py-2">
+                      <div>
+                        <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Selected</div>
+                        <div className="text-xs font-semibold text-foreground">{MARKETING_BLOCK_LABELS[selectedBlock]}</div>
+                      </div>
+                      <Button type="button" variant="outline" size="sm" className="h-7 text-[11px]" onClick={resetSelectedBlock}>
+                        Reset
+                      </Button>
+                    </div>
+                  ) : null}
+                </div>
+
                 <Collapsible open={basicsOpen} onOpenChange={setBasicsOpen}>
                   <CollapsibleTrigger className="flex items-center justify-between w-full py-2 text-xs font-semibold text-foreground hover:text-foreground/80">
                     Property Details
@@ -1092,11 +1329,72 @@ export default function MarketingEditor() {
             }}
           >
             <div
-              ref={canvasRef}
-              className="shadow-2xl"
+              ref={previewShellRef}
+              className="relative shadow-2xl"
               style={{ width: template.width, height: template.height }}
             >
-              {template.render(data, true)}
+              <div
+                ref={canvasRef}
+                style={{ width: template.width, height: template.height }}
+              >
+                {template.render(data, false)}
+              </div>
+
+              <div
+                className="absolute inset-0"
+                onPointerDown={(event) => {
+                  if (event.target === event.currentTarget) {
+                    setSelectedBlock(null);
+                  }
+                }}
+              >
+                {Object.entries(blockRects).map(([blockKey, rect]) => {
+                  if (!rect) return null;
+                  const block = blockKey as MarketingBlockKey;
+                  const selected = selectedBlock === block;
+
+                  return (
+                    <div
+                      key={block}
+                      className={cn(
+                        'absolute rounded-xl transition-colors',
+                        selected
+                          ? 'border-2 border-primary bg-primary/5 shadow-[0_0_0_1px_rgba(255,255,255,0.95)]'
+                          : 'border border-transparent hover:border-primary/40 hover:bg-primary/5'
+                      )}
+                      style={{
+                        left: rect.left,
+                        top: rect.top,
+                        width: rect.width,
+                        height: rect.height,
+                      }}
+                    >
+                      <button
+                        type="button"
+                        className="absolute inset-0 cursor-move rounded-xl"
+                        onPointerDown={(event) => beginBlockInteraction(event, block, 'move')}
+                        aria-label={`Move ${MARKETING_BLOCK_LABELS[block]}`}
+                      />
+
+                      {(selected || block === 'photo') ? (
+                        <div className="pointer-events-none absolute left-2 top-2 rounded-full bg-background/95 px-2 py-1 text-[10px] font-semibold text-foreground shadow-sm">
+                          {MARKETING_BLOCK_LABELS[block]}
+                        </div>
+                      ) : null}
+
+                      <button
+                        type="button"
+                        className={cn(
+                          'absolute bottom-0 right-0 h-4 w-4 translate-x-1/2 translate-y-1/2 rounded-full border-2 border-background bg-primary shadow-sm',
+                          selected ? 'opacity-100' : 'opacity-0 hover:opacity-100 focus:opacity-100'
+                        )}
+                        onPointerDown={(event) => beginBlockInteraction(event, block, 'resize')}
+                        aria-label={`Resize ${MARKETING_BLOCK_LABELS[block]}`}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
         </div>
