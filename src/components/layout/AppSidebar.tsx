@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Home, Plus, Users, DollarSign, Mail, CheckSquare, Calendar, Gift, Phone, Shield, UserCircle } from 'lucide-react';
+import { Home, Plus, Users, DollarSign, Mail, CheckSquare, Calendar, Gift, Phone, Shield, UserCircle, Building2 } from 'lucide-react';
 import { UERLogo } from '@/components/UERLogo';
 import { cn } from '@/lib/utils';
 import { useState, useRef, useEffect } from 'react';
