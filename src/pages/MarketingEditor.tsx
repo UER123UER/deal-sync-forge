@@ -1,4 +1,4 @@
-import { useRef, useState, useCallback, useEffect, useReducer } from 'react';
+import { useRef, useState, useCallback, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { toPng } from 'html-to-image';
 import { Button } from '@/components/ui/button';
@@ -19,6 +19,7 @@ import {
   Pencil,
   Undo2,
   Redo2,
+  Clock,
 } from 'lucide-react';
 import { useDeal } from '@/hooks/useDeals';
 import { useDealPhotos } from '@/hooks/useDealPhotos';
@@ -30,6 +31,50 @@ import {
   type TemplateCategory,
 } from '@/data/marketingTemplates';
 import { cn } from '@/lib/utils';
+
+// ── Recents persistence (localStorage, keyed per deal) ──────────────────────
+
+export interface RecentEntry {
+  templateId: string;
+  data: TemplateData;
+  lastEdited: number; // ms timestamp
+}
+
+const RECENTS_LIMIT = 20;
+
+function recentsKey(dealId: string) {
+  return `uer_marketing_recents_${dealId}`;
+}
+
+function loadRecents(dealId: string): RecentEntry[] {
+  try {
+    const raw = localStorage.getItem(recentsKey(dealId));
+    return raw ? (JSON.parse(raw) as RecentEntry[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveRecents(dealId: string, entries: RecentEntry[]) {
+  try {
+    localStorage.setItem(recentsKey(dealId), JSON.stringify(entries.slice(0, RECENTS_LIMIT)));
+  } catch {
+    // storage full — ignore
+  }
+}
+
+/** Upsert a recent entry for a given deal+template, then sort by lastEdited desc */
+function upsertRecent(dealId: string, templateId: string, data: TemplateData) {
+  const entries = loadRecents(dealId).filter((e) => e.templateId !== templateId);
+  const updated: RecentEntry[] = [
+    { templateId, data, lastEdited: Date.now() },
+    ...entries,
+  ];
+  saveRecents(dealId, updated);
+  return updated;
+}
+
+// ── Helpers ─────────────────────────────────────────────────────────────────
 
 const CATEGORY_COLORS: Record<TemplateCategory, string> = {
   'Just Listed':    'bg-emerald-100 text-emerald-800',
@@ -46,6 +91,19 @@ const TYPE_LABELS: Record<string, string> = {
   story: 'Story',
 };
 
+function timeAgo(ms: number): string {
+  const diff = Date.now() - ms;
+  const mins = Math.floor(diff / 60_000);
+  if (mins < 1) return 'Just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  return `${days}d ago`;
+}
+
+// ── Component ────────────────────────────────────────────────────────────────
+
 export default function MarketingEditor() {
   const { id } = useParams<{ id: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -58,18 +116,11 @@ export default function MarketingEditor() {
 
   const template = TEMPLATES.find((t) => t.id === templateId) || TEMPLATES[0];
 
-  // ── History (undo / redo) ──────────────────────────────────────────────────
+  // ── History (undo / redo) ─────────────────────────────────────────────────
   const [history, setHistory] = useState<TemplateData[]>([getDefaultTemplateData()]);
   const [historyIndex, setHistoryIndex] = useState(0);
   const data = history[historyIndex];
 
-  // Push a new state onto the history stack (drops any forward history)
-  const pushHistory = useCallback((next: TemplateData) => {
-    setHistory((prev) => [...prev.slice(0, historyIndex + 1), next]);
-    setHistoryIndex((i) => i + 1);
-  }, [historyIndex]);
-
-  // setData still works for immediate updates but always records history
   const setData = useCallback((updater: TemplateData | ((prev: TemplateData) => TemplateData)) => {
     setHistory((prev) => {
       const current = prev[historyIndex];
@@ -90,7 +141,7 @@ export default function MarketingEditor() {
     if (canRedo) setHistoryIndex((i) => i + 1);
   }, [canRedo]);
 
-  // Keyboard shortcuts: Ctrl/Cmd+Z = undo, Ctrl/Cmd+Shift+Z = redo
+  // Keyboard shortcuts
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const mod = e.metaKey || e.ctrlKey;
@@ -102,33 +153,64 @@ export default function MarketingEditor() {
     return () => window.removeEventListener('keydown', onKey);
   }, [handleUndo, handleRedo]);
 
+  // ── Recents state ─────────────────────────────────────────────────────────
+  const [recents, setRecents] = useState<RecentEntry[]>(() =>
+    id ? loadRecents(id) : []
+  );
+
+  // Auto-save: debounce 600ms after any data change
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (!id) return;
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(() => {
+      const updated = upsertRecent(id, templateId, data);
+      setRecents(updated);
+    }, 600);
+    return () => {
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    };
+  }, [data, id, templateId]);
+
+  // ── Other UI state ────────────────────────────────────────────────────────
   const [photosInitialized, setPhotosInitialized] = useState(false);
   const [zoom, setZoom] = useState(1);
   const [basicsOpen, setBasicsOpen] = useState(true);
   const [agentOpen, setAgentOpen] = useState(true);
   const [ohOpen, setOhOpen] = useState(true);
-  const [leftTab, setLeftTab] = useState<'templates' | 'edit'>('templates');
+  const [leftTab, setLeftTab] = useState<'templates' | 'edit' | 'recent'>('templates');
   const [categoryFilter, setCategoryFilter] = useState<TemplateCategory | 'All'>('All');
   const [exporting, setExporting] = useState(false);
 
-  // Auto-fill from deal data
+  // Auto-fill from deal data (preserve existing photos)
   useEffect(() => {
     if (deal) {
-      setData((prev) => ({ ...getDefaultTemplateData(deal), photos: prev.photos }));
+      // Check if there's a saved session for the current template first
+      const saved = id ? loadRecents(id).find((r) => r.templateId === templateId) : null;
+      if (saved) {
+        setHistory([saved.data]);
+        setHistoryIndex(0);
+      } else {
+        setData((prev) => ({ ...getDefaultTemplateData(deal), photos: prev.photos }));
+      }
     }
-  }, [deal]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [deal, templateId]);
 
-  // Auto-populate photos from deal's uploaded photos (only on first load)
+  // Auto-populate deal photos on first load (only if no saved session)
   useEffect(() => {
     if (!photosInitialized && dealPhotos.length > 0) {
-      setData((prev) => ({ ...prev, photos: dealPhotos.map((p) => p.url) }));
+      const saved = id ? loadRecents(id).find((r) => r.templateId === templateId) : null;
+      if (!saved) {
+        setData((prev) => ({ ...prev, photos: dealPhotos.map((p) => p.url) }));
+      }
       setPhotosInitialized(true);
     }
-  }, [dealPhotos, photosInitialized]);
+  }, [dealPhotos, photosInitialized, id, templateId]);
 
   const updateField = useCallback((field: keyof TemplateData, value: string) => {
     setData((prev) => ({ ...prev, [field]: value }));
-  }, []);
+  }, [setData]);
 
   // Photo upload
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -143,8 +225,16 @@ export default function MarketingEditor() {
     setData((prev) => ({ ...prev, photos: prev.photos.filter((_, i) => i !== index) }));
   };
 
-  const selectTemplate = (id: string) => {
-    setSearchParams({ template: id });
+  const selectTemplate = (tid: string) => {
+    setSearchParams({ template: tid });
+    setLeftTab('edit');
+  };
+
+  /** Resume a recent entry: load its saved data and switch to edit tab */
+  const resumeRecent = (entry: RecentEntry) => {
+    setSearchParams({ template: entry.templateId });
+    setHistory([entry.data]);
+    setHistoryIndex(0);
     setLeftTab('edit');
   };
 
@@ -168,7 +258,7 @@ export default function MarketingEditor() {
     }
   }, [template, data.address]);
 
-  // Calculate scale to fit canvas in viewport
+  // Scale canvas to viewport
   const maxCanvasWidth = typeof window !== 'undefined' ? window.innerWidth - 680 : 600;
   const maxCanvasHeight = typeof window !== 'undefined' ? window.innerHeight - 120 : 600;
   const naturalScale = Math.min(maxCanvasWidth / template.width, maxCanvasHeight / template.height, 1);
@@ -199,24 +289,10 @@ export default function MarketingEditor() {
         <div className="flex items-center gap-2">
           {/* Undo / Redo */}
           <div className="flex items-center gap-0.5 border rounded-md px-1">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7"
-              onClick={handleUndo}
-              disabled={!canUndo}
-              title="Undo (Ctrl+Z)"
-            >
+            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleUndo} disabled={!canUndo} title="Undo (Ctrl+Z)">
               <Undo2 className="h-3.5 w-3.5" />
             </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7"
-              onClick={handleRedo}
-              disabled={!canRedo}
-              title="Redo (Ctrl+Shift+Z)"
-            >
+            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleRedo} disabled={!canRedo} title="Redo (Ctrl+Shift+Z)">
               <Redo2 className="h-3.5 w-3.5" />
             </Button>
           </div>
@@ -240,39 +316,56 @@ export default function MarketingEditor() {
       </div>
 
       <div className="flex flex-1 overflow-hidden">
-        {/* ── Left Panel: Templates / Edit tabs ── */}
+        {/* ── Left Panel ── */}
         <div className="w-[260px] border-r bg-background shrink-0 flex flex-col">
-          {/* Tab bar */}
+          {/* Tab bar: Templates | Edit | Recent */}
           <div className="flex border-b shrink-0">
             <button
               onClick={() => setLeftTab('templates')}
               className={cn(
-                'flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-semibold transition-colors',
+                'flex-1 flex items-center justify-center gap-1 py-2.5 text-[11px] font-semibold transition-colors',
                 leftTab === 'templates'
                   ? 'text-foreground border-b-2 border-primary -mb-px'
                   : 'text-muted-foreground hover:text-foreground'
               )}
             >
-              <LayoutTemplate className="h-3.5 w-3.5" />
+              <LayoutTemplate className="h-3 w-3" />
               Templates
             </button>
             <button
               onClick={() => setLeftTab('edit')}
               className={cn(
-                'flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-semibold transition-colors',
+                'flex-1 flex items-center justify-center gap-1 py-2.5 text-[11px] font-semibold transition-colors',
                 leftTab === 'edit'
                   ? 'text-foreground border-b-2 border-primary -mb-px'
                   : 'text-muted-foreground hover:text-foreground'
               )}
             >
-              <Pencil className="h-3.5 w-3.5" />
+              <Pencil className="h-3 w-3" />
               Edit
+            </button>
+            <button
+              onClick={() => setLeftTab('recent')}
+              className={cn(
+                'flex-1 flex items-center justify-center gap-1 py-2.5 text-[11px] font-semibold transition-colors relative',
+                leftTab === 'recent'
+                  ? 'text-foreground border-b-2 border-primary -mb-px'
+                  : 'text-muted-foreground hover:text-foreground'
+              )}
+            >
+              <Clock className="h-3 w-3" />
+              Recent
+              {recents.length > 0 && (
+                <span className="absolute top-1.5 right-1.5 w-3.5 h-3.5 bg-primary text-primary-foreground rounded-full text-[8px] flex items-center justify-center font-bold">
+                  {recents.length > 9 ? '9+' : recents.length}
+                </span>
+              )}
             </button>
           </div>
 
+          {/* ── Templates tab ── */}
           {leftTab === 'templates' && (
             <div className="flex flex-col flex-1 overflow-hidden">
-              {/* Category filter */}
               <div className="p-2 border-b flex flex-wrap gap-1 shrink-0">
                 <button
                   onClick={() => setCategoryFilter('All')}
@@ -300,8 +393,6 @@ export default function MarketingEditor() {
                   </button>
                 ))}
               </div>
-
-              {/* Template grid */}
               <ScrollArea className="flex-1">
                 <div className="p-2 grid grid-cols-2 gap-2">
                   {filteredTemplates.map((t) => {
@@ -314,16 +405,10 @@ export default function MarketingEditor() {
                         onClick={() => selectTemplate(t.id)}
                         className={cn(
                           'group flex flex-col rounded-lg overflow-hidden border-2 transition-all text-left',
-                          isSelected
-                            ? 'border-primary shadow-md'
-                            : 'border-transparent hover:border-muted-foreground/30'
+                          isSelected ? 'border-primary shadow-md' : 'border-transparent hover:border-muted-foreground/30'
                         )}
                       >
-                        {/* Thumbnail */}
-                        <div
-                          className="overflow-hidden bg-muted relative"
-                          style={{ height: Math.min(thumbH, 160), width: '100%' }}
-                        >
+                        <div className="overflow-hidden bg-muted relative" style={{ height: Math.min(thumbH, 160), width: '100%' }}>
                           <div
                             style={{
                               transform: `scale(${thumbScale})`,
@@ -337,7 +422,6 @@ export default function MarketingEditor() {
                             {t.render({ ...getDefaultTemplateData(deal), photos: data.photos }, false)}
                           </div>
                         </div>
-                        {/* Label */}
                         <div className="px-2 py-1.5 bg-background">
                           <div className="text-[10px] font-semibold text-foreground truncate">{t.name}</div>
                           <div className="text-[9px] text-muted-foreground mt-0.5">{TYPE_LABELS[t.type]}</div>
@@ -350,10 +434,10 @@ export default function MarketingEditor() {
             </div>
           )}
 
+          {/* ── Edit tab ── */}
           {leftTab === 'edit' && (
             <ScrollArea className="flex-1">
               <div className="p-3 space-y-1">
-
                 {/* Photo Upload */}
                 <div className="pb-4 border-b mb-2">
                   <div className="flex items-center justify-between mb-2">
@@ -362,13 +446,7 @@ export default function MarketingEditor() {
                       <span className="text-[9px] text-muted-foreground">{dealPhotos.length} from deal</span>
                     )}
                   </div>
-                  <input
-                    ref={photoInputRef}
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handlePhotoUpload}
-                  />
+                  <input ref={photoInputRef} type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} />
                   {data.photos.length === 0 ? (
                     <button
                       onClick={() => photoInputRef.current?.click()}
@@ -378,36 +456,29 @@ export default function MarketingEditor() {
                       <span>Click to add photo</span>
                     </button>
                   ) : (
-                    <div className="space-y-2">
-                      <div className="flex flex-wrap gap-1.5">
-                        {data.photos.map((src, i) => (
-                          <div key={i} className="relative group">
-                            <img
-                              src={src}
-                              alt=""
-                              className="w-16 h-16 object-cover rounded border"
-                            />
-                            <button
-                              onClick={() => removePhoto(i)}
-                              className="absolute -top-1 -right-1 w-4 h-4 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                            >
-                              <X className="h-2.5 w-2.5" />
-                            </button>
-                            {i === 0 && (
-                              <div className="absolute bottom-0 left-0 right-0 text-[8px] bg-black/60 text-white text-center py-0.5 rounded-b">
-                                Main
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                        {/* Add more button */}
-                        <button
-                          onClick={() => photoInputRef.current?.click()}
-                          className="w-16 h-16 border-2 border-dashed border-muted-foreground/30 rounded flex flex-col items-center justify-center text-muted-foreground hover:border-primary hover:text-primary transition-colors"
-                        >
-                          <ImagePlus className="h-4 w-4" />
-                        </button>
-                      </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {data.photos.map((src, i) => (
+                        <div key={i} className="relative group">
+                          <img src={src} alt="" className="w-16 h-16 object-cover rounded border" />
+                          <button
+                            onClick={() => removePhoto(i)}
+                            className="absolute -top-1 -right-1 w-4 h-4 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <X className="h-2.5 w-2.5" />
+                          </button>
+                          {i === 0 && (
+                            <div className="absolute bottom-0 left-0 right-0 text-[8px] bg-black/60 text-white text-center py-0.5 rounded-b">
+                              Main
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                      <button
+                        onClick={() => photoInputRef.current?.click()}
+                        className="w-16 h-16 border-2 border-dashed border-muted-foreground/30 rounded flex flex-col items-center justify-center text-muted-foreground hover:border-primary hover:text-primary transition-colors"
+                      >
+                        <ImagePlus className="h-4 w-4" />
+                      </button>
                     </div>
                   )}
                 </div>
@@ -510,6 +581,86 @@ export default function MarketingEditor() {
                       </div>
                     </CollapsibleContent>
                   </Collapsible>
+                )}
+              </div>
+            </ScrollArea>
+          )}
+
+          {/* ── Recent tab ── */}
+          {leftTab === 'recent' && (
+            <ScrollArea className="flex-1">
+              <div className="p-3">
+                {recents.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-12 text-center gap-2">
+                    <Clock className="h-8 w-8 text-muted-foreground/40" />
+                    <p className="text-xs font-medium text-muted-foreground">No recent sessions yet</p>
+                    <p className="text-[10px] text-muted-foreground/70 leading-relaxed">
+                      Your edits save automatically.<br />Come back here to pick up where you left off.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wide font-semibold mb-3">
+                      {recents.length} saved session{recents.length !== 1 ? 's' : ''}
+                    </p>
+                    {recents.map((entry) => {
+                      const t = TEMPLATES.find((t) => t.id === entry.templateId);
+                      if (!t) return null;
+                      const thumbScale = 80 / t.width;
+                      const thumbH = Math.round(t.height * thumbScale);
+                      const isActive = entry.templateId === templateId;
+                      return (
+                        <button
+                          key={entry.templateId}
+                          onClick={() => resumeRecent(entry)}
+                          className={cn(
+                            'w-full flex items-start gap-2.5 p-2 rounded-lg border-2 text-left transition-all hover:bg-muted/60',
+                            isActive ? 'border-primary bg-primary/5' : 'border-transparent hover:border-muted-foreground/20'
+                          )}
+                        >
+                          {/* Mini preview */}
+                          <div
+                            className="rounded overflow-hidden bg-muted shrink-0 border"
+                            style={{ width: 80, height: thumbH }}
+                          >
+                            <div
+                              style={{
+                                transform: `scale(${thumbScale})`,
+                                transformOrigin: 'top left',
+                                width: t.width,
+                                height: t.height,
+                                pointerEvents: 'none',
+                                userSelect: 'none',
+                              }}
+                            >
+                              {t.render(entry.data, false)}
+                            </div>
+                          </div>
+                          {/* Info */}
+                          <div className="flex flex-col gap-0.5 min-w-0 flex-1 pt-0.5">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="text-[11px] font-semibold text-foreground truncate">{t.name}</span>
+                              {isActive && (
+                                <span className="text-[8px] font-bold px-1.5 py-0.5 bg-primary text-primary-foreground rounded-full shrink-0">
+                                  Active
+                                </span>
+                              )}
+                            </div>
+                            <span className="text-[10px] text-muted-foreground truncate">{entry.data.address}</span>
+                            <span className={cn(
+                              'text-[10px] font-semibold px-1.5 py-0.5 rounded-full self-start mt-0.5',
+                              CATEGORY_COLORS[t.category]
+                            )}>
+                              {t.category}
+                            </span>
+                            <span className="text-[9px] text-muted-foreground/70 mt-1">
+                              {timeAgo(entry.lastEdited)}
+                            </span>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
                 )}
               </div>
             </ScrollArea>
