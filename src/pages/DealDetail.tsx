@@ -1,8 +1,9 @@
 import { useState, useRef } from 'react';
 import { TEMPLATES, TEMPLATE_CATEGORIES, type TemplateCategory } from '@/data/marketingTemplates';
+import { type RecentEntry } from '@/pages/MarketingEditor';
 import { useSignatureRequests } from '@/hooks/useSignatureRequests';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ChevronDown, ChevronRight, Edit, Eye, Mail, Plus, FileText, GripVertical, Download, Printer, Send, Trash2, MessageSquare, Bell, UserPlus, Check, X, Upload, Image, StickyNote, Megaphone } from 'lucide-react';
+import { ChevronDown, ChevronRight, Edit, Eye, Mail, Plus, FileText, GripVertical, Download, Printer, Send, Trash2, MessageSquare, Bell, UserPlus, Check, X, Upload, Image, StickyNote, Megaphone, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -73,6 +74,15 @@ export default function DealDetail() {
   // Marketing local state
   const [marketingChecked, setMarketingChecked] = useState<Set<string>>(new Set());
   const [marketingCategory, setMarketingCategory] = useState<TemplateCategory | null>(null);
+  const [showRecentOnly, setShowRecentOnly] = useState(false);
+
+  // Load saved marketing sessions for this deal from localStorage
+  const dealRecents: RecentEntry[] = (() => {
+    try {
+      const raw = localStorage.getItem(`uer_marketing_recents_${id}`);
+      return raw ? (JSON.parse(raw) as RecentEntry[]) : [];
+    } catch { return []; }
+  })();
 
   // Hooks for tabs
   const { data: dealNotes = [] } = useDealNotes(id);
@@ -718,16 +728,29 @@ export default function DealDetail() {
           </div>
           {/* Category filter chips */}
           <div className="flex flex-wrap gap-2 mb-6">
+            {/* Recent pill — shown only when there are saved sessions */}
+            {dealRecents.length > 0 && (
+              <button
+                onClick={() => { setShowRecentOnly(!showRecentOnly); setMarketingCategory(null); }}
+                className={cn('px-3 py-1.5 rounded-full text-xs font-medium border transition-colors flex items-center gap-1.5', showRecentOnly ? 'bg-primary text-primary-foreground border-primary' : 'bg-background text-muted-foreground border-border hover:border-foreground/30')}
+              >
+                <Clock className="h-3 w-3" />
+                Recent
+                <span className={cn('text-[10px] font-bold px-1.5 py-0.5 rounded-full', showRecentOnly ? 'bg-primary-foreground/20 text-primary-foreground' : 'bg-muted text-muted-foreground')}>
+                  {dealRecents.length}
+                </span>
+              </button>
+            )}
             <button
-              onClick={() => setMarketingCategory(null)}
-              className={cn('px-3 py-1.5 rounded-full text-xs font-medium border transition-colors', !marketingCategory ? 'bg-primary text-primary-foreground border-primary' : 'bg-background text-muted-foreground border-border hover:border-foreground/30')}
+              onClick={() => { setMarketingCategory(null); setShowRecentOnly(false); }}
+              className={cn('px-3 py-1.5 rounded-full text-xs font-medium border transition-colors', !marketingCategory && !showRecentOnly ? 'bg-primary text-primary-foreground border-primary' : 'bg-background text-muted-foreground border-border hover:border-foreground/30')}
             >
               All Templates
             </button>
             {TEMPLATE_CATEGORIES.map((cat) => (
               <button
                 key={cat}
-                onClick={() => setMarketingCategory(marketingCategory === cat ? null : cat)}
+                onClick={() => { setMarketingCategory(marketingCategory === cat ? null : cat); setShowRecentOnly(false); }}
                 className={cn('px-3 py-1.5 rounded-full text-xs font-medium border transition-colors', marketingCategory === cat ? 'bg-primary text-primary-foreground border-primary' : 'bg-background text-muted-foreground border-border hover:border-foreground/30')}
               >
                 {cat}
@@ -735,7 +758,10 @@ export default function DealDetail() {
             ))}
           </div>
           {/* Template grid */}
-          {TEMPLATES.filter((t) => !marketingCategory || t.category === marketingCategory).length === 0 && (
+          {TEMPLATES.filter((t) => {
+            if (showRecentOnly) return dealRecents.some((r) => r.templateId === t.id);
+            return !marketingCategory || t.category === marketingCategory;
+          }).length === 0 && (
             <div className="flex flex-col items-center justify-center py-24 text-center">
               <div className="text-5xl mb-4">🎨</div>
               <h4 className="text-base font-semibold text-foreground mb-1">Templates coming soon</h4>
@@ -743,7 +769,10 @@ export default function DealDetail() {
             </div>
           )}
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-            {TEMPLATES.filter((t) => !marketingCategory || t.category === marketingCategory).map((template) => {
+            {TEMPLATES.filter((t) => {
+              if (showRecentOnly) return dealRecents.some((r) => r.templateId === t.id);
+              return !marketingCategory || t.category === marketingCategory;
+            }).map((template) => {
               // Render at a fixed 200px preview width, cap height so stories aren't enormous
               const PREVIEW_W = 200;
               const naturalH = Math.round(template.height * (PREVIEW_W / template.width));
