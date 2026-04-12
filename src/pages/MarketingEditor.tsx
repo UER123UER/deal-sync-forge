@@ -58,7 +58,7 @@ export default function MarketingEditor() {
 
   const [data, setData] = useState<TemplateData>(() => getDefaultTemplateData());
   const [photosInitialized, setPhotosInitialized] = useState(false);
-  const [zoom, setZoom] = useState(0.5);
+  const [zoom, setZoom] = useState(1);
   const [basicsOpen, setBasicsOpen] = useState(true);
   const [agentOpen, setAgentOpen] = useState(true);
   const [ohOpen, setOhOpen] = useState(true);
