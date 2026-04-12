@@ -96,20 +96,22 @@ const Logo = ({ width = 300 }: { width?: number }) => (
   />
 );
 
-// ─────────────────────────────────────────────────────────────────────────────
-// TEMPLATE 1 — "Just Sold" Social Post  1080×1080
-// Layout: white header (logo) | full photo | navy footer (Just Sold + address)
-// Matches the reference image exactly.
-// ─────────────────────────────────────────────────────────────────────────────
-export const TEMPLATES: MarketingTemplate[] = [
-  {
-    id: 'just-sold-post-1',
-    name: 'Just Sold',
-    category: 'Just Sold',
+// ─── Shared template builder ──────────────────────────────────────────────────
+// All templates share the same layout: white header (logo) | photo | navy footer
+function buildTemplate(
+  id: string,
+  name: string,
+  category: TemplateCategory,
+  labelParts: { italic: string; bold: string },
+): MarketingTemplate {
+  return {
+    id,
+    name,
+    category,
     type: 'post',
     width: 1080,
     height: 1080,
-    thumbnail: '🎉',
+    thumbnail: '',
     render: (data, editable) => (
       <div
         style={{
@@ -122,7 +124,7 @@ export const TEMPLATES: MarketingTemplate[] = [
           fontFamily: 'Georgia, "Times New Roman", serif',
         }}
       >
-        {/* ── White header — logo centred ── */}
+        {/* White header — logo centred */}
         <div
           style={{
             background: '#ffffff',
@@ -136,13 +138,10 @@ export const TEMPLATES: MarketingTemplate[] = [
           <Logo width={360} />
         </div>
 
-        {/* ── Property photo — edge to edge, fills remaining space ── */}
-        <Photo
-          photos={data.photos}
-          style={{ flex: 1, width: '100%' }}
-        />
+        {/* Property photo */}
+        <Photo photos={data.photos} style={{ flex: 1, width: '100%' }} />
 
-        {/* ── Navy footer ── */}
+        {/* Navy footer */}
         <div
           style={{
             background: '#0e1428',
@@ -151,7 +150,6 @@ export const TEMPLATES: MarketingTemplate[] = [
             textAlign: 'center',
           }}
         >
-          {/* "Just Sold" — italic serif + bold mix */}
           <div
             style={{
               display: 'flex',
@@ -171,7 +169,7 @@ export const TEMPLATES: MarketingTemplate[] = [
                 lineHeight: 1,
               }}
             >
-              Just
+              {labelParts.italic}
             </span>
             <span
               style={{
@@ -183,26 +181,18 @@ export const TEMPLATES: MarketingTemplate[] = [
                 lineHeight: 1,
               }}
             >
-              Sold
+              {labelParts.bold}
             </span>
           </div>
 
-          {/* Thin gold divider */}
-          <div
-            style={{
-              width: 80,
-              height: 2,
-              background: '#c9a96e',
-              margin: '0 auto 24px',
-            }}
-          />
+          {/* Gold divider */}
+          <div style={{ width: 80, height: 2, background: '#c9a96e', margin: '0 auto 24px' }} />
 
           {/* Address */}
           <div
             style={{
               fontSize: 36,
               fontWeight: 700,
-              fontStyle: 'normal',
               color: '#ffffff',
               letterSpacing: 0.5,
               lineHeight: 1.15,
@@ -217,17 +207,34 @@ export const TEMPLATES: MarketingTemplate[] = [
             style={{
               fontSize: 22,
               fontWeight: 400,
-              fontStyle: 'normal',
               color: 'rgba(255,255,255,0.5)',
               letterSpacing: 1,
             }}
           >
             <E editable={editable}>{data.city}, {data.state}</E>
           </div>
+
+          {/* Open House date/time — only for Open House templates */}
+          {category === 'Open House' && (
+            <div style={{ marginTop: 20, fontSize: 24, color: '#c9a96e', fontStyle: 'italic' }}>
+              <E editable={editable}>{data.openHouseDate}</E>
+              <span style={{ margin: '0 12px', color: 'rgba(255,255,255,0.3)' }}>|</span>
+              <E editable={editable}>{data.openHouseTime}</E>
+            </div>
+          )}
         </div>
       </div>
     ),
-  },
+  };
+}
+
+export const TEMPLATES: MarketingTemplate[] = [
+  buildTemplate('just-listed-post-1', 'Just Listed', 'Just Listed', { italic: 'Just', bold: 'Listed' }),
+  buildTemplate('open-house-post-1', 'Open House', 'Open House', { italic: 'Open', bold: 'House' }),
+  buildTemplate('coming-soon-post-1', 'Coming Soon', 'Coming Soon', { italic: 'Coming', bold: 'Soon' }),
+  buildTemplate('just-sold-post-1', 'Just Sold', 'Just Sold', { italic: 'Just', bold: 'Sold' }),
+  buildTemplate('price-cut-post-1', 'Price Cut', 'Price Cut', { italic: 'Price', bold: 'Cut' }),
+  buildTemplate('under-contract-post-1', 'Under Contract', 'Under Contract', { italic: 'Under', bold: 'Contract' }),
 ];
 
 export const TEMPLATE_CATEGORIES: TemplateCategory[] = [
