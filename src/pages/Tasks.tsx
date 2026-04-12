@@ -159,9 +159,23 @@ export default function Tasks() {
 
       {/* Content */}
       {isLoading ? (
-        <div className="flex-1 flex items-center justify-center gap-2">
-          <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-          <p className="text-sm text-muted-foreground">Loading tasks…</p>
+        <div className="flex-1 overflow-auto">
+          {[0, 1, 2, 3, 4].map((i) => (
+            <div key={i} className="flex items-center px-6 py-3 border-b animate-pulse">
+              <div className="w-8"><div className="w-4 h-4 rounded bg-muted" /></div>
+              <div className="flex-1 space-y-1.5">
+                <div className="h-3.5 rounded bg-muted w-2/5" />
+                <div className="h-3 rounded bg-muted/60 w-1/4" />
+              </div>
+              <div className="w-48"><div className="h-3 rounded bg-muted w-24" /></div>
+              <div className="w-32"><div className="h-3 rounded bg-muted w-20" /></div>
+              <div className="w-32"><div className="h-5 rounded-full bg-muted w-14" /></div>
+              <div className="w-20 flex gap-1">
+                <div className="h-6 w-6 rounded bg-muted" />
+                <div className="h-6 w-6 rounded bg-muted" />
+              </div>
+            </div>
+          ))}
         </div>
       ) : isError ? (
         <div className="flex-1 flex flex-col items-center justify-center gap-3">

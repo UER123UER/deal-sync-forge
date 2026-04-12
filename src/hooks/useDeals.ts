@@ -44,6 +44,7 @@ export interface DealRow {
   listing_start_date: string | null;
   listing_expiration: string | null;
   primary_agent: string | null;
+  visible_to_office: boolean;
   created_at: string;
   deal_contacts?: DealContact[];
   checklist_items?: ChecklistItemRow[];

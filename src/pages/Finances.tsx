@@ -58,7 +58,38 @@ export default function Finances() {
       </div>
 
       {isLoading ? (
-        <div className="flex-1 flex items-center justify-center"><p className="text-sm text-muted-foreground">Loading...</p></div>
+        <div className="flex-1 overflow-auto p-6 space-y-6">
+          {/* Summary card skeletons */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="border rounded-lg p-5 bg-card animate-pulse">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 rounded-lg bg-muted" />
+                  <div className="h-3 w-28 rounded bg-muted" />
+                </div>
+                <div className="h-7 w-24 rounded bg-muted" />
+              </div>
+            ))}
+          </div>
+          {/* Chart skeleton */}
+          <div className="border rounded-lg p-5 bg-card animate-pulse">
+            <div className="h-4 w-40 rounded bg-muted mb-4" />
+            <div className="h-[300px] rounded bg-muted/60" />
+          </div>
+          {/* Table skeleton */}
+          <div className="border rounded-lg bg-card animate-pulse">
+            <div className="px-5 py-3 border-b"><div className="h-4 w-32 rounded bg-muted" /></div>
+            {[0, 1, 2, 3].map((i) => (
+              <div key={i} className="px-5 py-3 flex items-center justify-between border-b last:border-0">
+                <div className="space-y-1.5">
+                  <div className="h-3.5 w-48 rounded bg-muted" />
+                  <div className="h-3 w-32 rounded bg-muted/60" />
+                </div>
+                <div className="h-3.5 w-20 rounded bg-muted" />
+              </div>
+            ))}
+          </div>
+        </div>
       ) : (
         <div className="flex-1 overflow-auto p-6 space-y-6">
           {/* Summary Cards */}

@@ -104,7 +104,7 @@ export default function DealDetail() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: allTasks = [] } = useTasks();
-  const dealTasks = allTasks.filter((t) => (t as any).deal_id === id);
+  const dealTasks = allTasks.filter((t) => t.deal_id === id);
   const createTask = useCreateTask();
   const deleteTask = useDeleteTask();
   const [newTaskTitle, setNewTaskTitle] = useState('');
@@ -182,8 +182,8 @@ export default function DealDetail() {
   const handleToggleVisibility = async () => {
     if (!deal) return;
     try {
-      await updateDeal.mutateAsync({ id: deal.id, visible_to_office: !(deal as any).visible_to_office });
-      toast.success((deal as any).visible_to_office ? 'Hidden from office' : 'Visible to office');
+      await updateDeal.mutateAsync({ id: deal.id, visible_to_office: !deal.visible_to_office });
+      toast.success(deal.visible_to_office ? 'Hidden from office' : 'Visible to office');
     } catch { toast.error('Failed to update visibility'); }
   };
 
@@ -330,7 +330,7 @@ export default function DealDetail() {
   }));
 
   const checklistItems = (deal.checklist_items || []).sort((a, b) => a.sort_order - b.sort_order);
-  const isVisibleToOffice = (deal as any).visible_to_office;
+  const isVisibleToOffice = deal.visible_to_office;
 
   return (
     <div className="flex-1 flex flex-col">
