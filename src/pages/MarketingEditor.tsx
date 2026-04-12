@@ -63,6 +63,160 @@ import {
 } from '@/data/marketingTemplates';
 import { cn } from '@/lib/utils';
 
+// ── Alignment / Snap Guide System ───────────────────────────────────────────
+
+const SNAP_THRESHOLD = 8;   // px — snap when within this many canvas-px
+const GUIDE_COLOR = '#a855f7'; // purple-500
+
+interface AlignGuide {
+  type: 'v' | 'h';           // vertical line | horizontal line
+  pos: number;               // canvas-px coordinate
+  label?: string;            // e.g. "Center"
+  source?: string;           // which block this came from
+}
+
+interface SpacingGuide {
+  axis: 'x' | 'y';
+  from: number;   // start of gap (canvas-px)
+  to: number;     // end of gap (canvas-px)
+  center: number; // perpendicular center of both blocks (for label placement)
+  value: number;  // gap size in canvas-px
+  equal?: boolean; // matches another gap
+}
+
+interface SnapResult {
+  x: number;
+  y: number;
+  guides: AlignGuide[];
+  spacingGuides: SpacingGuide[];
+}
+
+/** Compute snap offset + guides for a block being dragged */
+function computeSnap(
+  block: string,
+  proposed: { left: number; top: number; width: number; height: number },
+  canvasW: number,
+  canvasH: number,
+  allRects: Partial<Record<string, { left: number; top: number; width: number; height: number }>>,
+  threshold = SNAP_THRESHOLD,
+): SnapResult {
+  const cx = canvasW / 2;
+  const cy = canvasH / 2;
+
+  // Centers + edges of the dragged block
+  const bCX = proposed.left + proposed.width / 2;
+  const bCY = proposed.top + proposed.height / 2;
+  const bR  = proposed.left + proposed.width;
+  const bB  = proposed.top + proposed.height;
+
+  const guides: AlignGuide[] = [];
+  const spacingGuides: SpacingGuide[] = [];
+  let snapDX = 0;
+  let snapDY = 0;
+
+  // ── 1. Canvas center snapping ──────────────────────────────────────────────
+  const dCX = bCX - cx;
+  const dCY = bCY - cy;
+  if (Math.abs(dCX) < threshold) { snapDX = -dCX; guides.push({ type: 'v', pos: cx, label: 'Center' }); }
+  if (Math.abs(dCY) < threshold) { snapDY = -dCY; guides.push({ type: 'h', pos: cy, label: 'Center' }); }
+
+  // Canvas edges
+  if (Math.abs(proposed.left + snapDX) < threshold) { snapDX = -proposed.left; guides.push({ type: 'v', pos: 0 }); }
+  if (Math.abs(bR + snapDX - canvasW) < threshold)  { snapDX = canvasW - bR; guides.push({ type: 'v', pos: canvasW }); }
+  if (Math.abs(proposed.top + snapDY) < threshold)  { snapDY = -proposed.top; guides.push({ type: 'h', pos: 0 }); }
+  if (Math.abs(bB + snapDY - canvasH) < threshold)  { snapDY = canvasH - bB; guides.push({ type: 'h', pos: canvasH }); }
+
+  // ── 2. Other-block alignment snapping ──────────────────────────────────────
+  const others = Object.entries(allRects).filter(([k]) => k !== block);
+
+  for (const [key, rect] of others) {
+    if (!rect) continue;
+    const oCX = rect.left + rect.width  / 2;
+    const oCY = rect.top  + rect.height / 2;
+    const oR  = rect.left + rect.width;
+    const oB  = rect.top  + rect.height;
+
+    // Horizontal axes (Y alignment)
+    const hCases: [number, number][] = [
+      [bCY, oCY],   // center-center
+      [proposed.top, rect.top],     // top-top
+      [bB, oB],       // bottom-bottom
+      [proposed.top, oB],           // top to bottom
+      [bB, rect.top],               // bottom to top
+    ];
+    for (const [bVal, oVal] of hCases) {
+      const d = bVal - oVal;
+      if (Math.abs(d + snapDY) < threshold && Math.abs(d) < threshold * 2) {
+        snapDY = -d;
+        guides.push({ type: 'h', pos: oVal, source: key });
+        break;
+      }
+    }
+
+    // Vertical axes (X alignment)
+    const vCases: [number, number][] = [
+      [bCX, oCX],   // center-center
+      [proposed.left, rect.left],   // left-left
+      [bR,  oR],      // right-right
+      [proposed.left, oR],          // left to right edge
+      [bR,  rect.left],             // right to left edge
+    ];
+    for (const [bVal, oVal] of vCases) {
+      const d = bVal - oVal;
+      if (Math.abs(d + snapDX) < threshold && Math.abs(d) < threshold * 2) {
+        snapDX = -d;
+        guides.push({ type: 'v', pos: oVal, source: key });
+        break;
+      }
+    }
+  }
+
+  // ── 3. Spacing guides ──────────────────────────────────────────────────────
+  // Final snapped position
+  const snappedLeft = proposed.left + snapDX;
+  const snappedTop  = proposed.top  + snapDY;
+  const snappedCX   = snappedLeft + proposed.width  / 2;
+  const snappedCY   = snappedTop  + proposed.height / 2;
+  const snappedR    = snappedLeft + proposed.width;
+  const snappedB    = snappedTop  + proposed.height;
+
+  const gaps: { axis: 'x' | 'y'; from: number; to: number; center: number; value: number }[] = [];
+
+  for (const [, rect] of others) {
+    if (!rect) continue;
+    const oR = rect.left + rect.width;
+    const oB = rect.top  + rect.height;
+
+    // X-axis gaps (horizontal spacing)
+    if (oR <= snappedLeft) {
+      // other is to the left
+      gaps.push({ axis: 'x', from: oR, to: snappedLeft, center: (snappedCY + rect.top + rect.height / 2) / 2, value: snappedLeft - oR });
+    } else if (rect.left >= snappedR) {
+      // other is to the right
+      gaps.push({ axis: 'x', from: snappedR, to: rect.left, center: (snappedCY + rect.top + rect.height / 2) / 2, value: rect.left - snappedR });
+    }
+
+    // Y-axis gaps (vertical spacing)
+    if (oB <= snappedTop) {
+      // other is above
+      gaps.push({ axis: 'y', from: oB, to: snappedTop, center: (snappedCX + rect.left + rect.width / 2) / 2, value: snappedTop - oB });
+    } else if (rect.top >= snappedB) {
+      // other is below
+      gaps.push({ axis: 'y', from: snappedB, to: rect.top, center: (snappedCX + rect.left + rect.width / 2) / 2, value: rect.top - snappedB });
+    }
+  }
+
+  // Mark equal gaps
+  const gapValues = gaps.map(g => Math.round(g.value));
+  const equalGapValue = gapValues.find((v, i) => gapValues.indexOf(v) !== i && v > 2);
+  spacingGuides.push(...gaps.map(g => ({
+    ...g,
+    equal: equalGapValue !== undefined && Math.round(g.value) === equalGapValue,
+  })));
+
+  return { x: snapDX, y: snapDY, guides, spacingGuides };
+}
+
 // ── Recents persistence (localStorage, keyed per deal) ──────────────────────
 
 export interface RecentEntry {
@@ -389,6 +543,11 @@ export default function MarketingEditor() {
   const photoDragIndexRef = useRef<number | null>(null);
   // Pending delete (for undo-toast pattern)
   const pendingDeleteRef = useRef<{ id: string; entries: RecentEntry[] } | null>(null);
+  // Alignment guides (live during drag)
+  const [alignGuides, setAlignGuides] = useState<AlignGuide[]>([]);
+  const [spacingGuides, setSpacingGuides] = useState<SpacingGuide[]>([]);
+  // Position readout HUD (shows X/Y during drag)
+  const [dragHud, setDragHud] = useState<{ x: number; y: number } | null>(null);
   // Dimension picker
   const [showDimensionPicker, setShowDimensionPicker] = useState(false);
   const [customW, setCustomW] = useState('1080');
@@ -785,6 +944,14 @@ export default function MarketingEditor() {
     };
   }, [measureBlocks, data.photos, templateId]);
 
+  // Keep a ref to blockRects so pointer handler can read latest without re-registering
+  const blockRectsRef = useRef<Partial<Record<MarketingBlockKey, MarketingBlockRect>>>({});
+  useEffect(() => { blockRectsRef.current = blockRects; }, [blockRects]);
+
+  // Keep a ref to canvasW/H for snap engine
+  const canvasSizeRef = useRef({ w: canvasW, h: canvasH });
+  useEffect(() => { canvasSizeRef.current = { w: canvasW, h: canvasH }; }, [canvasW, canvasH]);
+
   useEffect(() => {
     const handlePointerMove = (event: PointerEvent) => {
       const interaction = interactionRef.current;
@@ -797,18 +964,50 @@ export default function MarketingEditor() {
       const dy = (event.clientY - interaction.startClientY) / divisor;
 
       if (interaction.mode === 'move') {
+        const rawX = interaction.startTransform.x + dx;
+        const rawY = interaction.startTransform.y + dy;
+
+        // Current block rect (moved to proposed position)
+        const baseRect = interaction.baseRect;
+        const proposedLeft = baseRect.left + (rawX - interaction.startTransform.x);
+        const proposedTop  = baseRect.top  + (rawY - interaction.startTransform.y);
+        const proposed = {
+          left: proposedLeft,
+          top: proposedTop,
+          width: baseRect.width,
+          height: baseRect.height,
+        };
+
+        // Compute snapping — convert other rects (they're in canvas-px already)
+        const snap = computeSnap(
+          interaction.block,
+          proposed,
+          canvasSizeRef.current.w,
+          canvasSizeRef.current.h,
+          blockRectsRef.current,
+        );
+
+        // Apply snap offset to transform
+        const snappedX = rawX + snap.x;
+        const snappedY = rawY + snap.y;
+
         updateBlockTransform(
           interaction.block,
-          {
-            ...interaction.startTransform,
-            x: interaction.startTransform.x + dx,
-            y: interaction.startTransform.y + dy,
-          },
+          { ...interaction.startTransform, x: snappedX, y: snappedY },
           interaction.committed,
         );
         interaction.committed = true;
+
+        // Update guide overlays + position HUD
+        setAlignGuides(snap.guides);
+        setSpacingGuides(snap.spacingGuides);
+        setDragHud({ x: Math.round(snappedX), y: Math.round(snappedY) });
         return;
       }
+
+      // Resize mode — no snapping, clear guides
+      setAlignGuides([]);
+      setSpacingGuides([]);
 
       const baseSize = Math.max(interaction.baseRect.width, interaction.baseRect.height, 120);
       const dominantDelta = Math.abs(dx) > Math.abs(dy) ? dx : dy;
@@ -830,6 +1029,10 @@ export default function MarketingEditor() {
 
     const handlePointerEnd = () => {
       interactionRef.current = null;
+      // Clear guides + HUD when drag ends
+      setAlignGuides([]);
+      setSpacingGuides([]);
+      setDragHud(null);
     };
 
     window.addEventListener('pointermove', handlePointerMove);
@@ -1676,6 +1879,178 @@ export default function MarketingEditor() {
               >
                 {template.render(data, false)}
               </div>
+
+              {/* ── Alignment Guide Overlay ── */}
+              {(alignGuides.length > 0 || spacingGuides.length > 0) && (
+                <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 30 }}>
+                  {/* Center/alignment lines */}
+                  {alignGuides.map((guide, i) => (
+                    guide.type === 'v' ? (
+                      <div
+                        key={`v-${i}`}
+                        className="absolute top-0 bottom-0"
+                        style={{
+                          left: guide.pos,
+                          width: 1,
+                          background: GUIDE_COLOR,
+                          opacity: 0.9,
+                          boxShadow: `0 0 3px ${GUIDE_COLOR}`,
+                        }}
+                      >
+                        {guide.label && (
+                          <span
+                            className="absolute text-[9px] font-bold px-1 py-0.5 rounded whitespace-nowrap"
+                            style={{
+                              top: canvasH / 2 - 10,
+                              left: 4,
+                              background: GUIDE_COLOR,
+                              color: '#fff',
+                              fontSize: 11,
+                            }}
+                          >
+                            {guide.label}
+                          </span>
+                        )}
+                      </div>
+                    ) : (
+                      <div
+                        key={`h-${i}`}
+                        className="absolute left-0 right-0"
+                        style={{
+                          top: guide.pos,
+                          height: 1,
+                          background: GUIDE_COLOR,
+                          opacity: 0.9,
+                          boxShadow: `0 0 3px ${GUIDE_COLOR}`,
+                        }}
+                      >
+                        {guide.label && (
+                          <span
+                            className="absolute text-[9px] font-bold px-1 py-0.5 rounded whitespace-nowrap"
+                            style={{
+                              left: canvasW / 2 - 25,
+                              top: 4,
+                              background: GUIDE_COLOR,
+                              color: '#fff',
+                              fontSize: 11,
+                            }}
+                          >
+                            {guide.label}
+                          </span>
+                        )}
+                      </div>
+                    )
+                  ))}
+
+                  {/* Spacing guides */}
+                  {spacingGuides.map((sg, i) => {
+                    const gapPx = Math.round(sg.value);
+                    if (gapPx < 2) return null;
+                    const color = sg.equal ? '#f59e0b' : '#06b6d4'; // amber for equal, cyan otherwise
+                    if (sg.axis === 'x') {
+                      const midY = sg.center;
+                      const midX = (sg.from + sg.to) / 2;
+                      return (
+                        <div key={`sg-x-${i}`} style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
+                          {/* Gap line */}
+                          <div style={{
+                            position: 'absolute',
+                            left: sg.from,
+                            top: midY - 0.5,
+                            width: sg.to - sg.from,
+                            height: 1,
+                            background: color,
+                            opacity: 0.85,
+                          }} />
+                          {/* Left cap */}
+                          <div style={{ position: 'absolute', left: sg.from, top: midY - 5, width: 1, height: 10, background: color, opacity: 0.85 }} />
+                          {/* Right cap */}
+                          <div style={{ position: 'absolute', left: sg.to - 1, top: midY - 5, width: 1, height: 10, background: color, opacity: 0.85 }} />
+                          {/* Label */}
+                          <span style={{
+                            position: 'absolute',
+                            left: midX,
+                            top: midY - 18,
+                            transform: 'translateX(-50%)',
+                            background: color,
+                            color: '#fff',
+                            fontSize: 10,
+                            fontWeight: 700,
+                            fontFamily: 'monospace',
+                            padding: '1px 4px',
+                            borderRadius: 3,
+                            whiteSpace: 'nowrap',
+                          }}>
+                            {sg.equal ? '=' : ''}{gapPx}px
+                          </span>
+                        </div>
+                      );
+                    } else {
+                      const midX = sg.center;
+                      const midY = (sg.from + sg.to) / 2;
+                      return (
+                        <div key={`sg-y-${i}`} style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
+                          {/* Gap line */}
+                          <div style={{
+                            position: 'absolute',
+                            top: sg.from,
+                            left: midX - 0.5,
+                            width: 1,
+                            height: sg.to - sg.from,
+                            background: color,
+                            opacity: 0.85,
+                          }} />
+                          {/* Top cap */}
+                          <div style={{ position: 'absolute', top: sg.from, left: midX - 5, width: 10, height: 1, background: color, opacity: 0.85 }} />
+                          {/* Bottom cap */}
+                          <div style={{ position: 'absolute', top: sg.to - 1, left: midX - 5, width: 10, height: 1, background: color, opacity: 0.85 }} />
+                          {/* Label */}
+                          <span style={{
+                            position: 'absolute',
+                            top: midY,
+                            left: midX + 8,
+                            transform: 'translateY(-50%)',
+                            background: color,
+                            color: '#fff',
+                            fontSize: 10,
+                            fontWeight: 700,
+                            fontFamily: 'monospace',
+                            padding: '1px 4px',
+                            borderRadius: 3,
+                            whiteSpace: 'nowrap',
+                          }}>
+                            {sg.equal ? '=' : ''}{gapPx}px
+                          </span>
+                        </div>
+                      );
+                    }
+                  })}
+                </div>
+              )}
+
+              {/* ── Position Readout HUD ── */}
+              {dragHud && (
+                <div
+                  className="absolute pointer-events-none"
+                  style={{
+                    bottom: 10,
+                    right: 10,
+                    zIndex: 40,
+                    background: 'rgba(0,0,0,0.72)',
+                    color: '#fff',
+                    fontSize: 11,
+                    fontFamily: 'monospace',
+                    fontWeight: 600,
+                    padding: '3px 8px',
+                    borderRadius: 5,
+                    letterSpacing: '0.02em',
+                    backdropFilter: 'blur(4px)',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                  }}
+                >
+                  X {dragHud.x > 0 ? '+' : ''}{dragHud.x} &nbsp; Y {dragHud.y > 0 ? '+' : ''}{dragHud.y}
+                </div>
+              )}
 
               <div
                 className="absolute inset-0"
