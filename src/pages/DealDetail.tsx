@@ -735,6 +735,13 @@ export default function DealDetail() {
             ))}
           </div>
           {/* Template grid */}
+          {TEMPLATES.filter((t) => !marketingCategory || t.category === marketingCategory).length === 0 && (
+            <div className="flex flex-col items-center justify-center py-24 text-center">
+              <div className="text-5xl mb-4">🎨</div>
+              <h4 className="text-base font-semibold text-foreground mb-1">Templates coming soon</h4>
+              <p className="text-sm text-muted-foreground">New designs are being built to order.</p>
+            </div>
+          )}
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
             {TEMPLATES.filter((t) => !marketingCategory || t.category === marketingCategory).map((template) => {
               // Render at a fixed 200px preview width, cap height so stories aren't enormous
