@@ -11,6 +11,71 @@ export type TemplateType = 'flyer' | 'post' | 'story';
 export type HeadlineStyle = 'h1' | 'h2' | 'h3';
 export type PhotoLayout = 'single' | 'collage';
 export type AgentLayout = 'single' | 'multi';
+
+// ── Canvas Dimensions ──────────────────────────────────────────────────────
+export interface CanvasDimension {
+  id: string;
+  label: string;
+  sublabel: string;        // e.g. "1080 × 1080"
+  platform: string;        // e.g. "Instagram · TikTok"
+  platformIcon: string;    // emoji icon for the platform group
+  width: number;
+  height: number;
+  aspectLabel: string;     // e.g. "1:1"
+}
+
+export const CANVAS_DIMENSIONS: CanvasDimension[] = [
+  {
+    id: 'square',
+    label: 'Square Post',
+    sublabel: '1080 × 1080',
+    platform: 'Instagram · Facebook',
+    platformIcon: '⬜',
+    width: 1080,
+    height: 1080,
+    aspectLabel: '1:1',
+  },
+  {
+    id: 'portrait',
+    label: 'Portrait Feed',
+    sublabel: '1080 × 1350',
+    platform: 'Instagram · Facebook',
+    platformIcon: '📸',
+    width: 1080,
+    height: 1350,
+    aspectLabel: '4:5',
+  },
+  {
+    id: 'story',
+    label: 'Story / Reel',
+    sublabel: '1080 × 1920',
+    platform: 'Instagram · TikTok',
+    platformIcon: '📱',
+    width: 1080,
+    height: 1920,
+    aspectLabel: '9:16',
+  },
+  {
+    id: 'landscape',
+    label: 'Landscape',
+    sublabel: '1920 × 1080',
+    platform: 'Facebook · LinkedIn',
+    platformIcon: '🖥',
+    width: 1920,
+    height: 1080,
+    aspectLabel: '16:9',
+  },
+  {
+    id: 'custom',
+    label: 'Custom',
+    sublabel: 'Any size',
+    platform: 'Custom',
+    platformIcon: '✏️',
+    width: 1080,
+    height: 1080,
+    aspectLabel: 'Custom',
+  },
+];
 export type MarketingBlockKey =
   | 'logo'
   | 'photo'
@@ -63,6 +128,10 @@ export interface TemplateData {
   agentLayout: AgentLayout;
   agents: MarketingAgent[];
   blockTransforms: MarketingBlockTransforms;
+  // Canvas dimension
+  canvasDimensionId: string;  // matches CanvasDimension.id
+  canvasWidth: number;
+  canvasHeight: number;
 }
 
 export interface TemplateVisibility {
@@ -276,28 +345,29 @@ function renderHeadlineBlock(
   headline: string,
   fallback: { italic: string; bold: string },
   editable?: boolean,
+  fontScale = 1,
 ) {
   const headlineParts = splitHeadline(headline, fallback);
 
   if (style === 'h2') {
     return (
-      <div style={{ marginBottom: 16 }}>
+      <div style={{ marginBottom: Math.round(16 * fontScale) }}>
         <div
           style={{
             fontFamily: '"Inter", system-ui, sans-serif',
-            fontSize: 20,
+            fontSize: Math.round(20 * fontScale),
             fontWeight: 700,
             letterSpacing: 7,
             textTransform: 'uppercase',
             color: '#c9a96e',
-            marginBottom: 10,
+            marginBottom: Math.round(10 * fontScale),
           }}
         >
           <E editable={editable}>{headline}</E>
         </div>
         <div
           style={{
-            width: 112,
+            width: Math.round(112 * fontScale),
             height: 1,
             background: 'rgba(255,255,255,0.3)',
             margin: '0 auto',
@@ -309,11 +379,11 @@ function renderHeadlineBlock(
 
   if (style === 'h3') {
     return (
-      <div style={{ marginBottom: 18 }}>
+      <div style={{ marginBottom: Math.round(18 * fontScale) }}>
         <div
           style={{
             fontFamily: 'Georgia, "Times New Roman", serif',
-            fontSize: 50,
+            fontSize: Math.round(50 * fontScale),
             fontWeight: 400,
             letterSpacing: 1.2,
             color: '#ffffff',
@@ -326,14 +396,15 @@ function renderHeadlineBlock(
     );
   }
 
+  // h1 — Serif Split (default)
   return (
     <div
       style={{
         display: 'flex',
         alignItems: 'baseline',
         justifyContent: 'center',
-        gap: 14,
-        marginBottom: 18,
+        gap: Math.round(14 * fontScale),
+        marginBottom: Math.round(18 * fontScale),
         flexWrap: 'wrap',
       }}
     >
@@ -343,7 +414,7 @@ function renderHeadlineBlock(
             fontFamily: 'Georgia, "Times New Roman", serif',
             fontStyle: 'italic',
             fontWeight: 400,
-            fontSize: 68,
+            fontSize: Math.round(68 * fontScale),
             color: '#ffffff',
             lineHeight: 1,
           }}
@@ -356,7 +427,7 @@ function renderHeadlineBlock(
           fontFamily: 'Georgia, "Times New Roman", serif',
           fontStyle: 'italic',
           fontWeight: 700,
-          fontSize: 68,
+          fontSize: Math.round(68 * fontScale),
           color: '#ffffff',
           lineHeight: 1,
         }}
@@ -400,6 +471,7 @@ function renderPhotoBlock(data: TemplateData) {
 
 // ─── Shared template builder ──────────────────────────────────────────────────
 // All templates share the same layout: white header (logo) | photo | navy footer
+// The render uses data.canvasWidth/canvasHeight so it adapts to any dimension.
 function buildTemplate(
   id: string,
   name: string,
@@ -411,10 +483,15 @@ function buildTemplate(
     name,
     category,
     type: 'post',
+    // Default size — overridden at render time by data.canvasWidth/canvasHeight
     width: 1080,
     height: 1080,
     thumbnail: '',
     render: (data, editable) => {
+      const w = data.canvasWidth || 1080;
+      const h = data.canvasHeight || 1080;
+      const isPortrait = h > w;
+      const isLandscape = w > h * 1.1;
       const visibility = mergeTemplateVisibility(data.visibility);
       const agents = getRenderableAgents(data);
       const showAgentBlock =
@@ -423,11 +500,14 @@ function buildTemplate(
         visibility.agentPhone ||
         visibility.agentEmail;
 
+      // Scale font sizes proportionally to canvas width (base = 1080)
+      const fontScale = w / 1080;
+
       return (
         <div
           style={{
-            width: 1080,
-            height: 1080,
+            width: w,
+            height: h,
             display: 'flex',
             flexDirection: 'column',
             overflow: 'hidden',
@@ -441,7 +521,8 @@ function buildTemplate(
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              padding: '44px 60px 40px',
+              // Scale header padding relative to canvas width
+              padding: `${Math.round(44 * fontScale)}px ${Math.round(60 * fontScale)}px ${Math.round(40 * fontScale)}px`,
               flexShrink: 0,
             }}
           >
@@ -450,7 +531,7 @@ function buildTemplate(
               block="logo"
               style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             >
-              <Logo width={360} />
+              <Logo width={Math.round(360 * fontScale)} />
             </AdjustableBlock>
           </div>
 
@@ -466,30 +547,30 @@ function buildTemplate(
             style={{
               background: '#0e1428',
               flexShrink: 0,
-              padding: '40px 64px 42px',
+              padding: `${Math.round(40 * fontScale)}px ${Math.round(64 * fontScale)}px ${Math.round(42 * fontScale)}px`,
               textAlign: 'center',
             }}
           >
             {visibility.headline && (
               <AdjustableBlock data={data} block="headline">
-                {renderHeadlineBlock(data.headlineStyle, data.headline, labelParts, editable)}
+                {renderHeadlineBlock(data.headlineStyle, data.headline, labelParts, editable, fontScale)}
               </AdjustableBlock>
             )}
 
             {visibility.address && (
               <AdjustableBlock data={data} block="address">
                 {visibility.headline && (
-                  <div style={{ width: 80, height: 2, background: '#c9a96e', margin: '0 auto 22px' }} />
+                  <div style={{ width: Math.round(80 * fontScale), height: 2, background: '#c9a96e', margin: `0 auto ${Math.round(22 * fontScale)}px` }} />
                 )}
                 <div
                   style={{
                     fontFamily: '"Inter", system-ui, sans-serif',
-                    fontSize: 36,
+                    fontSize: Math.round(36 * fontScale),
                     fontWeight: 700,
                     color: '#ffffff',
                     letterSpacing: 0.3,
                     lineHeight: 1.12,
-                    marginBottom: 8,
+                    marginBottom: Math.round(8 * fontScale),
                   }}
                 >
                   <E editable={editable}>{data.address}</E>
@@ -498,11 +579,11 @@ function buildTemplate(
                 <div
                   style={{
                     fontFamily: '"Inter", system-ui, sans-serif',
-                    fontSize: 22,
+                    fontSize: Math.round(22 * fontScale),
                     fontWeight: 400,
                     color: 'rgba(255,255,255,0.6)',
                     letterSpacing: 0.6,
-                    marginBottom: visibility.price || visibility.stats || visibility.description ? 16 : 0,
+                    marginBottom: visibility.price || visibility.stats || visibility.description ? Math.round(16 * fontScale) : 0,
                   }}
                 >
                   <E editable={editable}>{data.city}, {data.state} {data.zip}</E>
@@ -515,11 +596,11 @@ function buildTemplate(
                 <div
                   style={{
                     fontFamily: '"Inter", system-ui, sans-serif',
-                    fontSize: 42,
+                    fontSize: Math.round(42 * fontScale),
                     fontWeight: 700,
                     color: '#c9a96e',
                     letterSpacing: 0.4,
-                    marginBottom: visibility.stats || visibility.description ? 18 : 0,
+                    marginBottom: visibility.stats || visibility.description ? Math.round(18 * fontScale) : 0,
                   }}
                 >
                   <E editable={editable}>{data.price}</E>
@@ -533,8 +614,8 @@ function buildTemplate(
                   style={{
                     display: 'flex',
                     justifyContent: 'center',
-                    gap: 36,
-                    marginBottom: visibility.description ? 18 : 0,
+                    gap: Math.round(36 * fontScale),
+                    marginBottom: visibility.description ? Math.round(18 * fontScale) : 0,
                     flexWrap: 'wrap',
                     fontFamily: '"Inter", system-ui, sans-serif',
                   }}
@@ -544,11 +625,11 @@ function buildTemplate(
                     { label: 'Baths', value: data.baths },
                     { label: 'Sq Ft', value: data.sqft },
                   ].map((item) => (
-                    <div key={item.label} style={{ minWidth: 110 }}>
-                      <div style={{ fontSize: 28, fontWeight: 700, color: '#ffffff' }}>
+                    <div key={item.label} style={{ minWidth: Math.round(110 * fontScale) }}>
+                      <div style={{ fontSize: Math.round(28 * fontScale), fontWeight: 700, color: '#ffffff' }}>
                         <E editable={editable}>{item.value}</E>
                       </div>
-                      <div style={{ fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)', marginTop: 4 }}>
+                      <div style={{ fontSize: Math.round(11 * fontScale), letterSpacing: 2, textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)', marginTop: 4 }}>
                         {item.label}
                       </div>
                     </div>
@@ -561,10 +642,10 @@ function buildTemplate(
               <AdjustableBlock data={data} block="description">
                 <div
                   style={{
-                    maxWidth: 760,
+                    maxWidth: Math.round(760 * fontScale),
                     margin: '0 auto',
                     fontFamily: '"Inter", system-ui, sans-serif',
-                    fontSize: 18,
+                    fontSize: Math.round(18 * fontScale),
                     lineHeight: 1.45,
                     color: 'rgba(255,255,255,0.72)',
                   }}
@@ -575,9 +656,9 @@ function buildTemplate(
             )}
 
             {category === 'Open House' && (
-              <div style={{ marginTop: 20, fontSize: 24, color: '#c9a96e', fontStyle: 'italic' }}>
+              <div style={{ marginTop: Math.round(20 * fontScale), fontSize: Math.round(24 * fontScale), color: '#c9a96e', fontStyle: 'italic' }}>
                 <E editable={editable}>{data.openHouseDate}</E>
-                <span style={{ margin: '0 12px', color: 'rgba(255,255,255,0.3)' }}>|</span>
+                <span style={{ margin: `0 ${Math.round(12 * fontScale)}px`, color: 'rgba(255,255,255,0.3)' }}>|</span>
                 <E editable={editable}>{data.openHouseTime}</E>
               </div>
             )}
@@ -587,12 +668,12 @@ function buildTemplate(
                 {data.agentLayout === 'multi' && agents.length > 1 ? (
                   <div
                     style={{
-                      marginTop: 24,
-                      paddingTop: 20,
+                      marginTop: Math.round(24 * fontScale),
+                      paddingTop: Math.round(20 * fontScale),
                       borderTop: '1px solid rgba(255,255,255,0.14)',
                       display: 'grid',
                       gridTemplateColumns: `repeat(${Math.min(agents.length, 3)}, minmax(0, 1fr))`,
-                      gap: 14,
+                      gap: Math.round(14 * fontScale),
                       fontFamily: '"Inter", system-ui, sans-serif',
                     }}
                   >
@@ -601,28 +682,28 @@ function buildTemplate(
                         key={agent.id || `${agent.name}-${agent.email}`}
                         style={{
                           border: '1px solid rgba(255,255,255,0.12)',
-                          borderRadius: 16,
-                          padding: '14px 12px',
+                          borderRadius: Math.round(16 * fontScale),
+                          padding: `${Math.round(14 * fontScale)}px ${Math.round(12 * fontScale)}px`,
                           background: 'rgba(255,255,255,0.04)',
                         }}
                       >
                         {visibility.agentName && (
-                          <div style={{ color: '#ffffff', fontWeight: 700, fontSize: 15, marginBottom: visibility.agentTitle ? 4 : 8 }}>
+                          <div style={{ color: '#ffffff', fontWeight: 700, fontSize: Math.round(15 * fontScale), marginBottom: visibility.agentTitle ? 4 : 8 }}>
                             {agent.name}
                           </div>
                         )}
                         {visibility.agentTitle && (
-                          <div style={{ color: 'rgba(255,255,255,0.55)', fontSize: 12, marginBottom: visibility.agentPhone || visibility.agentEmail ? 10 : 0 }}>
+                          <div style={{ color: 'rgba(255,255,255,0.55)', fontSize: Math.round(12 * fontScale), marginBottom: visibility.agentPhone || visibility.agentEmail ? 10 : 0 }}>
                             {agent.title}
                           </div>
                         )}
                         {visibility.agentPhone && (
-                          <div style={{ color: 'rgba(255,255,255,0.82)', fontSize: 12, marginBottom: visibility.agentEmail ? 4 : 0 }}>
+                          <div style={{ color: 'rgba(255,255,255,0.82)', fontSize: Math.round(12 * fontScale), marginBottom: visibility.agentEmail ? 4 : 0 }}>
                             {agent.phone}
                           </div>
                         )}
                         {visibility.agentEmail && (
-                          <div style={{ color: 'rgba(255,255,255,0.65)', fontSize: 11, wordBreak: 'break-word' }}>
+                          <div style={{ color: 'rgba(255,255,255,0.65)', fontSize: Math.round(11 * fontScale), wordBreak: 'break-word' }}>
                             {agent.email}
                           </div>
                         )}
@@ -632,16 +713,16 @@ function buildTemplate(
                 ) : (
                   <div
                     style={{
-                      marginTop: 24,
-                      paddingTop: 20,
+                      marginTop: Math.round(24 * fontScale),
+                      paddingTop: Math.round(20 * fontScale),
                       borderTop: '1px solid rgba(255,255,255,0.14)',
                       display: 'flex',
                       justifyContent: 'center',
-                      gap: 20,
+                      gap: Math.round(20 * fontScale),
                       flexWrap: 'wrap',
                       fontFamily: '"Inter", system-ui, sans-serif',
                       color: 'rgba(255,255,255,0.72)',
-                      fontSize: 16,
+                      fontSize: Math.round(16 * fontScale),
                     }}
                   >
                     {visibility.agentName && (
@@ -756,5 +837,8 @@ export function getDefaultTemplateData(
     agentLayout: 'single',
     agents: uniqueAgents.length ? uniqueAgents : [primaryAgent],
     blockTransforms: {},
+    canvasDimensionId: 'square',
+    canvasWidth: 1080,
+    canvasHeight: 1080,
   };
 }

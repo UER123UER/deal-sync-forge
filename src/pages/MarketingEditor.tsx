@@ -48,10 +48,12 @@ import { useDealPhotos, useUploadDealPhoto } from '@/hooks/useDealPhotos';
 import {
   TEMPLATES,
   TEMPLATE_CATEGORIES,
+  CANVAS_DIMENSIONS,
   DEFAULT_TEMPLATE_VISIBILITY,
   getDefaultTemplateData,
   mergeMarketingBlockTransforms,
   type AgentLayout,
+  type CanvasDimension,
   type HeadlineStyle,
   type MarketingBlockKey,
   type PhotoLayout,
@@ -321,6 +323,10 @@ export default function MarketingEditor() {
             phone: incoming?.agentPhone ?? base.agentPhone,
             email: incoming?.agentEmail ?? base.agentEmail,
           }],
+      // Ensure canvas dimension fields always exist (backwards compat)
+      canvasDimensionId: incoming?.canvasDimensionId ?? base.canvasDimensionId ?? 'square',
+      canvasWidth: incoming?.canvasWidth ?? base.canvasWidth ?? 1080,
+      canvasHeight: incoming?.canvasHeight ?? base.canvasHeight ?? 1080,
     };
   }, []);
 
@@ -383,6 +389,12 @@ export default function MarketingEditor() {
   const photoDragIndexRef = useRef<number | null>(null);
   // Pending delete (for undo-toast pattern)
   const pendingDeleteRef = useRef<{ id: string; entries: RecentEntry[] } | null>(null);
+  // Dimension picker
+  const [showDimensionPicker, setShowDimensionPicker] = useState(false);
+  const [customW, setCustomW] = useState('1080');
+  const [customH, setCustomH] = useState('1080');
+  const [lockAspect, setLockAspect] = useState(false);
+  const customAspectRef = useRef(1); // w/h ratio when lock is activated
 
   // ── Recent item actions ───────────────────────────────────────────────────
   const deleteRecent = useCallback((entryTemplateId: string) => {
@@ -555,6 +567,32 @@ export default function MarketingEditor() {
     setData((prev) => ({ ...prev, agentLayout }));
   }, [setData]);
 
+  const applyCanvasDimension = useCallback((dim: CanvasDimension) => {
+    setData((prev) => ({
+      ...prev,
+      canvasDimensionId: dim.id,
+      canvasWidth: dim.width,
+      canvasHeight: dim.height,
+    }));
+    if (dim.id === 'custom') {
+      setCustomW(String(dim.width));
+      setCustomH(String(dim.height));
+    }
+    setShowDimensionPicker(false);
+  }, [setData]);
+
+  const applyCustomDimension = useCallback(() => {
+    const w = Math.max(100, Math.min(4096, parseInt(customW, 10) || 1080));
+    const h = Math.max(100, Math.min(4096, parseInt(customH, 10) || 1080));
+    setData((prev) => ({
+      ...prev,
+      canvasDimensionId: 'custom',
+      canvasWidth: w,
+      canvasHeight: h,
+    }));
+    setShowDimensionPicker(false);
+  }, [customW, customH, setData]);
+
   const updateBlockTransform = useCallback((
     block: MarketingBlockKey,
     nextTransform: { x: number; y: number; scale: number },
@@ -660,10 +698,12 @@ export default function MarketingEditor() {
     if (!canvasRef.current) return;
     setExporting(true);
     const toastId = toast.loading('Exporting image…');
+    const exportW = data.canvasWidth || 1080;
+    const exportH = data.canvasHeight || 1080;
     try {
       const dataUrl = await toPng(canvasRef.current, {
-        width: template.width,
-        height: template.height,
+        width: exportW,
+        height: exportH,
         pixelRatio: 2,
       });
       const link = document.createElement('a');
@@ -679,10 +719,14 @@ export default function MarketingEditor() {
     }
   }, [template, data.address]);
 
+  // Canvas dimensions — use data dimensions (which reflect selected dimension preset)
+  const canvasW = data.canvasWidth || 1080;
+  const canvasH = data.canvasHeight || 1080;
+
   // Scale canvas to viewport
   const maxCanvasWidth = typeof window !== 'undefined' ? window.innerWidth - 680 : 600;
   const maxCanvasHeight = typeof window !== 'undefined' ? window.innerHeight - 120 : 600;
-  const naturalScale = Math.min(maxCanvasWidth / template.width, maxCanvasHeight / template.height, 1);
+  const naturalScale = Math.min(maxCanvasWidth / canvasW, maxCanvasHeight / canvasH, 1);
   const scale = naturalScale * zoom;
   scaleRef.current = scale;
 
@@ -803,6 +847,12 @@ export default function MarketingEditor() {
     setSelectedBlock(null);
   }, [templateId]);
 
+  // Keep custom W/H inputs in sync with current data dimensions
+  useEffect(() => {
+    setCustomW(String(data.canvasWidth || 1080));
+    setCustomH(String(data.canvasHeight || 1080));
+  }, [data.canvasWidth, data.canvasHeight]);
+
   // ── Keyboard shortcuts ────────────────────────────────────────────────────
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -904,6 +954,34 @@ export default function MarketingEditor() {
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Dimension picker button */}
+          <button
+            onClick={() => setShowDimensionPicker(true)}
+            className="flex items-center gap-1.5 h-8 px-3 rounded-md border bg-background text-xs font-medium hover:bg-muted transition-colors"
+            title="Change canvas dimensions"
+          >
+            {/* Aspect ratio visual indicator */}
+            <span className="flex items-center justify-center">
+              <span
+                className="border-2 border-foreground/70 rounded-sm bg-muted/40"
+                style={{
+                  display: 'inline-block',
+                  width: Math.round(14 * Math.min(1, canvasW / canvasH)),
+                  height: Math.round(14 * Math.min(1, canvasH / canvasW)),
+                  minWidth: 8,
+                  minHeight: 8,
+                }}
+              />
+            </span>
+            <span className="text-muted-foreground">
+              {CANVAS_DIMENSIONS.find(d => d.id === data.canvasDimensionId)?.aspectLabel ?? `${canvasW}×${canvasH}`}
+            </span>
+            <span className="font-semibold text-foreground">
+              {canvasW}×{canvasH}
+            </span>
+            <ChevronDown className="h-3 w-3 text-muted-foreground" />
+          </button>
+
           {/* Undo / Redo */}
           <div className="flex items-center gap-0.5 border rounded-md px-1">
             <Button
@@ -1590,11 +1668,11 @@ export default function MarketingEditor() {
             <div
               ref={previewShellRef}
               className="relative shadow-2xl"
-              style={{ width: template.width, height: template.height }}
+              style={{ width: canvasW, height: canvasH }}
             >
               <div
                 ref={canvasRef}
-                style={{ width: template.width, height: template.height }}
+                style={{ width: canvasW, height: canvasH }}
               >
                 {template.render(data, false)}
               </div>
@@ -1671,6 +1749,195 @@ export default function MarketingEditor() {
           </div>
         </div>
       </div>
+
+      {/* ── Dimension Picker Overlay ── */}
+      {showDimensionPicker && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+          onClick={() => setShowDimensionPicker(false)}
+        >
+          <div
+            className="bg-background rounded-2xl border shadow-2xl p-6 w-[480px] max-w-[95vw]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-5">
+              <div>
+                <h3 className="font-semibold text-sm">Canvas Size</h3>
+                <p className="text-[11px] text-muted-foreground mt-0.5">Choose your posting format or set a custom size</p>
+              </div>
+              <button onClick={() => setShowDimensionPicker(false)} className="text-muted-foreground hover:text-foreground">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            {/* Presets grid */}
+            <div className="grid grid-cols-2 gap-2 mb-5">
+              {CANVAS_DIMENSIONS.filter(d => d.id !== 'custom').map((dim) => {
+                const isActive = data.canvasDimensionId === dim.id;
+                // Visual aspect ratio preview box — max 40px wide or tall
+                const previewMaxSize = 36;
+                const previewW = dim.width >= dim.height
+                  ? previewMaxSize
+                  : Math.round(previewMaxSize * dim.width / dim.height);
+                const previewH = dim.height >= dim.width
+                  ? previewMaxSize
+                  : Math.round(previewMaxSize * dim.height / dim.width);
+                return (
+                  <button
+                    key={dim.id}
+                    onClick={() => applyCanvasDimension(dim)}
+                    className={cn(
+                      'flex items-center gap-3 p-3 rounded-xl border-2 text-left transition-all hover:bg-muted/40',
+                      isActive
+                        ? 'border-primary bg-primary/5 shadow-sm'
+                        : 'border-border hover:border-muted-foreground/30'
+                    )}
+                  >
+                    {/* Aspect ratio preview */}
+                    <div className="w-10 h-10 flex items-center justify-center shrink-0">
+                      <div
+                        className={cn(
+                          'rounded border-2',
+                          isActive ? 'border-primary bg-primary/20' : 'border-muted-foreground/40 bg-muted/30'
+                        )}
+                        style={{ width: previewW, height: previewH }}
+                      />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs font-semibold text-foreground">{dim.label}</span>
+                        <span className={cn(
+                          'text-[9px] font-bold px-1.5 py-0.5 rounded-full',
+                          isActive ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
+                        )}>
+                          {dim.aspectLabel}
+                        </span>
+                      </div>
+                      <div className="text-[10px] text-muted-foreground mt-0.5">{dim.sublabel}</div>
+                      <div className="text-[10px] text-muted-foreground/60 mt-0.5">{dim.platform}</div>
+                    </div>
+                    {isActive && <Check className="h-4 w-4 text-primary shrink-0" />}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Custom size section */}
+            <div className={cn(
+              'rounded-xl border-2 p-4 transition-all',
+              data.canvasDimensionId === 'custom' ? 'border-primary bg-primary/5' : 'border-border'
+            )}>
+              <div className="flex items-center gap-2 mb-3">
+                <PencilLine className="h-3.5 w-3.5 text-muted-foreground" />
+                <span className="text-xs font-semibold text-foreground">Custom Size</span>
+                <span className="text-[10px] text-muted-foreground ml-auto">px</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="flex-1">
+                  <Label className="text-[10px] text-muted-foreground uppercase tracking-wide mb-1 block">Width</Label>
+                  <Input
+                    type="number"
+                    min="100"
+                    max="4096"
+                    value={customW}
+                    onChange={(e) => {
+                      setCustomW(e.target.value);
+                      if (lockAspect) {
+                        const w = parseInt(e.target.value, 10);
+                        if (!isNaN(w)) setCustomH(String(Math.round(w / customAspectRef.current)));
+                      }
+                    }}
+                    className="h-8 text-xs"
+                    placeholder="1080"
+                  />
+                </div>
+
+                {/* Aspect ratio lock button */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    const newLocked = !lockAspect;
+                    if (newLocked) {
+                      const w = parseInt(customW, 10) || 1080;
+                      const h = parseInt(customH, 10) || 1080;
+                      customAspectRef.current = w / h;
+                    }
+                    setLockAspect(newLocked);
+                  }}
+                  className={cn(
+                    'mt-5 h-8 w-8 rounded-lg border-2 flex items-center justify-center transition-all shrink-0',
+                    lockAspect
+                      ? 'border-primary bg-primary text-primary-foreground'
+                      : 'border-muted-foreground/30 text-muted-foreground hover:border-foreground/50'
+                  )}
+                  title={lockAspect ? 'Aspect ratio locked' : 'Lock aspect ratio'}
+                >
+                  {lockAspect ? (
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                    </svg>
+                  ) : (
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                      <path d="M7 11V7a5 5 0 0 1 9.9-1" />
+                    </svg>
+                  )}
+                </button>
+
+                <div className="flex-1">
+                  <Label className="text-[10px] text-muted-foreground uppercase tracking-wide mb-1 block">Height</Label>
+                  <Input
+                    type="number"
+                    min="100"
+                    max="4096"
+                    value={customH}
+                    onChange={(e) => {
+                      setCustomH(e.target.value);
+                      if (lockAspect) {
+                        const h = parseInt(e.target.value, 10);
+                        if (!isNaN(h)) setCustomW(String(Math.round(h * customAspectRef.current)));
+                      }
+                    }}
+                    className="h-8 text-xs"
+                    placeholder="1080"
+                  />
+                </div>
+              </div>
+
+              {/* Common custom size shortcuts */}
+              <div className="flex flex-wrap gap-1 mt-3">
+                {[
+                  { label: 'LinkedIn Banner', w: 1584, h: 396 },
+                  { label: 'Twitter Header', w: 1500, h: 500 },
+                  { label: 'Email Header', w: 600, h: 200 },
+                  { label: 'Flyer', w: 816, h: 1056 },
+                ].map(({ label, w, h }) => (
+                  <button
+                    key={label}
+                    type="button"
+                    onClick={() => { setCustomW(String(w)); setCustomH(String(h)); setLockAspect(false); }}
+                    className="text-[9px] px-2 py-1 rounded-full border bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                  >
+                    {label} ({w}×{h})
+                  </button>
+                ))}
+              </div>
+
+              <Button
+                className="w-full mt-3 h-8 text-xs"
+                onClick={applyCustomDimension}
+              >
+                Apply {customW}×{customH}
+              </Button>
+            </div>
+
+            <p className="text-[10px] text-muted-foreground mt-3 text-center">
+              Changing size resets block positions · Export uses the exact pixel dimensions
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* ── Keyboard Shortcuts Overlay ── */}
       {showShortcuts && (
