@@ -181,7 +181,7 @@ export default function MarketingEditor() {
   const [basicsOpen, setBasicsOpen] = useState(true);
   const [agentOpen, setAgentOpen] = useState(true);
   const [ohOpen, setOhOpen] = useState(true);
-  const [leftTab, setLeftTab] = useState<'templates' | 'edit' | 'recent'>('templates');
+  const [leftTab, setLeftTab] = useState<'templates' | 'edit'>('templates');
   const [categoryFilter, setCategoryFilter] = useState<TemplateCategory | 'All'>('All');
   const [exporting, setExporting] = useState(false);
 
@@ -319,7 +319,7 @@ export default function MarketingEditor() {
       <div className="flex flex-1 overflow-hidden">
         {/* ── Left Panel ── */}
         <div className="w-[260px] border-r bg-background shrink-0 flex flex-col">
-          {/* Tab bar: Templates | Edit | Recent */}
+          {/* Tab bar: Templates | Edit */}
           <div className="flex border-b shrink-0">
             <button
               onClick={() => setLeftTab('templates')}
@@ -345,56 +345,104 @@ export default function MarketingEditor() {
               <Pencil className="h-3 w-3" />
               Edit
             </button>
-            <button
-              onClick={() => setLeftTab('recent')}
-              className={cn(
-                'flex-1 flex items-center justify-center gap-1 py-2.5 text-[11px] font-semibold transition-colors relative',
-                leftTab === 'recent'
-                  ? 'text-foreground border-b-2 border-primary -mb-px'
-                  : 'text-muted-foreground hover:text-foreground'
-              )}
-            >
-              <Clock className="h-3 w-3" />
-              Recent
-              {recents.length > 0 && (
-                <span className="absolute top-1.5 right-1.5 w-3.5 h-3.5 bg-primary text-primary-foreground rounded-full text-[8px] flex items-center justify-center font-bold">
-                  {recents.length > 9 ? '9+' : recents.length}
-                </span>
-              )}
-            </button>
           </div>
 
           {/* ── Templates tab ── */}
           {leftTab === 'templates' && (
             <div className="flex flex-col flex-1 overflow-hidden">
-              <div className="p-2 border-b flex flex-wrap gap-1 shrink-0">
-                <button
-                  onClick={() => setCategoryFilter('All')}
-                  className={cn(
-                    'px-2.5 py-1 rounded-full text-[10px] font-semibold transition-colors',
-                    categoryFilter === 'All'
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                  )}
-                >
-                  All
-                </button>
-                {TEMPLATE_CATEGORIES.map((cat) => (
+              <ScrollArea className="flex-1">
+                {/* ── Recent section ── */}
+                {recents.length > 0 && (
+                  <div className="border-b pb-3">
+                    <div className="flex items-center gap-1.5 px-3 pt-3 pb-2">
+                      <Clock className="h-3 w-3 text-muted-foreground" />
+                      <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">Recent</span>
+                      <span className="ml-auto text-[9px] text-muted-foreground/60">{recents.length}</span>
+                    </div>
+                    <div className="px-2 space-y-1">
+                      {recents.map((entry) => {
+                        const t = TEMPLATES.find((t) => t.id === entry.templateId);
+                        if (!t) return null;
+                        const thumbScale = 52 / t.width;
+                        const thumbH = Math.round(t.height * thumbScale);
+                        const isActive = entry.templateId === templateId;
+                        return (
+                          <button
+                            key={entry.templateId}
+                            onClick={() => resumeRecent(entry)}
+                            className={cn(
+                              'w-full flex items-center gap-2.5 px-2 py-1.5 rounded-lg border-2 text-left transition-all hover:bg-muted/60',
+                              isActive ? 'border-primary bg-primary/5' : 'border-transparent hover:border-muted-foreground/20'
+                            )}
+                          >
+                            {/* Mini preview */}
+                            <div
+                              className="rounded overflow-hidden bg-muted shrink-0 border"
+                              style={{ width: 52, height: thumbH }}
+                            >
+                              <div
+                                style={{
+                                  transform: `scale(${thumbScale})`,
+                                  transformOrigin: 'top left',
+                                  width: t.width,
+                                  height: t.height,
+                                  pointerEvents: 'none',
+                                  userSelect: 'none',
+                                }}
+                              >
+                                {t.render(entry.data, false)}
+                              </div>
+                            </div>
+                            {/* Info */}
+                            <div className="flex flex-col gap-0.5 min-w-0 flex-1">
+                              <div className="flex items-center gap-1 min-w-0">
+                                <span className="text-[11px] font-semibold text-foreground truncate">{t.name}</span>
+                                {isActive && (
+                                  <span className="text-[8px] font-bold px-1 py-0.5 bg-primary text-primary-foreground rounded-full shrink-0">
+                                    Active
+                                  </span>
+                                )}
+                              </div>
+                              <span className="text-[10px] text-muted-foreground truncate">{entry.data.address}</span>
+                              <span className="text-[9px] text-muted-foreground/60">{timeAgo(entry.lastEdited)}</span>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* ── Category filter pills ── */}
+                <div className="p-2 flex flex-wrap gap-1 border-b">
                   <button
-                    key={cat}
-                    onClick={() => setCategoryFilter(cat)}
+                    onClick={() => setCategoryFilter('All')}
                     className={cn(
                       'px-2.5 py-1 rounded-full text-[10px] font-semibold transition-colors',
-                      categoryFilter === cat
+                      categoryFilter === 'All'
                         ? 'bg-primary text-primary-foreground'
                         : 'bg-muted text-muted-foreground hover:bg-muted/80'
                     )}
                   >
-                    {cat}
+                    All
                   </button>
-                ))}
-              </div>
-              <ScrollArea className="flex-1">
+                  {TEMPLATE_CATEGORIES.map((cat) => (
+                    <button
+                      key={cat}
+                      onClick={() => setCategoryFilter(cat)}
+                      className={cn(
+                        'px-2.5 py-1 rounded-full text-[10px] font-semibold transition-colors',
+                        categoryFilter === cat
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                      )}
+                    >
+                      {cat}
+                    </button>
+                  ))}
+                </div>
+
+                {/* ── Template grid ── */}
                 <div className="p-2 grid grid-cols-2 gap-2">
                   {filteredTemplates.map((t) => {
                     const thumbScale = 110 / t.width;
@@ -587,85 +635,6 @@ export default function MarketingEditor() {
             </ScrollArea>
           )}
 
-          {/* ── Recent tab ── */}
-          {leftTab === 'recent' && (
-            <ScrollArea className="flex-1">
-              <div className="p-3">
-                {recents.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-12 text-center gap-2">
-                    <Clock className="h-8 w-8 text-muted-foreground/40" />
-                    <p className="text-xs font-medium text-muted-foreground">No recent sessions yet</p>
-                    <p className="text-[10px] text-muted-foreground/70 leading-relaxed">
-                      Your edits save automatically.<br />Come back here to pick up where you left off.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    <p className="text-[10px] text-muted-foreground uppercase tracking-wide font-semibold mb-3">
-                      {recents.length} saved session{recents.length !== 1 ? 's' : ''}
-                    </p>
-                    {recents.map((entry) => {
-                      const t = TEMPLATES.find((t) => t.id === entry.templateId);
-                      if (!t) return null;
-                      const thumbScale = 80 / t.width;
-                      const thumbH = Math.round(t.height * thumbScale);
-                      const isActive = entry.templateId === templateId;
-                      return (
-                        <button
-                          key={entry.templateId}
-                          onClick={() => resumeRecent(entry)}
-                          className={cn(
-                            'w-full flex items-start gap-2.5 p-2 rounded-lg border-2 text-left transition-all hover:bg-muted/60',
-                            isActive ? 'border-primary bg-primary/5' : 'border-transparent hover:border-muted-foreground/20'
-                          )}
-                        >
-                          {/* Mini preview */}
-                          <div
-                            className="rounded overflow-hidden bg-muted shrink-0 border"
-                            style={{ width: 80, height: thumbH }}
-                          >
-                            <div
-                              style={{
-                                transform: `scale(${thumbScale})`,
-                                transformOrigin: 'top left',
-                                width: t.width,
-                                height: t.height,
-                                pointerEvents: 'none',
-                                userSelect: 'none',
-                              }}
-                            >
-                              {t.render(entry.data, false)}
-                            </div>
-                          </div>
-                          {/* Info */}
-                          <div className="flex flex-col gap-0.5 min-w-0 flex-1 pt-0.5">
-                            <div className="flex items-center gap-1.5 flex-wrap">
-                              <span className="text-[11px] font-semibold text-foreground truncate">{t.name}</span>
-                              {isActive && (
-                                <span className="text-[8px] font-bold px-1.5 py-0.5 bg-primary text-primary-foreground rounded-full shrink-0">
-                                  Active
-                                </span>
-                              )}
-                            </div>
-                            <span className="text-[10px] text-muted-foreground truncate">{entry.data.address}</span>
-                            <span className={cn(
-                              'text-[10px] font-semibold px-1.5 py-0.5 rounded-full self-start mt-0.5',
-                              CATEGORY_COLORS[t.category]
-                            )}>
-                              {t.category}
-                            </span>
-                            <span className="text-[9px] text-muted-foreground/70 mt-1">
-                              {timeAgo(entry.lastEdited)}
-                            </span>
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            </ScrollArea>
-          )}
         </div>
 
         {/* ── Canvas Area ── */}
