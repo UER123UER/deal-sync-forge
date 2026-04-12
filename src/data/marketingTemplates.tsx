@@ -368,28 +368,31 @@ function renderHeadlineBlock(
 }
 
 function renderPhotoBlock(data: TemplateData) {
+  // Hero layout or not enough photos for collage
   if (data.photoLayout !== 'collage' || data.photos.length < 2) {
     return <Photo photos={data.photos} style={{ width: '100%', height: '100%' }} />;
   }
 
   const [first, second, third] = data.photos;
+  // Only 2 photos → 2-column bottom row, no duplication
+  const hasThird = data.photos.length >= 3;
 
   return (
     <div
       style={{
         width: '100%',
         height: '100%',
-        background: '#f5f5f5',
+        background: '#0e1428',
         padding: 10,
         display: 'grid',
         gridTemplateRows: '1.75fr 1fr',
-        gap: 10,
+        gap: 8,
       }}
     >
-      <PhotoFrame src={first} style={{ width: '100%', height: '100%' }} />
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-        <PhotoFrame src={second || first} style={{ width: '100%', height: '100%' }} />
-        <PhotoFrame src={third || second || first} style={{ width: '100%', height: '100%' }} />
+      <PhotoFrame src={first} style={{ width: '100%', height: '100%', borderRadius: 6 }} />
+      <div style={{ display: 'grid', gridTemplateColumns: hasThird ? '1fr 1fr' : '1fr', gap: 8 }}>
+        <PhotoFrame src={second} style={{ width: '100%', height: '100%', borderRadius: 6 }} />
+        {hasThird && <PhotoFrame src={third} style={{ width: '100%', height: '100%', borderRadius: 6 }} />}
       </div>
     </div>
   );
@@ -475,7 +478,7 @@ function buildTemplate(
 
             {visibility.address && (
               <AdjustableBlock data={data} block="address">
-                {(visibility.headline || visibility.address || visibility.price) && (
+                {visibility.headline && (
                   <div style={{ width: 80, height: 2, background: '#c9a96e', margin: '0 auto 22px' }} />
                 )}
                 <div

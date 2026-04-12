@@ -33,6 +33,9 @@ import {
   Loader2,
   Move,
   Maximize2,
+  Keyboard,
+  Check,
+  GripVertical,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -341,10 +344,14 @@ export default function MarketingEditor() {
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     if (!id) return;
+    setSaveStatus('saving');
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     saveTimerRef.current = setTimeout(() => {
       const updated = upsertRecent(id, templateId, data);
       setRecents(updated);
+      setSaveStatus('saved');
+      if (saveStatusTimerRef.current) clearTimeout(saveStatusTimerRef.current);
+      saveStatusTimerRef.current = setTimeout(() => setSaveStatus('idle'), 2000);
     }, 800);
     return () => {
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
@@ -367,14 +374,38 @@ export default function MarketingEditor() {
   const [renameValue, setRenameValue] = useState('');
   const [selectedBlock, setSelectedBlock] = useState<MarketingBlockKey | null>(null);
   const [blockRects, setBlockRects] = useState<Partial<Record<MarketingBlockKey, MarketingBlockRect>>>({});
+  // Save-status indicator
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+  const saveStatusTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Keyboard shortcut overlay
+  const [showShortcuts, setShowShortcuts] = useState(false);
+  // Photo drag-to-reorder
+  const photoDragIndexRef = useRef<number | null>(null);
+  // Pending delete (for undo-toast pattern)
+  const pendingDeleteRef = useRef<{ id: string; entries: RecentEntry[] } | null>(null);
 
   // ── Recent item actions ───────────────────────────────────────────────────
   const deleteRecent = useCallback((entryTemplateId: string) => {
     if (!id) return;
+    // Optimistically remove
+    const before = [...recents];
     const updated = recents.filter((e) => e.templateId !== entryTemplateId);
     saveRecents(id, updated);
     setRecents(updated);
-    toast.success('Design removed');
+    pendingDeleteRef.current = { id: entryTemplateId, entries: before };
+    toast('Design removed', {
+      action: {
+        label: 'Undo',
+        onClick: () => {
+          if (pendingDeleteRef.current?.id === entryTemplateId) {
+            saveRecents(id, before);
+            setRecents(before);
+            pendingDeleteRef.current = null;
+          }
+        },
+      },
+      duration: 5000,
+    });
   }, [id, recents]);
 
   const duplicateRecent = useCallback((entry: RecentEntry) => {
@@ -599,6 +630,16 @@ export default function MarketingEditor() {
     setData((prev) => ({ ...prev, photos: prev.photos.filter((_, i) => i !== index) }));
   };
 
+  const reorderPhoto = useCallback((fromIndex: number, toIndex: number) => {
+    if (fromIndex === toIndex) return;
+    setData((prev) => {
+      const photos = [...prev.photos];
+      const [moved] = photos.splice(fromIndex, 1);
+      photos.splice(toIndex, 0, moved);
+      return { ...prev, photos };
+    });
+  }, [setData]);
+
   const selectTemplate = (tid: string) => {
     setSearchParams({ template: tid });
     setLeftTab('edit');
@@ -807,6 +848,8 @@ export default function MarketingEditor() {
       if (e.key === '+' || e.key === '=') { setZoom((z) => Math.min(1.5, +(z + 0.1).toFixed(2))); return; }
       if (e.key === '-') { setZoom((z) => Math.max(0.15, +(z - 0.1).toFixed(2))); return; }
       if (e.key === '0') { setZoom(1); return; }
+      // ? — toggle shortcut overlay
+      if (e.key === '?') { setShowShortcuts((s) => !s); return; }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
@@ -906,6 +949,26 @@ export default function MarketingEditor() {
               <ZoomIn className="h-3.5 w-3.5" />
             </Button>
           </div>
+
+          {/* Auto-save status */}
+          <div className={cn(
+            'flex items-center gap-1 text-[11px] font-medium transition-all duration-300',
+            saveStatus === 'idle' ? 'opacity-0 pointer-events-none' : 'opacity-100',
+            saveStatus === 'saved' ? 'text-emerald-600' : 'text-muted-foreground'
+          )}>
+            {saveStatus === 'saving' && <Loader2 className="h-3 w-3 animate-spin" />}
+            {saveStatus === 'saved' && <Check className="h-3 w-3" />}
+            {saveStatus === 'saving' ? 'Saving…' : 'Saved'}
+          </div>
+
+          {/* Keyboard shortcuts button */}
+          <Button
+            variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground"
+            onClick={() => setShowShortcuts(true)}
+            title="Keyboard shortcuts (?)"
+          >
+            <Keyboard className="h-3.5 w-3.5" />
+          </Button>
 
           <Button onClick={handleExport} size="sm" disabled={exporting} className="gap-2">
             {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
@@ -1077,28 +1140,37 @@ export default function MarketingEditor() {
                   <button
                     onClick={() => setCategoryFilter('All')}
                     className={cn(
-                      'px-2.5 py-1 rounded-full text-[10px] font-semibold transition-colors',
+                      'flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-semibold transition-colors',
                       categoryFilter === 'All'
                         ? 'bg-primary text-primary-foreground'
                         : 'bg-muted text-muted-foreground hover:bg-muted/80'
                     )}
                   >
                     All
+                    <span className={cn('text-[9px]', categoryFilter === 'All' ? 'opacity-70' : 'opacity-50')}>
+                      {TEMPLATES.length}
+                    </span>
                   </button>
-                  {TEMPLATE_CATEGORIES.map((cat) => (
-                    <button
-                      key={cat}
-                      onClick={() => setCategoryFilter(cat)}
-                      className={cn(
-                        'px-2.5 py-1 rounded-full text-[10px] font-semibold transition-colors',
-                        categoryFilter === cat
-                          ? 'bg-primary text-primary-foreground'
-                          : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                      )}
-                    >
-                      {cat}
-                    </button>
-                  ))}
+                  {TEMPLATE_CATEGORIES.map((cat) => {
+                    const count = TEMPLATES.filter((t) => t.category === cat).length;
+                    return (
+                      <button
+                        key={cat}
+                        onClick={() => setCategoryFilter(cat)}
+                        className={cn(
+                          'flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-semibold transition-colors',
+                          categoryFilter === cat
+                            ? 'bg-primary text-primary-foreground'
+                            : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                        )}
+                      >
+                        {cat}
+                        <span className={cn('text-[9px]', categoryFilter === cat ? 'opacity-70' : 'opacity-50')}>
+                          {count}
+                        </span>
+                      </button>
+                    );
+                  })}
                 </div>
 
                 {/* ── Template grid ── */}
@@ -1132,7 +1204,11 @@ export default function MarketingEditor() {
                         </div>
                         <div className="px-2 py-1.5 bg-background">
                           <div className="text-[10px] font-semibold text-foreground truncate">{t.name}</div>
-                          <div className="text-[9px] text-muted-foreground mt-0.5">{TYPE_LABELS[t.type]}</div>
+                          <div className="flex items-center gap-1 mt-0.5">
+                            <span className={cn('text-[9px] font-medium px-1.5 py-0.5 rounded-full', CATEGORY_COLORS[t.category])}>
+                              {t.category}
+                            </span>
+                          </div>
                         </div>
                       </button>
                     );
@@ -1150,9 +1226,14 @@ export default function MarketingEditor() {
                 <div className="pb-4 border-b mb-2">
                   <div className="flex items-center justify-between mb-2">
                     <div className="text-xs font-semibold text-foreground">Property Photos</div>
-                    {dealPhotos.length > 0 && (
+                    {data.photos.length > 1 ? (
+                      <span className="text-[9px] text-muted-foreground flex items-center gap-0.5">
+                        <GripVertical className="h-2.5 w-2.5" />
+                        Drag to reorder
+                      </span>
+                    ) : dealPhotos.length > 0 ? (
                       <span className="text-[9px] text-muted-foreground">{dealPhotos.length} from deal</span>
-                    )}
+                    ) : null}
                   </div>
                   <input ref={photoInputRef} type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} />
                   {data.photos.length === 0 ? (
@@ -1169,8 +1250,25 @@ export default function MarketingEditor() {
                   ) : (
                     <div className="flex flex-wrap gap-1.5">
                       {data.photos.map((src, i) => (
-                        <div key={i} className="relative group">
+                        <div
+                          key={src + i}
+                          className="relative group cursor-grab active:cursor-grabbing"
+                          draggable
+                          onDragStart={() => { photoDragIndexRef.current = i; }}
+                          onDragOver={(e) => { e.preventDefault(); }}
+                          onDrop={(e) => {
+                            e.preventDefault();
+                            const from = photoDragIndexRef.current;
+                            if (from !== null && from !== i) reorderPhoto(from, i);
+                            photoDragIndexRef.current = null;
+                          }}
+                          onDragEnd={() => { photoDragIndexRef.current = null; }}
+                        >
                           <img src={src} alt="" className="w-16 h-16 object-cover rounded border" />
+                          {/* Drag handle overlay */}
+                          <div className="absolute top-0 left-0 p-0.5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                            <GripVertical className="h-3 w-3 text-white drop-shadow" />
+                          </div>
                           <button
                             onClick={() => removePhoto(i)}
                             className="absolute -top-1 -right-1 w-4 h-4 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
@@ -1230,16 +1328,26 @@ export default function MarketingEditor() {
                       <div className="grid grid-cols-2 gap-2">
                         <OptionCard
                           label="Hero"
-                          description="Single main image"
-                          icon={ImagePlus}
+                          description="Single full-bleed photo"
                           active={data.photoLayout === 'single'}
+                          preview={
+                            <div className={cn('w-14 h-8 rounded-md', data.photoLayout === 'single' ? 'bg-primary/30 border border-primary' : 'bg-muted-foreground/20')} />
+                          }
                           onClick={() => setPhotoLayout('single')}
                         />
                         <OptionCard
                           label="Collage"
-                          description="Main + 2 supporting photos"
-                          icon={LayoutGrid}
+                          description="Main + 2 side photos"
                           active={data.photoLayout === 'collage'}
+                          preview={
+                            <div className="flex flex-col gap-0.5 w-14 h-8">
+                              <div className={cn('rounded-sm flex-[1.75]', data.photoLayout === 'collage' ? 'bg-primary/30 border border-primary' : 'bg-muted-foreground/20')} />
+                              <div className="flex gap-0.5 flex-1">
+                                <div className={cn('flex-1 rounded-sm', data.photoLayout === 'collage' ? 'bg-primary/20 border border-primary/50' : 'bg-muted-foreground/15')} />
+                                <div className={cn('flex-1 rounded-sm', data.photoLayout === 'collage' ? 'bg-primary/20 border border-primary/50' : 'bg-muted-foreground/15')} />
+                              </div>
+                            </div>
+                          }
                           onClick={() => setPhotoLayout('collage')}
                         />
                       </div>
@@ -1470,7 +1578,7 @@ export default function MarketingEditor() {
         </div>
 
         {/* ── Canvas Area ── */}
-        <div className="flex-1 overflow-auto flex items-start justify-center p-8 bg-[repeating-conic-gradient(#e5e7eb_0%_25%,transparent_0%_50%)] [background-size:20px_20px]">
+        <div className="flex-1 overflow-auto flex items-start justify-center p-8 bg-[repeating-conic-gradient(#e5e7eb_0%_25%,transparent_0%_50%)] [background-size:20px_20px] relative">
           <div
             style={{
               transform: `scale(${scale})`,
@@ -1554,8 +1662,99 @@ export default function MarketingEditor() {
               </div>
             </div>
           </div>
+          {/* Keyboard shortcut hint — bottom-right of canvas area */}
+          <div className="absolute bottom-4 right-4 pointer-events-none">
+            <span className="text-[10px] text-muted-foreground/50 flex items-center gap-1">
+              <Keyboard className="h-3 w-3" />
+              Press <kbd className="px-1 py-0.5 rounded bg-muted/80 text-foreground/60 text-[9px] font-mono">?</kbd> for shortcuts
+            </span>
+          </div>
         </div>
       </div>
+
+      {/* ── Keyboard Shortcuts Overlay ── */}
+      {showShortcuts && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+          onClick={() => setShowShortcuts(false)}
+        >
+          <div
+            className="bg-background rounded-2xl border shadow-2xl p-6 w-80 max-w-sm"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold text-sm flex items-center gap-2">
+                <Keyboard className="h-4 w-4" />
+                Keyboard Shortcuts
+              </h3>
+              <button onClick={() => setShowShortcuts(false)} className="text-muted-foreground hover:text-foreground">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-2">Editing</div>
+                <div className="space-y-1.5">
+                  {[
+                    { keys: ['⌘', 'Z'], desc: 'Undo' },
+                    { keys: ['⌘', '⇧', 'Z'], desc: 'Redo' },
+                    { keys: ['Del'], desc: 'Reset selected block' },
+                    { keys: ['Esc'], desc: 'Deselect block' },
+                  ].map(({ keys, desc }) => (
+                    <div key={desc} className="flex items-center justify-between">
+                      <span className="text-xs text-foreground">{desc}</span>
+                      <div className="flex items-center gap-0.5">
+                        {keys.map((k) => (
+                          <kbd key={k} className="px-1.5 py-0.5 rounded border bg-muted text-[10px] font-mono text-foreground/80">{k}</kbd>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-2">Block Movement</div>
+                <div className="space-y-1.5">
+                  {[
+                    { keys: ['↑↓←→'], desc: 'Nudge 1px' },
+                    { keys: ['⇧', '↑↓←→'], desc: 'Nudge 10px' },
+                  ].map(({ keys, desc }) => (
+                    <div key={desc} className="flex items-center justify-between">
+                      <span className="text-xs text-foreground">{desc}</span>
+                      <div className="flex items-center gap-0.5">
+                        {keys.map((k) => (
+                          <kbd key={k} className="px-1.5 py-0.5 rounded border bg-muted text-[10px] font-mono text-foreground/80">{k}</kbd>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-2">View</div>
+                <div className="space-y-1.5">
+                  {[
+                    { keys: ['+'], desc: 'Zoom in' },
+                    { keys: ['-'], desc: 'Zoom out' },
+                    { keys: ['0'], desc: 'Reset zoom to 100%' },
+                    { keys: ['?'], desc: 'Toggle this panel' },
+                  ].map(({ keys, desc }) => (
+                    <div key={desc} className="flex items-center justify-between">
+                      <span className="text-xs text-foreground">{desc}</span>
+                      <div className="flex items-center gap-0.5">
+                        {keys.map((k) => (
+                          <kbd key={k} className="px-1.5 py-0.5 rounded border bg-muted text-[10px] font-mono text-foreground/80">{k}</kbd>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <p className="text-[10px] text-muted-foreground mt-4 text-center">Click anywhere outside to close</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
