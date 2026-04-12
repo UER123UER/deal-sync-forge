@@ -20,7 +20,19 @@ import {
   Undo2,
   Redo2,
   Clock,
+  MoreVertical,
+  ExternalLink,
+  Copy,
+  FolderInput,
+  Trash2,
+  PencilLine,
 } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { useDeal } from '@/hooks/useDeals';
 import { useDealPhotos } from '@/hooks/useDealPhotos';
 import {
@@ -38,6 +50,7 @@ export interface RecentEntry {
   templateId: string;
   data: TemplateData;
   lastEdited: number; // ms timestamp
+  customName?: string; // user-defined name
 }
 
 const RECENTS_LIMIT = 20;
@@ -184,6 +197,73 @@ export default function MarketingEditor() {
   const [leftTab, setLeftTab] = useState<'templates' | 'edit'>('templates');
   const [categoryFilter, setCategoryFilter] = useState<TemplateCategory | 'All'>('All');
   const [exporting, setExporting] = useState(false);
+  const [renamingId, setRenamingId] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState('');
+
+  // ── Recent item actions ───────────────────────────────────────────────────
+  const deleteRecent = useCallback((entryTemplateId: string) => {
+    if (!id) return;
+    const updated = recents.filter((e) => e.templateId !== entryTemplateId);
+    saveRecents(id, updated);
+    setRecents(updated);
+  }, [id, recents]);
+
+  const duplicateRecent = useCallback((entry: RecentEntry) => {
+    if (!id) return;
+    const copyId = `${entry.templateId}-copy-${Date.now()}`;
+    const copy: RecentEntry = {
+      ...entry,
+      templateId: copyId,
+      customName: `${entry.customName || TEMPLATES.find(t => t.id === entry.templateId)?.name || 'Design'} (Copy)`,
+      lastEdited: Date.now(),
+    };
+    const updated = [copy, ...recents];
+    saveRecents(id, updated);
+    setRecents(updated);
+  }, [id, recents]);
+
+  const renameRecent = useCallback((entryTemplateId: string, newName: string) => {
+    if (!id) return;
+    const updated = recents.map((e) =>
+      e.templateId === entryTemplateId ? { ...e, customName: newName } : e
+    );
+    saveRecents(id, updated);
+    setRecents(updated);
+    setRenamingId(null);
+  }, [id, recents]);
+
+  const downloadRecent = useCallback(async (entry: RecentEntry) => {
+    const t = TEMPLATES.find((t) => t.id === entry.templateId);
+    if (!t) return;
+    // Temporarily render, export, then clean up
+    const container = document.createElement('div');
+    container.style.position = 'fixed';
+    container.style.left = '-9999px';
+    container.style.top = '0';
+    document.body.appendChild(container);
+    const { createRoot } = await import('react-dom/client');
+    const root = createRoot(container);
+    root.render(t.render(entry.data, false) as any);
+    await new Promise(r => setTimeout(r, 200));
+    try {
+      const dataUrl = await toPng(container.firstElementChild as HTMLElement, {
+        width: t.width, height: t.height, pixelRatio: 2,
+      });
+      const link = document.createElement('a');
+      link.download = `${(entry.customName || t.name).replace(/\s+/g, '-').toLowerCase()}.png`;
+      link.href = dataUrl;
+      link.click();
+    } finally {
+      root.unmount();
+      document.body.removeChild(container);
+    }
+  }, []);
+
+  const openRecentInNewTab = useCallback((entry: RecentEntry) => {
+    if (!id) return;
+    const url = `${window.location.origin}/transactions/${id}/marketing?template=${entry.templateId}`;
+    window.open(url, '_blank');
+  }, [id]);
 
   // Auto-fill from deal data (preserve existing photos)
   useEffect(() => {
@@ -367,46 +447,106 @@ export default function MarketingEditor() {
                         const thumbH = Math.round(t.height * thumbScale);
                         const isActive = entry.templateId === templateId;
                         return (
-                          <button
+                          <div
                             key={entry.templateId}
-                            onClick={() => resumeRecent(entry)}
                             className={cn(
-                              'w-full flex items-center gap-2.5 px-2 py-1.5 rounded-lg border-2 text-left transition-all hover:bg-muted/60',
+                              'w-full flex items-center gap-2.5 px-2 py-1.5 rounded-lg border-2 text-left transition-all hover:bg-muted/60 group',
                               isActive ? 'border-primary bg-primary/5' : 'border-transparent hover:border-muted-foreground/20'
                             )}
                           >
-                            {/* Mini preview */}
-                            <div
-                              className="rounded overflow-hidden bg-muted shrink-0 border"
-                              style={{ width: 52, height: thumbH }}
+                            <button
+                              onClick={() => resumeRecent(entry)}
+                              className="flex items-center gap-2.5 flex-1 min-w-0"
                             >
+                              {/* Mini preview */}
                               <div
-                                style={{
-                                  transform: `scale(${thumbScale})`,
-                                  transformOrigin: 'top left',
-                                  width: t.width,
-                                  height: t.height,
-                                  pointerEvents: 'none',
-                                  userSelect: 'none',
-                                }}
+                                className="rounded overflow-hidden bg-muted shrink-0 border"
+                                style={{ width: 52, height: thumbH }}
                               >
-                                {t.render(entry.data, false)}
+                                <div
+                                  style={{
+                                    transform: `scale(${thumbScale})`,
+                                    transformOrigin: 'top left',
+                                    width: t.width,
+                                    height: t.height,
+                                    pointerEvents: 'none',
+                                    userSelect: 'none',
+                                  }}
+                                >
+                                  {t.render(entry.data, false)}
+                                </div>
                               </div>
-                            </div>
-                            {/* Info */}
-                            <div className="flex flex-col gap-0.5 min-w-0 flex-1">
-                              <div className="flex items-center gap-1 min-w-0">
-                                <span className="text-[11px] font-semibold text-foreground truncate">{t.name}</span>
-                                {isActive && (
-                                  <span className="text-[8px] font-bold px-1 py-0.5 bg-primary text-primary-foreground rounded-full shrink-0">
-                                    Active
-                                  </span>
-                                )}
+                              {/* Info */}
+                              <div className="flex flex-col gap-0.5 min-w-0 flex-1">
+                                <div className="flex items-center gap-1 min-w-0">
+                                  {renamingId === entry.templateId ? (
+                                    <input
+                                      autoFocus
+                                      className="text-[11px] font-semibold bg-transparent border-b border-primary outline-none w-full"
+                                      value={renameValue}
+                                      onChange={(e) => setRenameValue(e.target.value)}
+                                      onBlur={() => renameRecent(entry.templateId, renameValue)}
+                                      onKeyDown={(e) => {
+                                        if (e.key === 'Enter') renameRecent(entry.templateId, renameValue);
+                                        if (e.key === 'Escape') setRenamingId(null);
+                                      }}
+                                      onClick={(e) => e.stopPropagation()}
+                                    />
+                                  ) : (
+                                    <span className="text-[11px] font-semibold text-foreground truncate">
+                                      {entry.customName || t.name}
+                                    </span>
+                                  )}
+                                  {isActive && renamingId !== entry.templateId && (
+                                    <span className="text-[8px] font-bold px-1 py-0.5 bg-primary text-primary-foreground rounded-full shrink-0">
+                                      Active
+                                    </span>
+                                  )}
+                                </div>
+                                <span className="text-[10px] text-muted-foreground truncate">{entry.data.address}</span>
+                                <span className="text-[9px] text-muted-foreground/60">{timeAgo(entry.lastEdited)}</span>
                               </div>
-                              <span className="text-[10px] text-muted-foreground truncate">{entry.data.address}</span>
-                              <span className="text-[9px] text-muted-foreground/60">{timeAgo(entry.lastEdited)}</span>
-                            </div>
-                          </button>
+                            </button>
+                            {/* Actions dropdown */}
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <button
+                                  className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-muted shrink-0"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <MoreVertical className="h-3.5 w-3.5 text-muted-foreground" />
+                                </button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-44">
+                                <DropdownMenuItem onClick={() => openRecentInNewTab(entry)}>
+                                  <ExternalLink className="h-3.5 w-3.5 mr-2" />
+                                  Open in a new tab
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => {
+                                  setRenameValue(entry.customName || t.name);
+                                  setRenamingId(entry.templateId);
+                                }}>
+                                  <PencilLine className="h-3.5 w-3.5 mr-2" />
+                                  Rename
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => duplicateRecent(entry)}>
+                                  <Copy className="h-3.5 w-3.5 mr-2" />
+                                  Make a copy
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => downloadRecent(entry)}>
+                                  <Download className="h-3.5 w-3.5 mr-2" />
+                                  Download
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => deleteRecent(entry.templateId)}
+                                  className="text-destructive focus:text-destructive"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5 mr-2" />
+                                  Move to Trash
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
                         );
                       })}
                     </div>
