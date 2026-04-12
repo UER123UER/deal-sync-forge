@@ -735,23 +735,24 @@ export default function DealDetail() {
             ))}
           </div>
           {/* Template grid */}
-          <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-5">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
             {TEMPLATES.filter((t) => !marketingCategory || t.category === marketingCategory).map((template) => {
-              // Fit the template preview into a fixed 240px wide container, preserving real aspect ratio
-              const PREVIEW_W = 240;
+              // Render at a fixed 200px preview width, cap height so stories aren't enormous
+              const PREVIEW_W = 200;
+              const naturalH = Math.round(template.height * (PREVIEW_W / template.width));
+              const THUMB_H = Math.min(naturalH, 260); // cap stories at 260px
               const thumbScale = PREVIEW_W / template.width;
-              const thumbH = Math.round(template.height * thumbScale);
-              const typeLabel = template.type === 'flyer' ? 'Flyer' : template.type === 'post' ? 'Social Post' : 'Story';
+              const typeLabel = template.type === 'flyer' ? 'Flyer' : template.type === 'post' ? 'Post' : 'Story';
               return (
                 <button
                   key={template.id}
                   onClick={() => navigate(`/transactions/${id}/marketing?template=${template.id}`)}
-                  className="group border rounded-xl overflow-hidden bg-background hover:shadow-xl transition-all hover:border-primary hover:-translate-y-0.5 text-left flex flex-col"
+                  className="group border-2 border-transparent rounded-xl overflow-hidden bg-background hover:shadow-xl hover:border-primary transition-all hover:-translate-y-0.5 text-left flex flex-col w-full"
                 >
-                  {/* Thumbnail — exact aspect ratio, no dead space */}
+                  {/* Thumbnail */}
                   <div
-                    className="relative overflow-hidden bg-muted w-full shrink-0"
-                    style={{ height: thumbH }}
+                    className="relative overflow-hidden bg-muted shrink-0"
+                    style={{ height: THUMB_H, width: '100%' }}
                   >
                     <div
                       style={{
@@ -764,32 +765,39 @@ export default function DealDetail() {
                       }}
                     >
                       {template.render({
-                        address: deal?.address || '123 Main St',
+                        address: deal?.address || '123 Main Street',
                         city: deal?.city || 'City',
                         state: deal?.state || 'ST',
                         zip: deal?.zip || '00000',
                         price: deal?.price || '$595,000',
                         beds: '4', baths: '3', sqft: '2,500', lotSize: '',
-                        photos: [], agentName: deal?.primary_agent || 'Agent Name', agentTitle: 'Real Estate Agent',
-                        agentPhone: '(555) 123-4567', agentEmail: 'agent@realty.com',
-                        headline: template.category, subheadline: '', description: 'Beautiful property with modern finishes and an open floor plan.',
-                        openHouseDate: 'Saturday, March 22', openHouseTime: '1:00 PM – 4:00 PM',
+                        photos: [],
+                        agentName: deal?.primary_agent || 'Agent Name',
+                        agentTitle: 'Real Estate Agent',
+                        agentPhone: '(555) 123-4567',
+                        agentEmail: 'agent@unitedestatesrealty.com',
+                        headline: template.category,
+                        subheadline: '',
+                        description: 'Beautiful property with modern finishes.',
+                        openHouseDate: 'Saturday, March 22',
+                        openHouseTime: '1:00 PM – 4:00 PM',
                       }, false)}
                     </div>
                     {/* Hover overlay */}
-                    <div className="absolute inset-0 bg-primary/0 group-hover:bg-primary/8 transition-colors flex items-center justify-center">
-                      <span className="opacity-0 group-hover:opacity-100 transition-opacity bg-primary text-primary-foreground text-xs font-semibold px-3 py-1.5 rounded-full shadow">
+                    <div className="absolute inset-0 bg-primary/0 group-hover:bg-primary/10 transition-colors flex items-center justify-center">
+                      <span className="opacity-0 group-hover:opacity-100 transition-opacity bg-primary text-primary-foreground text-xs font-semibold px-3 py-1.5 rounded-full shadow-lg">
                         Open in Editor
                       </span>
                     </div>
                   </div>
-                  {/* Card footer */}
-                  <div className="p-3 flex flex-col gap-0.5 border-t">
-                    <div className="text-sm font-semibold text-foreground leading-tight">{template.name}</div>
-                    <div className="flex items-center justify-between mt-1">
-                      <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">{template.category} · {typeLabel}</span>
-                      <span className="text-[10px] text-muted-foreground/60 tabular-nums">{template.width}×{template.height}</span>
+                  {/* Footer */}
+                  <div className="px-3 py-2.5 border-t flex flex-col gap-1">
+                    <div className="text-xs font-bold text-foreground leading-tight">{template.name}</div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] text-muted-foreground">{template.category}</span>
+                      <span className="text-[10px] font-medium text-primary bg-primary/10 px-1.5 py-0.5 rounded">{typeLabel}</span>
                     </div>
+                    <div className="text-[9px] text-muted-foreground/50 tabular-nums">{template.width}×{template.height}px</div>
                   </div>
                 </button>
               );
