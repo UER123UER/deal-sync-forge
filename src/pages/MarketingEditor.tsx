@@ -1,4 +1,4 @@
-import { useRef, useState, useCallback, useEffect } from 'react';
+import { useRef, useState, useCallback, useEffect, useReducer } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { toPng } from 'html-to-image';
 import { Button } from '@/components/ui/button';
@@ -17,6 +17,8 @@ import {
   X,
   LayoutTemplate,
   Pencil,
+  Undo2,
+  Redo2,
 } from 'lucide-react';
 import { useDeal } from '@/hooks/useDeals';
 import { useDealPhotos } from '@/hooks/useDealPhotos';
@@ -56,7 +58,50 @@ export default function MarketingEditor() {
 
   const template = TEMPLATES.find((t) => t.id === templateId) || TEMPLATES[0];
 
-  const [data, setData] = useState<TemplateData>(() => getDefaultTemplateData());
+  // ── History (undo / redo) ──────────────────────────────────────────────────
+  const [history, setHistory] = useState<TemplateData[]>([getDefaultTemplateData()]);
+  const [historyIndex, setHistoryIndex] = useState(0);
+  const data = history[historyIndex];
+
+  // Push a new state onto the history stack (drops any forward history)
+  const pushHistory = useCallback((next: TemplateData) => {
+    setHistory((prev) => [...prev.slice(0, historyIndex + 1), next]);
+    setHistoryIndex((i) => i + 1);
+  }, [historyIndex]);
+
+  // setData still works for immediate updates but always records history
+  const setData = useCallback((updater: TemplateData | ((prev: TemplateData) => TemplateData)) => {
+    setHistory((prev) => {
+      const current = prev[historyIndex];
+      const next = typeof updater === 'function' ? updater(current) : updater;
+      return [...prev.slice(0, historyIndex + 1), next];
+    });
+    setHistoryIndex((i) => i + 1);
+  }, [historyIndex]);
+
+  const canUndo = historyIndex > 0;
+  const canRedo = historyIndex < history.length - 1;
+
+  const handleUndo = useCallback(() => {
+    if (canUndo) setHistoryIndex((i) => i - 1);
+  }, [canUndo]);
+
+  const handleRedo = useCallback(() => {
+    if (canRedo) setHistoryIndex((i) => i + 1);
+  }, [canRedo]);
+
+  // Keyboard shortcuts: Ctrl/Cmd+Z = undo, Ctrl/Cmd+Shift+Z = redo
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const mod = e.metaKey || e.ctrlKey;
+      if (!mod) return;
+      if (e.key === 'z' && !e.shiftKey) { e.preventDefault(); handleUndo(); }
+      if ((e.key === 'z' && e.shiftKey) || e.key === 'y') { e.preventDefault(); handleRedo(); }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [handleUndo, handleRedo]);
+
   const [photosInitialized, setPhotosInitialized] = useState(false);
   const [zoom, setZoom] = useState(1);
   const [basicsOpen, setBasicsOpen] = useState(true);
@@ -152,6 +197,30 @@ export default function MarketingEditor() {
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Undo / Redo */}
+          <div className="flex items-center gap-0.5 border rounded-md px-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
+              onClick={handleUndo}
+              disabled={!canUndo}
+              title="Undo (Ctrl+Z)"
+            >
+              <Undo2 className="h-3.5 w-3.5" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
+              onClick={handleRedo}
+              disabled={!canRedo}
+              title="Redo (Ctrl+Shift+Z)"
+            >
+              <Redo2 className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+
           {/* Zoom */}
           <div className="flex items-center gap-1 border rounded-md px-1">
             <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setZoom((z) => Math.max(0.15, +(z - 0.1).toFixed(2)))}>
