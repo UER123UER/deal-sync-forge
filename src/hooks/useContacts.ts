@@ -38,6 +38,53 @@ export type ContactUpdate = {
   mls?: string | null;
 };
 
+// ── Source helper (stored as "source:VALUE" in tags) ─────────────────────────
+export const CONTACT_SOURCES = [
+  'Referral', 'Open House', 'Website', 'Cold Call', 'Social Media',
+  'Walk-in', 'Past Client', 'Direct Mail', 'Zillow', 'Realtor.com', 'Other',
+] as const;
+
+export type ContactSource = (typeof CONTACT_SOURCES)[number];
+
+export function getContactSource(contact: ContactRow): ContactSource | null {
+  const tag = (contact.tags || []).find((t) => t.startsWith('source:'));
+  if (!tag) return null;
+  return tag.replace('source:', '') as ContactSource;
+}
+
+export function setContactSource(tags: string[], source: ContactSource | ''): string[] {
+  const withoutSource = tags.filter((t) => !t.startsWith('source:'));
+  return source ? [...withoutSource, `source:${source}`] : withoutSource;
+}
+
+// ── Lead Score (0-100) ────────────────────────────────────────────────────────
+export function calcLeadScore(contact: ContactRow, dealCount: number): number {
+  let score = 0;
+  if (contact.email) score += 15;
+  if (contact.phone) score += 15;
+  if (contact.company) score += 5;
+  if (contact.current_address) score += 5;
+  if (dealCount > 0) score += 20;
+  if (dealCount > 1) score += 10;
+  if (contact.last_touch) {
+    try {
+      const days = Math.floor((Date.now() - new Date(contact.last_touch).getTime()) / 86_400_000);
+      if (days <= 7) score += 15;
+      else if (days <= 30) score += 10;
+      else if (days <= 90) score += 5;
+    } catch { /* ignore */ }
+  }
+  if (contact.next_touch) score += 10;
+  if ((contact.tags || []).includes('VIP')) score += 5;
+  return Math.min(score, 100);
+}
+
+export function leadScoreColor(score: number): string {
+  if (score >= 70) return 'text-emerald-600 bg-emerald-50 border-emerald-200';
+  if (score >= 40) return 'text-amber-600 bg-amber-50 border-amber-200';
+  return 'text-slate-500 bg-slate-50 border-slate-200';
+}
+
 export function useContacts() {
   return useQuery({
     queryKey: ['contacts'],

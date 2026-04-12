@@ -3,6 +3,7 @@ import { Home, Plus, Users, DollarSign, Mail, CheckSquare, Calendar, Gift, Phone
 import { UERLogo } from '@/components/UERLogo';
 import { cn } from '@/lib/utils';
 import { useState, useRef, useEffect } from 'react';
+import { useContacts } from '@/hooks/useContacts';
 
 const navItems = [
   { icon: Plus, label: 'Create', path: '/transactions/new' },
@@ -29,6 +30,13 @@ export function AppSidebar() {
   const [submenuOpen, setSubmenuOpen] = useState(false);
   const submenuRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
+
+  // Overdue follow-up count for the People badge
+  const { data: contacts = [] } = useContacts();
+  const overdueCount = contacts.filter((c) => {
+    if (!c.next_touch) return false;
+    try { return new Date(c.next_touch) < new Date(); } catch { return false; }
+  }).length;
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -70,7 +78,14 @@ export function AppSidebar() {
                 }}
                 title={item.label}
               >
-                <item.icon className="w-5 h-5" style={{ color: isActive ? 'hsl(var(--sidebar-active))' : 'hsl(var(--sidebar-fg))' }} />
+                <div className="relative">
+                  <item.icon className="w-5 h-5" style={{ color: isActive ? 'hsl(var(--sidebar-active))' : 'hsl(var(--sidebar-fg))' }} />
+                  {overdueCount > 0 && (
+                    <span className="absolute -top-1.5 -right-1.5 min-w-[14px] h-[14px] rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center px-0.5 leading-none">
+                      {overdueCount > 99 ? '99+' : overdueCount}
+                    </span>
+                  )}
+                </div>
                 <span className="text-[9px] leading-none" style={{ color: isActive ? 'hsl(var(--sidebar-active))' : 'hsl(var(--sidebar-fg))' }}>
                   {item.label}
                 </span>
