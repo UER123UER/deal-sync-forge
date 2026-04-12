@@ -10,6 +10,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useToast } from '@/hooks/use-toast';
 import { CreditCard, ShieldCheck } from 'lucide-react';
 
+// hi
 export default function OnboardingPayment() {
   const { user, refreshProfile } = useAuth();
   const navigate = useNavigate();
