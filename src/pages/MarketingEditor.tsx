@@ -17,8 +17,6 @@ import {
   ChevronDown,
   ImagePlus,
   X,
-  LayoutTemplate,
-  Pencil,
   Undo2,
   Redo2,
   Clock,
@@ -51,7 +49,6 @@ import { useDeal } from '@/hooks/useDeals';
 import { useDealPhotos, useUploadDealPhoto } from '@/hooks/useDealPhotos';
 import {
   TEMPLATES,
-  TEMPLATE_CATEGORIES,
   CANVAS_DIMENSIONS,
   DEFAULT_TEMPLATE_VISIBILITY,
   getDefaultTemplateData,
@@ -535,8 +532,6 @@ export default function MarketingEditor() {
   const [basicsOpen, setBasicsOpen] = useState(true);
   const [agentOpen, setAgentOpen] = useState(true);
   const [ohOpen, setOhOpen] = useState(true);
-  const [leftTab, setLeftTab] = useState<'templates' | 'edit'>('templates');
-  const [categoryFilter, setCategoryFilter] = useState<TemplateCategory | 'All'>('All');
   const [exporting, setExporting] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [renamingId, setRenamingId] = useState<string | null>(null);
@@ -929,7 +924,6 @@ export default function MarketingEditor() {
 
   const selectTemplate = (tid: string) => {
     setSearchParams({ template: tid });
-    setLeftTab('edit');
   };
 
   /** Resume a recent entry: load its saved data and switch to edit tab */
@@ -940,7 +934,6 @@ export default function MarketingEditor() {
       stack: [hydrateTemplateData(getDefaultTemplateData(deal, recentTemplate?.category ?? template.category), entry.data)],
       index: 0,
     });
-    setLeftTab('edit');
   };
 
   const handleExport = useCallback(async () => {
@@ -1250,8 +1243,6 @@ export default function MarketingEditor() {
     };
   }, [blockRects, data.blockTransforms, lockedBlocks]);
 
-  const filteredTemplates =
-    categoryFilter === 'All' ? TEMPLATES : TEMPLATES.filter((t) => t.category === categoryFilter);
 
   return (
     <div className="h-screen flex flex-col bg-muted/20">
@@ -1377,248 +1368,9 @@ export default function MarketingEditor() {
       <div className="flex flex-1 overflow-hidden">
         {/* ── Left Panel ── */}
         <div className="w-[260px] border-r bg-background shrink-0 flex flex-col">
-          {/* Tab bar: Templates | Edit */}
-          <div className="flex border-b shrink-0">
-            <button
-              onClick={() => setLeftTab('templates')}
-              className={cn(
-                'flex-1 flex items-center justify-center gap-1 py-2.5 text-[11px] font-semibold transition-colors',
-                leftTab === 'templates'
-                  ? 'text-foreground border-b-2 border-primary -mb-px'
-                  : 'text-muted-foreground hover:text-foreground'
-              )}
-            >
-              <LayoutTemplate className="h-3 w-3" />
-              Templates
-            </button>
-            <button
-              onClick={() => setLeftTab('edit')}
-              className={cn(
-                'flex-1 flex items-center justify-center gap-1 py-2.5 text-[11px] font-semibold transition-colors',
-                leftTab === 'edit'
-                  ? 'text-foreground border-b-2 border-primary -mb-px'
-                  : 'text-muted-foreground hover:text-foreground'
-              )}
-            >
-              <Pencil className="h-3 w-3" />
-              Edit
-            </button>
-          </div>
-
-          {/* ── Templates tab ── */}
-          {leftTab === 'templates' && (
-            <div className="flex flex-col flex-1 overflow-hidden">
-              <ScrollArea className="flex-1">
-                {/* ── Recent section ── */}
-                {recents.length > 0 && (
-                  <div className="border-b pb-3">
-                    <div className="flex items-center gap-1.5 px-3 pt-3 pb-2">
-                      <Clock className="h-3 w-3 text-muted-foreground" />
-                      <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">Recent</span>
-                      <span className="ml-auto text-[9px] text-muted-foreground/60">{recents.length}</span>
-                    </div>
-                    <div className="px-2 space-y-1">
-                      {recents.map((entry) => {
-                        const t = TEMPLATES.find((t) => t.id === entry.templateId);
-                        if (!t) return null;
-                        const thumbScale = 52 / t.width;
-                        const thumbH = Math.round(t.height * thumbScale);
-                        const isActive = entry.templateId === templateId;
-                        return (
-                          <div
-                            key={entry.templateId}
-                            className={cn(
-                              'w-full flex items-center gap-2.5 px-2 py-1.5 rounded-lg border-2 text-left transition-all hover:bg-muted/60 group',
-                              isActive ? 'border-primary bg-primary/5' : 'border-transparent hover:border-muted-foreground/20'
-                            )}
-                          >
-                            <button
-                              onClick={() => resumeRecent(entry)}
-                              className="flex items-center gap-2.5 flex-1 min-w-0"
-                            >
-                              {/* Mini preview */}
-                              <div
-                                className="rounded overflow-hidden bg-muted shrink-0 border"
-                                style={{ width: 52, height: thumbH }}
-                              >
-                                <div
-                                  style={{
-                                    transform: `scale(${thumbScale})`,
-                                    transformOrigin: 'top left',
-                                    width: t.width,
-                                    height: t.height,
-                                    pointerEvents: 'none',
-                                    userSelect: 'none',
-                                  }}
-                                >
-                                  {t.render(entry.data, false)}
-                                </div>
-                              </div>
-                              {/* Info */}
-                              <div className="flex flex-col gap-0.5 min-w-0 flex-1">
-                                <div className="flex items-center gap-1 min-w-0">
-                                  {renamingId === entry.templateId ? (
-                                    <input
-                                      autoFocus
-                                      className="text-[11px] font-semibold bg-transparent border-b border-primary outline-none w-full"
-                                      value={renameValue}
-                                      onChange={(e) => setRenameValue(e.target.value)}
-                                      onBlur={() => renameRecent(entry.templateId, renameValue)}
-                                      onKeyDown={(e) => {
-                                        if (e.key === 'Enter') renameRecent(entry.templateId, renameValue);
-                                        if (e.key === 'Escape') setRenamingId(null);
-                                        e.stopPropagation();
-                                      }}
-                                      onClick={(e) => e.stopPropagation()}
-                                    />
-                                  ) : (
-                                    <span className="text-[11px] font-semibold text-foreground truncate">
-                                      {entry.customName || t.name}
-                                    </span>
-                                  )}
-                                  {isActive && renamingId !== entry.templateId && (
-                                    <span className="text-[8px] font-bold px-1 py-0.5 bg-primary text-primary-foreground rounded-full shrink-0">
-                                      Active
-                                    </span>
-                                  )}
-                                </div>
-                                <span className="text-[10px] text-muted-foreground truncate">{entry.data.address}</span>
-                                <span className="text-[9px] text-muted-foreground/60">{timeAgo(entry.lastEdited)}</span>
-                              </div>
-                            </button>
-                            {/* Actions dropdown */}
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <button
-                                  className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-muted shrink-0"
-                                  onClick={(e) => e.stopPropagation()}
-                                >
-                                  <MoreVertical className="h-3.5 w-3.5 text-muted-foreground" />
-                                </button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end" className="w-44">
-                                <DropdownMenuItem onClick={() => openRecentInNewTab(entry)}>
-                                  <ExternalLink className="h-3.5 w-3.5 mr-2" />
-                                  Open in a new tab
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => {
-                                  setRenameValue(entry.customName || t.name);
-                                  setRenamingId(entry.templateId);
-                                }}>
-                                  <PencilLine className="h-3.5 w-3.5 mr-2" />
-                                  Rename
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => duplicateRecent(entry)}>
-                                  <Copy className="h-3.5 w-3.5 mr-2" />
-                                  Make a copy
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => downloadRecent(entry)}>
-                                  <Download className="h-3.5 w-3.5 mr-2" />
-                                  Download
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  onClick={() => deleteRecent(entry.templateId)}
-                                  className="text-destructive focus:text-destructive"
-                                >
-                                  <Trash2 className="h-3.5 w-3.5 mr-2" />
-                                  Move to Trash
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-
-                {/* ── Category filter pills ── */}
-                <div className="p-2 flex flex-wrap gap-1 border-b">
-                  <button
-                    onClick={() => setCategoryFilter('All')}
-                    className={cn(
-                      'flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-semibold transition-colors',
-                      categoryFilter === 'All'
-                        ? 'bg-primary text-primary-foreground'
-                        : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                    )}
-                  >
-                    All
-                    <span className={cn('text-[9px]', categoryFilter === 'All' ? 'opacity-70' : 'opacity-50')}>
-                      {TEMPLATES.length}
-                    </span>
-                  </button>
-                  {TEMPLATE_CATEGORIES.map((cat) => {
-                    const count = TEMPLATES.filter((t) => t.category === cat).length;
-                    return (
-                      <button
-                        key={cat}
-                        onClick={() => setCategoryFilter(cat)}
-                        className={cn(
-                          'flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-semibold transition-colors',
-                          categoryFilter === cat
-                            ? 'bg-primary text-primary-foreground'
-                            : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                        )}
-                      >
-                        {cat}
-                        <span className={cn('text-[9px]', categoryFilter === cat ? 'opacity-70' : 'opacity-50')}>
-                          {count}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-
-                {/* ── Template grid ── */}
-                <div className="p-2 grid grid-cols-2 gap-2">
-                  {filteredTemplates.map((t) => {
-                    const thumbScale = 110 / t.width;
-                    const thumbH = t.height * thumbScale;
-                    const isSelected = t.id === templateId;
-                    return (
-                      <button
-                        key={t.id}
-                        onClick={() => selectTemplate(t.id)}
-                        className={cn(
-                          'group flex flex-col rounded-lg overflow-hidden border-2 transition-all text-left',
-                          isSelected ? 'border-primary shadow-md' : 'border-transparent hover:border-muted-foreground/30'
-                        )}
-                      >
-                        <div className="overflow-hidden bg-muted relative" style={{ height: Math.min(thumbH, 160), width: '100%' }}>
-                          <div
-                            style={{
-                              transform: `scale(${thumbScale})`,
-                              transformOrigin: 'top left',
-                              width: t.width,
-                              height: t.height,
-                              pointerEvents: 'none',
-                              userSelect: 'none',
-                            }}
-                          >
-                            {t.render({ ...getDefaultTemplateData(deal, t.category), photos: data.photos }, false)}
-                          </div>
-                        </div>
-                        <div className="px-2 py-1.5 bg-background">
-                          <div className="text-[10px] font-semibold text-foreground truncate">{t.name}</div>
-                          <div className="flex items-center gap-1 mt-0.5">
-                            <span className={cn('text-[9px] font-medium px-1.5 py-0.5 rounded-full', CATEGORY_COLORS[t.category])}>
-                              {t.category}
-                            </span>
-                          </div>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              </ScrollArea>
-            </div>
-          )}
-
-          {/* ── Edit tab ── */}
-          {leftTab === 'edit' && (
-            <ScrollArea className="flex-1">
-              <div className="p-3 space-y-1">
+          {/* ── Edit Panel ── */}
+          <ScrollArea className="flex-1">
+            <div className="p-3 space-y-1">
                 {/* Photo Upload */}
                 <div className="pb-4 border-b mb-2">
                   <div className="flex items-center justify-between mb-2">
@@ -1968,9 +1720,8 @@ export default function MarketingEditor() {
                     </CollapsibleContent>
                   </Collapsible>
                 )}
-              </div>
-            </ScrollArea>
-          )}
+            </div>
+          </ScrollArea>
 
         </div>
 
