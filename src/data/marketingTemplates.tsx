@@ -87,7 +87,8 @@ export type MarketingBlockKey =
   | 'price'
   | 'stats'
   | 'description'
-  | 'agent';
+  | 'agent'
+  | `custom-text-${string}`;
 
 export interface MarketingBlockTransform {
   x: number;
@@ -107,6 +108,11 @@ export interface MarketingAgent {
   title: string;
   phone: string;
   email: string;
+}
+
+export interface MarketingCustomTextBlock {
+  id: string;
+  text: string;
 }
 
 export interface TemplateData {
@@ -134,6 +140,8 @@ export interface TemplateData {
   photoLayout: PhotoLayout;
   agentLayout: AgentLayout;
   agents: MarketingAgent[];
+  customTextBlocks: MarketingCustomTextBlock[];
+  groupedBlockKeys: MarketingBlockKey[];
   blockTransforms: MarketingBlockTransforms;
   // Canvas dimension
   canvasDimensionId: string;  // matches CanvasDimension.id
@@ -239,6 +247,55 @@ function AdjustableBlock({
       {children}
     </div>
   );
+}
+
+function renderCustomTextBlocks(data: TemplateData, editable?: boolean, fontScale = 1) {
+  const customTextBlocks = data.customTextBlocks ?? [];
+
+  return customTextBlocks.map((block, index) => {
+    const blockKey = `custom-text-${block.id}` as MarketingBlockKey;
+    const defaultX = Math.round((data.canvasWidth || 1080) * 0.08);
+    const defaultY = Math.round((data.canvasHeight || 1080) * 0.08) + (index * Math.round(72 * fontScale));
+
+    return (
+      <AdjustableBlock
+        key={block.id}
+        data={{
+          blockTransforms: {
+            ...data.blockTransforms,
+            [blockKey]: {
+              x: data.blockTransforms?.[blockKey]?.x ?? defaultX,
+              y: data.blockTransforms?.[blockKey]?.y ?? defaultY,
+              scale: data.blockTransforms?.[blockKey]?.scale ?? 1,
+            },
+          },
+        }}
+        block={blockKey}
+        style={{
+          position: 'absolute',
+          left: 0,
+          top: 0,
+          maxWidth: Math.round((data.canvasWidth || 1080) * 0.72),
+          pointerEvents: 'none',
+        }}
+      >
+        <div
+          style={{
+            fontFamily: '"Inter", system-ui, sans-serif',
+            fontSize: Math.round(40 * fontScale),
+            fontWeight: 700,
+            lineHeight: 1.08,
+            letterSpacing: -0.8,
+            color: '#0e1428',
+            whiteSpace: 'pre-wrap',
+            textShadow: '0 1px 2px rgba(255,255,255,0.3)',
+          }}
+        >
+          <E editable={editable}>{block.text}</E>
+        </div>
+      </AdjustableBlock>
+    );
+  });
 }
 
 // ─── Editable text ────────────────────────────────────────────────────────────
@@ -585,6 +642,7 @@ function buildTemplate(
           style={{
             width: w,
             height: h,
+            position: 'relative',
             display: 'flex',
             flexDirection: 'column',
             overflow: 'hidden',
@@ -827,6 +885,12 @@ function buildTemplate(
               </AdjustableBlock>
             )}
           </div>
+
+          {(data.customTextBlocks?.length ?? 0) > 0 && (
+            <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
+              {renderCustomTextBlocks(data, editable, fontScale)}
+            </div>
+          )}
         </div>
       );
     },
@@ -913,6 +977,8 @@ export function getDefaultTemplateData(
     photoLayout: 'single',
     agentLayout: 'single',
     agents: uniqueAgents.length ? uniqueAgents : [primaryAgent],
+    customTextBlocks: [],
+    groupedBlockKeys: [],
     blockTransforms: {},
     canvasDimensionId: 'square',
     canvasWidth: 1080,

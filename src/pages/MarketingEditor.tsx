@@ -38,6 +38,7 @@ import {
   LockOpen,
   Link2,
   Link2Off,
+  Type,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -55,6 +56,7 @@ import {
   mergeMarketingBlockTransforms,
   type AgentLayout,
   type CanvasDimension,
+  type MarketingCustomTextBlock,
   type HeadlineStyle,
   type MarketingBlockKey,
   type PhotoLayout,
@@ -324,10 +326,21 @@ type MarketingBlockInteraction = {
     h?: number;
   };
   baseRect: MarketingBlockRect;
+  targets: Array<{
+    block: MarketingBlockKey;
+    startTransform: {
+      x: number;
+      y: number;
+      scale: number;
+      w?: number;
+      h?: number;
+    };
+    baseRect: MarketingBlockRect;
+  }>;
   committed: boolean;
 };
 
-const MARKETING_BLOCK_LABELS: Record<MarketingBlockKey, string> = {
+const MARKETING_BLOCK_LABELS: Record<string, string> = {
   logo: 'Logo',
   photo: 'Photo Area',
   'photo-0': 'Photo 1',
@@ -340,6 +353,25 @@ const MARKETING_BLOCK_LABELS: Record<MarketingBlockKey, string> = {
   description: 'Description',
   agent: 'Agent info',
 };
+
+function isCustomTextBlock(block: MarketingBlockKey): block is `custom-text-${string}` {
+  return block.startsWith('custom-text-');
+}
+
+function getCustomTextBlockId(block: MarketingBlockKey): string | null {
+  return isCustomTextBlock(block) ? block.replace('custom-text-', '') : null;
+}
+
+function getBlockLabel(block: MarketingBlockKey, customTextBlocks: MarketingCustomTextBlock[]): string {
+  if (isCustomTextBlock(block)) {
+    const customTextId = getCustomTextBlockId(block);
+    const customText = customTextBlocks.find((entry) => entry.id === customTextId);
+    const preview = customText?.text.trim();
+    return preview ? `Text: ${preview.slice(0, 18)}` : 'Custom Text';
+  }
+
+  return MARKETING_BLOCK_LABELS[block] ?? 'Block';
+}
 
 const ZOOM_PRESETS = [0.5, 0.75, 1.0];
 
@@ -475,6 +507,8 @@ export default function MarketingEditor() {
         ...(incoming?.visibility ?? {}),
       },
       blockTransforms: mergeMarketingBlockTransforms(incoming?.blockTransforms),
+      customTextBlocks: incoming?.customTextBlocks ?? base.customTextBlocks ?? [],
+      groupedBlockKeys: incoming?.groupedBlockKeys ?? base.groupedBlockKeys ?? [],
       agents: incoming?.agents?.length
         ? incoming.agents
         : [{
@@ -538,7 +572,6 @@ export default function MarketingEditor() {
   const [renameValue, setRenameValue] = useState('');
   const [selectedBlock, setSelectedBlock] = useState<MarketingBlockKey | null>(null);
   const [lockedBlocks, setLockedBlocks] = useState<Set<MarketingBlockKey>>(new Set());
-  const [groupedBlocks, setGroupedBlocks] = useState<Set<MarketingBlockKey>>(new Set());
   const [isDraggingBlock, setIsDraggingBlock] = useState(false); // hides toolbar while moving
   const [blockRects, setBlockRects] = useState<Partial<Record<MarketingBlockKey, MarketingBlockRect>>>({});
   // Save-status indicator
@@ -709,6 +742,11 @@ export default function MarketingEditor() {
     ...DEFAULT_TEMPLATE_VISIBILITY,
     ...(data.visibility ?? {}),
   };
+  const groupedBlocks = new Set<MarketingBlockKey>(data.groupedBlockKeys ?? []);
+  const selectedCustomTextId = selectedBlock ? getCustomTextBlockId(selectedBlock) : null;
+  const selectedCustomTextBlock = selectedCustomTextId
+    ? data.customTextBlocks.find((entry) => entry.id === selectedCustomTextId) ?? null
+    : null;
 
   const updateVisibility = useCallback((field: keyof TemplateVisibility, checked: boolean) => {
     setData((prev) => ({
@@ -759,20 +797,37 @@ export default function MarketingEditor() {
     setShowDimensionPicker(false);
   }, [customW, customH, setData]);
 
-  const updateBlockTransform = useCallback((
-    block: MarketingBlockKey,
-    nextTransform: { x: number; y: number; scale: number },
+  const updateBlockTransforms = useCallback((
+    updates: Partial<Record<MarketingBlockKey, { x?: number; y?: number; scale?: number; w?: number; h?: number }>>,
     replace = false,
   ) => {
     const applyUpdate = replace ? replaceCurrentData : setData;
-    applyUpdate((prev) => ({
-      ...prev,
-      blockTransforms: {
-        ...(prev.blockTransforms ?? {}),
-        [block]: nextTransform,
-      },
-    }));
+    applyUpdate((prev) => {
+      const nextTransforms = { ...(prev.blockTransforms ?? {}) };
+
+      Object.entries(updates).forEach(([blockKey, patch]) => {
+        const block = blockKey as MarketingBlockKey;
+        const current = nextTransforms[block] ?? { x: 0, y: 0, scale: 1 };
+        nextTransforms[block] = {
+          ...current,
+          ...patch,
+        };
+      });
+
+      return {
+        ...prev,
+        blockTransforms: nextTransforms,
+      };
+    });
   }, [replaceCurrentData, setData]);
+
+  const updateBlockTransform = useCallback((
+    block: MarketingBlockKey,
+    nextTransform: { x: number; y: number; scale: number; w?: number; h?: number },
+    replace = false,
+  ) => {
+    updateBlockTransforms({ [block]: nextTransform }, replace);
+  }, [updateBlockTransforms]);
 
   const resetSelectedBlock = useCallback(() => {
     if (!selectedBlock) return;
@@ -814,13 +869,41 @@ export default function MarketingEditor() {
   }, [data.blockTransforms, setData]);
 
   const deleteBlock = useCallback((block: MarketingBlockKey) => {
+    if (isCustomTextBlock(block)) {
+      const customTextId = getCustomTextBlockId(block);
+      if (!customTextId) return;
+
+      setData((prev) => {
+        const nextTransforms = { ...(prev.blockTransforms ?? {}) };
+        delete nextTransforms[block];
+        return {
+          ...prev,
+          customTextBlocks: prev.customTextBlocks.filter((entry) => entry.id !== customTextId),
+          groupedBlockKeys: prev.groupedBlockKeys.filter((entry) => entry !== block),
+          blockTransforms: nextTransforms,
+        };
+      });
+      setLockedBlocks((prev) => {
+        const next = new Set(prev);
+        next.delete(block);
+        return next;
+      });
+      setSelectedBlock(null);
+      toast.success('Custom text removed');
+      return;
+    }
+
     // photo-0/1/2 → remove that photo from the photos array
     if (block === 'photo-0' || block === 'photo-1' || block === 'photo-2') {
       const idx = parseInt(block.split('-')[1]);
       setData((prev) => {
         const prevPhotos = prev.photos;
         const nextPhotos = prevPhotos.filter((_, i) => i !== idx);
-        return { ...prev, photos: nextPhotos };
+        return {
+          ...prev,
+          photos: nextPhotos,
+          groupedBlockKeys: prev.groupedBlockKeys.filter((entry) => entry !== block),
+        };
       });
       setSelectedBlock(null);
       toast('Photo removed', {
@@ -841,6 +924,7 @@ export default function MarketingEditor() {
     if (!visibilityKey) return;
     setData((prev) => ({
       ...prev,
+      groupedBlockKeys: prev.groupedBlockKeys.filter((entry) => entry !== block),
       visibility: { ...prev.visibility, [visibilityKey]: false },
     }));
     setSelectedBlock(null);
@@ -857,13 +941,58 @@ export default function MarketingEditor() {
   }, [data.photos, setData]);
 
   const toggleGroupBlock = useCallback((block: MarketingBlockKey) => {
-    setGroupedBlocks((prev) => {
-      const next = new Set(prev);
-      if (next.has(block)) { next.delete(block); toast('Removed from group'); }
-      else { next.add(block); toast(`Added to group (${next.size} blocks)`); }
-      return next;
+    setData((prev) => {
+      const next = new Set(prev.groupedBlockKeys ?? []);
+      if (next.has(block)) {
+        next.delete(block);
+        toast('Ungrouped');
+      } else {
+        next.add(block);
+        toast(next.size > 1 ? `${next.size} blocks will move together` : 'Block added to group');
+      }
+
+      return {
+        ...prev,
+        groupedBlockKeys: Array.from(next),
+      };
     });
-  }, []);
+  }, [setData]);
+
+  const addCustomTextBlock = useCallback(() => {
+    const customTextId = `text-${Date.now()}`;
+    const blockKey = `custom-text-${customTextId}` as MarketingBlockKey;
+
+    setData((prev) => ({
+      ...prev,
+      customTextBlocks: [
+        ...prev.customTextBlocks,
+        {
+          id: customTextId,
+          text: 'Custom text',
+        },
+      ],
+      blockTransforms: {
+        ...(prev.blockTransforms ?? {}),
+        [blockKey]: {
+          x: Math.round((prev.canvasWidth || 1080) * 0.08),
+          y: Math.round((prev.canvasHeight || 1080) * 0.1) + (prev.customTextBlocks.length * 70),
+          scale: 1,
+        },
+      },
+    }));
+
+    setSelectedBlock(blockKey);
+    toast.success('Custom text box added');
+  }, [setData]);
+
+  const updateCustomTextBlock = useCallback((blockId: string, text: string) => {
+    setData((prev) => ({
+      ...prev,
+      customTextBlocks: prev.customTextBlocks.map((entry) =>
+        entry.id === blockId ? { ...entry, text } : entry
+      ),
+    }));
+  }, [setData]);
 
   // ── Photo upload — persists to Supabase storage ───────────────────────────
   const handlePhotoUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1035,6 +1164,38 @@ export default function MarketingEditor() {
   const canvasSizeRef = useRef({ w: canvasW, h: canvasH });
   useEffect(() => { canvasSizeRef.current = { w: canvasW, h: canvasH }; }, [canvasW, canvasH]);
 
+  const isPhotoBlock = useCallback((block: MarketingBlockKey) => (
+    block === 'photo-0' || block === 'photo-1' || block === 'photo-2'
+  ), []);
+
+  const getInteractionTargets = useCallback((block: MarketingBlockKey) => {
+    const rects = blockRectsRef.current;
+    const groupedTargetKeys = groupedBlocks.has(block)
+      ? (data.groupedBlockKeys ?? []).filter((entry) => rects[entry] && !lockedBlocks.has(entry))
+      : [block];
+
+    const targetKeys = groupedTargetKeys.length > 0 ? groupedTargetKeys : [block];
+
+    return targetKeys
+      .map((entry) => {
+        const baseRect = rects[entry];
+        if (!baseRect) return null;
+        const currentTransform = data.blockTransforms?.[entry];
+        return {
+          block: entry,
+          startTransform: {
+            x: currentTransform?.x ?? 0,
+            y: currentTransform?.y ?? 0,
+            scale: currentTransform?.scale ?? 1,
+            w: currentTransform?.w ?? baseRect.width,
+            h: currentTransform?.h ?? baseRect.height,
+          },
+          baseRect,
+        };
+      })
+      .filter((entry): entry is NonNullable<typeof entry> => Boolean(entry));
+  }, [data.blockTransforms, data.groupedBlockKeys, groupedBlocks, lockedBlocks]);
+
   useEffect(() => {
     const handlePointerMove = (event: PointerEvent) => {
       const interaction = interactionRef.current;
@@ -1075,11 +1236,19 @@ export default function MarketingEditor() {
         const snappedX = rawX + snap.x;
         const snappedY = rawY + snap.y;
 
-        updateBlockTransform(
-          interaction.block,
-          { ...interaction.startTransform, x: snappedX, y: snappedY },
-          interaction.committed,
-        );
+        const deltaX = snappedX - interaction.startTransform.x;
+        const deltaY = snappedY - interaction.startTransform.y;
+        const updates: Partial<Record<MarketingBlockKey, { x?: number; y?: number; scale?: number; w?: number; h?: number }>> = {};
+
+        interaction.targets.forEach((target) => {
+          updates[target.block] = {
+            ...target.startTransform,
+            x: target.startTransform.x + deltaX,
+            y: target.startTransform.y + deltaY,
+          };
+        });
+
+        updateBlockTransforms(updates, interaction.committed);
         interaction.committed = true;
 
         // Update guide overlays + position HUD
@@ -1093,12 +1262,41 @@ export default function MarketingEditor() {
       setAlignGuides([]);
       setSpacingGuides([]);
 
-      const isIndividualPhoto =
-        interaction.block === 'photo-0' ||
-        interaction.block === 'photo-1' ||
-        interaction.block === 'photo-2';
+      const isGroupedInteraction = interaction.targets.length > 1;
+      const isIndividualPhoto = isPhotoBlock(interaction.block);
 
-      if (isIndividualPhoto) {
+      if (isGroupedInteraction) {
+        const baseScaleSize = Math.max(
+          interaction.startTransform.w ?? interaction.baseRect.width,
+          interaction.startTransform.h ?? interaction.baseRect.height,
+          interaction.baseRect.width,
+          interaction.baseRect.height,
+          120,
+        );
+        const dominantDelta = Math.abs(dx) > Math.abs(dy) ? dx : dy;
+        const ratio = Math.min(3, Math.max(0.35, (baseScaleSize + dominantDelta) / baseScaleSize));
+        const updates: Partial<Record<MarketingBlockKey, { x?: number; y?: number; scale?: number; w?: number; h?: number }>> = {};
+
+        interaction.targets.forEach((target) => {
+          if (isPhotoBlock(target.block)) {
+            updates[target.block] = {
+              ...target.startTransform,
+              w: Math.round(Math.max(80, (target.startTransform.w ?? target.baseRect.width) * ratio)),
+              h: Math.round(Math.max(60, (target.startTransform.h ?? target.baseRect.height) * ratio)),
+            };
+            return;
+          }
+
+          updates[target.block] = {
+            ...target.startTransform,
+            scale: Number.isFinite(target.startTransform.scale * ratio)
+              ? Math.min(3, Math.max(0.35, target.startTransform.scale * ratio))
+              : target.startTransform.scale,
+          };
+        });
+
+        updateBlockTransforms(updates, interaction.committed);
+      } else if (isIndividualPhoto) {
         // For individual photos, resize by changing explicit w/h dimensions
         const baseW = interaction.startTransform.w ?? interaction.baseRect.width;
         const baseH = interaction.startTransform.h ?? interaction.baseRect.height;
@@ -1146,7 +1344,7 @@ export default function MarketingEditor() {
       window.removeEventListener('pointerup', handlePointerEnd);
       window.removeEventListener('pointercancel', handlePointerEnd);
     };
-  }, [updateBlockTransform]);
+  }, [getInteractionTargets, isPhotoBlock, updateBlockTransform, updateBlockTransforms]);
 
   useEffect(() => {
     setSelectedBlock(null);
@@ -1178,6 +1376,10 @@ export default function MarketingEditor() {
       // Delete / Backspace — reset selected block position
       if ((e.key === 'Delete' || e.key === 'Backspace') && selectedBlock) {
         e.preventDefault();
+        if (isCustomTextBlock(selectedBlock)) {
+          deleteBlock(selectedBlock);
+          return;
+        }
         resetSelectedBlock();
         return;
       }
@@ -1186,16 +1388,25 @@ export default function MarketingEditor() {
       if (selectedBlock && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
         e.preventDefault();
         const nudge = e.shiftKey ? 10 : 1;
-        const current = data.blockTransforms?.[selectedBlock];
-        const tx = current?.x ?? 0;
-        const ty = current?.y ?? 0;
-        const ts = current?.scale ?? 1;
-        let nx = tx, ny = ty;
-        if (e.key === 'ArrowUp') ny = ty - nudge;
-        if (e.key === 'ArrowDown') ny = ty + nudge;
-        if (e.key === 'ArrowLeft') nx = tx - nudge;
-        if (e.key === 'ArrowRight') nx = tx + nudge;
-        updateBlockTransform(selectedBlock, { x: nx, y: ny, scale: ts });
+        const targets = getInteractionTargets(selectedBlock);
+        const updates: Partial<Record<MarketingBlockKey, { x?: number; y?: number; scale?: number; w?: number; h?: number }>> = {};
+
+        targets.forEach((target) => {
+          let nx = target.startTransform.x;
+          let ny = target.startTransform.y;
+          if (e.key === 'ArrowUp') ny -= nudge;
+          if (e.key === 'ArrowDown') ny += nudge;
+          if (e.key === 'ArrowLeft') nx -= nudge;
+          if (e.key === 'ArrowRight') nx += nudge;
+
+          updates[target.block] = {
+            ...target.startTransform,
+            x: nx,
+            y: ny,
+          };
+        });
+
+        updateBlockTransforms(updates);
         return;
       }
 
@@ -1208,7 +1419,7 @@ export default function MarketingEditor() {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [handleUndo, handleRedo, selectedBlock, resetSelectedBlock, updateBlockTransform, data.blockTransforms]);
+  }, [data.blockTransforms, deleteBlock, getInteractionTargets, handleRedo, handleUndo, resetSelectedBlock, selectedBlock, updateBlockTransforms]);
 
   const beginBlockInteraction = useCallback((
     event: React.PointerEvent<HTMLButtonElement>,
@@ -1225,6 +1436,7 @@ export default function MarketingEditor() {
 
     const currentTransform = data.blockTransforms?.[block];
     const baseRect = blockRects[block] ?? { left: 0, top: 0, width: 220, height: 220 };
+    const targets = getInteractionTargets(block);
     interactionRef.current = {
       block,
       mode,
@@ -1239,9 +1451,10 @@ export default function MarketingEditor() {
         h: currentTransform?.h ?? baseRect.height,
       },
       baseRect,
+      targets,
       committed: false,
     };
-  }, [blockRects, data.blockTransforms, lockedBlocks]);
+  }, [blockRects, data.blockTransforms, getInteractionTargets, lockedBlocks]);
 
 
   return (
@@ -1541,6 +1754,7 @@ export default function MarketingEditor() {
                   <ul className="space-y-1 text-[10px]">
                     <li><span className="font-medium text-foreground/80">Drag</span> a block to move it</li>
                     <li><span className="font-medium text-foreground/80"><Maximize2 className="inline h-2.5 w-2.5 mr-0.5" />corner dot</span> to resize</li>
+                    <li><span className="font-medium text-foreground/80"><Link2 className="inline h-2.5 w-2.5 mr-0.5" />link</span> blocks to move and scale them together</li>
                     <li><span className="font-medium text-foreground/80">Arrow keys</span> to nudge (Shift = 10px)</li>
                     <li><span className="font-medium text-foreground/80">Delete</span> to reset position</li>
                     <li><span className="font-medium text-foreground/80">Esc</span> to deselect</li>
@@ -1549,7 +1763,7 @@ export default function MarketingEditor() {
                     <div className="mt-3 flex items-center justify-between gap-2 rounded-xl border bg-background px-2.5 py-2">
                       <div>
                         <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Selected</div>
-                        <div className="text-xs font-semibold text-foreground">{MARKETING_BLOCK_LABELS[selectedBlock]}</div>
+                        <div className="text-xs font-semibold text-foreground">{getBlockLabel(selectedBlock, data.customTextBlocks)}</div>
                       </div>
                       <Button type="button" variant="outline" size="sm" className="h-7 text-[11px]" onClick={resetSelectedBlock}>
                         Reset
@@ -1557,6 +1771,77 @@ export default function MarketingEditor() {
                     </div>
                   ) : null}
                 </div>
+
+                <Collapsible defaultOpen>
+                  <CollapsibleTrigger className="flex items-center justify-between w-full py-2 text-xs font-semibold text-foreground hover:text-foreground/80 border-t">
+                    Custom Text
+                    <ChevronDown className="h-3.5 w-3.5 transition-transform data-[state=open]:rotate-180" />
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="space-y-2.5 pb-4">
+                    <Button type="button" variant="outline" size="sm" className="h-8 w-full justify-start gap-2 text-xs" onClick={addCustomTextBlock}>
+                      <Type className="h-3.5 w-3.5" />
+                      Add Text Box
+                    </Button>
+
+                    {data.customTextBlocks.length > 0 ? (
+                      <div className="space-y-2">
+                        <div className="flex flex-wrap gap-1.5">
+                          {data.customTextBlocks.map((entry, index) => {
+                            const blockKey = `custom-text-${entry.id}` as MarketingBlockKey;
+                            const selected = selectedBlock === blockKey;
+                            return (
+                              <button
+                                key={entry.id}
+                                type="button"
+                                onClick={() => setSelectedBlock(blockKey)}
+                                className={cn(
+                                  'rounded-full border px-2.5 py-1 text-[10px] font-medium transition-colors',
+                                  selected
+                                    ? 'border-primary bg-primary/10 text-primary'
+                                    : 'border-border bg-background text-muted-foreground hover:text-foreground'
+                                )}
+                              >
+                                {entry.text.trim() ? `${index + 1}. ${entry.text.trim().slice(0, 18)}` : `Text ${index + 1}`}
+                              </button>
+                            );
+                          })}
+                        </div>
+
+                        {selectedCustomTextBlock ? (
+                          <div className="rounded-xl border bg-background p-3 space-y-2.5">
+                            <div>
+                              <Label className="text-[10px] text-muted-foreground uppercase tracking-wide">Text content</Label>
+                              <Textarea
+                                value={selectedCustomTextBlock.text}
+                                onChange={(event) => updateCustomTextBlock(selectedCustomTextBlock.id, event.target.value)}
+                                className="mt-1 text-xs"
+                                rows={3}
+                              />
+                            </div>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="h-8 w-full justify-start gap-2 text-xs text-red-600 hover:text-red-700"
+                              onClick={() => deleteBlock(`custom-text-${selectedCustomTextBlock.id}` as MarketingBlockKey)}
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                              Remove Text Box
+                            </Button>
+                          </div>
+                        ) : (
+                          <div className="rounded-xl border bg-muted/20 px-3 py-2 text-[11px] text-muted-foreground">
+                            Select a text box on the canvas to edit its text here.
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="rounded-xl border bg-muted/20 px-3 py-2 text-[11px] text-muted-foreground">
+                        Add a custom text box if you want text that is not tied to the template fields.
+                      </div>
+                    )}
+                  </CollapsibleContent>
+                </Collapsible>
 
                 {/* Property Details */}
                 <Collapsible open={basicsOpen} onOpenChange={setBasicsOpen}>
@@ -1934,9 +2219,12 @@ export default function MarketingEditor() {
 
                   const isLocked = lockedBlocks.has(block);
                   const isGrouped = groupedBlocks.has(block);
-                  const isPhotoBlock = block === 'photo-0' || block === 'photo-1' || block === 'photo-2';
-                  const visibilityKey = (block === 'agent' || block === 'photo' || isPhotoBlock) ? null : block as keyof TemplateVisibility;
-                  const canDelete = visibilityKey !== null || isPhotoBlock;
+                  const isPhotoBlockSelection = isPhotoBlock(block);
+                  const isCustomTextSelection = isCustomTextBlock(block);
+                  const visibilityKey = (block === 'agent' || block === 'photo' || isPhotoBlockSelection || isCustomTextSelection)
+                    ? null
+                    : block as keyof TemplateVisibility;
+                  const canDelete = visibilityKey !== null || isPhotoBlockSelection || isCustomTextSelection;
 
                   return (
                     <div
@@ -1965,7 +2253,7 @@ export default function MarketingEditor() {
                           isLocked ? 'cursor-not-allowed' : 'cursor-move',
                         )}
                         onPointerDown={(event) => beginBlockInteraction(event, block, 'move')}
-                        aria-label={`Move ${MARKETING_BLOCK_LABELS[block]}`}
+                        aria-label={`Move ${getBlockLabel(block, data.customTextBlocks)}`}
                       />
 
                       {/* ── Floating Action Toolbar — appears above selected block ── */}
@@ -1977,7 +2265,7 @@ export default function MarketingEditor() {
                         >
                           {/* Block label */}
                           <span className="px-2 text-[10px] font-semibold text-muted-foreground uppercase tracking-wide select-none">
-                            {MARKETING_BLOCK_LABELS[block]}
+                            {getBlockLabel(block, data.customTextBlocks)}
                           </span>
                           <div className="w-px h-4 bg-border mx-0.5" />
 
@@ -2045,7 +2333,7 @@ export default function MarketingEditor() {
                       )}>
                         {isLocked && <Lock className="h-2.5 w-2.5 text-amber-500" />}
                         {isGrouped && <Link2 className="h-2.5 w-2.5 text-violet-500" />}
-                        {MARKETING_BLOCK_LABELS[block]}
+                        {getBlockLabel(block, data.customTextBlocks)}
                       </div>
 
                       {/* Resize handle — visible on hover OR when selected (disabled when locked) */}
@@ -2057,7 +2345,7 @@ export default function MarketingEditor() {
                             selected ? 'opacity-100' : 'opacity-0 group-hover/block:opacity-100'
                           )}
                           onPointerDown={(event) => beginBlockInteraction(event, block, 'resize')}
-                          aria-label={`Resize ${MARKETING_BLOCK_LABELS[block]}`}
+                          aria-label={`Resize ${getBlockLabel(block, data.customTextBlocks)}`}
                           title="Drag to resize"
                         >
                           <Maximize2 className="h-2.5 w-2.5 text-primary-foreground" />
