@@ -50,6 +50,7 @@ export interface RecentEntry {
   templateId: string;
   data: TemplateData;
   lastEdited: number; // ms timestamp
+  customName?: string; // user-defined name
 }
 
 const RECENTS_LIMIT = 20;
