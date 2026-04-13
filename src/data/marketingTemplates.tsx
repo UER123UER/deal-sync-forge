@@ -84,7 +84,8 @@ export type MarketingBlockKey =
   | 'price'
   | 'stats'
   | 'description'
-  | 'agent';
+  | 'agent'
+  | `custom-text-${string}`;
 
 export interface MarketingBlockTransform {
   x: number;
@@ -361,7 +362,7 @@ const PhotoFrame = ({
 // ─── Real UER logo ────────────────────────────────────────────────────────────
 const Logo = ({ width = 300 }: { width?: number }) => (
   <img
-    src="/logo.jpg"
+    src="/logo.png"
     alt="United Estates Realty"
     style={{ width, height: 'auto', objectFit: 'contain', display: 'block' }}
   />
