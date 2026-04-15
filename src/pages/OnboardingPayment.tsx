@@ -72,7 +72,7 @@ export default function OnboardingPayment() {
 
     toast({ title: 'Subscription activated!', description: 'Welcome to United Estates Realty.' });
     // Navigate immediately — ProtectedRoute re-fetches status from DB so no stale state issue
-    navigate('/transactions');
+    navigate('/profile');
     setLoading(false);
   };
 
