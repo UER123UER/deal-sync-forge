@@ -1142,8 +1142,12 @@ export default function MarketingEditor() {
     if (!files || files.length === 0) return;
     e.target.value = '';
     const urls = Array.from(files).map((f) => URL.createObjectURL(f));
+    // Add to sidebar thumbnails
     setPersonalPhotos((prev) => [...urls, ...prev]);
-  }, []);
+    // Also add to the poster's photo array so the template actually shows them
+    setData((prev) => ({ ...prev, photos: [...urls, ...prev.photos] }));
+    toast.success(urls.length === 1 ? 'Photo added to poster' : `${urls.length} photos added to poster`);
+  }, [setData]);
 
   const removePersonalPhoto = useCallback((index: number) => {
     setPersonalPhotos((prev) => {
