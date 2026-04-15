@@ -83,13 +83,16 @@ interface AlignGuide {
   source?: string;           // which block this came from
 }
 
+type SpacingReason = 'equal' | 'centered' | 'near-equal';
+
 interface SpacingGuide {
   axis: 'x' | 'y';
-  from: number;   // start of gap (canvas-px)
-  to: number;     // end of gap (canvas-px)
-  center: number; // perpendicular center of both blocks (for label placement)
-  value: number;  // gap size in canvas-px
-  equal?: boolean; // matches another gap
+  from: number;    // start of gap (canvas-px)
+  to: number;      // end of gap (canvas-px)
+  center: number;  // perpendicular midpoint for line placement
+  value: number;   // gap size in canvas-px
+  showLabel: boolean;   // only true when spacing is meaningful
+  reason: SpacingReason; // why we're showing this
 }
 
 interface SnapResult {
@@ -179,8 +182,7 @@ function computeSnap(
     }
   }
 
-  // ── 3. Spacing guides ──────────────────────────────────────────────────────
-  // Final snapped position
+  // ── 3. Spacing guides — Canva-style: only show when meaningful ─────────────
   const snappedLeft = proposed.left + snapDX;
   const snappedTop  = proposed.top  + snapDY;
   const snappedCX   = snappedLeft + proposed.width  / 2;
@@ -188,41 +190,100 @@ function computeSnap(
   const snappedR    = snappedLeft + proposed.width;
   const snappedB    = snappedTop  + proposed.height;
 
-  const gaps: { axis: 'x' | 'y'; from: number; to: number; center: number; value: number }[] = [];
+  // Collect all gaps between the dragged block and every other block
+  type RawGap = { axis: 'x' | 'y'; from: number; to: number; center: number; value: number };
+  const rawGaps: RawGap[] = [];
 
   for (const [, rect] of others) {
     if (!rect) continue;
-    const oR = rect.left + rect.width;
-    const oB = rect.top  + rect.height;
+    const oR  = rect.left + rect.width;
+    const oB  = rect.top  + rect.height;
+    const oCY = rect.top  + rect.height / 2;
+    const oCX = rect.left + rect.width  / 2;
 
-    // X-axis gaps (horizontal spacing)
-    const otherCY = rect.top + rect.height / 2;
-    const otherCX = rect.left + rect.width / 2;
-    if (oR <= snappedLeft) {
-      // other is to the left — midY = average of both block centers
-      gaps.push({ axis: 'x', from: oR, to: snappedLeft, center: (snappedCY + otherCY) / 2, value: snappedLeft - oR });
-    } else if (rect.left >= snappedR) {
-      // other is to the right
-      gaps.push({ axis: 'x', from: snappedR, to: rect.left, center: (snappedCY + otherCY) / 2, value: rect.left - snappedR });
+    // Only collect gaps where blocks are clearly on the same axis
+    // (overlapping blocks on the perpendicular axis are ignored)
+    const xOverlap = snappedLeft < oR && snappedR > rect.left;
+    const yOverlap = snappedTop  < oB && snappedB > rect.top;
+
+    if (!yOverlap) {
+      // X-axis: blocks beside each other horizontally
+      if (oR <= snappedLeft) {
+        rawGaps.push({ axis: 'x', from: oR, to: snappedLeft, center: (snappedCY + oCY) / 2, value: snappedLeft - oR });
+      } else if (rect.left >= snappedR) {
+        rawGaps.push({ axis: 'x', from: snappedR, to: rect.left, center: (snappedCY + oCY) / 2, value: rect.left - snappedR });
+      }
     }
 
-    // Y-axis gaps (vertical spacing)
-    if (oB <= snappedTop) {
-      // other is above — midX = average of both block centers
-      gaps.push({ axis: 'y', from: oB, to: snappedTop, center: (snappedCX + otherCX) / 2, value: snappedTop - oB });
-    } else if (rect.top >= snappedB) {
-      // other is below
-      gaps.push({ axis: 'y', from: snappedB, to: rect.top, center: (snappedCX + otherCX) / 2, value: rect.top - snappedB });
+    if (!xOverlap) {
+      // Y-axis: blocks above/below each other
+      if (oB <= snappedTop) {
+        rawGaps.push({ axis: 'y', from: oB, to: snappedTop, center: (snappedCX + oCX) / 2, value: snappedTop - oB });
+      } else if (rect.top >= snappedB) {
+        rawGaps.push({ axis: 'y', from: snappedB, to: rect.top, center: (snappedCX + oCX) / 2, value: rect.top - snappedB });
+      }
     }
   }
 
-  // Mark equal gaps
-  const gapValues = gaps.map(g => Math.round(g.value));
-  const equalGapValue = gapValues.find((v, i) => gapValues.indexOf(v) !== i && v > 2);
-  spacingGuides.push(...gaps.map(g => ({
-    ...g,
-    equal: equalGapValue !== undefined && Math.round(g.value) === equalGapValue,
-  })));
+  // ── Decide which gaps are worth showing ──────────────────────────────────
+  // Strategy: only show guides/labels when there is a meaningful spacing relationship.
+  // Rule 1 — Equal gaps: two or more gaps on the same axis are equal (or within 3px)
+  // Rule 2 — Centered: the dragged block sits centered between two others (gaps are equal on both sides)
+  // Rule 3 — Near-equal snap: one gap is within SNAP_THRESHOLD of another existing gap
+
+  const NEAR_EQUAL = threshold * 1.5; // px within which two gaps are considered "matching"
+
+  const xGaps = rawGaps.filter(g => g.axis === 'x' && g.value >= 2);
+  const yGaps = rawGaps.filter(g => g.axis === 'y' && g.value >= 2);
+
+  function findEqualGroups(gaps: RawGap[]): Map<number, RawGap[]> {
+    // Group gaps whose rounded values are within NEAR_EQUAL of each other
+    const groups = new Map<number, RawGap[]>();
+    for (const g of gaps) {
+      const rounded = Math.round(g.value);
+      let matched = false;
+      for (const [key, group] of groups) {
+        if (Math.abs(key - rounded) <= NEAR_EQUAL) {
+          group.push(g);
+          matched = true;
+          break;
+        }
+      }
+      if (!matched) groups.set(rounded, [g]);
+    }
+    return groups;
+  }
+
+  function isCentered(gaps: RawGap[]): boolean {
+    // Exactly two gaps and they are equal (block is between two others)
+    if (gaps.length !== 2) return false;
+    return Math.abs(gaps[0].value - gaps[1].value) <= NEAR_EQUAL;
+  }
+
+  function buildSpacingGuides(gaps: RawGap[]): SpacingGuide[] {
+    if (gaps.length === 0) return [];
+
+    const groups = findEqualGroups(gaps);
+    // Only show if there's a group of 2+ equal gaps (or centered)
+    const meaningfulGroups = [...groups.values()].filter(g => g.length >= 2);
+
+    // Also check centered case (2 gaps of equal value from a single group)
+    const centered = isCentered(gaps);
+
+    if (meaningfulGroups.length === 0 && !centered) return []; // nothing useful — stay quiet
+
+    const result: SpacingGuide[] = [];
+    const usedGaps = centered ? gaps : meaningfulGroups.flat();
+
+    for (const g of usedGaps) {
+      const reason: SpacingReason = centered ? 'centered' : 'equal';
+      result.push({ ...g, showLabel: true, reason });
+    }
+    return result;
+  }
+
+  spacingGuides.push(...buildSpacingGuides(xGaps));
+  spacingGuides.push(...buildSpacingGuides(yGaps));
 
   return { x: snapDX, y: snapDY, guides, spacingGuides };
 }
@@ -2273,85 +2334,79 @@ export default function MarketingEditor() {
                     )
                   ))}
 
-                  {/* Spacing guides */}
+                  {/* Spacing guides — only rendered when equal/centered spacing detected */}
                   {spacingGuides.map((sg, i) => {
                     const gapPx = Math.round(sg.value);
                     if (gapPx < 2) return null;
-                    const color = sg.equal ? '#f59e0b' : '#06b6d4'; // amber for equal, cyan otherwise
+                    // All spacing guides here are meaningful (equal or centered)
+                    // Use orange-amber to match Canva's equal-spacing color
+                    const color = '#f59e0b';
+                    const labelText = sg.reason === 'centered' ? `= ${gapPx}` : `= ${gapPx}`;
+
                     if (sg.axis === 'x') {
                       const midY = sg.center;
                       const midX = (sg.from + sg.to) / 2;
+                      const gapW = sg.to - sg.from;
                       return (
                         <div key={`sg-x-${i}`} style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
                           {/* Gap line */}
-                          <div style={{
-                            position: 'absolute',
-                            left: sg.from,
-                            top: midY - 0.5,
-                            width: sg.to - sg.from,
-                            height: 1,
-                            background: color,
-                            opacity: 0.85,
-                          }} />
-                          {/* Left cap */}
-                          <div style={{ position: 'absolute', left: sg.from, top: midY - 5, width: 1, height: 10, background: color, opacity: 0.85 }} />
-                          {/* Right cap */}
-                          <div style={{ position: 'absolute', left: sg.to - 1, top: midY - 5, width: 1, height: 10, background: color, opacity: 0.85 }} />
-                          {/* Label */}
-                          <span style={{
-                            position: 'absolute',
-                            left: midX,
-                            top: midY - 18,
-                            transform: 'translateX(-50%)',
-                            background: color,
-                            color: '#fff',
-                            fontSize: 10,
-                            fontWeight: 700,
-                            fontFamily: 'monospace',
-                            padding: '1px 4px',
-                            borderRadius: 3,
-                            whiteSpace: 'nowrap',
-                          }}>
-                            {sg.equal ? '=' : ''}{gapPx}px
-                          </span>
+                          <div style={{ position: 'absolute', left: sg.from, top: midY - 0.5, width: gapW, height: 1, background: color, opacity: 0.9 }} />
+                          {/* End caps */}
+                          <div style={{ position: 'absolute', left: sg.from, top: midY - 4, width: 1, height: 8, background: color, opacity: 0.9 }} />
+                          <div style={{ position: 'absolute', left: sg.to - 1, top: midY - 4, width: 1, height: 8, background: color, opacity: 0.9 }} />
+                          {/* Label — only when showLabel */}
+                          {sg.showLabel && (
+                            <span style={{
+                              position: 'absolute',
+                              left: midX,
+                              top: midY - 16,
+                              transform: 'translateX(-50%)',
+                              background: color,
+                              color: '#fff',
+                              fontSize: 9,
+                              fontWeight: 700,
+                              fontFamily: 'monospace',
+                              padding: '1px 4px',
+                              borderRadius: 3,
+                              whiteSpace: 'nowrap',
+                              letterSpacing: '0.02em',
+                            }}>
+                              {labelText}
+                            </span>
+                          )}
                         </div>
                       );
                     } else {
                       const midX = sg.center;
                       const midY = (sg.from + sg.to) / 2;
+                      const gapH = sg.to - sg.from;
                       return (
                         <div key={`sg-y-${i}`} style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
                           {/* Gap line */}
-                          <div style={{
-                            position: 'absolute',
-                            top: sg.from,
-                            left: midX - 0.5,
-                            width: 1,
-                            height: sg.to - sg.from,
-                            background: color,
-                            opacity: 0.85,
-                          }} />
-                          {/* Top cap */}
-                          <div style={{ position: 'absolute', top: sg.from, left: midX - 5, width: 10, height: 1, background: color, opacity: 0.85 }} />
-                          {/* Bottom cap */}
-                          <div style={{ position: 'absolute', top: sg.to - 1, left: midX - 5, width: 10, height: 1, background: color, opacity: 0.85 }} />
-                          {/* Label */}
-                          <span style={{
-                            position: 'absolute',
-                            top: midY,
-                            left: midX + 8,
-                            transform: 'translateY(-50%)',
-                            background: color,
-                            color: '#fff',
-                            fontSize: 10,
-                            fontWeight: 700,
-                            fontFamily: 'monospace',
-                            padding: '1px 4px',
-                            borderRadius: 3,
-                            whiteSpace: 'nowrap',
-                          }}>
-                            {sg.equal ? '=' : ''}{gapPx}px
-                          </span>
+                          <div style={{ position: 'absolute', top: sg.from, left: midX - 0.5, width: 1, height: gapH, background: color, opacity: 0.9 }} />
+                          {/* End caps */}
+                          <div style={{ position: 'absolute', top: sg.from, left: midX - 4, width: 8, height: 1, background: color, opacity: 0.9 }} />
+                          <div style={{ position: 'absolute', top: sg.to - 1, left: midX - 4, width: 8, height: 1, background: color, opacity: 0.9 }} />
+                          {/* Label — only when showLabel */}
+                          {sg.showLabel && (
+                            <span style={{
+                              position: 'absolute',
+                              top: midY,
+                              left: midX + 6,
+                              transform: 'translateY(-50%)',
+                              background: color,
+                              color: '#fff',
+                              fontSize: 9,
+                              fontWeight: 700,
+                              fontFamily: 'monospace',
+                              padding: '1px 4px',
+                              borderRadius: 3,
+                              whiteSpace: 'nowrap',
+                              letterSpacing: '0.02em',
+                            }}>
+                              {labelText}
+                            </span>
+                          )}
                         </div>
                       );
                     }
