@@ -1293,6 +1293,9 @@ export default function MarketingEditor() {
 
   // Keep a ref to blockRects so pointer handler can read latest without re-registering
   const blockRectsRef = useRef<Partial<Record<MarketingBlockKey, MarketingBlockRect>>>({});
+  // Live overlay positions during drag — updated every pointermove frame, no setState lag
+  const liveOverlayRef = useRef<Partial<Record<MarketingBlockKey, MarketingBlockRect>>>({});
+  const [, forceOverlayUpdate] = useState(0);
   useEffect(() => { blockRectsRef.current = blockRects; }, [blockRects]);
 
   // Keep a ref to canvasW/H for snap engine
@@ -1380,6 +1383,21 @@ export default function MarketingEditor() {
         updateBlockTransforms(updates, interaction.committed);
         interaction.committed = true;
 
+        // ── Live overlay sync (no DOM measurement lag) ──────────────────
+        // Compute exactly where each dragged block's overlay rect should be
+        // using the same math as the transform, then force a cheap re-render
+        // of the overlay layer only (no template re-render involved).
+        interaction.targets.forEach((target) => {
+          const base = target.baseRect;
+          liveOverlayRef.current[target.block] = {
+            left:  base.left  + deltaX,
+            top:   base.top   + deltaY,
+            width: base.width,
+            height: base.height,
+          };
+        });
+        forceOverlayUpdate((n) => n + 1);
+
         // Update guide overlays + position HUD
         setAlignGuides(snap.guides);
         setSpacingGuides(snap.spacingGuides);
@@ -1430,6 +1448,8 @@ export default function MarketingEditor() {
 
     const handlePointerEnd = () => {
       interactionRef.current = null;
+      // Clear live overlay overrides so we fall back to measured blockRects
+      liveOverlayRef.current = {};
       // Clear guides + HUD when drag ends
       setAlignGuides([]);
       setSpacingGuides([]);
@@ -2367,9 +2387,12 @@ export default function MarketingEditor() {
                   }
                 }}
               >
-                {Object.entries(blockRects).map(([blockKey, rect]) => {
-                  if (!rect) return null;
+                {Object.entries(blockRects).map(([blockKey, measuredRect]) => {
+                  if (!measuredRect) return null;
                   const block = blockKey as MarketingBlockKey;
+                  // Use live-computed position during drag to eliminate render-lag;
+                  // fall back to DOM-measured rect when idle.
+                  const rect = liveOverlayRef.current[block] ?? measuredRect;
                   const selected = selectedBlock === block;
 
                   const isLocked = lockedBlocks.has(block);
@@ -2384,7 +2407,9 @@ export default function MarketingEditor() {
                     <div
                       key={block}
                       className={cn(
-                        'absolute rounded-xl transition-all group/block',
+                        'absolute rounded-xl group/block',
+                        // Only animate when NOT dragging — during drag we want instant position
+                        !isDraggingBlock && 'transition-all',
                         selected && isLocked
                           ? 'border-2 border-amber-400 bg-amber-400/5 shadow-[0_0_0_1px_rgba(255,255,255,0.95)]'
                           : selected
