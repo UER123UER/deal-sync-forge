@@ -496,36 +496,165 @@ function renderHeadlineBlock(
 }
 
 function renderPhotoBlock(data: TemplateData) {
-  const photos = data.photos;
+  const photos = data.photos.filter(Boolean);
+  const n = photos.length;
 
   // ── Single / hero layout ───────────────────────────────────────────────────
-  if (data.photoLayout !== 'collage' || photos.length < 2) {
+  if (data.photoLayout !== 'collage' || n < 2) {
     return <Photo photos={photos} style={{ width: '100%', height: '100%' }} />;
   }
 
-  // ── Collage layout — clean CSS grid, no absolute chaos ────────────────────
-  const [first, second, third] = photos;
-  const hasThird = photos.length >= 3;
+  const w = data.canvasWidth  || 1080;
+  const h = data.canvasHeight || 1080;
+  const isPortrait  = h > w * 1.15;
+  const isLandscape = w > h * 1.15;
+  const gap = Math.round(Math.min(w, h) * 0.008); // ~8-9px at 1080, scales with canvas
+  const pad = Math.round(Math.min(w, h) * 0.009);
+  const r   = Math.round(Math.min(w, h) * 0.006); // border-radius
+  const bg  = '#0e1428';
 
-  return (
-    <div
-      style={{
-        width: '100%',
-        height: '100%',
-        background: '#0e1428',
-        padding: 10,
-        display: 'grid',
-        gridTemplateRows: '1.75fr 1fr',
-        gap: 8,
-        boxSizing: 'border-box',
-      }}
-    >
-      <PhotoFrame src={first} style={{ width: '100%', height: '100%', borderRadius: 6 }} />
-      <div style={{ display: 'grid', gridTemplateColumns: hasThird ? '1fr 1fr' : '1fr', gap: 8 }}>
-        <PhotoFrame src={second} style={{ width: '100%', height: '100%', borderRadius: 6 }} />
-        {hasThird && <PhotoFrame src={third} style={{ width: '100%', height: '100%', borderRadius: 6 }} />}
-      </div>
+  const frame = (src: string, style: React.CSSProperties = {}) => (
+    <PhotoFrame src={src} style={{ width: '100%', height: '100%', borderRadius: r, objectFit: 'cover', ...style }} />
+  );
+
+  const wrap = (children: React.ReactNode, grid: React.CSSProperties) => (
+    <div style={{ width: '100%', height: '100%', background: bg, padding: pad, display: 'grid', gap, boxSizing: 'border-box', ...grid }}>
+      {children}
     </div>
+  );
+
+  // ── 2 photos ───────────────────────────────────────────────────────────────
+  if (n === 2) {
+    // Portrait/square → stack vertically (top hero + bottom strip)
+    // Landscape → side by side
+    if (isLandscape) {
+      return wrap(<>{frame(photos[0])}{frame(photos[1])}</>, { gridTemplateColumns: '1fr 1fr' });
+    }
+    return wrap(<>{frame(photos[0])}{frame(photos[1])}</>, { gridTemplateRows: '1.6fr 1fr' });
+  }
+
+  // ── 3 photos ───────────────────────────────────────────────────────────────
+  if (n === 3) {
+    if (isLandscape) {
+      // Landscape: tall hero left, two stacked right
+      return wrap(
+        <>
+          {frame(photos[0])}
+          <div style={{ display: 'grid', gridTemplateRows: '1fr 1fr', gap }}>
+            {frame(photos[1])}{frame(photos[2])}
+          </div>
+        </>,
+        { gridTemplateColumns: '1.5fr 1fr' }
+      );
+    }
+    if (isPortrait) {
+      // Portrait: hero top, two columns bottom
+      return wrap(
+        <>
+          {frame(photos[0])}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap }}>
+            {frame(photos[1])}{frame(photos[2])}
+          </div>
+        </>,
+        { gridTemplateRows: '1.6fr 1fr' }
+      );
+    }
+    // Square: hero top, two side-by-side below
+    return wrap(
+      <>
+        {frame(photos[0])}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap }}>
+          {frame(photos[1])}{frame(photos[2])}
+        </div>
+      </>,
+      { gridTemplateRows: '1.75fr 1fr' }
+    );
+  }
+
+  // ── 4 photos ───────────────────────────────────────────────────────────────
+  if (n === 4) {
+    if (isLandscape) {
+      // 4 equal columns
+      return wrap(
+        <>{frame(photos[0])}{frame(photos[1])}{frame(photos[2])}{frame(photos[3])}</>,
+        { gridTemplateColumns: '1fr 1fr 1fr 1fr' }
+      );
+    }
+    // Portrait/square: 2×2 grid
+    return wrap(
+      <>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap }}>
+          {frame(photos[0])}{frame(photos[1])}
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap }}>
+          {frame(photos[2])}{frame(photos[3])}
+        </div>
+      </>,
+      { gridTemplateRows: '1fr 1fr' }
+    );
+  }
+
+  // ── 5 photos ───────────────────────────────────────────────────────────────
+  if (n === 5) {
+    if (isLandscape) {
+      // Hero left, 2×2 grid right
+      return wrap(
+        <>
+          {frame(photos[0])}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: '1fr 1fr', gap }}>
+            {frame(photos[1])}{frame(photos[2])}{frame(photos[3])}{frame(photos[4])}
+          </div>
+        </>,
+        { gridTemplateColumns: '1.2fr 1fr' }
+      );
+    }
+    // Portrait/square: hero top, 2+2 rows below
+    return wrap(
+      <>
+        {frame(photos[0])}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap }}>
+          {frame(photos[1])}{frame(photos[2])}
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap }}>
+          {frame(photos[3])}{frame(photos[4])}
+        </div>
+      </>,
+      { gridTemplateRows: '1.4fr 1fr 1fr' }
+    );
+  }
+
+  // ── 6+ photos — responsive masonry-style grid ──────────────────────────────
+  // Cap display at 6; show rest as count badge on last tile
+  const visible = photos.slice(0, 6);
+  const extra   = n - 6;
+  const cols = isLandscape ? 3 : 2;
+  const rows = Math.ceil(visible.length / cols);
+  return wrap(
+    <>
+      {visible.map((src, i) => {
+        const isLast = i === visible.length - 1 && extra > 0;
+        return (
+          <div key={i} style={{ position: 'relative', minHeight: 0 }}>
+            {frame(src)}
+            {isLast && (
+              <div style={{
+                position: 'absolute', inset: 0, borderRadius: r,
+                background: 'rgba(0,0,0,0.55)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                color: '#fff', fontSize: Math.round(Math.min(w, h) * 0.04),
+                fontWeight: 700, fontFamily: 'system-ui, sans-serif',
+              }}>
+                +{extra}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </>,
+    {
+      gridTemplateColumns: `repeat(${cols}, 1fr)`,
+      gridTemplateRows: `repeat(${rows}, 1fr)`,
+    }
   );
 }
 
