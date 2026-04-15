@@ -59,7 +59,7 @@ export default function Auth() {
       return;
     }
     setLoading(true);
-    const { error } = await supabase.auth.signUp({
+    const { error: signUpError } = await supabase.auth.signUp({
       email: signUpEmail,
       password: signUpPassword,
       options: {
@@ -67,11 +67,21 @@ export default function Auth() {
         emailRedirectTo: window.location.origin,
       },
     });
+    if (signUpError) {
+      setLoading(false);
+      toast({ title: 'Sign up failed', description: signUpError.message, variant: 'destructive' });
+      return;
+    }
+    // Sign in immediately so the user doesn't have to wait for a confirmation email
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email: signUpEmail,
+      password: signUpPassword,
+    });
     setLoading(false);
-    if (error) {
-      toast({ title: 'Sign up failed', description: error.message, variant: 'destructive' });
+    if (signInError) {
+      // Account created but auto-sign-in failed — tell them to sign in manually
+      toast({ title: 'Account created!', description: 'Please sign in with your new credentials.' });
     } else {
-      toast({ title: 'Account created!', description: 'Check your email to confirm your account, or continue below.' });
       navigate('/onboarding/payment');
     }
   };
