@@ -18,7 +18,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   useContacts, useCreateContact, useUpdateContact, useDeleteContact,
   CONTACT_SOURCES, getContactSource, setContactSource,
-  calcLeadScore, leadScoreColor,
+  calcLeadScore,
   type ContactRow, type ContactSource,
 } from '@/hooks/useContacts';
 import { useDeals } from '@/hooks/useDeals';
@@ -51,7 +51,23 @@ const PIPELINE_STAGES = [
 ] as const;
 type StageId = (typeof PIPELINE_STAGES)[number]['id'];
 
-const PRIORITY_TAGS = ['Hot', 'Warm', 'Cold', 'VIP'];
+const PRIORITY_TAGS = ['Extra Hot', 'Hot', 'Warm', 'Cold'] as const;
+type PriorityTag = (typeof PRIORITY_TAGS)[number];
+
+function getContactPriority(contact: ContactRow): PriorityTag | null {
+  const tags = contact.tags || [];
+  for (const p of PRIORITY_TAGS) {
+    if (tags.includes(p)) return p;
+  }
+  return null;
+}
+
+const PRIORITY_CONFIG: Record<PriorityTag, { label: string; emoji: string; color: string }> = {
+  'Extra Hot': { label: 'Extra Hot', emoji: '🔥🔥', color: 'bg-red-100 text-red-700 border-red-200' },
+  'Hot':       { label: 'Hot',       emoji: '🔥',   color: 'bg-orange-100 text-orange-700 border-orange-200' },
+  'Warm':      { label: 'Warm',      emoji: '☀️',   color: 'bg-amber-100 text-amber-700 border-amber-200' },
+  'Cold':      { label: 'Cold',      emoji: '❄️',   color: 'bg-sky-100 text-sky-700 border-sky-200' },
+};
 
 const ACTIVITY_ICONS: Record<ActivityType, React.ElementType> = {
   note:         FileText,
@@ -153,10 +169,13 @@ function StageBadge({ stageId }: { stageId: StageId | null }) {
   );
 }
 
-function LeadScoreBadge({ score }: { score: number }) {
+function PriorityBadge({ contact }: { contact: ContactRow }) {
+  const priority = getContactPriority(contact);
+  if (!priority) return null;
+  const cfg = PRIORITY_CONFIG[priority];
   return (
-    <span className={cn('inline-flex items-center text-[10px] font-bold px-1.5 py-0.5 rounded border', leadScoreColor(score))}>
-      {score}
+    <span className={cn('inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded-full border', cfg.color)}>
+      <span>{cfg.emoji}</span> {cfg.label}
     </span>
   );
 }
@@ -374,7 +393,9 @@ export default function People() {
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [stageFilter, setStageFilter] = useState<string>('all');
   const [sourceFilter, setSourceFilter] = useState<string>('all');
-  const [sortBy, setSortBy] = useState<'name' | 'last_touch' | 'next_touch' | 'created' | 'score'>('created');
+  const [priorityFilter, setPriorityFilter] = useState<string>('all');
+  const [overdueOnly, setOverdueOnly] = useState(false);
+  const [sortBy, setSortBy] = useState<'name' | 'last_touch' | 'next_touch' | 'created' | 'priority'>('created');
   const [detailTab, setDetailTab] = useState<'overview' | 'activity' | 'messages'>('overview');
 
   const [panelContact, setPanelContact] = useState<ContactRow | null>(null);
@@ -408,6 +429,8 @@ export default function People() {
     return map;
   }, [deals]);
 
+  const PRIORITY_ORDER: Record<string, number> = { 'Extra Hot': 0, 'Hot': 1, 'Warm': 2, 'Cold': 3 };
+
   const filtered = useMemo(() => {
     let list = contacts;
     if (search) {
@@ -421,15 +444,25 @@ export default function People() {
     if (roleFilter !== 'all') list = list.filter((c) => c.role === roleFilter);
     if (stageFilter !== 'all') list = list.filter((c) => getStage(c) === stageFilter);
     if (sourceFilter !== 'all') list = list.filter((c) => getContactSource(c) === sourceFilter);
+    if (priorityFilter !== 'all') list = list.filter((c) => getContactPriority(c) === priorityFilter);
+    if (overdueOnly) list = list.filter((c) => {
+      if (!c.next_touch) return false;
+      try { return isPast(parseISO(c.next_touch)); } catch { return false; }
+    });
     list = [...list].sort((a, b) => {
       if (sortBy === 'name') return `${a.first_name} ${a.last_name}`.localeCompare(`${b.first_name} ${b.last_name}`);
       if (sortBy === 'last_touch') return (b.last_touch || '').localeCompare(a.last_touch || '');
       if (sortBy === 'next_touch') return (a.next_touch || '9999').localeCompare(b.next_touch || '9999');
-      if (sortBy === 'score') return calcLeadScore(b, dealsByContact[b.id] || 0) - calcLeadScore(a, dealsByContact[a.id] || 0);
+      if (sortBy === 'priority') {
+        const pa = PRIORITY_ORDER[getContactPriority(a) ?? ''] ?? 99;
+        const pb = PRIORITY_ORDER[getContactPriority(b) ?? ''] ?? 99;
+        if (pa !== pb) return pa - pb;
+        return calcLeadScore(b, dealsByContact[b.id] || 0) - calcLeadScore(a, dealsByContact[a.id] || 0);
+      }
       return b.created_at.localeCompare(a.created_at);
     });
     return list;
-  }, [contacts, search, roleFilter, stageFilter, sourceFilter, sortBy, dealsByContact]);
+  }, [contacts, search, roleFilter, stageFilter, sourceFilter, priorityFilter, overdueOnly, sortBy, dealsByContact]);
 
   const stats = useMemo(() => ({
     total: contacts.length,
@@ -650,30 +683,65 @@ export default function People() {
 
       {/* ── Stats Bar ── */}
       <div className="grid grid-cols-4 gap-px bg-border border-b shrink-0">
-        {[
-          { label: 'Total Contacts', value: stats.total, icon: Users, color: 'text-foreground' },
-          { label: 'Leads', value: stats.leads, icon: TrendingUp, color: 'text-amber-600' },
-          { label: 'Active Clients', value: stats.active, icon: Star, color: 'text-emerald-600' },
-          { label: 'Follow-up Overdue', value: stats.overdue, icon: AlertCircle, color: 'text-destructive' },
-        ].map((s) => (
-          <div key={s.label} className="bg-background px-6 py-3 flex items-center gap-3">
-            <s.icon className={cn('w-4 h-4', s.color)} />
+        {([
+          {
+            label: 'Total Contacts', value: stats.total, icon: Users, color: 'text-foreground',
+            active: stageFilter === 'all' && !overdueOnly,
+            onClick: () => { setStageFilter('all'); setOverdueOnly(false); },
+          },
+          {
+            label: 'Leads', value: stats.leads, icon: TrendingUp, color: 'text-amber-600',
+            active: stageFilter === 'lead' && !overdueOnly,
+            onClick: () => { setStageFilter('lead'); setOverdueOnly(false); },
+          },
+          {
+            label: 'Active Clients', value: stats.active, icon: Star, color: 'text-emerald-600',
+            active: stageFilter === 'active' && !overdueOnly,
+            onClick: () => { setStageFilter('active'); setOverdueOnly(false); },
+          },
+          {
+            label: 'Follow-up Overdue', value: stats.overdue, icon: AlertCircle, color: 'text-destructive',
+            active: overdueOnly,
+            onClick: () => { setOverdueOnly((v) => !v); setStageFilter('all'); },
+          },
+        ] as const).map((s) => (
+          <button
+            key={s.label}
+            type="button"
+            onClick={s.onClick}
+            className={cn(
+              'bg-background px-6 py-3 flex items-center gap-3 text-left transition-colors hover:bg-muted/50 border-b-2',
+              s.active ? 'border-primary bg-primary/5' : 'border-transparent'
+            )}
+          >
+            <s.icon className={cn('w-4 h-4 shrink-0', s.color)} />
             <div>
               <div className="text-xl font-bold text-foreground leading-none">{s.value}</div>
               <div className="text-[10px] text-muted-foreground mt-0.5">{s.label}</div>
             </div>
-          </div>
+          </button>
         ))}
       </div>
 
       {/* ── Filter Bar ── */}
       <div className="flex items-center gap-2 px-6 py-2 border-b bg-background shrink-0 flex-wrap">
         <Filter className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-        <Select value={stageFilter} onValueChange={setStageFilter}>
+        <Select value={stageFilter} onValueChange={(v) => { setStageFilter(v); setOverdueOnly(false); }}>
           <SelectTrigger className="h-7 text-xs w-32"><SelectValue placeholder="Stage" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Stages</SelectItem>
             {PIPELINE_STAGES.map((s) => <SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+          <SelectTrigger className="h-7 text-xs w-32"><SelectValue placeholder="Priority" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Priorities</SelectItem>
+            {PRIORITY_TAGS.map((p) => (
+              <SelectItem key={p} value={p}>
+                {PRIORITY_CONFIG[p].emoji} {p}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
         <Select value={roleFilter} onValueChange={setRoleFilter}>
@@ -695,13 +763,18 @@ export default function People() {
           <SelectContent>
             <SelectItem value="created">Newest First</SelectItem>
             <SelectItem value="name">Name A→Z</SelectItem>
-            <SelectItem value="score">Lead Score ↓</SelectItem>
+            <SelectItem value="priority">Priority ↓</SelectItem>
             <SelectItem value="last_touch">Last Touch</SelectItem>
             <SelectItem value="next_touch">Next Touch</SelectItem>
           </SelectContent>
         </Select>
-        {(stageFilter !== 'all' || roleFilter !== 'all' || sourceFilter !== 'all' || search) && (
-          <button onClick={() => { setStageFilter('all'); setRoleFilter('all'); setSourceFilter('all'); setSearch(''); }} className="text-[10px] text-muted-foreground hover:text-foreground underline">Clear</button>
+        {(stageFilter !== 'all' || roleFilter !== 'all' || sourceFilter !== 'all' || priorityFilter !== 'all' || overdueOnly || search) && (
+          <button
+            onClick={() => { setStageFilter('all'); setRoleFilter('all'); setSourceFilter('all'); setPriorityFilter('all'); setOverdueOnly(false); setSearch(''); }}
+            className="text-[10px] text-muted-foreground hover:text-foreground underline"
+          >
+            Clear
+          </button>
         )}
         <span className="ml-auto text-[10px] text-muted-foreground">{filtered.length} of {contacts.length}</span>
       </div>
@@ -723,7 +796,7 @@ export default function People() {
                 <tr className="border-b bg-muted/30">
                   <th className="text-left text-[10px] font-semibold text-muted-foreground uppercase tracking-wide px-6 py-2.5">Contact</th>
                   <th className="text-left text-[10px] font-semibold text-muted-foreground uppercase tracking-wide px-4 py-2.5">Stage</th>
-                  <th className="text-left text-[10px] font-semibold text-muted-foreground uppercase tracking-wide px-4 py-2.5">Score</th>
+                  <th className="text-left text-[10px] font-semibold text-muted-foreground uppercase tracking-wide px-4 py-2.5">Priority</th>
                   <th className="text-left text-[10px] font-semibold text-muted-foreground uppercase tracking-wide px-4 py-2.5">Source</th>
                   <th className="text-left text-[10px] font-semibold text-muted-foreground uppercase tracking-wide px-4 py-2.5">Contact Info</th>
                   <th className="text-left text-[10px] font-semibold text-muted-foreground uppercase tracking-wide px-4 py-2.5">Next Touch</th>
@@ -736,7 +809,6 @@ export default function People() {
                   const stage = getStage(contact);
                   const touch = nextTouchStatus(contact.next_touch);
                   const dealCount = dealsByContact[contact.id] || 0;
-                  const score = calcLeadScore(contact, dealCount);
                   const source = getContactSource(contact);
                   return (
                     <tr
@@ -754,7 +826,7 @@ export default function People() {
                         </div>
                       </td>
                       <td className="px-4 py-3"><StageBadge stageId={stage} /></td>
-                      <td className="px-4 py-3"><LeadScoreBadge score={score} /></td>
+                      <td className="px-4 py-3"><PriorityBadge contact={contact} /></td>
                       <td className="px-4 py-3 text-xs text-muted-foreground">{source || '—'}</td>
                       <td className="px-4 py-3">
                         <div className="flex flex-col gap-0.5">
@@ -803,7 +875,6 @@ export default function People() {
                   </div>
                   {col.contacts.map((contact) => {
                     const touch = nextTouchStatus(contact.next_touch);
-                    const score = calcLeadScore(contact, dealsByContact[contact.id] || 0);
                     return (
                       <div
                         key={contact.id}
@@ -816,13 +887,10 @@ export default function People() {
                             <div className="text-xs font-semibold text-foreground truncate">{contact.first_name} {contact.last_name}</div>
                             {contact.company && <div className="text-[10px] text-muted-foreground truncate">{contact.company}</div>}
                           </div>
-                          <LeadScoreBadge score={score} />
+                          <PriorityBadge contact={contact} />
                         </div>
                         {contact.role && <div className="text-[10px] text-muted-foreground">{contact.role}</div>}
                         {touch && <div className={cn('mt-1.5 text-[10px]', touch.color)}>📅 {touch.label}</div>}
-                        {contact.tags && contact.tags.filter((t) => PRIORITY_TAGS.includes(t)).map((t) => (
-                          <span key={t} className="inline-block mt-1.5 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-800 mr-1">{t}</span>
-                        ))}
                       </div>
                     );
                   })}
@@ -848,7 +916,7 @@ export default function People() {
                 {panelMode === 'detail' && panelContact && (
                   <>
                     <span className="text-sm font-semibold text-foreground flex-1 truncate">{panelContact.first_name} {panelContact.last_name}</span>
-                    <LeadScoreBadge score={calcLeadScore(panelContact, dealsByContact[panelContact.id] || 0)} />
+                    <PriorityBadge contact={panelContact} />
                     <button onClick={() => openEdit(panelContact)} className="p-1.5 rounded hover:bg-muted"><Edit className="w-4 h-4 text-muted-foreground" /></button>
                     <button onClick={closePanel} className="p-1.5 rounded hover:bg-muted"><X className="w-4 h-4 text-muted-foreground" /></button>
                   </>
@@ -992,12 +1060,12 @@ export default function People() {
                             </div>
                           </div>
 
-                          {/* Tags */}
-                          {(panelContact.tags || []).filter((t) => !t.startsWith('source:')).length > 0 && (
+                          {/* Tags (excluding priority and source) */}
+                          {(panelContact.tags || []).filter((t) => !t.startsWith('source:') && !(PRIORITY_TAGS as readonly string[]).includes(t)).length > 0 && (
                             <div className="border rounded-xl p-4">
                               <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-2.5"><Tag className="w-3 h-3 inline mr-1" />Tags</div>
                               <div className="flex flex-wrap gap-1.5">
-                                {panelContact.tags.filter((t) => !t.startsWith('source:')).map((t) => (
+                                {panelContact.tags.filter((t) => !t.startsWith('source:') && !(PRIORITY_TAGS as readonly string[]).includes(t)).map((t) => (
                                   <span key={t} className="text-[10px] font-medium bg-muted text-muted-foreground px-2 py-0.5 rounded-full">{t}</span>
                                 ))}
                               </div>
@@ -1087,6 +1155,33 @@ export default function People() {
                           </SelectContent>
                         </Select>
                       </div>
+                      {/* Priority */}
+                      <div>
+                        <Label className="text-xs text-muted-foreground">Priority</Label>
+                        <div className="mt-1.5 grid grid-cols-4 gap-1.5">
+                          {PRIORITY_TAGS.map((p) => {
+                            const cfg = PRIORITY_CONFIG[p];
+                            const active = form.tags.includes(p);
+                            return (
+                              <button
+                                key={p}
+                                type="button"
+                                onClick={() => setForm((f) => {
+                                  const withoutPriority = f.tags.filter((t) => !(PRIORITY_TAGS as readonly string[]).includes(t));
+                                  return { ...f, tags: active ? withoutPriority : [...withoutPriority, p] };
+                                })}
+                                className={cn(
+                                  'text-[10px] font-semibold px-1.5 py-1.5 rounded-lg border transition-all text-center',
+                                  active ? cfg.color : 'bg-background text-muted-foreground border-border hover:border-foreground/20'
+                                )}
+                              >
+                                {cfg.emoji} {p}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
                       <div className="grid grid-cols-2 gap-3">
                         <div><Label className="text-xs text-muted-foreground">Last Touch</Label><Input type="date" value={form.last_touch} onChange={(e) => setForm((f) => ({ ...f, last_touch: e.target.value }))} className="mt-1 h-8 text-sm" /></div>
                         <div><Label className="text-xs text-muted-foreground">Next Touch</Label><Input type="date" value={form.next_touch} onChange={(e) => setForm((f) => ({ ...f, next_touch: e.target.value }))} className="mt-1 h-8 text-sm" /></div>
@@ -1097,9 +1192,9 @@ export default function People() {
                           <Input placeholder="Add tag…" value={tagInput} onChange={(e) => setTagInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())} className="h-8 text-sm flex-1" />
                           <Button size="sm" variant="outline" className="h-8" onClick={addTag}>Add</Button>
                         </div>
-                        {form.tags.length > 0 && (
+                        {form.tags.filter((t) => !(PRIORITY_TAGS as readonly string[]).includes(t)).length > 0 && (
                           <div className="flex flex-wrap gap-1.5 mt-2">
-                            {form.tags.map((t) => (
+                            {form.tags.filter((t) => !(PRIORITY_TAGS as readonly string[]).includes(t)).map((t) => (
                               <span key={t} className="inline-flex items-center gap-1 text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full">
                                 {t}<button onClick={() => setForm((f) => ({ ...f, tags: f.tags.filter((x) => x !== t) }))}><X className="w-2.5 h-2.5" /></button>
                               </span>
