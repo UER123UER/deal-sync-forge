@@ -79,6 +79,7 @@ export const CANVAS_DIMENSIONS: CanvasDimension[] = [
 export type MarketingBlockKey =
   | 'logo'
   | 'photo'
+  | `photo-${number}`
   | 'headline'
   | 'address'
   | 'price'
@@ -495,6 +496,75 @@ function renderHeadlineBlock(
   );
 }
 
+/** A single collage cell — overflow-hidden frame with pan+zoom of the inner image.
+ *  data-marketing-block="photo-N" is set so the editor overlay can detect and
+ *  allow independent drag (pan) / resize (zoom) of each cell.
+ */
+function CollageCell({
+  src,
+  index,
+  data,
+  r,
+}: {
+  src: string;
+  index: number;
+  data: TemplateData;
+  r: number;
+}) {
+  const blockKey = `photo-${index}` as MarketingBlockKey;
+  const t = getBlockTransform(data, blockKey);
+  // x/y = pan offset in px; scale = zoom multiplier (>1 = zoomed in)
+  const zoom = Math.max(1, t.scale);
+
+  return (
+    <div
+      data-marketing-block={blockKey}
+      style={{
+        position: 'relative',
+        width: '100%',
+        height: '100%',
+        borderRadius: r,
+        overflow: 'hidden',
+        minHeight: 0,
+        minWidth: 0,
+      }}
+    >
+      {src ? (
+        <img
+          src={src}
+          alt={`Property ${index + 1}`}
+          style={{
+            position: 'absolute',
+            // Zoom from centre, then shift by pan offset
+            width: `${zoom * 100}%`,
+            height: `${zoom * 100}%`,
+            objectFit: 'cover',
+            // Centre the zoomed image, then shift by pan (t.x / t.y in canvas-px)
+            left: `${50 - zoom * 50}%`,
+            top: `${50 - zoom * 50}%`,
+            transform: `translate(${t.x}px, ${t.y}px)`,
+            transformOrigin: 'top left',
+            display: 'block',
+            pointerEvents: 'none',
+            userSelect: 'none',
+          }}
+        />
+      ) : (
+        <div
+          style={{
+            width: '100%', height: '100%', borderRadius: r,
+            background: '#d1d5db',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            color: '#9ca3af', fontSize: 12,
+          }}
+        >
+          Add Photo {index + 1}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function renderPhotoBlock(data: TemplateData) {
   const photos = data.photos.filter(Boolean);
   const n = photos.length;
@@ -508,13 +578,20 @@ function renderPhotoBlock(data: TemplateData) {
   const h = data.canvasHeight || 1080;
   const isPortrait  = h > w * 1.15;
   const isLandscape = w > h * 1.15;
-  const gap = Math.round(Math.min(w, h) * 0.008); // ~8-9px at 1080, scales with canvas
+  const gap = Math.round(Math.min(w, h) * 0.008);
   const pad = Math.round(Math.min(w, h) * 0.009);
-  const r   = Math.round(Math.min(w, h) * 0.006); // border-radius
+  const r   = Math.round(Math.min(w, h) * 0.006);
   const bg  = '#0e1428';
 
-  const frame = (src: string, style: React.CSSProperties = {}) => (
-    <PhotoFrame src={src} style={{ width: '100%', height: '100%', borderRadius: r, objectFit: 'cover', ...style }} />
+  // Each photo gets its own independently pannable/zoomable cell
+  const cell = (photoIndex: number) => (
+    <CollageCell
+      key={photoIndex}
+      src={photos[photoIndex]}
+      index={photoIndex}
+      data={data}
+      r={r}
+    />
   );
 
   const wrap = (children: React.ReactNode, grid: React.CSSProperties) => (
@@ -525,46 +602,41 @@ function renderPhotoBlock(data: TemplateData) {
 
   // ── 2 photos ───────────────────────────────────────────────────────────────
   if (n === 2) {
-    // Portrait/square → stack vertically (top hero + bottom strip)
-    // Landscape → side by side
     if (isLandscape) {
-      return wrap(<>{frame(photos[0])}{frame(photos[1])}</>, { gridTemplateColumns: '1fr 1fr' });
+      return wrap(<>{cell(0)}{cell(1)}</>, { gridTemplateColumns: '1fr 1fr' });
     }
-    return wrap(<>{frame(photos[0])}{frame(photos[1])}</>, { gridTemplateRows: '1.6fr 1fr' });
+    return wrap(<>{cell(0)}{cell(1)}</>, { gridTemplateRows: '1.6fr 1fr' });
   }
 
   // ── 3 photos ───────────────────────────────────────────────────────────────
   if (n === 3) {
     if (isLandscape) {
-      // Landscape: tall hero left, two stacked right
       return wrap(
         <>
-          {frame(photos[0])}
+          {cell(0)}
           <div style={{ display: 'grid', gridTemplateRows: '1fr 1fr', gap }}>
-            {frame(photos[1])}{frame(photos[2])}
+            {cell(1)}{cell(2)}
           </div>
         </>,
         { gridTemplateColumns: '1.5fr 1fr' }
       );
     }
     if (isPortrait) {
-      // Portrait: hero top, two columns bottom
       return wrap(
         <>
-          {frame(photos[0])}
+          {cell(0)}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap }}>
-            {frame(photos[1])}{frame(photos[2])}
+            {cell(1)}{cell(2)}
           </div>
         </>,
         { gridTemplateRows: '1.6fr 1fr' }
       );
     }
-    // Square: hero top, two side-by-side below
     return wrap(
       <>
-        {frame(photos[0])}
+        {cell(0)}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap }}>
-          {frame(photos[1])}{frame(photos[2])}
+          {cell(1)}{cell(2)}
         </div>
       </>,
       { gridTemplateRows: '1.75fr 1fr' }
@@ -574,20 +646,15 @@ function renderPhotoBlock(data: TemplateData) {
   // ── 4 photos ───────────────────────────────────────────────────────────────
   if (n === 4) {
     if (isLandscape) {
-      // 4 equal columns
-      return wrap(
-        <>{frame(photos[0])}{frame(photos[1])}{frame(photos[2])}{frame(photos[3])}</>,
-        { gridTemplateColumns: '1fr 1fr 1fr 1fr' }
-      );
+      return wrap(<>{cell(0)}{cell(1)}{cell(2)}{cell(3)}</>, { gridTemplateColumns: '1fr 1fr 1fr 1fr' });
     }
-    // Portrait/square: 2×2 grid
     return wrap(
       <>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap }}>
-          {frame(photos[0])}{frame(photos[1])}
+          {cell(0)}{cell(1)}
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap }}>
-          {frame(photos[2])}{frame(photos[3])}
+          {cell(2)}{cell(3)}
         </div>
       </>,
       { gridTemplateRows: '1fr 1fr' }
@@ -597,49 +664,46 @@ function renderPhotoBlock(data: TemplateData) {
   // ── 5 photos ───────────────────────────────────────────────────────────────
   if (n === 5) {
     if (isLandscape) {
-      // Hero left, 2×2 grid right
       return wrap(
         <>
-          {frame(photos[0])}
+          {cell(0)}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: '1fr 1fr', gap }}>
-            {frame(photos[1])}{frame(photos[2])}{frame(photos[3])}{frame(photos[4])}
+            {cell(1)}{cell(2)}{cell(3)}{cell(4)}
           </div>
         </>,
         { gridTemplateColumns: '1.2fr 1fr' }
       );
     }
-    // Portrait/square: hero top, 2+2 rows below
     return wrap(
       <>
-        {frame(photos[0])}
+        {cell(0)}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap }}>
-          {frame(photos[1])}{frame(photos[2])}
+          {cell(1)}{cell(2)}
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap }}>
-          {frame(photos[3])}{frame(photos[4])}
+          {cell(3)}{cell(4)}
         </div>
       </>,
       { gridTemplateRows: '1.4fr 1fr 1fr' }
     );
   }
 
-  // ── 6+ photos — responsive masonry-style grid ──────────────────────────────
-  // Cap display at 6; show rest as count badge on last tile
+  // ── 6+ photos ──────────────────────────────────────────────────────────────
   const visible = photos.slice(0, 6);
   const extra   = n - 6;
   const cols = isLandscape ? 3 : 2;
   const rows = Math.ceil(visible.length / cols);
   return wrap(
     <>
-      {visible.map((src, i) => {
+      {visible.map((_, i) => {
         const isLast = i === visible.length - 1 && extra > 0;
         return (
           <div key={i} style={{ position: 'relative', minHeight: 0 }}>
-            {frame(src)}
+            {cell(i)}
             {isLast && (
               <div style={{
                 position: 'absolute', inset: 0, borderRadius: r,
-                background: 'rgba(0,0,0,0.55)',
+                background: 'rgba(0,0,0,0.55)', pointerEvents: 'none',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 color: '#fff', fontSize: Math.round(Math.min(w, h) * 0.04),
                 fontWeight: 700, fontFamily: 'system-ui, sans-serif',
@@ -651,10 +715,7 @@ function renderPhotoBlock(data: TemplateData) {
         );
       })}
     </>,
-    {
-      gridTemplateColumns: `repeat(${cols}, 1fr)`,
-      gridTemplateRows: `repeat(${rows}, 1fr)`,
-    }
+    { gridTemplateColumns: `repeat(${cols}, 1fr)`, gridTemplateRows: `repeat(${rows}, 1fr)` }
   );
 }
 

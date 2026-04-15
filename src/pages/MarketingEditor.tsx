@@ -422,6 +422,14 @@ function isCustomTextBlock(block: string): block is `custom-text-${string}` {
   return block.startsWith('custom-text-');
 }
 
+function isPhotoIndexBlock(block: string): block is `photo-${number}` {
+  return /^photo-\d+$/.test(block);
+}
+
+function getPhotoIndex(block: string): number {
+  return parseInt(block.replace('photo-', ''), 10);
+}
+
 function getCustomTextBlockId(block: MarketingBlockKey): string | null {
   return isCustomTextBlock(block) ? block.replace('custom-text-', '') : null;
 }
@@ -432,6 +440,10 @@ function getBlockLabel(block: MarketingBlockKey, customTextBlocks: MarketingCust
     const customText = customTextBlocks.find((entry) => entry.id === customTextId);
     const preview = customText?.text.trim();
     return preview ? `Text: ${preview.slice(0, 18)}` : 'Custom Text';
+  }
+
+  if (isPhotoIndexBlock(block)) {
+    return `Photo ${getPhotoIndex(block) + 1}`;
   }
 
   return MARKETING_BLOCK_LABELS[block] ?? 'Block';
@@ -1409,6 +1421,24 @@ export default function MarketingEditor() {
       const dy = (event.clientY - interaction.startClientY) / divisor;
 
       if (interaction.mode === 'move') {
+        // ── photo-N pan mode — drag shifts the image within its cell ────────
+        if (isPhotoIndexBlock(interaction.block)) {
+          const newX = interaction.startTransform.x + dx;
+          const newY = interaction.startTransform.y + dy;
+          updateBlockTransform(
+            interaction.block,
+            { ...interaction.startTransform, x: newX, y: newY },
+            interaction.committed,
+          );
+          interaction.committed = true;
+          // Live overlay stays at the cell rect (cell doesn't move, only the image inside pans)
+          forceOverlayUpdate((n) => n + 1);
+          setAlignGuides([]);
+          setSpacingGuides([]);
+          setDragHud({ x: Math.round(newX), y: Math.round(newY) });
+          return;
+        }
+
         const rawX = interaction.startTransform.x + dx;
         const rawY = interaction.startTransform.y + dy;
 
@@ -1476,6 +1506,27 @@ export default function MarketingEditor() {
       // Resize mode — no snapping, clear guides
       setAlignGuides([]);
       setSpacingGuides([]);
+
+      // ── photo-N zoom mode — drag changes zoom level within the cell ──────
+      if (isPhotoIndexBlock(interaction.block)) {
+        const baseSize = Math.max(interaction.baseRect.width, interaction.baseRect.height, 120);
+        const dominantDelta = Math.abs(dx) > Math.abs(dy) ? dx : dy;
+        const nextScale = Math.min(
+          5,
+          // photo-N zoom minimum is 1.0 — can't zoom out below filling the cell
+          Math.max(1, interaction.startTransform.scale * ((baseSize + dominantDelta) / baseSize)),
+        );
+        updateBlockTransform(
+          interaction.block,
+          {
+            ...interaction.startTransform,
+            scale: Number.isFinite(nextScale) ? nextScale : interaction.startTransform.scale,
+          },
+          interaction.committed,
+        );
+        interaction.committed = true;
+        return;
+      }
 
       const isGroupedInteraction = interaction.targets.length > 1;
 
@@ -1621,8 +1672,10 @@ export default function MarketingEditor() {
 
     setSelectedBlock(block);
 
-    // Locked blocks can be selected but not moved/resized
-    if (lockedBlocks.has(block)) return;
+    // Locked blocks can be selected but not moved/resized.
+    // photo-N cells are also locked when the parent 'photo' block is locked.
+    const effectiveLocked = lockedBlocks.has(block) || (isPhotoIndexBlock(block) && lockedBlocks.has('photo'));
+    if (effectiveLocked) return;
 
     const currentTransform = data.blockTransforms?.[block];
     const baseRect = blockRects[block] ?? { left: 0, top: 0, width: 220, height: 220 };
@@ -2452,15 +2505,21 @@ export default function MarketingEditor() {
                 {Object.entries(blockRects).map(([blockKey, measuredRect]) => {
                   if (!measuredRect) return null;
                   const block = blockKey as MarketingBlockKey;
+
+                  // photo-N blocks are only interactive in collage mode
+                  if (isPhotoIndexBlock(block) && data.photoLayout !== 'collage') return null;
+
                   // Use live-computed position during drag to eliminate render-lag;
                   // fall back to DOM-measured rect when idle.
                   const rect = liveOverlayRef.current[block] ?? measuredRect;
                   const selected = selectedBlock === block;
 
-                  const isLocked = lockedBlocks.has(block);
-                  const isGrouped = groupedBlocks.has(block);
+                  const isPhotoCell = isPhotoIndexBlock(block);
+                  // photo-N cells inherit locked state from parent 'photo' block
+                  const isLocked = lockedBlocks.has(block) || (isPhotoCell && lockedBlocks.has('photo'));
+                  const isGrouped = !isPhotoCell && groupedBlocks.has(block);
                   const isCustomTextSelection = isCustomTextBlock(block);
-                  const visibilityKey = (block === 'agent' || block === 'photo' || isCustomTextSelection)
+                  const visibilityKey = (block === 'agent' || block === 'photo' || isCustomTextSelection || isPhotoCell)
                     ? null
                     : block as keyof TemplateVisibility;
                   const canDelete = visibilityKey !== null || isCustomTextSelection;
@@ -2469,7 +2528,9 @@ export default function MarketingEditor() {
                     <div
                       key={block}
                       className={cn(
-                        'absolute rounded-xl group/block',
+                        'absolute group/block',
+                        // photo cells get rounded corners matching the cell border-radius
+                        isPhotoCell ? 'rounded-md' : 'rounded-xl',
                         // Only animate when NOT dragging — during drag we want instant position
                         !isDraggingBlock && 'transition-all',
                         selected && isLocked
@@ -2490,11 +2551,12 @@ export default function MarketingEditor() {
                       <button
                         type="button"
                         className={cn(
-                          'absolute inset-0 rounded-xl',
-                          isLocked ? 'cursor-not-allowed' : 'cursor-move',
+                          'absolute inset-0',
+                          isPhotoCell ? 'rounded-md' : 'rounded-xl',
+                          isLocked ? 'cursor-not-allowed' : isPhotoCell ? 'cursor-grab active:cursor-grabbing' : 'cursor-move',
                         )}
                         onPointerDown={(event) => beginBlockInteraction(event, block, 'move')}
-                        aria-label={`Move ${getBlockLabel(block, data.customTextBlocks)}`}
+                        aria-label={`${isPhotoCell ? 'Pan' : 'Move'} ${getBlockLabel(block, data.customTextBlocks)}`}
                       />
 
                       {/* ── Floating Action Toolbar — appears above selected block ── */}
@@ -2508,71 +2570,89 @@ export default function MarketingEditor() {
                           <span className="px-2 text-[10px] font-semibold text-muted-foreground uppercase tracking-wide select-none">
                             {getBlockLabel(block, data.customTextBlocks)}
                           </span>
-                          <div className="w-px h-4 bg-border mx-0.5" />
 
-                          {/* Group / Ungroup */}
-                          <button
-                            type="button"
-                            title={isGrouped ? 'Remove from group' : 'Add to group'}
-                            onClick={() => toggleGroupBlock(block)}
-                            className={cn(
-                              'flex items-center justify-center h-7 w-7 rounded-lg transition-colors',
-                              isGrouped
-                                ? 'bg-violet-100 text-violet-600 hover:bg-violet-200'
-                                : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                            )}
-                          >
-                            {isGrouped ? <Link2Off className="h-3.5 w-3.5" /> : <Link2 className="h-3.5 w-3.5" />}
-                          </button>
-
-                          {/* Lock / Unlock */}
-                          <button
-                            type="button"
-                            title={isLocked ? 'Unlock block' : 'Lock block'}
-                            onClick={() => toggleLockBlock(block)}
-                            className={cn(
-                              'flex items-center justify-center h-7 w-7 rounded-lg transition-colors',
-                              isLocked
-                                ? 'bg-amber-100 text-amber-600 hover:bg-amber-200'
-                                : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                            )}
-                          >
-                            {isLocked ? <Lock className="h-3.5 w-3.5" /> : <LockOpen className="h-3.5 w-3.5" />}
-                          </button>
-
-                          {/* Duplicate — only for custom text blocks; template blocks get a Reset instead */}
-                          {isCustomTextSelection ? (
-                            <button
-                              type="button"
-                              title="Duplicate text box"
-                              onClick={() => duplicateBlock(block)}
-                              className="flex items-center justify-center h-7 w-7 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-                            >
-                              <Copy className="h-3.5 w-3.5" />
-                            </button>
-                          ) : (
-                            <button
-                              type="button"
-                              title="Reset block position"
-                              onClick={resetSelectedBlock}
-                              className="flex items-center justify-center h-7 w-7 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-                            >
-                              <Undo2 className="h-3.5 w-3.5" />
-                            </button>
-                          )}
-
-                          {/* Delete (hide block) */}
-                          {canDelete && (
+                          {/* photo-N toolbar: just reset pan/zoom */}
+                          {isPhotoCell ? (
                             <>
                               <div className="w-px h-4 bg-border mx-0.5" />
                               <button
                                 type="button"
-                                title="Hide block"
-                                onClick={() => deleteBlock(block)}
-                                className="flex items-center justify-center h-7 w-7 rounded-lg text-muted-foreground hover:bg-red-50 hover:text-red-600 transition-colors"
+                                title="Reset pan & zoom"
+                                onClick={resetSelectedBlock}
+                                className="flex items-center justify-center h-7 w-7 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
                               >
-                                <Trash2 className="h-3.5 w-3.5" />
+                                <Undo2 className="h-3.5 w-3.5" />
                               </button>
+                            </>
+                          ) : (
+                            <>
+                              <div className="w-px h-4 bg-border mx-0.5" />
+
+                              {/* Group / Ungroup */}
+                              <button
+                                type="button"
+                                title={isGrouped ? 'Remove from group' : 'Add to group'}
+                                onClick={() => toggleGroupBlock(block)}
+                                className={cn(
+                                  'flex items-center justify-center h-7 w-7 rounded-lg transition-colors',
+                                  isGrouped
+                                    ? 'bg-violet-100 text-violet-600 hover:bg-violet-200'
+                                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                                )}
+                              >
+                                {isGrouped ? <Link2Off className="h-3.5 w-3.5" /> : <Link2 className="h-3.5 w-3.5" />}
+                              </button>
+
+                              {/* Lock / Unlock */}
+                              <button
+                                type="button"
+                                title={isLocked ? 'Unlock block' : 'Lock block'}
+                                onClick={() => toggleLockBlock(block)}
+                                className={cn(
+                                  'flex items-center justify-center h-7 w-7 rounded-lg transition-colors',
+                                  isLocked
+                                    ? 'bg-amber-100 text-amber-600 hover:bg-amber-200'
+                                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                                )}
+                              >
+                                {isLocked ? <Lock className="h-3.5 w-3.5" /> : <LockOpen className="h-3.5 w-3.5" />}
+                              </button>
+
+                              {/* Duplicate — only for custom text blocks; template blocks get a Reset instead */}
+                              {isCustomTextSelection ? (
+                                <button
+                                  type="button"
+                                  title="Duplicate text box"
+                                  onClick={() => duplicateBlock(block)}
+                                  className="flex items-center justify-center h-7 w-7 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                                >
+                                  <Copy className="h-3.5 w-3.5" />
+                                </button>
+                              ) : (
+                                <button
+                                  type="button"
+                                  title="Reset block position"
+                                  onClick={resetSelectedBlock}
+                                  className="flex items-center justify-center h-7 w-7 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                                >
+                                  <Undo2 className="h-3.5 w-3.5" />
+                                </button>
+                              )}
+
+                              {/* Delete (hide block) */}
+                              {canDelete && (
+                                <>
+                                  <div className="w-px h-4 bg-border mx-0.5" />
+                                  <button
+                                    type="button"
+                                    title="Hide block"
+                                    onClick={() => deleteBlock(block)}
+                                    className="flex items-center justify-center h-7 w-7 rounded-lg text-muted-foreground hover:bg-red-50 hover:text-red-600 transition-colors"
+                                  >
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                  </button>
+                                </>
+                              )}
                             </>
                           )}
                         </div>
@@ -2588,7 +2668,8 @@ export default function MarketingEditor() {
                         {getBlockLabel(block, data.customTextBlocks)}
                       </div>
 
-                      {/* Resize handle — visible on hover OR when selected (disabled when locked) */}
+                      {/* Resize handle — visible on hover OR when selected (disabled when locked).
+                          For photo cells this controls zoom level within the cell. */}
                       {!isLocked && (
                         <button
                           type="button"
@@ -2597,8 +2678,8 @@ export default function MarketingEditor() {
                             selected ? 'opacity-100' : 'opacity-0 group-hover/block:opacity-100'
                           )}
                           onPointerDown={(event) => beginBlockInteraction(event, block, 'resize')}
-                          aria-label={`Resize ${getBlockLabel(block, data.customTextBlocks)}`}
-                          title="Drag to resize"
+                          aria-label={isPhotoCell ? `Zoom ${getBlockLabel(block, data.customTextBlocks)}` : `Resize ${getBlockLabel(block, data.customTextBlocks)}`}
+                          title={isPhotoCell ? 'Drag to zoom' : 'Drag to resize'}
                         >
                           <Maximize2 className="h-2.5 w-2.5 text-primary-foreground" />
                         </button>
