@@ -561,7 +561,7 @@ function buildTemplate(
         visibility.agentEmail;
 
       // Scale font sizes proportionally to canvas width (base = 1080)
-      const fontScale = w / 1080;
+      const fontScale = Math.min(w, h) / 1080;
 
       return (
         <div
