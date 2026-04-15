@@ -2110,7 +2110,11 @@ export default function MarketingEditor() {
         </div>
 
         {/* ── Canvas Area ── */}
-        <div className="flex-1 overflow-auto flex items-start justify-center p-8 bg-[repeating-conic-gradient(#e5e7eb_0%_25%,transparent_0%_50%)] [background-size:20px_20px] relative">
+        <div
+          className="flex-1 overflow-auto flex items-start justify-center p-8 bg-[repeating-conic-gradient(#e5e7eb_0%_25%,transparent_0%_50%)] [background-size:20px_20px] relative"
+          onDragOver={handleCanvasPhotoDragOver}
+          onDrop={handleCanvasPhotoDrop}
+        >
           <div
             style={{
               transform: `scale(${scale})`,
