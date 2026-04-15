@@ -643,6 +643,9 @@ export default function MarketingEditor() {
   const [ohOpen, setOhOpen] = useState(true);
   const [exporting, setExporting] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [personalPhotos, setPersonalPhotos] = useState<string[]>([]);
+  const [uploadingPersonalPhoto, setUploadingPersonalPhoto] = useState(false);
+  const personalPhotoInputRef = useRef<HTMLInputElement>(null);
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
   const [selectedBlock, setSelectedBlock] = useState<MarketingBlockKey | null>(null);
@@ -1132,6 +1135,56 @@ export default function MarketingEditor() {
       return { ...prev, photos };
     });
   }, [setData]);
+
+  // ── Personal photo upload — session-only blob URLs ─────────────────────────
+  const handlePersonalPhotoUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    e.target.value = '';
+    const urls = Array.from(files).map((f) => URL.createObjectURL(f));
+    setPersonalPhotos((prev) => [...urls, ...prev]);
+  }, []);
+
+  const removePersonalPhoto = useCallback((index: number) => {
+    setPersonalPhotos((prev) => {
+      const removed = prev[index];
+      if (removed?.startsWith('blob:')) URL.revokeObjectURL(removed);
+      return prev.filter((_, i) => i !== index);
+    });
+  }, []);
+
+  // ── Drag photo onto canvas — sets as main poster photo ─────────────────────
+  const handleCanvasPhotoDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    const photoUrl = e.dataTransfer.getData('text/photo-url');
+    if (photoUrl) {
+      setData((prev) => {
+        // Put the dropped photo first (main photo position)
+        const filtered = prev.photos.filter((u) => u !== photoUrl);
+        return { ...prev, photos: [photoUrl, ...filtered] };
+      });
+      toast.success('Photo set as main image');
+      return;
+    }
+    // Also handle file drops directly onto canvas
+    const files = e.dataTransfer.files;
+    if (files && files.length > 0) {
+      const file = files[0];
+      if (file.type.startsWith('image/')) {
+        const url = URL.createObjectURL(file);
+        setPersonalPhotos((prev) => [url, ...prev]);
+        setData((prev) => ({ ...prev, photos: [url, ...prev.photos] }));
+        toast.success('Photo added and set as main image');
+      }
+    }
+  }, [setData]);
+
+  const handleCanvasPhotoDragOver = useCallback((e: React.DragEvent) => {
+    if (e.dataTransfer.types.includes('text/photo-url') || e.dataTransfer.types.includes('Files')) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'copy';
+    }
+  }, []);
 
   const selectTemplate = (tid: string) => {
     setSearchParams({ template: tid });
