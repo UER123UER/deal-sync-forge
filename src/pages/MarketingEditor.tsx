@@ -1683,8 +1683,8 @@ export default function MarketingEditor() {
           {/* ── Edit Panel ── */}
           <ScrollArea className="flex-1">
             <div className="p-3 space-y-1">
-                {/* Photo Upload */}
-                <div className="pb-4 border-b mb-2">
+                {/* Property Photos */}
+                <div className="pb-3 border-b mb-2">
                   <div className="flex items-center justify-between mb-2">
                     <div className="text-xs font-semibold text-foreground">Property Photos</div>
                     {data.photos.length > 1 ? (
@@ -1715,10 +1715,15 @@ export default function MarketingEditor() {
                           key={src + i}
                           className="relative group cursor-grab active:cursor-grabbing"
                           draggable
-                          onDragStart={() => { photoDragIndexRef.current = i; }}
+                          onDragStart={(e) => {
+                            photoDragIndexRef.current = i;
+                            e.dataTransfer.setData('text/photo-url', src);
+                            e.dataTransfer.effectAllowed = 'copyMove';
+                          }}
                           onDragOver={(e) => { e.preventDefault(); }}
                           onDrop={(e) => {
                             e.preventDefault();
+                            e.stopPropagation();
                             const from = photoDragIndexRef.current;
                             if (from !== null && from !== i) reorderPhoto(from, i);
                             photoDragIndexRef.current = null;
@@ -1726,7 +1731,6 @@ export default function MarketingEditor() {
                           onDragEnd={() => { photoDragIndexRef.current = null; }}
                         >
                           <img src={src} alt="" className="w-16 h-16 object-cover rounded border" />
-                          {/* Drag handle overlay */}
                           <div className="absolute top-0 left-0 p-0.5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
                             <GripVertical className="h-3 w-3 text-white drop-shadow" />
                           </div>
@@ -1749,6 +1753,52 @@ export default function MarketingEditor() {
                         className="w-16 h-16 border-2 border-dashed border-muted-foreground/30 rounded flex flex-col items-center justify-center text-muted-foreground hover:border-primary hover:text-primary transition-colors disabled:opacity-50"
                       >
                         {uploadingPhoto ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4" />}
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Personal Photos — session-only, not saved to deal */}
+                <div className="pb-4 border-b mb-2">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="text-xs font-semibold text-foreground">Personal Photos</div>
+                    <span className="text-[9px] text-muted-foreground">Drag onto poster</span>
+                  </div>
+                  <input ref={personalPhotoInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handlePersonalPhotoUpload} />
+                  {personalPhotos.length === 0 ? (
+                    <button
+                      onClick={() => personalPhotoInputRef.current?.click()}
+                      className="w-full h-16 border-2 border-dashed border-muted-foreground/30 rounded-lg flex flex-col items-center justify-center gap-1 text-muted-foreground hover:border-primary hover:text-primary transition-colors text-xs"
+                    >
+                      <ImagePlus className="h-4 w-4" />
+                      <span>Add any photo</span>
+                    </button>
+                  ) : (
+                    <div className="flex flex-wrap gap-1.5">
+                      {personalPhotos.map((src, i) => (
+                        <div
+                          key={src + i}
+                          className="relative group cursor-grab active:cursor-grabbing"
+                          draggable
+                          onDragStart={(e) => {
+                            e.dataTransfer.setData('text/photo-url', src);
+                            e.dataTransfer.effectAllowed = 'copy';
+                          }}
+                        >
+                          <img src={src} alt="" className="w-16 h-16 object-cover rounded border" />
+                          <button
+                            onClick={() => removePersonalPhoto(i)}
+                            className="absolute -top-1 -right-1 w-4 h-4 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <X className="h-2.5 w-2.5" />
+                          </button>
+                        </div>
+                      ))}
+                      <button
+                        onClick={() => personalPhotoInputRef.current?.click()}
+                        className="w-16 h-16 border-2 border-dashed border-muted-foreground/30 rounded flex flex-col items-center justify-center text-muted-foreground hover:border-primary hover:text-primary transition-colors"
+                      >
+                        <ImagePlus className="h-4 w-4" />
                       </button>
                     </div>
                   )}
