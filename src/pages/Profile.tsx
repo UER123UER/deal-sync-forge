@@ -95,7 +95,11 @@ export default function Profile() {
       return;
     }
     if (newPassword.length < 6) {
-      toast({ title: 'Password too short', description: 'Password must be at least 6 characters.', variant: 'destructive' });
+      toast({ title: 'Password too short', description: 'Must be at least 6 characters.', variant: 'destructive' });
+      return;
+    }
+    if (!/[a-z]/.test(newPassword) || !/[A-Z]/.test(newPassword) || !/[0-9]/.test(newPassword)) {
+      toast({ title: 'Password too weak', description: 'Must include at least one lowercase letter, one uppercase letter, and one number.', variant: 'destructive' });
       return;
     }
     if (newPassword !== confirmPassword) {
