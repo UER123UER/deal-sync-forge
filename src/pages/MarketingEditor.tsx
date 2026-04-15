@@ -1199,10 +1199,13 @@ export default function MarketingEditor() {
 
   // ── Personal photo upload — session-only blob URLs ─────────────────────────
   const handlePersonalPhotoUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
+    // Snapshot files BEFORE resetting the input — some browsers clear FileList on value reset
+    const fileList = e.target.files;
+    const fileArray = fileList ? Array.from(fileList) : [];
+    // Reset input so the same file can be re-selected later
     e.target.value = '';
-    const urls = Array.from(files).map((f) => URL.createObjectURL(f));
+    if (fileArray.length === 0) return;
+    const urls = fileArray.map((f) => URL.createObjectURL(f));
     // Add to sidebar thumbnails
     setPersonalPhotos((prev) => [...urls, ...prev]);
     // Also add to the poster's photo array so the template actually shows them
