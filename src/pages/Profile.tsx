@@ -6,9 +6,23 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { User, Lock, CreditCard, LogOut, Eye, EyeOff, Building2, Phone, BadgeCheck, Camera, Trash2 } from 'lucide-react';
+import { User, Lock, CreditCard, LogOut, Eye, EyeOff, Building2, Phone, BadgeCheck, Camera, Trash2, Plus, Landmark, X, DollarSign, CheckCircle2, XCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { validateRoutingNumber, validateAccountNumber, validateAccountConfirm } from '@/lib/bankingValidation';
+
+function FieldHint({ value, result }: { value: string; result: { valid: boolean; message: string } }) {
+  if (!value) return null;
+  return (
+    <p className={cn('flex items-center gap-1 text-xs mt-1', result.valid ? 'text-emerald-600 dark:text-emerald-400' : 'text-destructive')}>
+      {result.valid
+        ? <CheckCircle2 className="w-3 h-3 shrink-0" />
+        : <XCircle className="w-3 h-3 shrink-0" />}
+      {result.message}
+    </p>
+  );
+}
 
 export default function Profile() {
   const { user, profile, signOut, refreshProfile } = useAuth();
@@ -35,6 +49,26 @@ export default function Profile() {
   // Billing state
   const [bankAccounts, setBankAccounts] = useState<any[]>([]);
   const [billingLoading, setBillingLoading] = useState(true);
+  const [showAddAccount, setShowAddAccount] = useState(false);
+  const [addingAccount, setAddingAccount] = useState(false);
+  const [newAcctHolder, setNewAcctHolder] = useState('');
+  const [newAcctType, setNewAcctType] = useState<'checking' | 'savings'>('checking');
+  const [newRouting, setNewRouting] = useState('');
+  const [newAccountNum, setNewAccountNum] = useState('');
+  const [newAccountNumConfirm, setNewAccountNumConfirm] = useState('');
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  // Direct deposit state
+  const [showAddDirectDeposit, setShowAddDirectDeposit] = useState(false);
+  const [directDeposits, setDirectDeposits] = useState<any[]>([]);
+  const [directDepositLoading, setDirectDepositLoading] = useState(true);
+  const [addingDeposit, setAddingDeposit] = useState(false);
+  const [ddAgentName, setDdAgentName] = useState('');
+  const [ddBankName, setDdBankName] = useState('');
+  const [ddRouting, setDdRouting] = useState('');
+  const [ddAccountNum, setDdAccountNum] = useState('');
+  const [ddAccountType, setDdAccountType] = useState<'checking' | 'savings'>('checking');
+  const [ddDeletingId, setDdDeletingId] = useState<string | null>(null);
 
   // Avatar state
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
@@ -43,6 +77,17 @@ export default function Profile() {
 
   // Sign out state
   const [signingOut, setSigningOut] = useState(false);
+
+  // Live validation — billing form
+  const billingRoutingResult = validateRoutingNumber(newRouting);
+  const billingAccountResult = validateAccountNumber(newAccountNum);
+  const billingConfirmResult = validateAccountConfirm(newAccountNum, newAccountNumConfirm);
+  const billingFormValid = newAcctHolder.trim().length > 0 && billingRoutingResult.valid && billingAccountResult.valid && billingConfirmResult.valid;
+
+  // Live validation — direct deposit form
+  const ddRoutingResult = validateRoutingNumber(ddRouting);
+  const ddAccountResult = validateAccountNumber(ddAccountNum);
+  const ddFormValid = ddAgentName.trim().length > 0 && ddRoutingResult.valid && ddAccountResult.valid;
 
   // Populate profile fields from loaded profile
   useEffect(() => {
@@ -70,6 +115,20 @@ export default function Profile() {
       });
   }, [user]);
 
+  // Load direct deposit accounts
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from('direct_deposits')
+      .select('*')
+      .eq('owner_id', user.id)
+      .order('created_at', { ascending: false })
+      .then(({ data }) => {
+        setDirectDeposits(data ?? []);
+        setDirectDepositLoading(false);
+      });
+  }, [user]);
+
   // Upload avatar photo
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -86,7 +145,6 @@ export default function Profile() {
     const ext = file.name.split('.').pop() ?? 'jpg';
     const path = `${user.id}/avatar.${ext}`;
 
-    // Upload (upsert replaces existing)
     const { error: uploadError } = await supabase.storage
       .from('avatars')
       .upload(path, file, { upsert: true, contentType: file.type });
@@ -97,12 +155,9 @@ export default function Profile() {
       return;
     }
 
-    // Get public URL
     const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(path);
-    // Bust cache with timestamp
     const bustedUrl = `${publicUrl}?t=${Date.now()}`;
 
-    // Save to profile
     const { error: dbError } = await supabase
       .from('profiles')
       .update({ avatar_url: bustedUrl })
@@ -123,13 +178,11 @@ export default function Profile() {
     if (!user || !avatarUrl) return;
     setAvatarUploading(true);
 
-    // Remove all files in the user's avatar folder
     const { data: files } = await supabase.storage.from('avatars').list(user.id);
     if (files && files.length > 0) {
       await supabase.storage.from('avatars').remove(files.map((f) => `${user.id}/${f.name}`));
     }
 
-    // Clear avatar_url in DB
     await supabase.from('profiles').update({ avatar_url: null }).eq('id', user.id);
     setAvatarUrl(null);
     setAvatarUploading(false);
@@ -161,7 +214,7 @@ export default function Profile() {
     }
   };
 
-  // Change password — re-authenticate with current password first
+  // Change password
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!currentPassword) {
@@ -185,7 +238,6 @@ export default function Profile() {
       return;
     }
     setPasswordLoading(true);
-    // Verify current password by re-signing in
     const email = user?.email ?? '';
     const { error: signInError } = await supabase.auth.signInWithPassword({ email, password: currentPassword });
     if (signInError) {
@@ -202,6 +254,101 @@ export default function Profile() {
       setNewPassword('');
       setConfirmPassword('');
       toast({ title: 'Password updated', description: 'Your password has been changed.' });
+    }
+  };
+
+  // Add bank account
+  const handleAddBankAccount = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user || !billingFormValid) return;
+
+    setAddingAccount(true);
+    const last4 = newAccountNum.slice(-4);
+    const { data, error } = await supabase
+      .from('bank_accounts')
+      .insert({
+        user_id: user.id,
+        account_holder_name: newAcctHolder.trim(),
+        routing_number: newRouting,
+        account_number_last4: last4,
+        account_type: newAcctType,
+      })
+      .select()
+      .single();
+
+    setAddingAccount(false);
+    if (error) {
+      toast({ title: 'Error saving account', description: error.message, variant: 'destructive' });
+    } else {
+      setBankAccounts((prev) => [data, ...prev]);
+      setNewAcctHolder('');
+      setNewRouting('');
+      setNewAccountNum('');
+      setNewAccountNumConfirm('');
+      setNewAcctType('checking');
+      setShowAddAccount(false);
+      toast({ title: 'Bank account added ✓' });
+    }
+  };
+
+  // Delete bank account
+  const handleDeleteBankAccount = async (id: string) => {
+    setDeletingId(id);
+    const { error } = await supabase.from('bank_accounts').delete().eq('id', id);
+    setDeletingId(null);
+    if (error) {
+      toast({ title: 'Error deleting account', description: error.message, variant: 'destructive' });
+    } else {
+      setBankAccounts((prev) => prev.filter((a) => a.id !== id));
+      toast({ title: 'Bank account removed' });
+    }
+  };
+
+  // Add direct deposit recipient
+  const handleAddDirectDeposit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user || !ddFormValid) return;
+
+    setAddingDeposit(true);
+    const last4 = ddAccountNum.slice(-4);
+    const { data, error } = await supabase
+      .from('direct_deposits')
+      .insert({
+        owner_id: user.id,
+        agent_name: ddAgentName.trim(),
+        bank_name: ddBankName.trim() || null,
+        routing_number: ddRouting,
+        account_number_last4: last4,
+        account_type: ddAccountType,
+      })
+      .select()
+      .single();
+
+    setAddingDeposit(false);
+    if (error) {
+      toast({ title: 'Error saving direct deposit', description: error.message, variant: 'destructive' });
+    } else {
+      setDirectDeposits((prev) => [data, ...prev]);
+      setDdAgentName('');
+      setDdBankName('');
+      setDdRouting('');
+      setDdAccountNum('');
+      setDdAccountType('checking');
+      setShowAddDirectDeposit(false);
+      toast({ title: 'Direct deposit recipient added ✓' });
+    }
+  };
+
+  // Delete direct deposit recipient
+  const handleDeleteDirectDeposit = async (id: string) => {
+    setDdDeletingId(id);
+    const { error } = await supabase.from('direct_deposits').delete().eq('id', id);
+    setDdDeletingId(null);
+    if (error) {
+      toast({ title: 'Error removing recipient', description: error.message, variant: 'destructive' });
+    } else {
+      setDirectDeposits((prev) => prev.filter((d) => d.id !== id));
+      toast({ title: 'Direct deposit recipient removed' });
     }
   };
 
@@ -238,7 +385,6 @@ export default function Profile() {
             <CardContent>
               {/* ── Avatar upload ── */}
               <div className="flex items-center gap-5 mb-6 pb-6 border-b">
-                {/* Avatar circle */}
                 <div className="relative shrink-0">
                   <div className={cn(
                     'w-20 h-20 rounded-full overflow-hidden border-2 border-border bg-muted flex items-center justify-center',
@@ -258,7 +404,6 @@ export default function Profile() {
                       </span>
                     )}
                   </div>
-                  {/* Camera badge */}
                   <button
                     type="button"
                     onClick={() => avatarInputRef.current?.click()}
@@ -277,7 +422,6 @@ export default function Profile() {
                   />
                 </div>
 
-                {/* Text + actions */}
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-foreground">
                     {firstName || lastName ? `${firstName} ${lastName}`.trim() : 'Your Name'}
@@ -453,19 +597,30 @@ export default function Profile() {
           {/* Billing / Bank Account Card */}
           <Card>
             <CardHeader>
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <CreditCard className="w-4 h-4 text-primary" />
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <CreditCard className="w-4 h-4 text-primary" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-base">Billing Information</CardTitle>
+                    <CardDescription className="text-xs">Your subscription and payment details</CardDescription>
+                  </div>
                 </div>
-                <div>
-                  <CardTitle className="text-base">Billing Information</CardTitle>
-                  <CardDescription className="text-xs">Your subscription and payment details</CardDescription>
-                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-8 text-xs gap-1.5"
+                  onClick={() => setShowAddAccount((v) => !v)}
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  Add Account
+                </Button>
               </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
               {/* Subscription status */}
-              <div className="mb-4 flex items-center justify-between p-3 rounded-lg bg-muted/50 border">
+              <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50 border">
                 <div>
                   <p className="text-xs text-muted-foreground uppercase tracking-wide">Subscription Status</p>
                   <p className="text-sm font-semibold text-foreground capitalize">{profile?.subscription_status ?? '—'}</p>
@@ -479,22 +634,284 @@ export default function Profile() {
                 </span>
               </div>
 
-              {/* Bank accounts */}
+              {/* Add account form */}
+              {showAddAccount && (
+                <div className="rounded-lg border bg-muted/20 p-4 space-y-3">
+                  <div className="flex items-center justify-between mb-1">
+                    <p className="text-sm font-semibold text-foreground flex items-center gap-2">
+                      <Landmark className="w-4 h-4 text-primary" /> New Bank Account
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setShowAddAccount(false)}
+                      className="text-muted-foreground hover:text-foreground"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  <form onSubmit={handleAddBankAccount} className="space-y-3">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Account Holder Name</Label>
+                      <Input
+                        placeholder="Full legal name"
+                        value={newAcctHolder}
+                        onChange={(e) => setNewAcctHolder(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Account Type</Label>
+                      <Select value={newAcctType} onValueChange={(v) => setNewAcctType(v as 'checking' | 'savings')}>
+                        <SelectTrigger className="h-9 text-sm">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="checking">Checking</SelectItem>
+                          <SelectItem value="savings">Savings</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Routing Number</Label>
+                      <Input
+                        placeholder="9-digit ABA routing number"
+                        value={newRouting}
+                        onChange={(e) => setNewRouting(e.target.value.replace(/\D/g, '').slice(0, 9))}
+                        maxLength={9}
+                        className={cn(newRouting && (billingRoutingResult.valid ? 'border-emerald-500' : 'border-destructive'))}
+                        required
+                      />
+                      <FieldHint value={newRouting} result={billingRoutingResult} />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Account Number</Label>
+                      <Input
+                        placeholder="Enter account number"
+                        type="password"
+                        value={newAccountNum}
+                        onChange={(e) => setNewAccountNum(e.target.value.replace(/\D/g, '').slice(0, 17))}
+                        className={cn(newAccountNum && (billingAccountResult.valid ? 'border-emerald-500' : 'border-destructive'))}
+                        required
+                      />
+                      <FieldHint value={newAccountNum} result={billingAccountResult} />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Confirm Account Number</Label>
+                      <Input
+                        placeholder="Re-enter account number"
+                        type="password"
+                        value={newAccountNumConfirm}
+                        onChange={(e) => setNewAccountNumConfirm(e.target.value.replace(/\D/g, '').slice(0, 17))}
+                        className={cn(newAccountNumConfirm && (billingConfirmResult.valid ? 'border-emerald-500' : 'border-destructive'))}
+                        required
+                      />
+                      <FieldHint value={newAccountNumConfirm} result={billingConfirmResult} />
+                    </div>
+                    <p className="text-[10px] text-muted-foreground">
+                      Only the last 4 digits of your account number are stored.
+                    </p>
+                    <div className="flex gap-2 pt-1">
+                      <Button type="submit" size="sm" className="flex-1" disabled={addingAccount || !billingFormValid}>
+                        {addingAccount ? 'Saving…' : 'Save Account'}
+                      </Button>
+                      <Button type="button" size="sm" variant="outline" onClick={() => setShowAddAccount(false)}>
+                        Cancel
+                      </Button>
+                    </div>
+                  </form>
+                </div>
+              )}
+
+              {/* Bank account list */}
               {billingLoading ? (
                 <p className="text-sm text-muted-foreground">Loading billing info…</p>
               ) : bankAccounts.length === 0 ? (
                 <p className="text-sm text-muted-foreground">No payment method on file.</p>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-2">
                   {bankAccounts.map((acct) => (
-                    <div key={acct.id} className="flex items-center gap-3 p-3 rounded-lg border bg-muted/30">
-                      <CreditCard className="w-4 h-4 text-muted-foreground shrink-0" />
+                    <div key={acct.id} className="flex items-center gap-3 p-3 rounded-lg border bg-muted/30 group">
+                      <div className="w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center shrink-0">
+                        <Landmark className="w-4 h-4 text-primary" />
+                      </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-foreground truncate">{acct.account_holder_name}</p>
                         <p className="text-xs text-muted-foreground capitalize">
-                          {acct.account_type} account ending in {acct.account_number_last4}
+                          {acct.account_type} ···· {acct.account_number_last4}
+                          {acct.routing_number && (
+                            <span className="ml-2 text-muted-foreground/60">Routing: ···{acct.routing_number.slice(-4)}</span>
+                          )}
                         </p>
                       </div>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteBankAccount(acct.id)}
+                        disabled={deletingId === acct.id}
+                        className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-all p-1 rounded"
+                        title="Remove account"
+                      >
+                        {deletingId === acct.id ? (
+                          <span className="text-xs">…</span>
+                        ) : (
+                          <Trash2 className="w-3.5 h-3.5" />
+                        )}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Direct Deposit Card */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                    <DollarSign className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-base">Direct Deposit</CardTitle>
+                    <CardDescription className="text-xs">Agent banking info for deal payouts</CardDescription>
+                  </div>
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-8 text-xs gap-1.5"
+                  onClick={() => setShowAddDirectDeposit((v) => !v)}
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  Add Agent
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Add agent banking details here so you can quickly send their commission when a deal closes. Only the last 4 digits of their account number are stored.
+              </p>
+
+              {/* Add direct deposit form */}
+              {showAddDirectDeposit && (
+                <div className="rounded-lg border bg-muted/20 p-4 space-y-3">
+                  <div className="flex items-center justify-between mb-1">
+                    <p className="text-sm font-semibold text-foreground flex items-center gap-2">
+                      <DollarSign className="w-4 h-4 text-emerald-600 dark:text-emerald-400" /> New Payout Recipient
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setShowAddDirectDeposit(false)}
+                      className="text-muted-foreground hover:text-foreground"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  <form onSubmit={handleAddDirectDeposit} className="space-y-3">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Agent Name</Label>
+                      <Input
+                        placeholder="Agent full name"
+                        value={ddAgentName}
+                        onChange={(e) => setDdAgentName(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Bank Name <span className="text-muted-foreground">(optional)</span></Label>
+                      <Input
+                        placeholder="e.g. Chase, Wells Fargo"
+                        value={ddBankName}
+                        onChange={(e) => setDdBankName(e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Account Type</Label>
+                      <Select value={ddAccountType} onValueChange={(v) => setDdAccountType(v as 'checking' | 'savings')}>
+                        <SelectTrigger className="h-9 text-sm">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="checking">Checking</SelectItem>
+                          <SelectItem value="savings">Savings</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Routing Number</Label>
+                      <Input
+                        placeholder="9-digit ABA routing number"
+                        value={ddRouting}
+                        onChange={(e) => setDdRouting(e.target.value.replace(/\D/g, '').slice(0, 9))}
+                        maxLength={9}
+                        className={cn(ddRouting && (ddRoutingResult.valid ? 'border-emerald-500' : 'border-destructive'))}
+                        required
+                      />
+                      <FieldHint value={ddRouting} result={ddRoutingResult} />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Account Number</Label>
+                      <Input
+                        placeholder="Enter account number"
+                        type="password"
+                        value={ddAccountNum}
+                        onChange={(e) => setDdAccountNum(e.target.value.replace(/\D/g, '').slice(0, 17))}
+                        className={cn(ddAccountNum && (ddAccountResult.valid ? 'border-emerald-500' : 'border-destructive'))}
+                        required
+                      />
+                      <FieldHint value={ddAccountNum} result={ddAccountResult} />
+                    </div>
+                    <p className="text-[10px] text-muted-foreground">
+                      Only the last 4 digits of the account number are stored for security.
+                    </p>
+                    <div className="flex gap-2 pt-1">
+                      <Button type="submit" size="sm" className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white" disabled={addingDeposit || !ddFormValid}>
+                        {addingDeposit ? 'Saving…' : 'Save Recipient'}
+                      </Button>
+                      <Button type="button" size="sm" variant="outline" onClick={() => setShowAddDirectDeposit(false)}>
+                        Cancel
+                      </Button>
+                    </div>
+                  </form>
+                </div>
+              )}
+
+              {/* Direct deposit list */}
+              {directDepositLoading ? (
+                <p className="text-sm text-muted-foreground">Loading…</p>
+              ) : directDeposits.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No payout recipients added yet.</p>
+              ) : (
+                <div className="space-y-2">
+                  {directDeposits.map((dep) => (
+                    <div key={dep.id} className="flex items-center gap-3 p-3 rounded-lg border bg-muted/30 group">
+                      <div className="w-8 h-8 rounded-md bg-emerald-500/10 flex items-center justify-center shrink-0">
+                        <DollarSign className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-foreground truncate">{dep.agent_name}</p>
+                        <p className="text-xs text-muted-foreground capitalize">
+                          {dep.bank_name ? `${dep.bank_name} · ` : ''}{dep.account_type} ···· {dep.account_number_last4}
+                          {dep.routing_number && (
+                            <span className="ml-2 text-muted-foreground/60">Routing: ···{dep.routing_number.slice(-4)}</span>
+                          )}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteDirectDeposit(dep.id)}
+                        disabled={ddDeletingId === dep.id}
+                        className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-all p-1 rounded"
+                        title="Remove recipient"
+                      >
+                        {ddDeletingId === dep.id ? (
+                          <span className="text-xs">…</span>
+                        ) : (
+                          <Trash2 className="w-3.5 h-3.5" />
+                        )}
+                      </button>
                     </div>
                   ))}
                 </div>

@@ -11,6 +11,8 @@ export interface Profile {
   license_number: string | null;
   avatar_url: string | null;
   subscription_status: string;
+  referral_code: string | null;
+  referred_by_code: string | null;
   created_at: string;
   updated_at: string;
 }

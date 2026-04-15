@@ -9,6 +9,7 @@ import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import Auth from "@/pages/Auth";
 import OnboardingPayment from "@/pages/OnboardingPayment";
 import ResetPassword from "@/pages/ResetPassword";
+import Signup from "@/pages/Signup";
 import Transactions from "@/pages/Transactions";
 import NewDeal from "@/pages/NewDeal";
 import DealDetail from "@/pages/DealDetail";
@@ -50,6 +51,7 @@ const App = () => (
           <Route path="/" element={<Navigate to="/transactions" replace />} />
           {/* Public routes */}
           <Route path="/auth" element={<Auth />} />
+          <Route path="/signup" element={<Signup />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/sign/:token" element={<SignDocument />} />
           {/* Paywall route (auth required but no active subscription needed) */}
