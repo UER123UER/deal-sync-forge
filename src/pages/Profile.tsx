@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -7,7 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { User, Lock, CreditCard, LogOut, Eye, EyeOff, Building2, Phone, BadgeCheck } from 'lucide-react';
+import { User, Lock, CreditCard, LogOut, Eye, EyeOff, Building2, Phone, BadgeCheck, Camera, Trash2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 export default function Profile() {
   const { user, profile, signOut, refreshProfile } = useAuth();
@@ -35,6 +36,11 @@ export default function Profile() {
   const [bankAccounts, setBankAccounts] = useState<any[]>([]);
   const [billingLoading, setBillingLoading] = useState(true);
 
+  // Avatar state
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+
   // Sign out state
   const [signingOut, setSigningOut] = useState(false);
 
@@ -46,6 +52,7 @@ export default function Profile() {
       setPhone(profile.phone ?? '');
       setBrokerageName(profile.brokerage_name ?? '');
       setLicenseNumber(profile.license_number ?? '');
+      setAvatarUrl(profile.avatar_url ?? null);
     }
   }, [profile]);
 
@@ -62,6 +69,73 @@ export default function Profile() {
         setBillingLoading(false);
       });
   }, [user]);
+
+  // Upload avatar photo
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file || !user) return;
+
+    const MAX = 5 * 1024 * 1024;
+    if (file.size > MAX) {
+      toast({ title: 'File too large', description: 'Please choose an image under 5 MB.', variant: 'destructive' });
+      return;
+    }
+
+    setAvatarUploading(true);
+    const ext = file.name.split('.').pop() ?? 'jpg';
+    const path = `${user.id}/avatar.${ext}`;
+
+    // Upload (upsert replaces existing)
+    const { error: uploadError } = await supabase.storage
+      .from('avatars')
+      .upload(path, file, { upsert: true, contentType: file.type });
+
+    if (uploadError) {
+      setAvatarUploading(false);
+      toast({ title: 'Upload failed', description: uploadError.message, variant: 'destructive' });
+      return;
+    }
+
+    // Get public URL
+    const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(path);
+    // Bust cache with timestamp
+    const bustedUrl = `${publicUrl}?t=${Date.now()}`;
+
+    // Save to profile
+    const { error: dbError } = await supabase
+      .from('profiles')
+      .update({ avatar_url: bustedUrl })
+      .eq('id', user.id);
+
+    setAvatarUploading(false);
+    if (dbError) {
+      toast({ title: 'Could not save avatar', description: dbError.message, variant: 'destructive' });
+    } else {
+      setAvatarUrl(bustedUrl);
+      refreshProfile?.();
+      toast({ title: 'Profile photo updated ✓' });
+    }
+  };
+
+  // Remove avatar photo
+  const handleAvatarRemove = async () => {
+    if (!user || !avatarUrl) return;
+    setAvatarUploading(true);
+
+    // Remove all files in the user's avatar folder
+    const { data: files } = await supabase.storage.from('avatars').list(user.id);
+    if (files && files.length > 0) {
+      await supabase.storage.from('avatars').remove(files.map((f) => `${user.id}/${f.name}`));
+    }
+
+    // Clear avatar_url in DB
+    await supabase.from('profiles').update({ avatar_url: null }).eq('id', user.id);
+    setAvatarUrl(null);
+    setAvatarUploading(false);
+    refreshProfile?.();
+    toast({ title: 'Profile photo removed' });
+  };
 
   // Save profile info
   const handleSaveProfile = async (e: React.FormEvent) => {
@@ -162,6 +236,83 @@ export default function Profile() {
               </div>
             </CardHeader>
             <CardContent>
+              {/* ── Avatar upload ── */}
+              <div className="flex items-center gap-5 mb-6 pb-6 border-b">
+                {/* Avatar circle */}
+                <div className="relative shrink-0">
+                  <div className={cn(
+                    'w-20 h-20 rounded-full overflow-hidden border-2 border-border bg-muted flex items-center justify-center',
+                    avatarUploading && 'opacity-50'
+                  )}>
+                    {avatarUrl ? (
+                      <img src={avatarUrl} alt="Profile" className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-2xl font-bold text-muted-foreground select-none">
+                        {(() => {
+                          const f = firstName.trim();
+                          const l = lastName.trim();
+                          if (f && l) return `${f[0]}${l[0]}`.toUpperCase();
+                          if (f) return f.slice(0, 2).toUpperCase();
+                          return (user?.email ?? '??').slice(0, 2).toUpperCase();
+                        })()}
+                      </span>
+                    )}
+                  </div>
+                  {/* Camera badge */}
+                  <button
+                    type="button"
+                    onClick={() => avatarInputRef.current?.click()}
+                    disabled={avatarUploading}
+                    className="absolute bottom-0 right-0 w-7 h-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow border-2 border-background hover:bg-primary/90 transition-colors"
+                    title="Upload photo"
+                  >
+                    <Camera className="w-3.5 h-3.5" />
+                  </button>
+                  <input
+                    ref={avatarInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/gif"
+                    className="hidden"
+                    onChange={handleAvatarUpload}
+                  />
+                </div>
+
+                {/* Text + actions */}
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-foreground">
+                    {firstName || lastName ? `${firstName} ${lastName}`.trim() : 'Your Name'}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{user?.email ?? ''}</p>
+                  <div className="flex gap-2 mt-3">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="h-7 text-xs gap-1.5"
+                      disabled={avatarUploading}
+                      onClick={() => avatarInputRef.current?.click()}
+                    >
+                      <Camera className="w-3 h-3" />
+                      {avatarUploading ? 'Uploading…' : avatarUrl ? 'Change Photo' : 'Upload Photo'}
+                    </Button>
+                    {avatarUrl && (
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 text-xs text-destructive hover:text-destructive hover:bg-destructive/10 gap-1.5"
+                        disabled={avatarUploading}
+                        onClick={handleAvatarRemove}
+                      >
+                        <Trash2 className="w-3 h-3" />
+                        Remove
+                      </Button>
+                    )}
+                  </div>
+                  <p className="text-[10px] text-muted-foreground mt-1.5">JPG, PNG, WebP or GIF · max 5 MB</p>
+                </div>
+              </div>
+
               {/* Email (read-only) */}
               <div className="mb-5">
                 <Label className="text-xs text-muted-foreground uppercase tracking-wide">Email Address</Label>

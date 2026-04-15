@@ -160,23 +160,31 @@ export function AppSidebar() {
         onClick={() => navigate('/profile')}
         title="My Profile"
         className={cn(
-          'mt-2 w-10 h-10 rounded-full flex items-center justify-center transition-all ring-2 shrink-0',
+          'mt-2 w-10 h-10 rounded-full overflow-hidden flex items-center justify-center transition-all ring-2 shrink-0',
           profileActive
             ? 'ring-[hsl(var(--sidebar-active))] scale-105'
-            : 'ring-transparent hover:ring-[hsl(var(--sidebar-fg))/40] hover:scale-105'
+            : 'ring-transparent hover:ring-white/30 hover:scale-105'
         )}
         style={{
-          background: profileActive
+          background: profile?.avatar_url ? undefined : profileActive
             ? 'hsl(var(--sidebar-active))'
             : 'hsl(var(--sidebar-hover))',
         }}
       >
-        <span
-          className="text-[13px] font-bold leading-none select-none"
-          style={{ color: profileActive ? 'hsl(var(--sidebar-bg))' : 'hsl(var(--sidebar-fg))' }}
-        >
-          {initials}
-        </span>
+        {profile?.avatar_url ? (
+          <img
+            src={profile.avatar_url}
+            alt="Profile"
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <span
+            className="text-[13px] font-bold leading-none select-none"
+            style={{ color: profileActive ? 'hsl(var(--sidebar-bg))' : 'hsl(var(--sidebar-fg))' }}
+          >
+            {initials}
+          </span>
+        )}
       </button>
     </div>
   );
