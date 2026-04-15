@@ -1,9 +1,10 @@
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Home, Plus, Users, DollarSign, Mail, CheckSquare, Calendar, Gift, Phone, Shield, UserCircle, Building2 } from 'lucide-react';
+import { Home, Plus, Users, DollarSign, Mail, CheckSquare, Calendar, Gift, Phone, Shield, Building2 } from 'lucide-react';
 import { UERLogo } from '@/components/UERLogo';
 import { cn } from '@/lib/utils';
 import { useState, useRef, useEffect } from 'react';
 import { useContacts } from '@/hooks/useContacts';
+import { useAuth } from '@/hooks/useAuth';
 
 const navItems = [
   { icon: Plus, label: 'Create', path: '/transactions/new' },
@@ -14,7 +15,6 @@ const navItems = [
   { icon: Gift, label: 'Referral', path: '/referral' },
   { icon: Phone, label: 'Brokerage', path: '/contact-brokerage' },
   { icon: Shield, label: 'Admin', path: '/admin/pdf-editor' },
-  { icon: UserCircle, label: 'Profile', path: '/profile' },
 ];
 
 const peopleSubmenu = [
@@ -30,6 +30,19 @@ export function AppSidebar() {
   const [submenuOpen, setSubmenuOpen] = useState(false);
   const submenuRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const { profile, user } = useAuth();
+
+  // Avatar initials from profile or email
+  const initials = (() => {
+    const first = profile?.first_name?.trim();
+    const last = profile?.last_name?.trim();
+    if (first && last) return `${first[0]}${last[0]}`.toUpperCase();
+    if (first) return first.slice(0, 2).toUpperCase();
+    const email = user?.email ?? '';
+    return email.slice(0, 2).toUpperCase();
+  })();
+
+  const profileActive = location.pathname.startsWith('/profile');
 
   // Overdue follow-up count for the People badge
   const { data: contacts = [] } = useContacts();
@@ -58,6 +71,8 @@ export function AppSidebar() {
         <UERLogo width={48} />
       </div>
 
+      {/* Nav items — flex-1 so profile stays at bottom */}
+      <div className="flex flex-col items-center gap-1 flex-1 w-full">
       {navItems.map((item) => {
         const isActive = item.path === '/transactions/new'
           ? location.pathname === '/transactions/new'
@@ -138,6 +153,31 @@ export function AppSidebar() {
           </button>
         );
       })}
+      </div>
+
+      {/* Profile avatar — pinned to bottom */}
+      <button
+        onClick={() => navigate('/profile')}
+        title="My Profile"
+        className={cn(
+          'mt-2 w-10 h-10 rounded-full flex items-center justify-center transition-all ring-2 shrink-0',
+          profileActive
+            ? 'ring-[hsl(var(--sidebar-active))] scale-105'
+            : 'ring-transparent hover:ring-[hsl(var(--sidebar-fg))/40] hover:scale-105'
+        )}
+        style={{
+          background: profileActive
+            ? 'hsl(var(--sidebar-active))'
+            : 'hsl(var(--sidebar-hover))',
+        }}
+      >
+        <span
+          className="text-[13px] font-bold leading-none select-none"
+          style={{ color: profileActive ? 'hsl(var(--sidebar-bg))' : 'hsl(var(--sidebar-fg))' }}
+        >
+          {initials}
+        </span>
+      </button>
     </div>
   );
 }
