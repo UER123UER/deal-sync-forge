@@ -121,9 +121,9 @@ export default function Referral() {
                 <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
                   <Gift className="w-4 h-4 text-primary" />
                 </div>
-                <span className="text-xs text-muted-foreground">Per Referral</span>
+                <span className="text-xs text-muted-foreground">Per Month / Active</span>
               </div>
-              <div className="text-2xl font-bold text-foreground">${earningsPerReferral}</div>
+              <div className="text-2xl font-bold text-foreground">${earningsPerMonth}</div>
             </div>
           </div>
 
