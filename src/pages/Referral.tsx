@@ -169,7 +169,7 @@ export default function Referral() {
               {[
                 { step: '1', text: 'Share your referral link with fellow agents' },
                 { step: '2', text: 'They sign up using your unique link' },
-                { step: '3', text: 'Once they become a paying agent, you earn $20' },
+                { step: '3', text: 'You earn $20 every month they remain an active paying agent' },
               ].map((item) => (
                 <div key={item.step} className="flex items-center gap-3">
                   <div className="w-7 h-7 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold shrink-0">
