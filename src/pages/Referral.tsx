@@ -10,22 +10,45 @@ import { supabase } from '@/integrations/supabase/client';
 export default function Referral() {
   const { user, profile } = useAuth();
   const [copied, setCopied] = useState(false);
-  const [referralCount, setReferralCount] = useState<number | null>(null);
+  const [totalReferrals, setTotalReferrals] = useState(0);
+  const [activeReferrals, setActiveReferrals] = useState(0);
+  const [totalEarnings, setTotalEarnings] = useState(0);
   const [loadingCount, setLoadingCount] = useState(true);
 
-  const earningsPerReferral = 20;
+  const earningsPerMonth = 20;
 
-  // Load how many agents signed up using this profile's referral code
+  // Load referred agents and compute monthly accruing earnings
   useEffect(() => {
     if (!profile?.referral_code) return;
-    (supabase as any)
-      .from('profiles')
-      .select('id', { count: 'exact', head: true })
-      .eq('referred_by_code', profile.referral_code)
-      .then(({ count }: any) => {
-        setReferralCount(count ?? 0);
-        setLoadingCount(false);
-      });
+    (async () => {
+      const { data } = await (supabase as any)
+        .from('profiles')
+        .select('id, subscription_status, subscription_activated_at')
+        .eq('referred_by_code', profile.referral_code);
+
+      const rows = (data ?? []) as Array<{
+        subscription_status: string;
+        subscription_activated_at: string | null;
+      }>;
+
+      let earnings = 0;
+      let active = 0;
+      const now = Date.now();
+      for (const r of rows) {
+        if (r.subscription_status === 'active' && r.subscription_activated_at) {
+          active += 1;
+          const start = new Date(r.subscription_activated_at).getTime();
+          // Count each completed 30-day month the referred agent has been paying
+          const months = Math.max(1, Math.floor((now - start) / (1000 * 60 * 60 * 24 * 30)) + 1);
+          earnings += months * earningsPerMonth;
+        }
+      }
+
+      setTotalReferrals(rows.length);
+      setActiveReferrals(active);
+      setTotalEarnings(earnings);
+      setLoadingCount(false);
+    })();
   }, [profile?.referral_code]);
 
   // Use the permanent code from the user's profile
@@ -33,9 +56,6 @@ export default function Referral() {
   const referralLink = profile?.referral_code
     ? `${window.location.origin}/signup?ref=${profile.referral_code}`
     : '';
-
-  const totalReferrals = referralCount ?? 0;
-  const totalEarnings = totalReferrals * earningsPerReferral;
 
   const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => () => { if (copyTimerRef.current) clearTimeout(copyTimerRef.current); }, []);
@@ -101,9 +121,9 @@ export default function Referral() {
                 <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
                   <Gift className="w-4 h-4 text-primary" />
                 </div>
-                <span className="text-xs text-muted-foreground">Per Referral</span>
+                <span className="text-xs text-muted-foreground">Per Month / Active</span>
               </div>
-              <div className="text-2xl font-bold text-foreground">${earningsPerReferral}</div>
+              <div className="text-2xl font-bold text-foreground">${earningsPerMonth}</div>
             </div>
           </div>
 
@@ -111,7 +131,7 @@ export default function Referral() {
           <div className="border rounded-lg p-8 bg-background flex flex-col items-center gap-6">
             <h2 className="text-lg font-semibold text-foreground">Share Your Referral</h2>
             <p className="text-sm text-muted-foreground text-center max-w-md">
-              Earn <span className="font-semibold text-foreground">${earningsPerReferral}</span> for every paying agent you refer. Share your unique link or QR code.
+              Earn <span className="font-semibold text-foreground">${earningsPerMonth}</span> every month for each agent you refer who keeps an active subscription.
             </p>
             {referralLink ? (
               <div className="p-4 bg-white border rounded-xl shadow-sm">
@@ -149,7 +169,7 @@ export default function Referral() {
               {[
                 { step: '1', text: 'Share your referral link with fellow agents' },
                 { step: '2', text: 'They sign up using your unique link' },
-                { step: '3', text: 'Once they become a paying agent, you earn $20' },
+                { step: '3', text: 'You earn $20 every month they remain an active paying agent' },
               ].map((item) => (
                 <div key={item.step} className="flex items-center gap-3">
                   <div className="w-7 h-7 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold shrink-0">

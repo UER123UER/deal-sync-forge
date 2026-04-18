@@ -68,10 +68,10 @@ export default function OnboardingPayment() {
       return;
     }
 
-    // Activate subscription
-    const { error: profileError } = await supabase
-      .from('profiles')
-      .update({ subscription_status: 'active' })
+    // Activate subscription (mark activation timestamp so referrer earnings can accrue monthly)
+    const { error: profileError } = await (supabase
+      .from('profiles') as any)
+      .update({ subscription_status: 'active', subscription_activated_at: new Date().toISOString() })
       .eq('id', user.id);
 
     if (profileError) {
