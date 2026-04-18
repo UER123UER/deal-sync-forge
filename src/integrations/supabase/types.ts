@@ -44,6 +44,39 @@ export type Database = {
         }
         Relationships: []
       }
+      affiliate_links: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          name: string
+          notes: string | null
+          updated_at: string
+          url: string
+          user_id: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          id?: string
+          name: string
+          notes?: string | null
+          updated_at?: string
+          url: string
+          user_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          name?: string
+          notes?: string | null
+          updated_at?: string
+          url?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       bank_accounts: {
         Row: {
           account_holder_name: string
