@@ -131,7 +131,7 @@ export default function Referral() {
           <div className="border rounded-lg p-8 bg-background flex flex-col items-center gap-6">
             <h2 className="text-lg font-semibold text-foreground">Share Your Referral</h2>
             <p className="text-sm text-muted-foreground text-center max-w-md">
-              Earn <span className="font-semibold text-foreground">${earningsPerReferral}</span> for every paying agent you refer. Share your unique link or QR code.
+              Earn <span className="font-semibold text-foreground">${earningsPerMonth}</span> every month for each agent you refer who keeps an active subscription.
             </p>
             {referralLink ? (
               <div className="p-4 bg-white border rounded-xl shadow-sm">
