@@ -10,22 +10,45 @@ import { supabase } from '@/integrations/supabase/client';
 export default function Referral() {
   const { user, profile } = useAuth();
   const [copied, setCopied] = useState(false);
-  const [referralCount, setReferralCount] = useState<number | null>(null);
+  const [totalReferrals, setTotalReferrals] = useState(0);
+  const [activeReferrals, setActiveReferrals] = useState(0);
+  const [totalEarnings, setTotalEarnings] = useState(0);
   const [loadingCount, setLoadingCount] = useState(true);
 
-  const earningsPerReferral = 20;
+  const earningsPerMonth = 20;
 
-  // Load how many agents signed up using this profile's referral code
+  // Load referred agents and compute monthly accruing earnings
   useEffect(() => {
     if (!profile?.referral_code) return;
-    (supabase as any)
-      .from('profiles')
-      .select('id', { count: 'exact', head: true })
-      .eq('referred_by_code', profile.referral_code)
-      .then(({ count }: any) => {
-        setReferralCount(count ?? 0);
-        setLoadingCount(false);
-      });
+    (async () => {
+      const { data } = await (supabase as any)
+        .from('profiles')
+        .select('id, subscription_status, subscription_activated_at')
+        .eq('referred_by_code', profile.referral_code);
+
+      const rows = (data ?? []) as Array<{
+        subscription_status: string;
+        subscription_activated_at: string | null;
+      }>;
+
+      let earnings = 0;
+      let active = 0;
+      const now = Date.now();
+      for (const r of rows) {
+        if (r.subscription_status === 'active' && r.subscription_activated_at) {
+          active += 1;
+          const start = new Date(r.subscription_activated_at).getTime();
+          // Count each completed 30-day month the referred agent has been paying
+          const months = Math.max(1, Math.floor((now - start) / (1000 * 60 * 60 * 24 * 30)) + 1);
+          earnings += months * earningsPerMonth;
+        }
+      }
+
+      setTotalReferrals(rows.length);
+      setActiveReferrals(active);
+      setTotalEarnings(earnings);
+      setLoadingCount(false);
+    })();
   }, [profile?.referral_code]);
 
   // Use the permanent code from the user's profile
@@ -33,9 +56,6 @@ export default function Referral() {
   const referralLink = profile?.referral_code
     ? `${window.location.origin}/signup?ref=${profile.referral_code}`
     : '';
-
-  const totalReferrals = referralCount ?? 0;
-  const totalEarnings = totalReferrals * earningsPerReferral;
 
   const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => () => { if (copyTimerRef.current) clearTimeout(copyTimerRef.current); }, []);
