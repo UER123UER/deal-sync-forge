@@ -118,12 +118,12 @@ export default function Profile() {
   // Load direct deposit accounts
   useEffect(() => {
     if (!user) return;
-    supabase
+    (supabase as any)
       .from('direct_deposits')
       .select('*')
       .eq('owner_id', user.id)
       .order('created_at', { ascending: false })
-      .then(({ data }) => {
+      .then(({ data }: any) => {
         setDirectDeposits(data ?? []);
         setDirectDepositLoading(false);
       });
@@ -311,7 +311,7 @@ export default function Profile() {
 
     setAddingDeposit(true);
     const last4 = ddAccountNum.slice(-4);
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('direct_deposits')
       .insert({
         owner_id: user.id,
@@ -342,7 +342,7 @@ export default function Profile() {
   // Delete direct deposit recipient
   const handleDeleteDirectDeposit = async (id: string) => {
     setDdDeletingId(id);
-    const { error } = await supabase.from('direct_deposits').delete().eq('id', id);
+    const { error } = await (supabase as any).from('direct_deposits').delete().eq('id', id);
     setDdDeletingId(null);
     if (error) {
       toast({ title: 'Error removing recipient', description: error.message, variant: 'destructive' });

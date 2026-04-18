@@ -18,11 +18,11 @@ export default function Referral() {
   // Load how many agents signed up using this profile's referral code
   useEffect(() => {
     if (!profile?.referral_code) return;
-    supabase
+    (supabase as any)
       .from('profiles')
       .select('id', { count: 'exact', head: true })
       .eq('referred_by_code', profile.referral_code)
-      .then(({ count }) => {
+      .then(({ count }: any) => {
         setReferralCount(count ?? 0);
         setLoadingCount(false);
       });
