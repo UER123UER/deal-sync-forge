@@ -374,6 +374,8 @@ export type Database = {
           last_name: string | null
           license_number: string | null
           phone: string | null
+          referral_code: string | null
+          referred_by_code: string | null
           subscription_status: string
           updated_at: string
         }
@@ -386,6 +388,8 @@ export type Database = {
           last_name?: string | null
           license_number?: string | null
           phone?: string | null
+          referral_code?: string | null
+          referred_by_code?: string | null
           subscription_status?: string
           updated_at?: string
         }
@@ -398,6 +402,8 @@ export type Database = {
           last_name?: string | null
           license_number?: string | null
           phone?: string | null
+          referral_code?: string | null
+          referred_by_code?: string | null
           subscription_status?: string
           updated_at?: string
         }
