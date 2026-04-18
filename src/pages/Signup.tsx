@@ -109,8 +109,7 @@ export default function Signup() {
 
     // Save the referral code that brought this user here
     if (refCode && signInData.user) {
-      await supabase
-        .from('profiles')
+      await (supabase.from('profiles') as any)
         .update({ referred_by_code: refCode })
         .eq('id', signInData.user.id);
     }
