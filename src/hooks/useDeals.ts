@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { buildAdminDocumentCatalog } from '@/lib/adminDocuments';
 
 export interface DealContact {
   id: string;
@@ -144,7 +145,7 @@ export function useCreateDeal() {
         }
       }
 
-      const DEFAULT_CHECKLIST = [
+      const FALLBACK_CHECKLIST = [
         { name: 'Exclusive Right of Sale Listing Agreement', has_digital_form: true },
         { name: 'Tax Roll', has_digital_form: false },
         { name: 'Lead-Based Paint Pamphlet', has_digital_form: false },
@@ -155,8 +156,21 @@ export function useCreateDeal() {
         { name: 'Compensation Agreement - Seller or Sellers Broker to Buyers Broker', has_digital_form: true },
         { name: 'Modification to Compensation Agreement - Seller or Sellers Broker to Buyers Broker', has_digital_form: true },
       ];
+
+      const { data: adminDocuments } = await supabase
+        .from('admin_documents')
+        .select('file_name')
+        .order('file_name', { ascending: true });
+
+      const defaultChecklist = adminDocuments?.length
+        ? buildAdminDocumentCatalog(adminDocuments).map((document) => ({
+            name: document.checklistName,
+            has_digital_form: true,
+          }))
+        : FALLBACK_CHECKLIST;
+
       await supabase.from('checklist_items').insert(
-        DEFAULT_CHECKLIST.map((item, i) => ({
+        defaultChecklist.map((item, i) => ({
           deal_id: newDeal.id,
           name: item.name,
           has_digital_form: item.has_digital_form,

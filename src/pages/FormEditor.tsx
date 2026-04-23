@@ -9,6 +9,7 @@ import { PdfEditorSidebar, type Signer, type SidebarTab } from '@/components/adm
 import { PdfCanvas, type FontStyle } from '@/components/admin/PdfCanvas';
 import { SignatureStampModal } from '@/components/admin/SignatureStampModal';
 import { supabase } from '@/integrations/supabase/client';
+import { findMatchingAdminDocument } from '@/lib/adminDocuments';
 import { toast } from 'sonner';
 import * as pdfjsLib from 'pdfjs-dist';
 import { Canvas as FabricCanvas, IText } from 'fabric';
@@ -181,30 +182,26 @@ export default function FormEditor() {
     };
   }, [deal]);
 
-  // Load the legal PDF
-  useEffect(() => {
-    loadPdf();
-  }, []);
+  const loadPdf = useCallback(async () => {
+    if (!checklistItem?.name) return;
 
-  const loadPdf = async () => {
     setPdfLoading(true);
     setPdfError(null);
     try {
       const { data: docs, error } = await supabase
         .from('admin_documents')
-        .select('*')
-        .or('file_name.ilike.%ERS%,file_name.ilike.%Listing Agreement%,file_name.ilike.%Exclusive Right%')
-        .order('created_at', { ascending: false })
-        .limit(1);
+        .select('id, file_name, storage_path, updated_at')
+        .order('updated_at', { ascending: false });
 
       if (error) throw error;
-      if (!docs || docs.length === 0) {
-        setPdfError('No listing agreement PDF found. Please upload one in the Admin PDF Editor first.');
+      const doc = findMatchingAdminDocument(checklistItem.name, docs || []);
+
+      if (!doc?.storage_path) {
+        setPdfError(`No PDF found for "${checklistItem.name}". Please upload it in the Admin PDF Editor first.`);
         setPdfLoading(false);
         return;
       }
 
-      const doc = docs[0];
       const { data: fileData, error: dlError } = await supabase.storage
         .from('admin-documents')
         .download(doc.storage_path);
@@ -242,7 +239,21 @@ export default function FormEditor() {
     } finally {
       setPdfLoading(false);
     }
-  };
+  }, [checklistItem?.name]);
+
+  // Load the matching PDF for the current checklist item.
+  useEffect(() => {
+    if (isLoading) return;
+
+    if (!checklistItem) {
+      setPages([]);
+      setPdfLoading(false);
+      setPdfError('Document not found.');
+      return;
+    }
+
+    loadPdf();
+  }, [checklistItem, isLoading, loadPdf]);
 
   // ── AUTOFILL MODE: Render background image ──
   useEffect(() => {

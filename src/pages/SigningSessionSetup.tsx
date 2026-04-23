@@ -20,6 +20,7 @@ import {
   useUpdateSigningSession,
 } from '@/hooks/useSigningSessions';
 import { supabase } from '@/integrations/supabase/client';
+import { findMatchingAdminDocument } from '@/lib/adminDocuments';
 import { toast } from 'sonner';
 
 const STEPS = ['Details', 'Documents', 'Recipients', 'Roles', 'Settings'] as const;
@@ -75,9 +76,6 @@ const reindexRecipients = (recipients: LocalRecipient[]) =>
     sort_order: index,
   }));
 
-const normalizeDocumentName = (value: string) =>
-  value.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
-
 const normalizeComparison = (value: string) =>
   value.toLowerCase().replace(/\s+/g, ' ').trim();
 
@@ -90,30 +88,6 @@ const getRoleName = (role: LocalRoleAssignment) =>
     : role.role_option;
 
 const buildNumberedRole = (baseRole: string, count: number) => `${baseRole.trim()} ${count}`;
-
-const findMatchingAdminDocument = (
-  checklistName: string,
-  adminDocs: Array<{ file_name: string; storage_path: string }>
-) => {
-  const normalizedChecklist = normalizeDocumentName(checklistName);
-  const checklistTokens = normalizedChecklist.split(' ').filter((token) => token.length > 2);
-
-  return adminDocs.find((doc) => {
-    const normalizedFileName = normalizeDocumentName(doc.file_name);
-    if (
-      normalizedFileName.includes(normalizedChecklist) ||
-      normalizedChecklist.includes(normalizedFileName)
-    ) {
-      return true;
-    }
-
-    const matchedTokenCount = checklistTokens.filter((token) =>
-      normalizedFileName.includes(token)
-    ).length;
-
-    return checklistTokens.length > 0 && matchedTokenCount >= Math.max(2, checklistTokens.length - 1);
-  });
-};
 
 const buildSuggestedRoleOptions = (dealPeople: DealPerson[], recipients: LocalRecipient[]) => {
   const numberedRoles: string[] = [];

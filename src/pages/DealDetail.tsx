@@ -3,7 +3,7 @@ import { TEMPLATES, TEMPLATE_CATEGORIES, getDefaultTemplateData, type TemplateCa
 import { type RecentEntry } from '@/pages/MarketingEditor';
 import { useSignatureRequests } from '@/hooks/useSignatureRequests';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { ChevronDown, ChevronRight, Edit, Eye, Mail, Plus, FileText, GripVertical, Download, Printer, Send, Trash2, MessageSquare, Bell, UserPlus, Check, X, Upload, Image, StickyNote, Megaphone, Clock } from 'lucide-react';
+import { ChevronDown, Edit, Eye, Mail, Plus, FileText, GripVertical, Download, Printer, Send, Trash2, MessageSquare, Bell, UserPlus, Check, X, Upload, Image, StickyNote, Megaphone, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -59,7 +59,6 @@ export default function DealDetail() {
     ? (searchParams.get('tab') as typeof TABS[number])
     : 'Checklists';
   const [activeTab, setActiveTab] = useState<typeof TABS[number]>(initialTab);
-  const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   const [selectedSigningItems, setSelectedSigningItems] = useState<Set<string>>(new Set());
 
   // Inline editing states
@@ -128,15 +127,6 @@ export default function DealDetail() {
     if (allSigned) return 'signed';
     if (anySigned) return 'partially_signed';
     return 'sent';
-  };
-
-  const toggleExpand = (itemId: string) => {
-    setExpandedItems((prev) => {
-      const next = new Set(prev);
-      if (next.has(itemId)) next.delete(itemId);
-      else next.add(itemId);
-      return next;
-    });
   };
 
   const handleChangeStatus = async (status: string) => {
@@ -562,13 +552,11 @@ export default function DealDetail() {
             </div>
             <div className="border rounded-md overflow-hidden">
               {checklistItems.map((item) => {
-                const isExpanded = expandedItems.has(item.id);
                 const isSelectedForSigning = selectedSigningItems.has(item.id);
                 return (
                   <div key={item.id}>
                     <div className={cn(
                       'flex items-center px-3 py-3 border-b last:border-b-0 group transition-colors',
-                      isExpanded && 'bg-info-light',
                       isSelectedForSigning && 'bg-primary/5'
                     )}>
                       <GripVertical className="w-4 h-4 text-muted-foreground/40 mr-2 flex-shrink-0 cursor-grab" />
@@ -577,9 +565,7 @@ export default function DealDetail() {
                         onCheckedChange={() => handleToggleSigningSelection(item.id)}
                         className="mr-2 flex-shrink-0"
                       />
-                      <button onClick={() => toggleExpand(item.id)} className="mr-2 flex-shrink-0">
-                        {item.has_digital_form ? (isExpanded ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />) : <div className="w-4 h-4" />}
-                      </button>
+                      <div className="mr-2 h-4 w-4 flex-shrink-0" />
                       <span className="text-sm text-foreground flex-1">{item.name}</span>
                       {(() => {
                         const sigStatus = getSignatureStatus(item.id);
@@ -611,26 +597,9 @@ export default function DealDetail() {
                             <DropdownMenuItem onClick={() => toast.success('Office notified to review')}><Bell className="w-3.5 h-3.5 mr-2" /> Notify Office to Review</DropdownMenuItem>
                             <DropdownMenuItem className="text-destructive" onClick={() => handleDeleteChecklist(item.id)}><Trash2 className="w-3.5 h-3.5 mr-2" /> Delete</DropdownMenuItem>
                           </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                    </div>
-                    {isExpanded && item.has_digital_form && (
-                      <div className="flex items-center px-3 py-2.5 pl-14 border-b bg-info-light/50">
-                        <FileText className="w-4 h-4 text-primary mr-2 flex-shrink-0" />
-                        <span className="text-sm text-foreground flex-1">Digital Form</span>
-                        <div className="flex items-center">
-                          <Button variant="outline" size="sm" className="h-7 text-xs rounded-r-none border-r-0" onClick={() => navigate(`/transactions/${deal.id}/form/${item.id}`)}>Edit Form</Button>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild><Button variant="outline" size="icon" className="h-7 w-7 rounded-l-none"><ChevronDown className="w-3.5 h-3.5" /></Button></DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => handleCreateSigningSession([item.id])}><Send className="w-3.5 h-3.5 mr-2" /> Docusign</DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => navigate(`/transactions/${deal.id}/form/${item.id}`)}><Printer className="w-3.5 h-3.5 mr-2" /> View/Print</DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleChecklistEmail(item.name)}><Mail className="w-3.5 h-3.5 mr-2" /> Email</DropdownMenuItem>
-                            </DropdownMenuContent>
                           </DropdownMenu>
                         </div>
                       </div>
-                    )}
                   </div>
                 );
               })}
