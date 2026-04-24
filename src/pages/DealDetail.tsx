@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { TEMPLATES, TEMPLATE_CATEGORIES, getDefaultTemplateData, type TemplateCategory } from '@/data/marketingTemplates';
 import { type RecentEntry } from '@/pages/MarketingEditor';
 import { useSignatureRequests } from '@/hooks/useSignatureRequests';
@@ -7,7 +7,8 @@ import { ChevronDown, Edit, Eye, Mail, Plus, FileText, GripVertical, Download, P
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { useDeal, useUpdateDeal, useDeleteChecklistItem, useAddDealContact } from '@/hooks/useDeals';
+import { useQuery } from '@tanstack/react-query';
+import { useDeal, useUpdateDeal, useDeleteChecklistItem, useAddDealContact, useAddChecklistItems } from '@/hooks/useDeals';
 import { useDealNotes, useCreateDealNote, useDeleteDealNote } from '@/hooks/useDealNotes';
 import { useOffers, useCreateOffer, useDeleteOffer } from '@/hooks/useOffers';
 import { useDealPhotos, useUploadDealPhoto, useDeleteDealPhoto } from '@/hooks/useDealPhotos';
@@ -21,6 +22,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { SigningSessionsPanel } from '@/components/deal/SigningSessionsPanel';
+import { supabase } from '@/integrations/supabase/client';
+import { buildAddableFormOptions, getChecklistSectionId, getChecklistSectionTitle } from '@/lib/checklistCatalog';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import JSZip from 'jszip';
@@ -54,12 +57,16 @@ export default function DealDetail() {
   const updateDeal = useUpdateDeal();
   const deleteChecklist = useDeleteChecklistItem();
   const addDealContact = useAddDealContact();
+  const addChecklistItems = useAddChecklistItems();
   const { data: allContacts = [] } = useContacts();
   const initialTab = (TABS as readonly string[]).includes(searchParams.get('tab') ?? '')
     ? (searchParams.get('tab') as typeof TABS[number])
     : 'Checklists';
   const [activeTab, setActiveTab] = useState<typeof TABS[number]>(initialTab);
   const [selectedSigningItems, setSelectedSigningItems] = useState<Set<string>>(new Set());
+  const [addFormsOpen, setAddFormsOpen] = useState(false);
+  const [hiddenFormSearch, setHiddenFormSearch] = useState('');
+  const [selectedHiddenForms, setSelectedHiddenForms] = useState<Set<string>>(new Set());
 
   // Inline editing states
   const [editingMls, setEditingMls] = useState(false);
@@ -116,6 +123,17 @@ export default function DealDetail() {
   const createOH = useCreateOpenHouse();
 
   const { data: signatureRequests = [] } = useSignatureRequests(id);
+  const { data: adminDocuments = [] } = useQuery({
+    queryKey: ['admin_documents', 'catalog'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('admin_documents')
+        .select('file_name, storage_path')
+        .order('file_name', { ascending: true });
+      if (error) throw error;
+      return data || [];
+    },
+  });
 
   // Helper to get signature status for a checklist item
   const getSignatureStatus = (checklistItemId: string) => {
@@ -167,6 +185,15 @@ export default function DealDetail() {
   const handleDeleteChecklist = async (itemId: string) => {
     try { await deleteChecklist.mutateAsync(itemId); toast.success('Checklist item deleted'); }
     catch { toast.error('Failed to delete checklist item'); }
+  };
+
+  const handleToggleHiddenForm = (fileName: string) => {
+    setSelectedHiddenForms((currentSelection) => {
+      const nextSelection = new Set(currentSelection);
+      if (nextSelection.has(fileName)) nextSelection.delete(fileName);
+      else nextSelection.add(fileName);
+      return nextSelection;
+    });
   };
 
   const handleToggleVisibility = async () => {
@@ -298,6 +325,90 @@ export default function DealDetail() {
     navigate(`/transactions/${deal.id}/signing-session/new/setup?${params.toString()}`);
   };
 
+  const checklistItems = useMemo(
+    () => [...(deal?.checklist_items || [])].sort((a, b) => a.sort_order - b.sort_order),
+    [deal?.checklist_items]
+  );
+
+  const addableForms = useMemo(
+    () =>
+      buildAddableFormOptions({
+        adminDocuments,
+        checklistItems,
+        propertyType: deal?.property_type,
+        representationSide: deal?.representation_side,
+      }),
+    [adminDocuments, checklistItems, deal?.property_type, deal?.representation_side]
+  );
+
+  const filteredAddableForms = useMemo(() => {
+    const normalizedSearch = hiddenFormSearch.trim().toLowerCase();
+
+    if (!normalizedSearch) return addableForms;
+
+    return addableForms.filter((form) =>
+      form.checklistName.toLowerCase().includes(normalizedSearch) ||
+      form.file_name.toLowerCase().includes(normalizedSearch)
+    );
+  }, [addableForms, hiddenFormSearch]);
+
+  const groupedChecklistSections = useMemo(() => {
+    const sectionMap = new Map<string, typeof checklistItems>();
+
+    for (const checklistItem of checklistItems) {
+      const sectionId = getChecklistSectionId(checklistItem.name, {
+        propertyType: deal?.property_type,
+        representationSide: deal?.representation_side,
+      });
+      const collection = sectionMap.get(sectionId) || [];
+      collection.push(checklistItem);
+      sectionMap.set(sectionId, collection);
+    }
+
+    return ['listing', 'contract', 'company', 'additional']
+      .map((sectionId) => ({
+        id: sectionId,
+        title: getChecklistSectionTitle(sectionId),
+        items: sectionMap.get(sectionId) || [],
+      }))
+      .filter((section) => section.items.length > 0);
+  }, [checklistItems, deal?.property_type, deal?.representation_side]);
+
+  const handleAddHiddenForms = async () => {
+    if (!deal || selectedHiddenForms.size === 0) return;
+
+    const selectedForms = addableForms.filter((form) => selectedHiddenForms.has(form.file_name));
+    if (!selectedForms.length) {
+      toast.error('Select at least one hidden form to add');
+      return;
+    }
+
+    const nextSortOrderStart =
+      checklistItems.reduce((highestSortOrder, item) => Math.max(highestSortOrder, item.sort_order), -1) + 1;
+
+    try {
+      await addChecklistItems.mutateAsync({
+        dealId: deal.id,
+        items: selectedForms.map((form, index) => ({
+          name: form.checklistName,
+          has_digital_form: true,
+          sort_order: nextSortOrderStart + index,
+        })),
+      });
+
+      toast.success(
+        selectedForms.length === 1
+          ? `Added "${selectedForms[0].checklistName}"`
+          : `Added ${selectedForms.length} forms`
+      );
+      setSelectedHiddenForms(new Set());
+      setHiddenFormSearch('');
+      setAddFormsOpen(false);
+    } catch {
+      toast.error('Failed to add selected forms');
+    }
+  };
+
   if (isLoading) {
     return <div className="flex-1 flex items-center justify-center"><p className="text-muted-foreground">Loading deal...</p></div>;
   }
@@ -319,7 +430,6 @@ export default function DealDetail() {
     commissionType: (dc.contact?.commission_type as 'percentage' | 'dollars') || 'percentage',
   }));
 
-  const checklistItems = (deal.checklist_items || []).sort((a, b) => a.sort_order - b.sort_order);
   const isVisibleToOffice = deal.visible_to_office;
 
   return (
@@ -522,12 +632,22 @@ export default function DealDetail() {
           <div className="flex-1 overflow-auto p-4">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h3 className="text-sm font-semibold text-foreground">Listing</h3>
+                <h3 className="text-sm font-semibold text-foreground">Checklist</h3>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Select the documents you want included in the signing session.
+                  Main forms stay on the default checklist. Hidden forms can be searched and added when needed.
                 </p>
               </div>
               <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-xs gap-1.5"
+                  onClick={() => setAddFormsOpen(true)}
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  Add Hidden Forms
+                  {addableForms.length > 0 ? ` (${addableForms.length})` : ''}
+                </Button>
                 {selectedSigningItems.size > 0 && (
                   <Button
                     variant="ghost"
@@ -551,58 +671,72 @@ export default function DealDetail() {
               </div>
             </div>
             <div className="border rounded-md overflow-hidden">
-              {checklistItems.map((item) => {
-                const isSelectedForSigning = selectedSigningItems.has(item.id);
-                return (
-                  <div key={item.id}>
-                    <div className={cn(
-                      'flex items-center px-3 py-3 border-b last:border-b-0 group transition-colors',
-                      isSelectedForSigning && 'bg-primary/5'
-                    )}>
-                      <GripVertical className="w-4 h-4 text-muted-foreground/40 mr-2 flex-shrink-0 cursor-grab" />
-                      <Checkbox
-                        checked={isSelectedForSigning}
-                        onCheckedChange={() => handleToggleSigningSelection(item.id)}
-                        className="mr-2 flex-shrink-0"
-                      />
-                      <div className="mr-2 h-4 w-4 flex-shrink-0" />
-                      <span className="text-sm text-foreground flex-1">{item.name}</span>
-                      {(() => {
-                        const sigStatus = getSignatureStatus(item.id);
-                        if (!sigStatus) return null;
-                        return (
-                          <span className={cn('text-[10px] font-medium px-2 py-0.5 rounded-full mr-2',
-                            sigStatus === 'signed' ? 'bg-success/10 text-success' :
-                            sigStatus === 'partially_signed' ? 'bg-warning/10 text-warning' :
-                            'bg-primary/10 text-primary'
-                          )}>
-                            {sigStatus === 'signed' ? 'Signed' : sigStatus === 'partially_signed' ? 'Partially Signed' : 'Sent for Signature'}
-                          </span>
-                        );
-                      })()}
-                      <div className="flex items-center">
-                        {item.has_digital_form && (
-                          <Button variant="outline" size="sm" className="h-7 text-xs rounded-r-none border-r-0" onClick={() => navigate(`/transactions/${deal.id}/form/${item.id}`)}>Edit Form</Button>
-                        )}
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="outline" size="icon" className={cn("h-7 w-7", item.has_digital_form ? "rounded-l-none" : "")}><ChevronDown className="w-3.5 h-3.5" /></Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => navigate(`/transactions/${deal.id}/form/${item.id}`)}><Printer className="w-3.5 h-3.5 mr-2" /> View/Print</DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleCreateSigningSession([item.id])}><Send className="w-3.5 h-3.5 mr-2" /> Docusign</DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleChecklistEmail(item.name)}><Mail className="w-3.5 h-3.5 mr-2" /> Email</DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleChecklistUpload(item.id)}><FileText className="w-3.5 h-3.5 mr-2" /> Upload</DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => toast.success('Message sent to office')}><MessageSquare className="w-3.5 h-3.5 mr-2" /> Message Office</DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => toast.success('Office notified to review')}><Bell className="w-3.5 h-3.5 mr-2" /> Notify Office to Review</DropdownMenuItem>
-                            <DropdownMenuItem className="text-destructive" onClick={() => handleDeleteChecklist(item.id)}><Trash2 className="w-3.5 h-3.5 mr-2" /> Delete</DropdownMenuItem>
-                          </DropdownMenuContent>
-                          </DropdownMenu>
-                        </div>
-                      </div>
+              {groupedChecklistSections.map((section, sectionIndex) => (
+                <div key={section.id}>
+                  <div className={cn(
+                    'px-3 py-2 bg-muted/50 border-b',
+                    sectionIndex > 0 && 'border-t'
+                  )}>
+                    <div className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                      {section.title}
+                    </div>
                   </div>
-                );
-              })}
+                  {section.items.map((item) => {
+                    const isSelectedForSigning = selectedSigningItems.has(item.id);
+                    return (
+                      <div key={item.id}>
+                        <div className={cn(
+                          'flex items-center px-3 py-3 border-b last:border-b-0 group transition-colors',
+                          isSelectedForSigning && 'bg-primary/5'
+                        )}>
+                          <GripVertical className="w-4 h-4 text-muted-foreground/40 mr-2 flex-shrink-0 cursor-grab" />
+                          <Checkbox
+                            checked={isSelectedForSigning}
+                            onCheckedChange={() => handleToggleSigningSelection(item.id)}
+                            className="mr-2 flex-shrink-0"
+                          />
+                          <div className="mr-2 h-4 w-4 flex-shrink-0" />
+                          <span className="text-sm text-foreground flex-1">{item.name}</span>
+                          {(() => {
+                            const sigStatus = getSignatureStatus(item.id);
+                            if (!sigStatus) return null;
+                            return (
+                              <span className={cn('text-[10px] font-medium px-2 py-0.5 rounded-full mr-2',
+                                sigStatus === 'signed' ? 'bg-success/10 text-success' :
+                                sigStatus === 'partially_signed' ? 'bg-warning/10 text-warning' :
+                                'bg-primary/10 text-primary'
+                              )}>
+                                {sigStatus === 'signed' ? 'Signed' : sigStatus === 'partially_signed' ? 'Partially Signed' : 'Sent for Signature'}
+                              </span>
+                            );
+                          })()}
+                          <div className="flex items-center">
+                            {item.has_digital_form && (
+                              <Button variant="outline" size="sm" className="h-7 text-xs rounded-r-none border-r-0" onClick={() => navigate(`/transactions/${deal.id}/form/${item.id}`)}>Edit Form</Button>
+                            )}
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="outline" size="icon" className={cn("h-7 w-7", item.has_digital_form ? "rounded-l-none" : "")}><ChevronDown className="w-3.5 h-3.5" /></Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                {item.has_digital_form && (
+                                  <DropdownMenuItem onClick={() => navigate(`/transactions/${deal.id}/form/${item.id}`)}><Printer className="w-3.5 h-3.5 mr-2" /> View/Print</DropdownMenuItem>
+                                )}
+                                <DropdownMenuItem onClick={() => handleCreateSigningSession([item.id])}><Send className="w-3.5 h-3.5 mr-2" /> Docusign</DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleChecklistEmail(item.name)}><Mail className="w-3.5 h-3.5 mr-2" /> Email</DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleChecklistUpload(item.id)}><FileText className="w-3.5 h-3.5 mr-2" /> Upload</DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => toast.success('Message sent to office')}><MessageSquare className="w-3.5 h-3.5 mr-2" /> Message Office</DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => toast.success('Office notified to review')}><Bell className="w-3.5 h-3.5 mr-2" /> Notify Office to Review</DropdownMenuItem>
+                                <DropdownMenuItem className="text-destructive" onClick={() => handleDeleteChecklist(item.id)}><Trash2 className="w-3.5 h-3.5 mr-2" /> Delete</DropdownMenuItem>
+                              </DropdownMenuContent>
+                              </DropdownMenu>
+                            </div>
+                          </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -888,6 +1022,88 @@ export default function DealDetail() {
               </Select>
             </div>
             <Button className="w-full" onClick={handleAddContact} disabled={addDealContact.isPending}>Add to Deal</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={addFormsOpen} onOpenChange={(open) => {
+        setAddFormsOpen(open);
+        if (!open) {
+          setHiddenFormSearch('');
+          setSelectedHiddenForms(new Set());
+        }
+      }}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Add Hidden Forms</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
+            <div className="flex items-center justify-between gap-4 text-xs text-muted-foreground">
+              <span>{addableForms.length} hidden forms available</span>
+              <span>{selectedHiddenForms.size} selected</span>
+            </div>
+            <Input
+              value={hiddenFormSearch}
+              onChange={(event) => setHiddenFormSearch(event.target.value)}
+              placeholder="Search hidden forms..."
+            />
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="text-xs"
+                onClick={() => setSelectedHiddenForms(new Set(filteredAddableForms.map((form) => form.file_name)))}
+                disabled={filteredAddableForms.length === 0}
+              >
+                Select Filtered
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="text-xs"
+                onClick={() => setSelectedHiddenForms(new Set())}
+                disabled={selectedHiddenForms.size === 0}
+              >
+                Clear
+              </Button>
+            </div>
+            <div className="max-h-[420px] overflow-auto border rounded-md">
+              {filteredAddableForms.length === 0 ? (
+                <div className="px-4 py-8 text-sm text-center text-muted-foreground">
+                  No hidden forms match your search.
+                </div>
+              ) : (
+                filteredAddableForms.map((form) => (
+                  <label
+                    key={form.file_name}
+                    className="flex items-center gap-3 px-4 py-3 border-b last:border-b-0 cursor-pointer hover:bg-muted/40"
+                  >
+                    <Checkbox
+                      checked={selectedHiddenForms.has(form.file_name)}
+                      onCheckedChange={() => handleToggleHiddenForm(form.file_name)}
+                    />
+                    <div className="min-w-0">
+                      <div className="text-sm text-foreground">{form.checklistName}</div>
+                      <div className="text-[11px] text-muted-foreground truncate">{form.file_name}</div>
+                    </div>
+                  </label>
+                ))
+              )}
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="ghost" onClick={() => setAddFormsOpen(false)}>
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                onClick={handleAddHiddenForms}
+                disabled={selectedHiddenForms.size === 0 || addChecklistItems.isPending}
+              >
+                {addChecklistItems.isPending ? 'Adding...' : `Add ${selectedHiddenForms.size || ''}`.trim()}
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>

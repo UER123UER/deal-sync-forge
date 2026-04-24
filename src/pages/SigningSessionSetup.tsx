@@ -20,7 +20,7 @@ import {
   useUpdateSigningSession,
 } from '@/hooks/useSigningSessions';
 import { supabase } from '@/integrations/supabase/client';
-import { findMatchingAdminDocument } from '@/lib/adminDocuments';
+import { resolveChecklistAdminDocument } from '@/lib/checklistCatalog';
 import { toast } from 'sonner';
 
 const STEPS = ['Details', 'Documents', 'Recipients', 'Roles', 'Settings'] as const;
@@ -519,7 +519,10 @@ export default function SigningSessionSetup() {
         if (error) throw error;
 
         const resolvedDocuments = selectedChecklistItems.map((item) => {
-          const match = findMatchingAdminDocument(item.name, adminDocs || []);
+          const match = resolveChecklistAdminDocument(item.name, adminDocs || [], {
+            propertyType: deal?.property_type,
+            representationSide: deal?.representation_side,
+          });
 
           return {
             checklistItemId: item.id,

@@ -9,7 +9,7 @@ import { PdfEditorSidebar, type Signer, type SidebarTab } from '@/components/adm
 import { PdfCanvas, type FontStyle } from '@/components/admin/PdfCanvas';
 import { SignatureStampModal } from '@/components/admin/SignatureStampModal';
 import { supabase } from '@/integrations/supabase/client';
-import { findMatchingAdminDocument } from '@/lib/adminDocuments';
+import { resolveChecklistAdminDocument } from '@/lib/checklistCatalog';
 import { toast } from 'sonner';
 import * as pdfjsLib from 'pdfjs-dist';
 import { Canvas as FabricCanvas, IText } from 'fabric';
@@ -194,7 +194,10 @@ export default function FormEditor() {
         .order('updated_at', { ascending: false });
 
       if (error) throw error;
-      const doc = findMatchingAdminDocument(checklistItem.name, docs || []);
+      const doc = resolveChecklistAdminDocument(checklistItem.name, docs || [], {
+        propertyType: deal?.property_type,
+        representationSide: deal?.representation_side,
+      });
 
       if (!doc?.storage_path) {
         setPdfError(`No PDF found for "${checklistItem.name}". Please upload it in the Admin PDF Editor first.`);
@@ -239,7 +242,7 @@ export default function FormEditor() {
     } finally {
       setPdfLoading(false);
     }
-  }, [checklistItem?.name]);
+  }, [checklistItem?.name, deal?.property_type, deal?.representation_side]);
 
   // Load the matching PDF for the current checklist item.
   useEffect(() => {

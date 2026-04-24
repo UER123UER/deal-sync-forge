@@ -5,6 +5,7 @@ import {
   buildAdminDocumentCatalog,
   normalizeDocumentName,
 } from '../src/lib/adminDocuments.js';
+import { buildDefaultChecklistItemsForDeal } from '../src/lib/checklistCatalog.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -117,7 +118,7 @@ const createSupabaseClient = ({ supabaseUrl, supabaseKey }) => {
 
     async listDeals() {
       return (
-        (await request('/rest/v1/deals?select=id,address&order=created_at.asc')) || []
+        (await request('/rest/v1/deals?select=id,address,property_type,representation_side&order=created_at.asc')) || []
       );
     },
 
@@ -332,9 +333,14 @@ const syncChecklistItems = async ({ manifest, supabase, dryRun }) => {
     const existingItems = checklistItemsByDealId.get(deal.id) || [];
     const usedItemIds = new Set();
     const inserts = [];
+    const defaultChecklist = buildDefaultChecklistItemsForDeal({
+      adminDocuments: manifest,
+      propertyType: deal.property_type,
+      representationSide: deal.representation_side,
+    });
 
-    for (const entry of manifest) {
-      const normalizedChecklistName = normalizeDocumentName(entry.checklistName);
+    for (const entry of defaultChecklist) {
+      const normalizedChecklistName = normalizeDocumentName(entry.name);
       const matchingItem = existingItems.find(
         (item) =>
           !usedItemIds.has(item.id) &&
@@ -345,15 +351,15 @@ const syncChecklistItems = async ({ manifest, supabase, dryRun }) => {
         usedItemIds.add(matchingItem.id);
 
         const needsUpdate =
-          matchingItem.name !== entry.checklistName ||
+          matchingItem.name !== entry.name ||
           matchingItem.sort_order !== entry.sortOrder ||
-          matchingItem.has_digital_form !== true;
+          matchingItem.has_digital_form !== entry.hasDigitalForm;
 
         if (needsUpdate && !dryRun) {
           await supabase.updateChecklistItem(matchingItem.id, {
-            name: entry.checklistName,
+            name: entry.name,
             sort_order: entry.sortOrder,
-            has_digital_form: true,
+            has_digital_form: entry.hasDigitalForm,
           });
         }
 
@@ -362,8 +368,8 @@ const syncChecklistItems = async ({ manifest, supabase, dryRun }) => {
 
       inserts.push({
         deal_id: deal.id,
-        name: entry.checklistName,
-        has_digital_form: true,
+        name: entry.name,
+        has_digital_form: entry.hasDigitalForm,
         sort_order: entry.sortOrder,
       });
     }
@@ -418,6 +424,7 @@ const verifyCounts = async (supabase) => {
 
 const main = async () => {
   const dryRun = process.argv.includes('--dry-run');
+  const skipDocuments = process.argv.includes('--skip-documents');
   const pdfDirectory =
     process.env.PDF_DIR ||
     process.argv.find((arg) => arg.startsWith('--pdf-dir='))?.split('=')[1] ||
@@ -446,9 +453,11 @@ const main = async () => {
 
   const supabase = createSupabaseClient({ supabaseUrl, supabaseKey });
 
-  console.log(`Syncing ${manifest.length} PDFs from ${pdfDirectory}${dryRun ? ' (dry run)' : ''}...`);
+  console.log(`Syncing ${manifest.length} PDFs from ${pdfDirectory}${dryRun ? ' (dry run)' : ''}${skipDocuments ? ' [skip documents]' : ''}...`);
 
-  const documentSyncResult = await syncAdminDocuments({ manifest, supabase, dryRun });
+  const documentSyncResult = skipDocuments
+    ? { skipped: true }
+    : await syncAdminDocuments({ manifest, supabase, dryRun });
   await syncChecklistItems({ manifest, supabase, dryRun });
   const verification = await verifyCounts(supabase);
 
@@ -456,6 +465,7 @@ const main = async () => {
     JSON.stringify(
       {
         dryRun,
+        skipDocuments,
         documentSyncResult,
         verification,
       },

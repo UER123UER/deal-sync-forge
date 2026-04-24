@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { buildAdminDocumentCatalog } from '@/lib/adminDocuments';
+import { buildDefaultChecklistItemsForDeal } from '@/lib/checklistCatalog';
 
 export interface DealContact {
   id: string;
@@ -145,35 +145,22 @@ export function useCreateDeal() {
         }
       }
 
-      const FALLBACK_CHECKLIST = [
-        { name: 'Exclusive Right of Sale Listing Agreement', has_digital_form: true },
-        { name: 'Tax Roll', has_digital_form: false },
-        { name: 'Lead-Based Paint Pamphlet', has_digital_form: false },
-        { name: 'Sellers Property Disclosure - Residential', has_digital_form: true },
-        { name: 'Affiliated Business Arrangement Disclosure Statement (Seller)', has_digital_form: true },
-        { name: 'P. Lead Based Paint Disclosure (Pre 1978 Housing)', has_digital_form: true },
-        { name: 'Compensation Agreement - Owner/Listing Broker to Tenants Broker', has_digital_form: true },
-        { name: 'Compensation Agreement - Seller or Sellers Broker to Buyers Broker', has_digital_form: true },
-        { name: 'Modification to Compensation Agreement - Seller or Sellers Broker to Buyers Broker', has_digital_form: true },
-      ];
-
       const { data: adminDocuments } = await supabase
         .from('admin_documents')
-        .select('file_name')
+        .select('file_name, storage_path')
         .order('file_name', { ascending: true });
 
-      const defaultChecklist = adminDocuments?.length
-        ? buildAdminDocumentCatalog(adminDocuments).map((document) => ({
-            name: document.checklistName,
-            has_digital_form: true,
-          }))
-        : FALLBACK_CHECKLIST;
+      const defaultChecklist = buildDefaultChecklistItemsForDeal({
+        adminDocuments: adminDocuments || [],
+        propertyType: deal.property_type,
+        representationSide: deal.representation_side,
+      });
 
       await supabase.from('checklist_items').insert(
         defaultChecklist.map((item, i) => ({
           deal_id: newDeal.id,
           name: item.name,
-          has_digital_form: item.has_digital_form,
+          has_digital_form: item.hasDigitalForm,
           sort_order: i,
         }))
       );
@@ -223,6 +210,34 @@ export function useDeleteChecklistItem() {
     mutationFn: async (itemId: string) => {
       const { error } = await supabase.from('checklist_items').delete().eq('id', itemId);
       if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['deals'] }),
+  });
+}
+
+export function useAddChecklistItems() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      dealId,
+      items,
+    }: {
+      dealId: string;
+      items: { name: string; has_digital_form: boolean; sort_order: number }[];
+    }) => {
+      const { data, error } = await supabase
+        .from('checklist_items')
+        .insert(
+          items.map((item) => ({
+            deal_id: dealId,
+            name: item.name,
+            has_digital_form: item.has_digital_form,
+            sort_order: item.sort_order,
+          }))
+        )
+        .select();
+      if (error) throw error;
+      return data as ChecklistItemRow[];
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['deals'] }),
   });
