@@ -23,7 +23,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 // import { SigningSessionsPanel } from '@/components/deal/SigningSessionsPanel';
 import { supabase } from '@/integrations/supabase/client';
-import { buildAddableFormOptions, getChecklistSectionId, getChecklistSectionTitle } from '@/lib/checklistCatalog';
+import { buildAddableFormOptions, getChecklistSectionId, getChecklistSectionTitle, resolveChecklistAdminDocument } from '@/lib/checklistCatalog';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import JSZip from 'jszip';
@@ -290,6 +290,19 @@ export default function DealDetail() {
     [deal?.checklist_items]
   );
   const completedChecklistCount = checklistItems.filter((item) => item.completed).length;
+  const checklistDocumentsByItemId = useMemo(
+    () =>
+      new Map(
+        checklistItems.map((item) => [
+          item.id,
+          resolveChecklistAdminDocument(item.name, adminDocuments, {
+            propertyType: deal?.property_type,
+            representationSide: deal?.representation_side,
+          }),
+        ])
+      ),
+    [adminDocuments, checklistItems, deal?.property_type, deal?.representation_side]
+  );
 
   const addableForms = useMemo(
     () =>
@@ -367,6 +380,52 @@ export default function DealDetail() {
       setAddFormsOpen(false);
     } catch {
       toast.error('Failed to add selected forms');
+    }
+  };
+
+  const handleViewChecklistPdf = (itemId: string) => {
+    const linkedDocument = checklistDocumentsByItemId.get(itemId);
+
+    if (!linkedDocument?.storage_path) {
+      toast.error('No linked PDF for this checklist item');
+      return;
+    }
+
+    const { data } = supabase.storage
+      .from('admin-documents')
+      .getPublicUrl(linkedDocument.storage_path);
+
+    if (!data?.publicUrl) {
+      toast.error('Unable to open this PDF');
+      return;
+    }
+
+    window.open(data.publicUrl, '_blank', 'noopener,noreferrer');
+  };
+
+  const handleDownloadChecklistPdf = async (itemId: string) => {
+    const linkedDocument = checklistDocumentsByItemId.get(itemId);
+
+    if (!linkedDocument?.storage_path) {
+      toast.error('No linked PDF for this checklist item');
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase.storage
+        .from('admin-documents')
+        .download(linkedDocument.storage_path);
+
+      if (error || !data) throw error;
+
+      const url = URL.createObjectURL(data);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = linkedDocument.file_name || `${linkedDocument.checklistName || 'document'}.pdf`;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      toast.error('Unable to download this PDF');
     }
   };
 
@@ -627,6 +686,7 @@ export default function DealDetail() {
                   </div>
                   {section.items.map((item) => {
                     const isCompleted = !!item.completed;
+                    const linkedDocument = checklistDocumentsByItemId.get(item.id);
                     return (
                       <div key={item.id}>
                         <div className={cn(
@@ -651,6 +711,32 @@ export default function DealDetail() {
                               Complete
                             </span>
                           )}
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                className="h-8 w-8 mr-1"
+                                aria-label={`PDF actions for ${item.name}`}
+                              >
+                                <ChevronDown className="w-3.5 h-3.5" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              {linkedDocument?.storage_path ? (
+                                <>
+                                  <DropdownMenuItem onClick={() => handleViewChecklistPdf(item.id)}>
+                                    View PDF
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => handleDownloadChecklistPdf(item.id)}>
+                                    Download PDF
+                                  </DropdownMenuItem>
+                                </>
+                              ) : (
+                                <DropdownMenuItem disabled>No linked PDF</DropdownMenuItem>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                           {/* Form editing and signing actions are intentionally disabled for the manual checklist flow. */}
                           <Button
                             variant="ghost"
