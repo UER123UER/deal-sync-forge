@@ -13,7 +13,7 @@ import Signup from "@/pages/Signup";
 import Transactions from "@/pages/Transactions";
 import NewDeal from "@/pages/NewDeal";
 import DealDetail from "@/pages/DealDetail";
-import FormEditor from "@/pages/FormEditor";
+// import FormEditor from "@/pages/FormEditor";
 import MarketingEditor from "@/pages/MarketingEditor";
 import SignDocument from "@/pages/SignDocument";
 import People from "@/pages/People";
@@ -27,9 +27,9 @@ import ContactBrokerage from "@/pages/ContactBrokerage";
 import AdminPdfEditor from "@/pages/AdminPdfEditor";
 import AffiliateLinks from "@/pages/AffiliateLinks";
 import Profile from "@/pages/Profile";
-import SigningSessions from "@/pages/SigningSessions";
-import SigningSessionSetup from "@/pages/SigningSessionSetup";
-import SigningSessionPrepare from "@/pages/SigningSessionPrepare";
+// import SigningSessions from "@/pages/SigningSessions";
+// import SigningSessionSetup from "@/pages/SigningSessionSetup";
+// import SigningSessionPrepare from "@/pages/SigningSessionPrepare";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -62,11 +62,12 @@ const App = () => (
             <Route path="/transactions" element={<Transactions />} />
             <Route path="/transactions/new" element={<NewDeal />} />
             <Route path="/transactions/:id" element={<DealDetail />} />
-            <Route path="/transactions/:id/form/:formId" element={<FormEditor />} />
+            {/* Form editor and signing flows are paused while checklist work stays manual-only. */}
+            {/* <Route path="/transactions/:id/form/:formId" element={<FormEditor />} /> */}
             <Route path="/transactions/:id/marketing" element={<MarketingEditor />} />
-            <Route path="/transactions/:id/signing-sessions" element={<SigningSessions />} />
-            <Route path="/transactions/:id/signing-session/:sessionId/setup" element={<SigningSessionSetup />} />
-            <Route path="/transactions/:id/signing-session/:sessionId/prepare" element={<SigningSessionPrepare />} />
+            {/* <Route path="/transactions/:id/signing-sessions" element={<SigningSessions />} /> */}
+            {/* <Route path="/transactions/:id/signing-session/:sessionId/setup" element={<SigningSessionSetup />} /> */}
+            {/* <Route path="/transactions/:id/signing-session/:sessionId/prepare" element={<SigningSessionPrepare />} /> */}
             <Route path="/people" element={<People />} />
             <Route path="/tasks" element={<Tasks />} />
             <Route path="/inbox" element={<Inbox />} />
