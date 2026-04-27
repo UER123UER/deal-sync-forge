@@ -1,9 +1,7 @@
-import { useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 
 import { useAuth } from '@/hooks/useAuth';
 import { getNextOnboardingPath, useOnboardingStatus } from '@/hooks/useOnboardingStatus';
-import { supabase } from '@/integrations/supabase/client';
 
 const ONBOARDING_PATHS = new Set([
   '/onboarding/agreement',
@@ -13,30 +11,15 @@ const ONBOARDING_PATHS = new Set([
 ]);
 
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth();
+  const { user, profile, loading } = useAuth();
   const location = useLocation();
-  const [subStatus, setSubStatus] = useState<string | null>(null);
-  const [subLoading, setSubLoading] = useState(true);
-  const { data: onboardingStatus, isLoading: onboardingLoading } = useOnboardingStatus();
+  const {
+    data: onboardingStatus,
+    error: onboardingError,
+    isLoading: onboardingLoading,
+  } = useOnboardingStatus({ user, profile, loading });
 
-  useEffect(() => {
-    if (!user) {
-      setSubLoading(false);
-      return;
-    }
-
-    supabase
-      .from('profiles')
-      .select('subscription_status')
-      .eq('id', user.id)
-      .single()
-      .then(({ data }) => {
-        setSubStatus(data?.subscription_status ?? null);
-        setSubLoading(false);
-      });
-  }, [user]);
-
-  if (loading || subLoading || onboardingLoading) {
+  if (loading || onboardingLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-primary" />
@@ -49,15 +32,16 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   }
 
   const isOnboardingRoute = ONBOARDING_PATHS.has(location.pathname);
-  const nextPath = getNextOnboardingPath(onboardingStatus);
+  const nextPath = getNextOnboardingPath(onboardingError ? null : onboardingStatus);
+  const subscriptionStatus = profile?.subscription_status ?? onboardingStatus?.subscriptionStatus ?? 'pending';
 
-  if (subStatus && subStatus !== 'active') {
+  if (subscriptionStatus !== 'active') {
     if (!isOnboardingRoute || location.pathname !== nextPath) {
       return <Navigate to={nextPath} replace />;
     }
   }
 
-  if (subStatus === 'active' && isOnboardingRoute) {
+  if (subscriptionStatus === 'active' && isOnboardingRoute) {
     return <Navigate to="/transactions" replace />;
   }
 

@@ -1,9 +1,11 @@
 import { Navigate } from 'react-router-dom';
 
+import { useAuth } from '@/hooks/useAuth';
 import { getNextOnboardingPath, useOnboardingStatus } from '@/hooks/useOnboardingStatus';
 
 export default function OnboardingPayment() {
-  const { data: onboardingStatus, isLoading } = useOnboardingStatus();
+  const { user, profile, loading: authLoading } = useAuth();
+  const { data: onboardingStatus, isLoading } = useOnboardingStatus({ user, profile, loading: authLoading });
 
   if (isLoading) {
     return (

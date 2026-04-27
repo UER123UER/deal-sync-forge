@@ -1,7 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
+import type { User } from '@supabase/supabase-js';
 
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/hooks/useAuth';
+import type { Profile } from '@/hooks/useAuth';
 
 type BillingAccountSummary = {
   id: string;
@@ -41,9 +42,15 @@ export const getNextOnboardingPath = (status: OnboardingStatus | null | undefine
   return '/onboarding/deposit';
 };
 
-export function useOnboardingStatus() {
-  const { user, profile, loading } = useAuth();
-
+export function useOnboardingStatus({
+  user,
+  profile,
+  loading,
+}: {
+  user: User | null;
+  profile: Profile | null;
+  loading: boolean;
+}) {
   return useQuery({
     queryKey: [
       'onboarding_status',

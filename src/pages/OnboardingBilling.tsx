@@ -27,8 +27,8 @@ function FieldHint({ value, result }: { value: string; result: { valid: boolean;
 }
 
 export default function OnboardingBilling() {
-  const { user, profile } = useAuth();
-  const { data: onboardingStatus, isLoading } = useOnboardingStatus();
+  const { user, profile, loading: authLoading } = useAuth();
+  const { data: onboardingStatus, isLoading } = useOnboardingStatus({ user, profile, loading: authLoading });
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();

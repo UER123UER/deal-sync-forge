@@ -15,8 +15,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
 export default function OnboardingAgreement() {
-  const { user, profile, refreshProfile } = useAuth();
-  const { data: onboardingStatus, isLoading } = useOnboardingStatus();
+  const { user, profile, refreshProfile, loading: authLoading } = useAuth();
+  const { data: onboardingStatus, isLoading } = useOnboardingStatus({ user, profile, loading: authLoading });
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
