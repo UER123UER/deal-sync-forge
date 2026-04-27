@@ -411,6 +411,8 @@ export default function People() {
   const [overdueOnly, setOverdueOnly] = useState(false);
   const [sortBy, setSortBy] = useState<'name' | 'last_touch' | 'next_touch' | 'created' | 'priority'>('created');
   const [boardGroupBy, setBoardGroupBy] = useState<BoardGroupMode>('stage');
+  const [draggedContactId, setDraggedContactId] = useState<string | null>(null);
+  const [dragOverColumnId, setDragOverColumnId] = useState<string | null>(null);
   const [detailTab, setDetailTab] = useState<'overview' | 'activity' | 'messages'>('overview');
 
   const [panelContact, setPanelContact] = useState<ContactRow | null>(null);
@@ -563,6 +565,38 @@ export default function People() {
     const tags = (contact.tags || []).filter((t) => !PIPELINE_STAGES.some((s) => s.id === t.toLowerCase()));
     await updateContact.mutateAsync({ id: contact.id, tags: [...tags, stageId] });
     if (panelContact?.id === contact.id) setPanelContact({ ...contact, tags: [...tags, stageId] });
+  };
+
+  const handleSetPriority = async (contact: ContactRow, priorityId: PriorityColumnId) => {
+    const withoutPriority = (contact.tags || []).filter((tag) => !(PRIORITY_TAGS as readonly string[]).includes(tag));
+    const nextTags = priorityId === 'unranked' ? withoutPriority : [...withoutPriority, priorityId];
+    await updateContact.mutateAsync({ id: contact.id, tags: nextTags });
+    if (panelContact?.id === contact.id) setPanelContact({ ...contact, tags: nextTags });
+  };
+
+  const handleDropToBoardColumn = async (columnId: string) => {
+    if (!draggedContactId) return;
+    const contact = contacts.find((item) => item.id === draggedContactId);
+    if (!contact) return;
+
+    try {
+      if (boardGroupBy === 'stage') {
+        const stageId = columnId as StageId;
+        if (getStage(contact) !== stageId) {
+          await handleSetStage(contact, stageId);
+        }
+      } else {
+        const priorityId = columnId as PriorityColumnId;
+        if (getPriorityColumnId(contact) !== priorityId) {
+          await handleSetPriority(contact, priorityId);
+        }
+      }
+    } catch {
+      toast.error('Failed to move contact');
+    } finally {
+      setDraggedContactId(null);
+      setDragOverColumnId(null);
+    }
   };
 
   const handleLogTouch = async (contact: ContactRow) => {
@@ -916,7 +950,28 @@ export default function People() {
           ) : (
             <div className="flex gap-4 p-5 h-full overflow-x-auto items-start">
               {boardColumns.map((col) => (
-                <div key={col.id} className="flex flex-col gap-2 w-64 shrink-0">
+                <div
+                  key={col.id}
+                  className={cn(
+                    'flex flex-col gap-2 w-64 shrink-0 rounded-2xl p-2 transition-colors',
+                    dragOverColumnId === col.id ? 'bg-primary/5 ring-1 ring-primary/20' : ''
+                  )}
+                  onDragOver={(event) => {
+                    event.preventDefault();
+                    if (dragOverColumnId !== col.id) {
+                      setDragOverColumnId(col.id);
+                    }
+                  }}
+                  onDragLeave={(event) => {
+                    if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+                      setDragOverColumnId((current) => (current === col.id ? null : current));
+                    }
+                  }}
+                  onDrop={(event) => {
+                    event.preventDefault();
+                    void handleDropToBoardColumn(col.id);
+                  }}
+                >
                   <div className="flex items-center gap-2 mb-1">
                     <span className={cn('w-2.5 h-2.5 rounded-full', col.dot)} />
                     <span className="text-xs font-semibold text-foreground">{col.label}</span>
@@ -928,8 +983,22 @@ export default function People() {
                     return (
                       <div
                         key={contact.id}
+                        draggable
+                        onDragStart={(event) => {
+                          setDraggedContactId(contact.id);
+                          event.dataTransfer.effectAllowed = 'move';
+                          event.dataTransfer.setData('text/plain', contact.id);
+                        }}
+                        onDragEnd={() => {
+                          setDraggedContactId(null);
+                          setDragOverColumnId(null);
+                        }}
                         onClick={() => openDetail(contact)}
-                        className={cn('bg-background border rounded-xl p-3 cursor-pointer hover:shadow-md hover:border-primary/40 transition-all', panelContact?.id === contact.id && 'border-primary shadow-md')}
+                        className={cn(
+                          'bg-background border rounded-xl p-3 cursor-grab hover:shadow-md hover:border-primary/40 transition-all active:cursor-grabbing',
+                          panelContact?.id === contact.id && 'border-primary shadow-md',
+                          draggedContactId === contact.id && 'opacity-60'
+                        )}
                       >
                         <div className="flex items-start gap-2.5 mb-2">
                           <Avatar contact={contact} size="sm" />
