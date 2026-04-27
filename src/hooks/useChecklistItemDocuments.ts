@@ -84,3 +84,29 @@ export function useUploadChecklistItemDocument() {
     },
   });
 }
+
+export function useDeleteChecklistItemDocument() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      dealId,
+      itemId,
+      storagePath,
+    }: {
+      dealId: string;
+      itemId: string;
+      storagePath: string;
+    }) => {
+      const { error } = await supabase.storage
+        .from(CHECKLIST_ITEM_DOCUMENTS_BUCKET)
+        .remove([storagePath]);
+
+      if (error) throw error;
+      return { dealId, itemId };
+    },
+    onSuccess: ({ dealId, itemId }) => {
+      queryClient.invalidateQueries({ queryKey: ['checklist_item_documents', dealId, itemId] });
+    },
+  });
+}

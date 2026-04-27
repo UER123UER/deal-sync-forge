@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import {
   CHECKLIST_ITEM_DOCUMENTS_BUCKET,
+  useDeleteChecklistItemDocument,
   getChecklistItemDocumentDisplayName,
   useChecklistItemDocuments,
   useUploadChecklistItemDocument,
@@ -51,6 +52,7 @@ export function ChecklistDocumentPanel({
     isLoading,
   } = useChecklistItemDocuments(dealId, itemId);
   const uploadChecklistDocument = useUploadChecklistItemDocument();
+  const deleteChecklistDocument = useDeleteChecklistItemDocument();
 
   const documentRows = useMemo(() => {
     const rows: ChecklistDocumentRow[] = [];
@@ -136,6 +138,26 @@ export function ChecklistDocumentPanel({
     event.target.value = '';
   };
 
+  const handleDelete = async (document: ChecklistDocumentRow) => {
+    if (document.kind !== 'uploaded') {
+      toast.error('Default blank PDFs cannot be deleted');
+      return;
+    }
+
+    try {
+      await deleteChecklistDocument.mutateAsync({
+        dealId,
+        itemId,
+        storagePath: document.storagePath,
+      });
+      toast.success('Uploaded PDF deleted');
+    } catch (error: any) {
+      toast.error(
+        error?.message ? `Failed to delete ${document.fileName}: ${error.message}` : 'Failed to delete PDF'
+      );
+    }
+  };
+
   return (
     <div className="border-b bg-muted/20 px-12 py-3">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
@@ -215,6 +237,15 @@ export function ChecklistDocumentPanel({
                   <DropdownMenuItem onClick={() => downloadDocument(document)}>
                     Download PDF
                   </DropdownMenuItem>
+                  {document.kind === 'uploaded' && (
+                    <DropdownMenuItem
+                      onClick={() => handleDelete(document)}
+                      className="text-destructive focus:text-destructive"
+                      disabled={deleteChecklistDocument.isPending}
+                    >
+                      Delete PDF
+                    </DropdownMenuItem>
+                  )}
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
