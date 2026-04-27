@@ -132,7 +132,9 @@ export default function Signup() {
         </div>
 
         <div className="relative z-10">
-          <UERLogo width={180} />
+          <div className="inline-flex rounded-2xl border border-white/20 bg-white/95 px-5 py-4 shadow-xl shadow-black/10 backdrop-blur">
+            <UERLogo width={180} />
+          </div>
         </div>
 
         <div className="relative z-10 space-y-8">
