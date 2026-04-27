@@ -30,7 +30,6 @@ import {
   User,
   Users,
   Loader2,
-  Move,
   Maximize2,
   Keyboard,
   Check,
@@ -2030,27 +2029,12 @@ export default function MarketingEditor() {
                         onClick={() => setAgentLayout('multi')}
                       />
                     </div>
-                    <div className="rounded-xl border bg-muted/25 px-3 py-2 text-[11px] leading-4 text-muted-foreground">
-                      Multi-agent uses the agents attached to this deal. Falls back to single agent when only one exists.
-                    </div>
                   </CollapsibleContent>
                 </Collapsible>
 
-                {/* Canvas hint + selected block */}
-                <div className="rounded-2xl border bg-muted/25 px-3 py-3 text-[11px] leading-4 text-muted-foreground">
-                  <div className="text-[10px] font-semibold uppercase tracking-wide text-foreground/70 mb-2 flex items-center gap-1.5">
-                    <Move className="h-3 w-3" /> Canvas Controls
-                  </div>
-                  <ul className="space-y-1 text-[10px]">
-                    <li><span className="font-medium text-foreground/80">Drag</span> a block to move it</li>
-                    <li><span className="font-medium text-foreground/80"><Maximize2 className="inline h-2.5 w-2.5 mr-0.5" />corner dot</span> to resize</li>
-                    <li><span className="font-medium text-foreground/80"><Link2 className="inline h-2.5 w-2.5 mr-0.5" />link</span> blocks to move and scale them together</li>
-                    <li><span className="font-medium text-foreground/80">Arrow keys</span> to nudge (Shift = 10px)</li>
-                    <li><span className="font-medium text-foreground/80">Delete</span> to reset position</li>
-                    <li><span className="font-medium text-foreground/80">Esc</span> to deselect</li>
-                  </ul>
-                  {selectedBlock ? (
-                    <div className="mt-3 flex items-center justify-between gap-2 rounded-xl border bg-background px-2.5 py-2">
+                {selectedBlock ? (
+                  <div className="rounded-2xl border bg-muted/25 px-3 py-3 text-[11px] leading-4 text-muted-foreground">
+                    <div className="flex items-center justify-between gap-2 rounded-xl border bg-background px-2.5 py-2">
                       <div>
                         <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Selected</div>
                         <div className="text-xs font-semibold text-foreground">{getBlockLabel(selectedBlock, data.customTextBlocks)}</div>
@@ -2059,8 +2043,8 @@ export default function MarketingEditor() {
                         Reset
                       </Button>
                     </div>
-                  ) : null}
-                </div>
+                  </div>
+                ) : null}
 
                 <Collapsible defaultOpen>
                   <CollapsibleTrigger className="flex items-center justify-between w-full py-2 text-xs font-semibold text-foreground hover:text-foreground/80 border-t">

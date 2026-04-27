@@ -619,12 +619,7 @@ export default function DealDetail() {
           {/* Right Panel - Checklists */}
           <div className="flex-1 overflow-auto p-4">
             <div className="flex items-center justify-between mb-4">
-              <div>
-                <h3 className="text-sm font-semibold text-foreground">Checklist</h3>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Check items off as they are completed. Hidden forms can still be searched and added when needed.
-                </p>
-              </div>
+              <h3 className="text-sm font-semibold text-foreground">Checklist</h3>
               <div className="flex items-center gap-2">
                 <div className="text-xs text-muted-foreground">
                   {completedChecklistCount} of {checklistItems.length} completed

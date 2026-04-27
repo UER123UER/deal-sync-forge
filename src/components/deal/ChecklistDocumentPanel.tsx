@@ -160,10 +160,7 @@ export function ChecklistDocumentPanel({
 
   return (
     <div className="border-b bg-muted/20 px-12 py-3">
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-        <div className="text-xs text-muted-foreground">
-          Blank PDFs stay first. Uploaded signed PDFs are added below them.
-        </div>
+      <div className="mb-3 flex flex-wrap items-center justify-end gap-3">
         <div>
           <input
             ref={fileInputRef}
