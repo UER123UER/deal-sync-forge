@@ -155,18 +155,18 @@ export default function Signup() {
         <div className="relative z-10 space-y-8">
           <div>
             <h1 className="text-3xl font-bold text-white leading-tight">
-              Manage every deal,<br />close with confidence.
+              Run the brokerage,<br />support every agent.
             </h1>
             <p className="mt-3 text-white/60 text-sm leading-relaxed max-w-sm">
-              United Estates Realty gives you everything you need — transactions, contacts, marketing, and payouts — in one place.
+              United Estates Realty gives your office one place for listings, contracts, contacts, marketing, onboarding, and payouts.
             </p>
           </div>
 
           <div className="space-y-3">
             {[
-              { icon: Home, text: 'Track every transaction from offer to close' },
-              { icon: User, text: 'Built-in CRM with priority contacts' },
-              { icon: CheckCircle2, text: 'Digital signing & marketing tools' },
+              { icon: Home, text: 'Track listings, contracts, and office tasks' },
+              { icon: User, text: 'Built-in CRM and agent support tools' },
+              { icon: CheckCircle2, text: 'Marketing, signing, and brokerage workflows' },
             ].map((item) => (
               <div key={item.text} className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center shrink-0">

@@ -34,16 +34,16 @@ const offerings = [
     iconClassName: "bg-[#fff1e6] text-[#b45309]",
   },
   {
-    title: "Transaction dashboard",
+    title: "Brokerage dashboard",
     description:
-      "Track listings, contracts, notes, due dates, and deal activity from one workspace instead of bouncing between files and inboxes.",
+      "Track listings, contracts, notes, due dates, and office activity from one workspace instead of bouncing between files, inboxes, and side conversations.",
     icon: LayoutDashboard,
     iconClassName: "bg-[#eefbf3] text-[#0f766e]",
   },
   {
     title: "Marketing tools",
     description:
-      "Build branded listing and social assets from inside the same system your agents use to manage the transaction itself.",
+      "Build branded listing and social assets from inside the same system your agents use for brokerage-approved workflow and follow-up.",
     icon: Megaphone,
     iconClassName: "bg-[#f7edff] text-[#7c3aed]",
   },
@@ -68,9 +68,9 @@ const pricingTiers = [
     name: "Independent Agent",
     pricing: "Custom monthly pricing",
     description:
-      "For agents who want one clean place to manage deals, forms, contacts, and marketing without building their own back office.",
+      "For agents who want one clean place to work inside the brokerage's process for forms, contacts, listings, and marketing.",
     features: [
-      "Personal transaction workspace",
+      "Personal agent workspace",
       "Property-specific default checklists",
       "PDF view and download access",
       "Marketing and referral tools",
@@ -107,7 +107,7 @@ const workflowSteps = [
   {
     title: "Start the deal with the right file type",
     description:
-      "Create a listing, contract, lease, land, or referral file and let the default checklist match the kind of property you picked.",
+      "Create a listing, contract, lease, land, or referral file and let the office checklist match the kind of property you picked.",
   },
   {
     title: "Work the checklist as the transaction moves",
@@ -174,14 +174,14 @@ export default function Index() {
             <div className="mx-auto flex min-h-[74vh] max-w-6xl items-end px-4 pb-14 pt-16 sm:px-6 lg:px-8 lg:pb-20">
               <div className="max-w-3xl drop-shadow-[0_10px_30px_rgba(8,15,29,0.28)]">
                 <p className="text-sm font-semibold uppercase tracking-[0.18em] text-white/80">
-                  Real estate transaction management
+                  Brokerage operations platform
                 </p>
                 <h1 className="mt-4 max-w-3xl text-4xl font-semibold leading-tight text-white sm:text-5xl lg:text-6xl">
-                  United Estates Agent keeps your listings, contracts, and office follow-up in one place.
+                  United Estates Realty keeps your agents, listings, contracts, and office follow-up in one place.
                 </h1>
                 <p className="mt-5 hidden max-w-2xl text-base leading-7 text-white/90 sm:block sm:text-lg">
-                  Run active files from one workspace with property-specific checklists, searchable forms, team visibility,
-                  marketing tools, and the structure agents need to move deals forward without losing the thread.
+                  Run your brokerage from one workspace with property-specific checklists, searchable forms, office visibility,
+                  marketing tools, and the structure your team needs to keep agents supported and files moving.
                 </p>
 
                 <div className="mt-8 flex flex-wrap gap-3">
@@ -236,11 +236,11 @@ export default function Index() {
             <div className="max-w-3xl">
               <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">What We Offer</p>
               <h2 className="mt-3 text-3xl font-semibold text-slate-950 sm:text-4xl">
-                A cleaner operating system for agents, teams, and brokerages.
+                A cleaner operating system for your brokerage, agents, and staff.
               </h2>
               <p className="mt-4 text-base leading-7 text-slate-600">
-                United Estates Agent is built around how real estate files actually move: one deal at a time, with changing
-                paperwork, office visibility, and a lot of details that need to stay organized.
+                United Estates Agent is built around how a brokerage actually runs: active listings, changing paperwork,
+                office standards, agent support, and the daily follow-up that has to stay organized.
               </p>
             </div>
 

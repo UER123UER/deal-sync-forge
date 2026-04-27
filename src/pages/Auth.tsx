@@ -157,7 +157,7 @@ export default function Auth() {
           <div className="mx-auto mb-2 flex justify-center">
             <UERLogo width={220} />
           </div>
-          <CardDescription>Real estate transaction management</CardDescription>
+          <CardDescription>Brokerage operations for United Estates Realty</CardDescription>
         </CardHeader>
         <CardContent>
           {/* Google OAuth button intentionally removed while auth stays email/password only. */}
