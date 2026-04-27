@@ -16,6 +16,7 @@ import { useOpenHouses, useCreateOpenHouse } from '@/hooks/useOpenHouses';
 import { useTasks, useCreateTask, useDeleteTask } from '@/hooks/useTasks';
 import { useContacts } from '@/hooks/useContacts';
 import { cn } from '@/lib/utils';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
