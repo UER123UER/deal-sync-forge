@@ -50,9 +50,11 @@ const PIPELINE_STAGES = [
   { id: 'nurture',   label: 'Nurture',     color: 'bg-rose-100 text-rose-800 border-rose-200',          dot: 'bg-rose-400' },
 ] as const;
 type StageId = (typeof PIPELINE_STAGES)[number]['id'];
+type BoardGroupMode = 'stage' | 'priority';
 
 const PRIORITY_TAGS = ['Extra Hot', 'Hot', 'Warm', 'Cold'] as const;
 type PriorityTag = (typeof PRIORITY_TAGS)[number];
+type PriorityColumnId = PriorityTag | 'unranked';
 
 function getContactPriority(contact: ContactRow): PriorityTag | null {
   const tags = contact.tags || [];
@@ -68,6 +70,18 @@ const PRIORITY_CONFIG: Record<PriorityTag, { label: string; emoji: string; color
   'Warm':      { label: 'Warm',      emoji: '☀️',   color: 'bg-amber-100 text-amber-700 border-amber-200' },
   'Cold':      { label: 'Cold',      emoji: '❄️',   color: 'bg-sky-100 text-sky-700 border-sky-200' },
 };
+
+const PRIORITY_COLUMNS = [
+  { id: 'Extra Hot', label: 'Extra Hot', dot: 'bg-red-400' },
+  { id: 'Hot', label: 'Hot', dot: 'bg-orange-400' },
+  { id: 'Warm', label: 'Warm', dot: 'bg-amber-400' },
+  { id: 'Cold', label: 'Cold', dot: 'bg-sky-400' },
+  { id: 'unranked', label: 'No Priority', dot: 'bg-slate-300' },
+] as const;
+
+function getPriorityColumnId(contact: ContactRow): PriorityColumnId {
+  return getContactPriority(contact) ?? 'unranked';
+}
 
 const ACTIVITY_ICONS: Record<ActivityType, React.ElementType> = {
   note:         FileText,
@@ -396,6 +410,7 @@ export default function People() {
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
   const [overdueOnly, setOverdueOnly] = useState(false);
   const [sortBy, setSortBy] = useState<'name' | 'last_touch' | 'next_touch' | 'created' | 'priority'>('created');
+  const [boardGroupBy, setBoardGroupBy] = useState<BoardGroupMode>('stage');
   const [detailTab, setDetailTab] = useState<'overview' | 'activity' | 'messages'>('overview');
 
   const [panelContact, setPanelContact] = useState<ContactRow | null>(null);
@@ -474,11 +489,21 @@ export default function People() {
     }).length,
   }), [contacts]);
 
-  const boardColumns = useMemo(() =>
-    PIPELINE_STAGES.map((stage) => ({
+  const boardColumns = useMemo(() => {
+    if (boardGroupBy === 'priority') {
+      return PRIORITY_COLUMNS.map((priority) => ({
+        id: priority.id,
+        label: priority.label,
+        dot: priority.dot,
+        contacts: filtered.filter((contact) => getPriorityColumnId(contact) === priority.id),
+      }));
+    }
+
+    return PIPELINE_STAGES.map((stage) => ({
       ...stage,
-      contacts: filtered.filter((c) => getStage(c) === stage.id),
-    })), [filtered]);
+      contacts: filtered.filter((contact) => getStage(contact) === stage.id),
+    }));
+  }, [boardGroupBy, filtered]);
 
   // ── Handlers ────────────────────────────────────────────────────────────────
 
@@ -768,6 +793,30 @@ export default function People() {
             <SelectItem value="next_touch">Next Touch</SelectItem>
           </SelectContent>
         </Select>
+        {view === 'board' && (
+          <div className="flex items-center gap-1 rounded-md border bg-background p-0.5">
+            <button
+              type="button"
+              onClick={() => setBoardGroupBy('stage')}
+              className={cn(
+                'rounded px-2.5 py-1 text-[10px] font-semibold transition-colors',
+                boardGroupBy === 'stage' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
+              )}
+            >
+              By Stage
+            </button>
+            <button
+              type="button"
+              onClick={() => setBoardGroupBy('priority')}
+              className={cn(
+                'rounded px-2.5 py-1 text-[10px] font-semibold transition-colors',
+                boardGroupBy === 'priority' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
+              )}
+            >
+              By Lead Heat
+            </button>
+          </div>
+        )}
         {(stageFilter !== 'all' || roleFilter !== 'all' || sourceFilter !== 'all' || priorityFilter !== 'all' || overdueOnly || search) && (
           <button
             onClick={() => { setStageFilter('all'); setRoleFilter('all'); setSourceFilter('all'); setPriorityFilter('all'); setOverdueOnly(false); setSearch(''); }}
@@ -875,6 +924,7 @@ export default function People() {
                   </div>
                   {col.contacts.map((contact) => {
                     const touch = nextTouchStatus(contact.next_touch);
+                    const stage = getStage(contact);
                     return (
                       <div
                         key={contact.id}
@@ -887,7 +937,7 @@ export default function People() {
                             <div className="text-xs font-semibold text-foreground truncate">{contact.first_name} {contact.last_name}</div>
                             {contact.company && <div className="text-[10px] text-muted-foreground truncate">{contact.company}</div>}
                           </div>
-                          <PriorityBadge contact={contact} />
+                          {boardGroupBy === 'stage' ? <PriorityBadge contact={contact} /> : <StageBadge stageId={stage} />}
                         </div>
                         {contact.role && <div className="text-[10px] text-muted-foreground">{contact.role}</div>}
                         {touch && <div className={cn('mt-1.5 text-[10px]', touch.color)}>📅 {touch.label}</div>}
@@ -895,7 +945,9 @@ export default function People() {
                     );
                   })}
                   {col.contacts.length === 0 && (
-                    <div className="border-2 border-dashed rounded-xl p-4 text-center text-[10px] text-muted-foreground/50">No contacts</div>
+                    <div className="border-2 border-dashed rounded-xl p-4 text-center text-[10px] text-muted-foreground/50">
+                      {boardGroupBy === 'priority' ? 'No leads' : 'No contacts'}
+                    </div>
                   )}
                 </div>
               ))}
