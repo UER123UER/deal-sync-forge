@@ -3,7 +3,7 @@ import { TEMPLATES, TEMPLATE_CATEGORIES, getDefaultTemplateData, type TemplateCa
 import { type RecentEntry } from '@/pages/MarketingEditor';
 // import { useSignatureRequests } from '@/hooks/useSignatureRequests';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { ChevronDown, Eye, Mail, Plus, GripVertical, Download, Trash2, Bell, UserPlus, Check, X, Upload, Image, Clock, MoreHorizontal, FileText } from 'lucide-react';
+import { ChevronDown, Eye, Mail, Plus, GripVertical, Download, Trash2, Bell, UserPlus, Check, X, Upload, Image, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -16,7 +16,6 @@ import { useOpenHouses, useCreateOpenHouse } from '@/hooks/useOpenHouses';
 import { useTasks, useCreateTask, useDeleteTask } from '@/hooks/useTasks';
 import { useContacts } from '@/hooks/useContacts';
 import { cn } from '@/lib/utils';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -24,6 +23,7 @@ import { Label } from '@/components/ui/label';
 // import { SigningSessionsPanel } from '@/components/deal/SigningSessionsPanel';
 import { supabase } from '@/integrations/supabase/client';
 import { buildAddableFormOptions, getChecklistSectionId, getChecklistSectionTitle, resolveChecklistAdminDocument } from '@/lib/checklistCatalog';
+import { ChecklistDocumentPanel } from '@/components/deal/ChecklistDocumentPanel';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import JSZip from 'jszip';
@@ -384,52 +384,6 @@ export default function DealDetail() {
     }
   };
 
-  const handleViewChecklistPdf = (itemId: string) => {
-    const linkedDocument = checklistDocumentsByItemId.get(itemId);
-
-    if (!linkedDocument?.storage_path) {
-      toast.error('No linked PDF for this checklist item');
-      return;
-    }
-
-    const { data } = supabase.storage
-      .from('admin-documents')
-      .getPublicUrl(linkedDocument.storage_path);
-
-    if (!data?.publicUrl) {
-      toast.error('Unable to open this PDF');
-      return;
-    }
-
-    window.open(data.publicUrl, '_blank', 'noopener,noreferrer');
-  };
-
-  const handleDownloadChecklistPdf = async (itemId: string) => {
-    const linkedDocument = checklistDocumentsByItemId.get(itemId);
-
-    if (!linkedDocument?.storage_path) {
-      toast.error('No linked PDF for this checklist item');
-      return;
-    }
-
-    try {
-      const { data, error } = await supabase.storage
-        .from('admin-documents')
-        .download(linkedDocument.storage_path);
-
-      if (error || !data) throw error;
-
-      const url = URL.createObjectURL(data);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = linkedDocument.file_name || `${linkedDocument.checklistName || 'document'}.pdf`;
-      link.click();
-      URL.revokeObjectURL(url);
-    } catch {
-      toast.error('Unable to download this PDF');
-    }
-  };
-
   const handleToggleChecklistPdfRow = (itemId: string) => {
     setExpandedChecklistItems((current) => {
       const next = new Set(current);
@@ -746,38 +700,12 @@ export default function DealDetail() {
                           </Button>
                         </div>
                         {isPdfRowOpen && (
-                          <div className="flex items-center gap-3 border-b bg-muted/20 px-12 py-2.5">
-                            <FileText className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
-                            <span className="min-w-0 flex-1 truncate text-sm text-foreground">
-                              {linkedDocument?.file_name || `${item.name}.pdf`}
-                            </span>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8 text-muted-foreground"
-                                  aria-label={`PDF actions for ${item.name}`}
-                                >
-                                  <MoreHorizontal className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                {linkedDocument?.storage_path ? (
-                                  <>
-                                    <DropdownMenuItem onClick={() => handleViewChecklistPdf(item.id)}>
-                                      View PDF
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={() => handleDownloadChecklistPdf(item.id)}>
-                                      Download PDF
-                                    </DropdownMenuItem>
-                                  </>
-                                ) : (
-                                  <DropdownMenuItem disabled>No linked PDF</DropdownMenuItem>
-                                )}
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </div>
+                          <ChecklistDocumentPanel
+                            dealId={deal.id}
+                            itemId={item.id}
+                            itemName={item.name}
+                            defaultDocument={linkedDocument}
+                          />
                         )}
                       </div>
                     );
