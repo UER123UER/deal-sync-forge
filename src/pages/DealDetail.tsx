@@ -3,7 +3,7 @@ import { TEMPLATES, TEMPLATE_CATEGORIES, getDefaultTemplateData, type TemplateCa
 import { type RecentEntry } from '@/pages/MarketingEditor';
 // import { useSignatureRequests } from '@/hooks/useSignatureRequests';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { ChevronDown, Eye, Mail, Plus, GripVertical, Download, Trash2, Bell, UserPlus, Check, X, Upload, Image, Clock } from 'lucide-react';
+import { ChevronDown, Eye, Mail, Plus, GripVertical, Download, Trash2, Bell, UserPlus, Check, X, Upload, Image, Clock, MoreHorizontal, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -74,6 +74,7 @@ export default function DealDetail() {
   const [addFormsOpen, setAddFormsOpen] = useState(false);
   const [hiddenFormSearch, setHiddenFormSearch] = useState('');
   const [selectedHiddenForms, setSelectedHiddenForms] = useState<Set<string>>(new Set());
+  const [expandedChecklistItems, setExpandedChecklistItems] = useState<Set<string>>(new Set());
 
   // Inline editing states
   const [editingMls, setEditingMls] = useState(false);
@@ -429,6 +430,18 @@ export default function DealDetail() {
     }
   };
 
+  const handleToggleChecklistPdfRow = (itemId: string) => {
+    setExpandedChecklistItems((current) => {
+      const next = new Set(current);
+      if (next.has(itemId)) {
+        next.delete(itemId);
+      } else {
+        next.add(itemId);
+      }
+      return next;
+    });
+  };
+
   if (isLoading) {
     return <div className="flex-1 flex items-center justify-center"><p className="text-muted-foreground">Loading deal...</p></div>;
   }
@@ -687,6 +700,7 @@ export default function DealDetail() {
                   {section.items.map((item) => {
                     const isCompleted = !!item.completed;
                     const linkedDocument = checklistDocumentsByItemId.get(item.id);
+                    const isPdfRowOpen = expandedChecklistItems.has(item.id);
                     return (
                       <div key={item.id}>
                         <div className={cn(
@@ -711,32 +725,15 @@ export default function DealDetail() {
                               Complete
                             </span>
                           )}
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button
-                                variant="outline"
-                                size="icon"
-                                className="h-8 w-8 mr-1"
-                                aria-label={`PDF actions for ${item.name}`}
-                              >
-                                <ChevronDown className="w-3.5 h-3.5" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              {linkedDocument?.storage_path ? (
-                                <>
-                                  <DropdownMenuItem onClick={() => handleViewChecklistPdf(item.id)}>
-                                    View PDF
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem onClick={() => handleDownloadChecklistPdf(item.id)}>
-                                    Download PDF
-                                  </DropdownMenuItem>
-                                </>
-                              ) : (
-                                <DropdownMenuItem disabled>No linked PDF</DropdownMenuItem>
-                              )}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-8 w-8 mr-1"
+                            aria-label={`${isPdfRowOpen ? 'Hide' : 'Show'} PDF row for ${item.name}`}
+                            onClick={() => handleToggleChecklistPdfRow(item.id)}
+                          >
+                            <ChevronDown className={cn('w-3.5 h-3.5 transition-transform', isPdfRowOpen && 'rotate-180')} />
+                          </Button>
                           {/* Form editing and signing actions are intentionally disabled for the manual checklist flow. */}
                           <Button
                             variant="ghost"
@@ -748,6 +745,40 @@ export default function DealDetail() {
                             <Trash2 className="w-3.5 h-3.5" />
                           </Button>
                         </div>
+                        {isPdfRowOpen && (
+                          <div className="flex items-center gap-3 border-b bg-muted/20 px-12 py-2.5">
+                            <FileText className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
+                            <span className="min-w-0 flex-1 truncate text-sm text-foreground">
+                              {linkedDocument?.file_name || `${item.name}.pdf`}
+                            </span>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 text-muted-foreground"
+                                  aria-label={`PDF actions for ${item.name}`}
+                                >
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                {linkedDocument?.storage_path ? (
+                                  <>
+                                    <DropdownMenuItem onClick={() => handleViewChecklistPdf(item.id)}>
+                                      View PDF
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => handleDownloadChecklistPdf(item.id)}>
+                                      Download PDF
+                                    </DropdownMenuItem>
+                                  </>
+                                ) : (
+                                  <DropdownMenuItem disabled>No linked PDF</DropdownMenuItem>
+                                )}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
+                        )}
                       </div>
                     );
                   })}
