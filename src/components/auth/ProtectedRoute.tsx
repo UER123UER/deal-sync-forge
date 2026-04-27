@@ -13,13 +13,14 @@ const ONBOARDING_PATHS = new Set([
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, profile, loading } = useAuth();
   const location = useLocation();
+  const isAgreementRoute = location.pathname === '/onboarding/agreement';
   const {
     data: onboardingStatus,
     error: onboardingError,
     isLoading: onboardingLoading,
   } = useOnboardingStatus({ user, profile, loading });
 
-  if (loading || onboardingLoading) {
+  if (loading || (!isAgreementRoute && onboardingLoading)) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-primary" />
@@ -34,6 +35,10 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const isOnboardingRoute = ONBOARDING_PATHS.has(location.pathname);
   const nextPath = getNextOnboardingPath(onboardingError ? null : onboardingStatus);
   const subscriptionStatus = profile?.subscription_status ?? onboardingStatus?.subscriptionStatus ?? 'pending';
+
+  if (isAgreementRoute && subscriptionStatus !== 'active') {
+    return <>{children}</>;
+  }
 
   if (subscriptionStatus !== 'active') {
     if (!isOnboardingRoute || location.pathname !== nextPath) {

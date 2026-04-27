@@ -16,7 +16,7 @@ import { useToast } from '@/hooks/use-toast';
 
 export default function OnboardingAgreement() {
   const { user, profile, refreshProfile, loading: authLoading } = useAuth();
-  const { data: onboardingStatus, isLoading } = useOnboardingStatus({ user, profile, loading: authLoading });
+  const { data: onboardingStatus } = useOnboardingStatus({ user, profile, loading: authLoading });
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -36,7 +36,7 @@ export default function OnboardingAgreement() {
     }
   }, [defaultSignatureName, signatureName]);
 
-  if (isLoading || !user) {
+  if (authLoading || !user) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-primary" />
