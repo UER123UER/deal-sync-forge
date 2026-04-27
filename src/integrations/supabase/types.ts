@@ -267,6 +267,39 @@ export type Database = {
           },
         ]
       }
+      direct_deposits: {
+        Row: {
+          account_number_last4: string
+          account_type: string
+          agent_name: string
+          bank_name: string | null
+          created_at: string
+          id: string
+          owner_id: string
+          routing_number: string
+        }
+        Insert: {
+          account_number_last4: string
+          account_type?: string
+          agent_name: string
+          bank_name?: string | null
+          created_at?: string
+          id?: string
+          owner_id: string
+          routing_number: string
+        }
+        Update: {
+          account_number_last4?: string
+          account_type?: string
+          agent_name?: string
+          bank_name?: string | null
+          created_at?: string
+          id?: string
+          owner_id?: string
+          routing_number?: string
+        }
+        Relationships: []
+      }
       deals: {
         Row: {
           address: string

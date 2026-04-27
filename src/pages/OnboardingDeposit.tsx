@@ -1,0 +1,308 @@
+import { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Building2, CheckCircle2, Landmark, ShieldCheck, XCircle } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
+
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { useAuth } from '@/hooks/useAuth';
+import { useOnboardingStatus } from '@/hooks/useOnboardingStatus';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { validateAccountConfirm, validateAccountNumber, validateRoutingNumber } from '@/lib/bankingValidation';
+import { cn } from '@/lib/utils';
+
+function FieldHint({ value, result }: { value: string; result: { valid: boolean; message: string } }) {
+  if (!value) return null;
+
+  return (
+    <p className={cn('mt-1 flex items-center gap-1 text-xs', result.valid ? 'text-emerald-600' : 'text-destructive')}>
+      {result.valid ? <CheckCircle2 className="h-3 w-3 shrink-0" /> : <XCircle className="h-3 w-3 shrink-0" />}
+      {result.message}
+    </p>
+  );
+}
+
+export default function OnboardingDeposit() {
+  const { user, profile, refreshProfile } = useAuth();
+  const { data: onboardingStatus, isLoading } = useOnboardingStatus();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const [useBillingAccount, setUseBillingAccount] = useState(true);
+  const [agentName, setAgentName] = useState('');
+  const [bankName, setBankName] = useState('');
+  const [routingNumber, setRoutingNumber] = useState('');
+  const [accountNumber, setAccountNumber] = useState('');
+  const [confirmAccountNumber, setConfirmAccountNumber] = useState('');
+  const [accountType, setAccountType] = useState('checking');
+  const [saving, setSaving] = useState(false);
+
+  const defaultAgentName = useMemo(
+    () =>
+      onboardingStatus?.latestDepositAccount?.agent_name ||
+      [profile?.first_name, profile?.last_name].filter(Boolean).join(' ').trim(),
+    [onboardingStatus?.latestDepositAccount?.agent_name, profile?.first_name, profile?.last_name]
+  );
+
+  useEffect(() => {
+    if (!onboardingStatus) return;
+
+    if (!agentName && defaultAgentName) setAgentName(defaultAgentName);
+
+    if (onboardingStatus.latestDepositAccount) {
+      if (!bankName && onboardingStatus.latestDepositAccount.bank_name) {
+        setBankName(onboardingStatus.latestDepositAccount.bank_name);
+      }
+      if (!routingNumber) setRoutingNumber(onboardingStatus.latestDepositAccount.routing_number);
+      setAccountType(onboardingStatus.latestDepositAccount.account_type);
+    } else if (onboardingStatus.latestBillingAccount) {
+      setUseBillingAccount(true);
+      setAccountType(onboardingStatus.latestBillingAccount.account_type);
+    }
+  }, [
+    agentName,
+    bankName,
+    defaultAgentName,
+    onboardingStatus,
+    routingNumber,
+  ]);
+
+  if (isLoading || !user || !onboardingStatus) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-primary" />
+      </div>
+    );
+  }
+
+  const routingResult = validateRoutingNumber(routingNumber);
+  const accountResult = validateAccountNumber(accountNumber);
+  const confirmResult = validateAccountConfirm(accountNumber, confirmAccountNumber);
+  const canSubmitDifferentAccount =
+    agentName.trim().length > 0 &&
+    routingResult.valid &&
+    accountResult.valid &&
+    confirmResult.valid;
+
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!agentName.trim()) return;
+    if (useBillingAccount && !onboardingStatus.latestBillingAccount) {
+      toast({ title: 'Billing account missing', description: 'Please finish billing first.', variant: 'destructive' });
+      return;
+    }
+    if (!useBillingAccount && !canSubmitDifferentAccount) return;
+
+    setSaving(true);
+
+    const depositPayload = useBillingAccount
+      ? {
+          owner_id: user.id,
+          agent_name: agentName.trim(),
+          bank_name: bankName.trim() || null,
+          routing_number: onboardingStatus.latestBillingAccount!.routing_number,
+          account_number_last4: onboardingStatus.latestBillingAccount!.account_number_last4,
+          account_type: onboardingStatus.latestBillingAccount!.account_type,
+        }
+      : {
+          owner_id: user.id,
+          agent_name: agentName.trim(),
+          bank_name: bankName.trim() || null,
+          routing_number: routingNumber,
+          account_number_last4: accountNumber.slice(-4),
+          account_type: accountType,
+        };
+
+    const existingDepositId = onboardingStatus.latestDepositAccount?.id;
+    const depositResponse = existingDepositId
+      ? await supabase.from('direct_deposits').update(depositPayload).eq('id', existingDepositId)
+      : await supabase.from('direct_deposits').insert(depositPayload);
+
+    if (depositResponse.error) {
+      setSaving(false);
+      toast({ title: 'Could not save deposit account', description: depositResponse.error.message, variant: 'destructive' });
+      return;
+    }
+
+    const { error: profileError } = await (supabase.from('profiles') as any)
+      .update({
+        subscription_status: 'active',
+        subscription_activated_at: new Date().toISOString(),
+      })
+      .eq('id', user.id);
+
+    if (profileError) {
+      setSaving(false);
+      toast({ title: 'Could not activate account', description: profileError.message, variant: 'destructive' });
+      return;
+    }
+
+    await refreshProfile?.();
+    await queryClient.invalidateQueries({ queryKey: ['onboarding_status'] });
+    toast({ title: 'Welcome aboard', description: 'Your brokerage account is active.' });
+    navigate('/transactions');
+    setSaving(false);
+  };
+
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-muted/30 p-4">
+      <Card className="w-full max-w-xl">
+        <CardHeader className="text-center">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-primary">
+            <Landmark className="h-7 w-7 text-primary-foreground" />
+          </div>
+          <div className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Step 3 of 3</div>
+          <CardTitle className="text-2xl">Set Up Direct Deposit</CardTitle>
+          <CardDescription>Choose where United Estates Realty should send your commission payouts.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div className="space-y-1.5">
+              <Label htmlFor="agent-name">Payee Name</Label>
+              <Input
+                id="agent-name"
+                placeholder="Name on the deposit account"
+                value={agentName}
+                onChange={(event) => setAgentName(event.target.value)}
+                required
+              />
+            </div>
+
+            <label className="flex items-start gap-3 rounded-xl border bg-muted/20 px-4 py-3">
+              <Checkbox
+                checked={useBillingAccount}
+                onCheckedChange={(checked) => setUseBillingAccount(checked === true)}
+              />
+              <div className="space-y-1">
+                <div className="text-sm font-medium text-foreground">Same as billing information</div>
+                <div className="text-xs leading-5 text-muted-foreground">
+                  Use the billing account you just entered for commission deposits too.
+                </div>
+              </div>
+            </label>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="deposit-bank-name">Bank Name</Label>
+              <div className="relative">
+                <Building2 className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  id="deposit-bank-name"
+                  placeholder="Optional"
+                  value={bankName}
+                  onChange={(event) => setBankName(event.target.value)}
+                  className="pl-9"
+                />
+              </div>
+            </div>
+
+            {useBillingAccount ? (
+              <div className="rounded-xl border bg-muted/20 px-4 py-4">
+                <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                  <ShieldCheck className="h-4 w-4 text-emerald-500" />
+                  Billing account will also be used for deposits
+                </div>
+                {onboardingStatus.latestBillingAccount ? (
+                  <div className="mt-3 space-y-1 text-sm text-muted-foreground">
+                    <p>{onboardingStatus.latestBillingAccount.account_holder_name}</p>
+                    <p className="capitalize">
+                      {onboardingStatus.latestBillingAccount.account_type} • ending in {onboardingStatus.latestBillingAccount.account_number_last4}
+                    </p>
+                  </div>
+                ) : (
+                  <p className="mt-3 text-sm text-destructive">No billing account is available yet.</p>
+                )}
+              </div>
+            ) : (
+              <>
+                <div className="space-y-1.5">
+                  <Label htmlFor="deposit-routing">Routing Number</Label>
+                  <Input
+                    id="deposit-routing"
+                    placeholder="9-digit ABA routing number"
+                    maxLength={9}
+                    value={routingNumber}
+                    onChange={(event) => setRoutingNumber(event.target.value.replace(/\D/g, ''))}
+                    className={cn(
+                      routingNumber &&
+                        (routingResult.valid
+                          ? 'border-emerald-500 focus-visible:ring-emerald-500/30'
+                          : 'border-destructive focus-visible:ring-destructive/30')
+                    )}
+                    required={!useBillingAccount}
+                  />
+                  <FieldHint value={routingNumber} result={routingResult} />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="deposit-account">Account Number</Label>
+                  <Input
+                    id="deposit-account"
+                    placeholder="Enter your account number"
+                    type="password"
+                    value={accountNumber}
+                    onChange={(event) => setAccountNumber(event.target.value.replace(/\D/g, '').slice(0, 17))}
+                    className={cn(
+                      accountNumber &&
+                        (accountResult.valid
+                          ? 'border-emerald-500 focus-visible:ring-emerald-500/30'
+                          : 'border-destructive focus-visible:ring-destructive/30')
+                    )}
+                    required={!useBillingAccount}
+                  />
+                  <FieldHint value={accountNumber} result={accountResult} />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="deposit-confirm-account">Confirm Account Number</Label>
+                  <Input
+                    id="deposit-confirm-account"
+                    placeholder="Re-enter account number"
+                    type="password"
+                    value={confirmAccountNumber}
+                    onChange={(event) => setConfirmAccountNumber(event.target.value.replace(/\D/g, '').slice(0, 17))}
+                    className={cn(
+                      confirmAccountNumber &&
+                        (confirmResult.valid
+                          ? 'border-emerald-500 focus-visible:ring-emerald-500/30'
+                          : 'border-destructive focus-visible:ring-destructive/30')
+                    )}
+                    required={!useBillingAccount}
+                  />
+                  <FieldHint value={confirmAccountNumber} result={confirmResult} />
+                </div>
+
+                <div className="space-y-3">
+                  <Label>Account Type</Label>
+                  <RadioGroup value={accountType} onValueChange={setAccountType} className="flex gap-6">
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="checking" id="deposit-checking" />
+                      <Label htmlFor="deposit-checking" className="cursor-pointer font-normal">Checking</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="savings" id="deposit-savings" />
+                      <Label htmlFor="deposit-savings" className="cursor-pointer font-normal">Savings</Label>
+                    </div>
+                  </RadioGroup>
+                </div>
+              </>
+            )}
+
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={saving || (!useBillingAccount && !canSubmitDifferentAccount) || (useBillingAccount && !onboardingStatus.latestBillingAccount)}
+            >
+              {saving ? 'Finishing setup...' : 'Finish Setup'}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

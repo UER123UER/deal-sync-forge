@@ -1,17 +1,30 @@
 import { useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
+
 import { useAuth } from '@/hooks/useAuth';
+import { getNextOnboardingPath, useOnboardingStatus } from '@/hooks/useOnboardingStatus';
 import { supabase } from '@/integrations/supabase/client';
+
+const ONBOARDING_PATHS = new Set([
+  '/onboarding/agreement',
+  '/onboarding/billing',
+  '/onboarding/deposit',
+  '/onboarding/payment',
+]);
 
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   const location = useLocation();
   const [subStatus, setSubStatus] = useState<string | null>(null);
   const [subLoading, setSubLoading] = useState(true);
+  const { data: onboardingStatus, isLoading: onboardingLoading } = useOnboardingStatus();
 
-  // Fetch subscription status directly from DB on every render — avoids stale React state
   useEffect(() => {
-    if (!user) { setSubLoading(false); return; }
+    if (!user) {
+      setSubLoading(false);
+      return;
+    }
+
     supabase
       .from('profiles')
       .select('subscription_status')
@@ -23,10 +36,10 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
       });
   }, [user]);
 
-  if (loading || subLoading) {
+  if (loading || subLoading || onboardingLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-primary" />
       </div>
     );
   }
@@ -35,10 +48,17 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
     return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 
+  const isOnboardingRoute = ONBOARDING_PATHS.has(location.pathname);
+  const nextPath = getNextOnboardingPath(onboardingStatus);
+
   if (subStatus && subStatus !== 'active') {
-    if (location.pathname !== '/onboarding/payment') {
-      return <Navigate to="/onboarding/payment" replace />;
+    if (!isOnboardingRoute || location.pathname !== nextPath) {
+      return <Navigate to={nextPath} replace />;
     }
+  }
+
+  if (subStatus === 'active' && isOnboardingRoute) {
+    return <Navigate to="/transactions" replace />;
   }
 
   return <>{children}</>;

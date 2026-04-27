@@ -8,6 +8,9 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import Index from "@/pages/Index";
 import Auth from "@/pages/Auth";
+import OnboardingAgreement from "@/pages/OnboardingAgreement";
+import OnboardingBilling from "@/pages/OnboardingBilling";
+import OnboardingDeposit from "@/pages/OnboardingDeposit";
 import OnboardingPayment from "@/pages/OnboardingPayment";
 import ResetPassword from "@/pages/ResetPassword";
 import Signup from "@/pages/Signup";
@@ -57,6 +60,9 @@ const App = () => (
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/sign/:token" element={<SignDocument />} />
           {/* Paywall route (auth required but no active subscription needed) */}
+          <Route path="/onboarding/agreement" element={<ProtectedRoute><OnboardingAgreement /></ProtectedRoute>} />
+          <Route path="/onboarding/billing" element={<ProtectedRoute><OnboardingBilling /></ProtectedRoute>} />
+          <Route path="/onboarding/deposit" element={<ProtectedRoute><OnboardingDeposit /></ProtectedRoute>} />
           <Route path="/onboarding/payment" element={<ProtectedRoute><OnboardingPayment /></ProtectedRoute>} />
           {/* Protected app routes */}
           <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>

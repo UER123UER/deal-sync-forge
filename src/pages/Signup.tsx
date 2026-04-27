@@ -57,6 +57,7 @@ export default function Signup() {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
+  const [agentNumber, setAgentNumber] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -73,6 +74,10 @@ export default function Signup() {
       toast({ title: 'Password too weak', description: 'Must be 6+ characters with uppercase, lowercase, and a number.', variant: 'destructive' });
       return;
     }
+    if (!agentNumber.trim()) {
+      toast({ title: 'Agent number required', description: 'Please enter your real estate agent number.', variant: 'destructive' });
+      return;
+    }
     if (password !== confirmPassword) {
       toast({ title: 'Passwords do not match', variant: 'destructive' });
       return;
@@ -86,6 +91,7 @@ export default function Signup() {
         data: {
           first_name: firstName,
           last_name: lastName,
+          license_number: agentNumber.trim(),
           referral_code: refCode || undefined,
         },
         emailRedirectTo: window.location.origin,
@@ -114,8 +120,17 @@ export default function Signup() {
         .eq('id', signInData.user.id);
     }
 
+    if (signInData.user) {
+      await (supabase.from('profiles') as any)
+        .update({
+          license_number: agentNumber.trim(),
+          brokerage_name: 'United Estates Realty',
+        })
+        .eq('id', signInData.user.id);
+    }
+
     setLoading(false);
-    navigate('/onboarding/payment');
+    navigate('/onboarding/agreement');
   };
 
   // Google OAuth is intentionally disabled for now.
@@ -238,6 +253,17 @@ export default function Signup() {
                   required
                 />
               </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="agent-number">Agent Number</Label>
+              <Input
+                id="agent-number"
+                placeholder="Enter your active agent number"
+                value={agentNumber}
+                onChange={(e) => setAgentNumber(e.target.value)}
+                required
+              />
             </div>
 
             <div className="space-y-1.5">

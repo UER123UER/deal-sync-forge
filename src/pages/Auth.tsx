@@ -28,6 +28,7 @@ export default function Auth() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
+  const [agentNumber, setAgentNumber] = useState('');
 
   // Forgot password state
   const [showForgotPassword, setShowForgotPassword] = useState(false);
@@ -62,12 +63,16 @@ export default function Auth() {
       toast({ title: 'Password too weak', description: 'Must include at least one lowercase letter, one uppercase letter, and one number.', variant: 'destructive' });
       return;
     }
+    if (!agentNumber.trim()) {
+      toast({ title: 'Agent number required', description: 'Please enter your real estate agent number.', variant: 'destructive' });
+      return;
+    }
     setLoading(true);
     const { error: signUpError } = await supabase.auth.signUp({
       email: signUpEmail,
       password: signUpPassword,
       options: {
-        data: { first_name: firstName, last_name: lastName },
+        data: { first_name: firstName, last_name: lastName, license_number: agentNumber.trim() },
         emailRedirectTo: window.location.origin,
       },
     });
@@ -77,7 +82,7 @@ export default function Auth() {
       return;
     }
     // Sign in immediately so the user doesn't have to wait for a confirmation email
-    const { error: signInError } = await supabase.auth.signInWithPassword({
+    const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
       email: signUpEmail,
       password: signUpPassword,
     });
@@ -86,7 +91,15 @@ export default function Auth() {
       // Account created but auto-sign-in failed — tell them to sign in manually
       toast({ title: 'Account created!', description: 'Please sign in with your new credentials.' });
     } else {
-      navigate('/onboarding/payment');
+      if (signInData.user) {
+        await (supabase.from('profiles') as any)
+          .update({
+            license_number: agentNumber.trim(),
+            brokerage_name: 'United Estates Realty',
+          })
+          .eq('id', signInData.user.id);
+      }
+      navigate('/onboarding/agreement');
     }
   };
 
@@ -204,6 +217,10 @@ export default function Auth() {
                     <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                     <Input id="signup-email" type="email" placeholder="you@example.com" className="pl-9" value={signUpEmail} onChange={(e) => setSignUpEmail(e.target.value)} required />
                   </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="signup-agent-number">Agent Number</Label>
+                  <Input id="signup-agent-number" placeholder="Enter your active agent number" value={agentNumber} onChange={(e) => setAgentNumber(e.target.value)} required />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="signup-password">Password</Label>
