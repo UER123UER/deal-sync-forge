@@ -12,8 +12,10 @@ import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 
 const PROPERTY_TYPES = [
-  'Sale-Condo', 'Sale-Single Family Home', 'Sale-Land', 'Sale-New Construction',
-  'Sale-Commercial', 'Lease-Commercial', 'Lease-Condo', 'Lease-Single Family Home', 'Referral',
+  'Sale-Condo',
+  'Sale-Single Family Home',
+  'Lease-Condo',
+  'Lease-Single Family Home',
 ];
 
 export default function NewDeal() {
