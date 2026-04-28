@@ -9,7 +9,6 @@ export type TemplateCategory =
   | 'Under Contract';
 export type TemplateType = 'flyer' | 'post' | 'story';
 export type HeadlineStyle = 'h1' | 'h2' | 'h3';
-export type PhotoLayout = 'single' | 'collage';
 export type AgentLayout = 'single' | 'multi';
 export type PhotoFitMode = 'cover' | 'contain';
 
@@ -80,7 +79,7 @@ export const CANVAS_DIMENSIONS: CanvasDimension[] = [
 export type MarketingBlockKey =
   | 'logo'
   | 'photo'
-  | `photo-${number}`
+  | `photo-item-${string}`
   | 'headline'
   | 'address'
   | 'price'
@@ -111,6 +110,15 @@ export interface MarketingCustomTextBlock {
   text: string;
 }
 
+export interface MarketingPhotoBlock {
+  id: string;
+  src: string;
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+}
+
 export interface TemplateData {
   address: string;
   city: string;
@@ -133,9 +141,9 @@ export interface TemplateData {
   openHouseTime: string;
   visibility: TemplateVisibility;
   headlineStyle: HeadlineStyle;
-  photoLayout: PhotoLayout;
   agentLayout: AgentLayout;
   agents: MarketingAgent[];
+  photoBlocks: MarketingPhotoBlock[];
   customTextBlocks: MarketingCustomTextBlock[];
   groupedBlockKeys: MarketingBlockKey[];
   blockTransforms: MarketingBlockTransforms;
@@ -166,6 +174,39 @@ export interface MarketingTemplate {
   height: number;
   thumbnail: string;
   render: (data: TemplateData, editable?: boolean) => React.ReactNode;
+}
+
+export function createMarketingPhotoBlock(
+  src: string,
+  canvasWidth: number,
+  canvasHeight: number,
+  index = 0,
+  preferredLeft?: number,
+  preferredTop?: number,
+): MarketingPhotoBlock {
+  const w = canvasWidth || 1080;
+  const h = canvasHeight || 1080;
+  const scale = Math.min(w, h) / 1080;
+
+  const isFirst = index === 0;
+  const width = Math.round(isFirst ? Math.min(w * 0.8, 860 * scale) : Math.min(w * 0.34, 360 * scale));
+  const height = Math.round(isFirst ? Math.min(h * 0.38, 430 * scale) : width * 0.72);
+  const staggerIndex = Math.max(0, index - 1);
+  const column = staggerIndex % 3;
+  const row = Math.floor(staggerIndex / 3);
+  const defaultLeft = isFirst ? Math.round((w - width) / 2) : Math.round(w * 0.06) + column * Math.round(width + 18 * scale);
+  const defaultTop = isFirst ? Math.round(h * 0.17) : Math.round(h * 0.14) + row * Math.round(height + 18 * scale);
+  const maxLeft = Math.max(16, w - width - 16);
+  const maxTop = Math.max(16, h - height - 16);
+
+  return {
+    id: `photo-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    src,
+    left: Math.min(maxLeft, Math.max(16, Math.round(preferredLeft ?? defaultLeft))),
+    top: Math.min(maxTop, Math.max(16, Math.round(preferredTop ?? defaultTop))),
+    width,
+    height,
+  };
 }
 
 export const DEFAULT_TEMPLATE_VISIBILITY: TemplateVisibility = {
@@ -512,217 +553,66 @@ function renderHeadlineBlock(
   );
 }
 
-/** A single collage cell — overflow-hidden frame with pan+zoom of the inner image.
- *  data-marketing-block="photo-N" is set so the editor overlay can detect and
- *  allow independent drag (pan) / resize (zoom) of each cell.
- */
-function CollageCell({
-  src,
+function FreeformPhotoBlock({
+  block,
   index,
   data,
-  r,
 }: {
-  src: string;
+  block: MarketingPhotoBlock;
   index: number;
   data: TemplateData;
-  r: number;
 }) {
-  const blockKey = `photo-${index}` as MarketingBlockKey;
+  const blockKey = `photo-item-${block.id}` as MarketingBlockKey;
   const t = getBlockTransform(data, blockKey);
-  // x/y = pan offset in px; scale = zoom multiplier (>1 = zoomed in)
-  const zoom = Math.max(1, t.scale);
   const fitMode = t.fitMode ?? (index === 0 ? 'cover' : 'contain');
+  const radius = Math.round(Math.min(data.canvasWidth || 1080, data.canvasHeight || 1080) * 0.008);
 
   return (
-    <div
-      data-marketing-block={blockKey}
+    <AdjustableBlock
+      data={data}
+      block={blockKey}
       style={{
-        position: 'relative',
-        width: '100%',
-        height: '100%',
-        borderRadius: r,
+        position: 'absolute',
+        left: block.left,
+        top: block.top,
+        width: block.width,
+        height: block.height,
+        borderRadius: radius,
         overflow: 'hidden',
-        minHeight: 0,
-        minWidth: 0,
+        background: '#e5e7eb',
+        boxShadow: '0 16px 40px rgba(15, 23, 42, 0.16)',
       }}
     >
-      {src ? (
-        <img
-          src={src}
-          alt={`Property ${index + 1}`}
-          crossOrigin="anonymous"
-          loading="eager"
-          style={{
-            position: 'absolute',
-            // Zoom from centre, then shift by pan offset
-            width: `${zoom * 100}%`,
-            height: `${zoom * 100}%`,
-            objectFit: fitMode,
-            objectPosition: 'center center',
-            // Centre the zoomed image, then shift by pan (t.x / t.y in canvas-px)
-            left: `${50 - zoom * 50}%`,
-            top: `${50 - zoom * 50}%`,
-            transform: `translate(${t.x}px, ${t.y}px)`,
-            transformOrigin: 'top left',
-            display: 'block',
-            pointerEvents: 'none',
-            userSelect: 'none',
-          }}
-        />
-      ) : (
-        <div
-          style={{
-            width: '100%', height: '100%', borderRadius: r,
-            background: '#d1d5db',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: '#9ca3af', fontSize: 12,
-          }}
-        >
-          Add Photo {index + 1}
-        </div>
-      )}
-    </div>
+      <img
+        src={block.src}
+        alt={`Property ${index + 1}`}
+        crossOrigin="anonymous"
+        loading="eager"
+        style={{
+          width: '100%',
+          height: '100%',
+          objectFit: fitMode,
+          objectPosition: 'center center',
+          display: 'block',
+          pointerEvents: 'none',
+          userSelect: 'none',
+          background: '#f8fafc',
+        }}
+      />
+    </AdjustableBlock>
   );
 }
 
-function renderPhotoBlock(data: TemplateData) {
-  const photos = data.photos.filter(Boolean);
-  const n = photos.length;
-
-  // ── Single / hero layout ───────────────────────────────────────────────────
-  if (data.photoLayout !== 'collage' || n < 2) {
-    return <Photo photos={photos} style={{ width: '100%', height: '100%' }} />;
-  }
-
-  const w = data.canvasWidth  || 1080;
-  const h = data.canvasHeight || 1080;
-  const isPortrait  = h > w * 1.15;
-  const isLandscape = w > h * 1.15;
-  const gap = Math.round(Math.min(w, h) * 0.008);
-  const pad = Math.round(Math.min(w, h) * 0.009);
-  const r   = Math.round(Math.min(w, h) * 0.006);
-  const bg  = '#0e1428';
-
-  // Each photo gets its own independently pannable/zoomable cell
-  const cell = (photoIndex: number) => (
-    <CollageCell
-      key={photoIndex}
-      src={photos[photoIndex]}
-      index={photoIndex}
+function renderPhotoBlocks(data: TemplateData) {
+  const photoBlocks = data.photoBlocks ?? [];
+  return photoBlocks.map((block, index) => (
+    <FreeformPhotoBlock
+      key={block.id}
+      block={block}
+      index={index}
       data={data}
-      r={r}
     />
-  );
-
-  const wrap = (children: React.ReactNode, grid: React.CSSProperties) => (
-    <div style={{ width: '100%', height: '100%', background: bg, padding: pad, display: 'grid', gap, boxSizing: 'border-box', ...grid }}>
-      {children}
-    </div>
-  );
-
-  // ── 2 photos ───────────────────────────────────────────────────────────────
-  if (n === 2) {
-    if (isPortrait) {
-      return wrap(<>{cell(0)}{cell(1)}</>, { gridTemplateRows: '1fr 1fr' });
-    }
-    return wrap(<>{cell(0)}{cell(1)}</>, { gridTemplateColumns: '1fr 1fr' });
-  }
-
-  // ── 3 photos ───────────────────────────────────────────────────────────────
-  if (n === 3) {
-    if (isLandscape || !isPortrait) {
-      return wrap(
-        <>
-          {cell(0)}
-          <div style={{ display: 'grid', gridTemplateRows: '1fr 1fr', gap }}>
-            {cell(1)}{cell(2)}
-          </div>
-        </>,
-        { gridTemplateColumns: isLandscape ? '1.5fr 1fr' : '1.2fr 1fr' }
-      );
-    }
-    return wrap(
-      <>
-        {cell(0)}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap }}>
-          {cell(1)}{cell(2)}
-        </div>
-      </>,
-      { gridTemplateRows: '1.75fr 1fr' }
-    );
-  }
-
-  // ── 4 photos ───────────────────────────────────────────────────────────────
-  if (n === 4) {
-    return wrap(
-      <>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap }}>
-          {cell(0)}{cell(1)}
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap }}>
-          {cell(2)}{cell(3)}
-        </div>
-      </>,
-      { gridTemplateRows: '1fr 1fr' }
-    );
-  }
-
-  // ── 5 photos ───────────────────────────────────────────────────────────────
-  if (n === 5) {
-    if (isLandscape) {
-      return wrap(
-        <>
-          {cell(0)}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: '1fr 1fr', gap }}>
-            {cell(1)}{cell(2)}{cell(3)}{cell(4)}
-          </div>
-        </>,
-        { gridTemplateColumns: '1.2fr 1fr' }
-      );
-    }
-    return wrap(
-      <>
-        {cell(0)}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap }}>
-          {cell(1)}{cell(2)}
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap }}>
-          {cell(3)}{cell(4)}
-        </div>
-      </>,
-      { gridTemplateRows: '1.4fr 1fr 1fr' }
-    );
-  }
-
-  // ── 6+ photos ──────────────────────────────────────────────────────────────
-  const visible = photos.slice(0, 6);
-  const extra   = n - 6;
-  const cols = isLandscape ? 3 : 2;
-  const rows = Math.ceil(visible.length / cols);
-  return wrap(
-    <>
-      {visible.map((_, i) => {
-        const isLast = i === visible.length - 1 && extra > 0;
-        return (
-          <div key={i} style={{ position: 'relative', minHeight: 0 }}>
-            {cell(i)}
-            {isLast && (
-              <div style={{
-                position: 'absolute', inset: 0, borderRadius: r,
-                background: 'rgba(0,0,0,0.55)', pointerEvents: 'none',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                color: '#fff', fontSize: Math.round(Math.min(w, h) * 0.04),
-                fontWeight: 700, fontFamily: 'system-ui, sans-serif',
-              }}>
-                +{extra}
-              </div>
-            )}
-          </div>
-        );
-      })}
-    </>,
-    { gridTemplateColumns: `repeat(${cols}, 1fr)`, gridTemplateRows: `repeat(${rows}, 1fr)` }
-  );
+  ));
 }
 
 // ─── Shared template builder ──────────────────────────────────────────────────
@@ -792,13 +682,14 @@ function buildTemplate(
             </AdjustableBlock>
           </div>
 
-          <AdjustableBlock
-            data={data}
-            block="photo"
-            style={{ flex: 1, minHeight: 0, display: 'flex' }}
-          >
-            {renderPhotoBlock(data)}
-          </AdjustableBlock>
+          <div
+            style={{
+              flex: 1,
+              minHeight: 0,
+              display: 'flex',
+              background: '#ffffff',
+            }}
+          />
 
           <div
             style={{
@@ -1008,9 +899,10 @@ function buildTemplate(
             )}
           </div>
 
-          {(data.customTextBlocks?.length ?? 0) > 0 && (
+          {((data.photoBlocks?.length ?? 0) > 0 || (data.customTextBlocks?.length ?? 0) > 0) && (
             <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
-              {renderCustomTextBlocks(data, editable, fontScale)}
+              {(data.photoBlocks?.length ?? 0) > 0 && renderPhotoBlocks(data)}
+              {(data.customTextBlocks?.length ?? 0) > 0 && renderCustomTextBlocks(data, editable, fontScale)}
             </div>
           )}
         </div>
@@ -1096,9 +988,9 @@ export function getDefaultTemplateData(
     openHouseTime: '1:00 PM – 4:00 PM',
     visibility: { ...DEFAULT_TEMPLATE_VISIBILITY },
     headlineStyle: 'h1',
-    photoLayout: 'single',
     agentLayout: 'single',
     agents: uniqueAgents.length ? uniqueAgents : [primaryAgent],
+    photoBlocks: [],
     customTextBlocks: [],
     groupedBlockKeys: [],
     blockTransforms: {},

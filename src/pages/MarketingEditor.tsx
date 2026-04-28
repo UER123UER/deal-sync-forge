@@ -33,7 +33,6 @@ import {
   Maximize2,
   Keyboard,
   Check,
-  GripVertical,
   Lock,
   LockOpen,
   Link2,
@@ -52,14 +51,15 @@ import {
   TEMPLATES,
   CANVAS_DIMENSIONS,
   DEFAULT_TEMPLATE_VISIBILITY,
+  createMarketingPhotoBlock,
   getDefaultTemplateData,
   mergeMarketingBlockTransforms,
   type AgentLayout,
   type CanvasDimension,
   type MarketingCustomTextBlock,
+  type MarketingPhotoBlock,
   type HeadlineStyle,
   type MarketingBlockKey,
-  type PhotoLayout,
   type PhotoFitMode,
   type TemplateData,
   type TemplateCategory,
@@ -526,19 +526,23 @@ function isCustomTextBlock(block: string): block is `custom-text-${string}` {
   return block.startsWith('custom-text-');
 }
 
-function isPhotoIndexBlock(block: string): block is `photo-${number}` {
-  return /^photo-\d+$/.test(block);
+function isPhotoCanvasBlock(block: string): block is `photo-item-${string}` {
+  return block.startsWith('photo-item-');
 }
 
-function getPhotoIndex(block: string): number {
-  return parseInt(block.replace('photo-', ''), 10);
+function getPhotoBlockId(block: MarketingBlockKey): string | null {
+  return isPhotoCanvasBlock(block) ? block.replace('photo-item-', '') : null;
 }
 
 function getCustomTextBlockId(block: MarketingBlockKey): string | null {
   return isCustomTextBlock(block) ? block.replace('custom-text-', '') : null;
 }
 
-function getBlockLabel(block: MarketingBlockKey, customTextBlocks: MarketingCustomTextBlock[]): string {
+function getBlockLabel(
+  block: MarketingBlockKey,
+  customTextBlocks: MarketingCustomTextBlock[],
+  photoBlocks: MarketingPhotoBlock[],
+): string {
   if (isCustomTextBlock(block)) {
     const customTextId = getCustomTextBlockId(block);
     const customText = customTextBlocks.find((entry) => entry.id === customTextId);
@@ -546,8 +550,10 @@ function getBlockLabel(block: MarketingBlockKey, customTextBlocks: MarketingCust
     return preview ? `Text: ${preview.slice(0, 18)}` : 'Custom Text';
   }
 
-  if (isPhotoIndexBlock(block)) {
-    return `Photo ${getPhotoIndex(block) + 1}`;
+  if (isPhotoCanvasBlock(block)) {
+    const photoBlockId = getPhotoBlockId(block);
+    const index = photoBlocks.findIndex((entry) => entry.id === photoBlockId);
+    return index >= 0 ? `Photo ${index + 1}` : 'Photo';
   }
 
   return MARKETING_BLOCK_LABELS[block] ?? 'Block';
@@ -564,6 +570,57 @@ function timeAgo(ms: number): string {
   if (hrs < 24) return `${hrs}h ago`;
   const days = Math.floor(hrs / 24);
   return `${days}d ago`;
+}
+
+function makePosterPhotoBlock(
+  src: string,
+  canvasWidth: number,
+  canvasHeight: number,
+  existingCount: number,
+  preferredLeft?: number,
+  preferredTop?: number,
+  forcedId?: string,
+): MarketingPhotoBlock {
+  const block = createMarketingPhotoBlock(
+    src,
+    canvasWidth,
+    canvasHeight,
+    existingCount,
+    preferredLeft,
+    preferredTop,
+  );
+
+  return forcedId ? { ...block, id: forcedId } : block;
+}
+
+function getDefaultPhotoBlocks(
+  photos: string[],
+  canvasWidth: number,
+  canvasHeight: number,
+): MarketingPhotoBlock[] {
+  if (photos.length === 0) return [];
+
+  return [
+    makePosterPhotoBlock(photos[0], canvasWidth, canvasHeight, 0),
+  ];
+}
+
+function clampPhotoPosition(
+  block: MarketingPhotoBlock,
+  canvasWidth: number,
+  canvasHeight: number,
+  left: number,
+  top: number,
+): MarketingPhotoBlock {
+  const padding = 16;
+  const maxLeft = Math.max(padding, canvasWidth - block.width - padding);
+  const maxTop = Math.max(padding, canvasHeight - block.height - padding);
+
+  return {
+    ...block,
+    left: Math.min(maxLeft, Math.max(padding, Math.round(left))),
+    top: Math.min(maxTop, Math.max(padding, Math.round(top))),
+  };
 }
 
 function VisibilityLabel({
@@ -746,13 +803,33 @@ export default function MarketingEditor() {
       ...(incoming ?? {}),
     } as TemplateData;
 
+    const canvasWidth = incoming?.canvasWidth ?? base.canvasWidth ?? 1080;
+    const canvasHeight = incoming?.canvasHeight ?? base.canvasHeight ?? 1080;
+    const libraryPhotos = incoming?.photos ?? base.photos ?? [];
+    const hasExplicitPhotoBlocks = Array.isArray(incoming?.photoBlocks);
+    const photoBlocks = hasExplicitPhotoBlocks
+      ? (incoming?.photoBlocks ?? [])
+      : getDefaultPhotoBlocks(libraryPhotos, canvasWidth, canvasHeight);
+    const blockTransforms = mergeMarketingBlockTransforms(incoming?.blockTransforms);
+
+    if (!hasExplicitPhotoBlocks && photoBlocks.length > 0) {
+      photoBlocks.forEach((photoBlock, index) => {
+        const oldKey = `photo-${index}` as MarketingBlockKey;
+        const nextKey = `photo-item-${photoBlock.id}` as MarketingBlockKey;
+        if (blockTransforms[oldKey] && !blockTransforms[nextKey]) {
+          blockTransforms[nextKey] = blockTransforms[oldKey];
+        }
+      });
+    }
+
     return {
       ...merged,
       visibility: {
         ...DEFAULT_TEMPLATE_VISIBILITY,
         ...(incoming?.visibility ?? {}),
       },
-      blockTransforms: mergeMarketingBlockTransforms(incoming?.blockTransforms),
+      blockTransforms,
+      photoBlocks,
       customTextBlocks: incoming?.customTextBlocks ?? base.customTextBlocks ?? [],
       groupedBlockKeys: incoming?.groupedBlockKeys ?? base.groupedBlockKeys ?? [],
       agents: incoming?.agents?.length
@@ -765,8 +842,8 @@ export default function MarketingEditor() {
           }],
       // Ensure canvas dimension fields always exist (backwards compat)
       canvasDimensionId: incoming?.canvasDimensionId ?? base.canvasDimensionId ?? 'square',
-      canvasWidth: incoming?.canvasWidth ?? base.canvasWidth ?? 1080,
-      canvasHeight: incoming?.canvasHeight ?? base.canvasHeight ?? 1080,
+      canvasWidth,
+      canvasHeight,
     };
   }, []);
 
@@ -834,8 +911,6 @@ export default function MarketingEditor() {
   const saveStatusTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Keyboard shortcut overlay
   const [showShortcuts, setShowShortcuts] = useState(false);
-  // Photo drag-to-reorder
-  const photoDragIndexRef = useRef<number | null>(null);
   // Pending delete (for undo-toast pattern)
   const pendingDeleteRef = useRef<{ id: string; entries: RecentEntry[] } | null>(null);
   // Alignment guides (live during drag)
@@ -951,7 +1026,14 @@ export default function MarketingEditor() {
           index: 0,
         });
       } else {
-        setData((prev) => ({ ...getDefaultTemplateData(deal, template.category), photos: prev.photos }));
+        setData((prev) => {
+          const nextPhotos = prev.photos;
+          return {
+            ...getDefaultTemplateData(deal, template.category),
+            photos: nextPhotos,
+            photoBlocks: getDefaultPhotoBlocks(nextPhotos, prev.canvasWidth || 1080, prev.canvasHeight || 1080),
+          };
+        });
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -962,7 +1044,16 @@ export default function MarketingEditor() {
     if (!photosInitialized && dealPhotos.length > 0) {
       const saved = id ? loadRecents(id).find((r) => r.templateId === templateId) : null;
       if (!saved) {
-        setData((prev) => ({ ...prev, photos: dealPhotos.map((p) => p.url) }));
+        setData((prev) => {
+          const nextPhotos = dealPhotos.map((p) => p.url);
+          return {
+            ...prev,
+            photos: nextPhotos,
+            photoBlocks: prev.photoBlocks.length > 0
+              ? prev.photoBlocks
+              : getDefaultPhotoBlocks(nextPhotos, prev.canvasWidth || 1080, prev.canvasHeight || 1080),
+          };
+        });
       }
       setPhotosInitialized(true);
     }
@@ -1007,8 +1098,12 @@ export default function MarketingEditor() {
   const selectedCustomTextBlock = selectedCustomTextId
     ? data.customTextBlocks.find((entry) => entry.id === selectedCustomTextId) ?? null
     : null;
-  const selectedPhotoFitMode = selectedBlock && isPhotoIndexBlock(selectedBlock)
-    ? (data.blockTransforms?.[selectedBlock]?.fitMode ?? (selectedBlock === 'photo-0' ? 'cover' : 'contain'))
+  const selectedPhotoFitMode = selectedBlock && isPhotoCanvasBlock(selectedBlock)
+    ? (() => {
+        const photoBlockId = getPhotoBlockId(selectedBlock);
+        const photoIndex = data.photoBlocks.findIndex((entry) => entry.id === photoBlockId);
+        return data.blockTransforms?.[selectedBlock]?.fitMode ?? (photoIndex === 0 ? 'cover' : 'contain');
+      })()
     : null;
 
   const updateVisibility = useCallback((field: keyof TemplateVisibility, checked: boolean) => {
@@ -1024,10 +1119,6 @@ export default function MarketingEditor() {
 
   const setHeadlineStyle = useCallback((headlineStyle: HeadlineStyle) => {
     setData((prev) => ({ ...prev, headlineStyle }));
-  }, [setData]);
-
-  const setPhotoLayout = useCallback((photoLayout: PhotoLayout) => {
-    setData((prev) => ({ ...prev, photoLayout }));
   }, [setData]);
 
   const setAgentLayout = useCallback((agentLayout: AgentLayout) => {
@@ -1093,7 +1184,7 @@ export default function MarketingEditor() {
   }, [updateBlockTransforms]);
 
   const setPhotoFitMode = useCallback((block: MarketingBlockKey, fitMode: PhotoFitMode) => {
-    if (!isPhotoIndexBlock(block)) return;
+    if (!isPhotoCanvasBlock(block)) return;
     updateBlockTransforms({ [block]: { fitMode } });
   }, [updateBlockTransforms]);
 
@@ -1160,6 +1251,31 @@ export default function MarketingEditor() {
   }, [data.blockTransforms, setData]);
 
   const deleteBlock = useCallback((block: MarketingBlockKey) => {
+    if (isPhotoCanvasBlock(block)) {
+      const photoBlockId = getPhotoBlockId(block);
+      if (!photoBlockId) return;
+
+      setData((prev) => {
+        const nextTransforms = { ...(prev.blockTransforms ?? {}) };
+        delete nextTransforms[block];
+
+        return {
+          ...prev,
+          photoBlocks: prev.photoBlocks.filter((entry) => entry.id !== photoBlockId),
+          groupedBlockKeys: prev.groupedBlockKeys.filter((entry) => entry !== block),
+          blockTransforms: nextTransforms,
+        };
+      });
+      setLockedBlocks((prev) => {
+        const next = new Set(prev);
+        next.delete(block);
+        return next;
+      });
+      setSelectedBlock(null);
+      toast.success('Photo removed from poster');
+      return;
+    }
+
     if (isCustomTextBlock(block)) {
       const customTextId = getCustomTextBlockId(block);
       if (!customTextId) return;
@@ -1266,6 +1382,46 @@ export default function MarketingEditor() {
     }));
   }, [setData]);
 
+  const addPhotoBlock = useCallback((
+    src: string,
+    options?: {
+      preferredLeft?: number;
+      preferredTop?: number;
+      select?: boolean;
+      toastMessage?: string;
+    },
+  ) => {
+    const blockId = `photo-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const blockKey = `photo-item-${blockId}` as MarketingBlockKey;
+
+    setData((prev) => {
+      const canvasWidth = prev.canvasWidth || 1080;
+      const canvasHeight = prev.canvasHeight || 1080;
+      const nextBlock = makePosterPhotoBlock(
+        src,
+        canvasWidth,
+        canvasHeight,
+        prev.photoBlocks.length,
+        options?.preferredLeft,
+        options?.preferredTop,
+        blockId,
+      );
+
+      return {
+        ...prev,
+        photoBlocks: [...prev.photoBlocks, nextBlock],
+      };
+    });
+
+    if (options?.select !== false) {
+      setSelectedBlock(blockKey);
+    }
+
+    if (options?.toastMessage) {
+      toast.success(options.toastMessage);
+    }
+  }, [setData]);
+
   // ── Photo upload — persists to Supabase storage ───────────────────────────
   const handlePhotoUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -1275,7 +1431,16 @@ export default function MarketingEditor() {
     if (!id) {
       // No deal context — fall back to temporary blob URL with a warning
       const url = URL.createObjectURL(file);
-      setData((prev) => ({ ...prev, photos: [url, ...prev.photos] }));
+      setData((prev) => {
+        const nextPhotos = [url, ...prev.photos];
+        return {
+          ...prev,
+          photos: nextPhotos,
+          photoBlocks: prev.photoBlocks.length > 0
+            ? prev.photoBlocks
+            : getDefaultPhotoBlocks(nextPhotos, prev.canvasWidth || 1080, prev.canvasHeight || 1080),
+        };
+      });
       toast.warning('Photo added locally only — open this template from a deal to save photos permanently.');
       return;
     }
@@ -1304,23 +1469,23 @@ export default function MarketingEditor() {
       if (!hasNew) return prev;
       // Merge: Supabase photos first, then any local blob URLs not yet replaced
       const blobUrls = prev.photos.filter((u) => u.startsWith('blob:'));
-      return { ...prev, photos: [...supabaseUrls, ...blobUrls] };
+      const nextPhotos = [...supabaseUrls, ...blobUrls];
+      return {
+        ...prev,
+        photos: nextPhotos,
+        photoBlocks: prev.photoBlocks.length > 0
+          ? prev.photoBlocks
+          : getDefaultPhotoBlocks(nextPhotos, prev.canvasWidth || 1080, prev.canvasHeight || 1080),
+      };
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dealPhotos]);
 
-  const removePhoto = (index: number) => {
-    setData((prev) => ({ ...prev, photos: prev.photos.filter((_, i) => i !== index) }));
-  };
-
-  const reorderPhoto = useCallback((fromIndex: number, toIndex: number) => {
-    if (fromIndex === toIndex) return;
-    setData((prev) => {
-      const photos = [...prev.photos];
-      const [moved] = photos.splice(fromIndex, 1);
-      photos.splice(toIndex, 0, moved);
-      return { ...prev, photos };
-    });
+  const removePhoto = useCallback((index: number) => {
+    setData((prev) => ({
+      ...prev,
+      photos: prev.photos.filter((_, i) => i !== index),
+    }));
   }, [setData]);
 
   // ── Personal photo upload — session-only blob URLs ─────────────────────────
@@ -1334,44 +1499,81 @@ export default function MarketingEditor() {
     const urls = fileArray.map((f) => URL.createObjectURL(f));
     // Add to sidebar thumbnails
     setPersonalPhotos((prev) => [...urls, ...prev]);
-    // Also add to the poster's photo array so the template actually shows them
-    setData((prev) => ({ ...prev, photos: [...urls, ...prev.photos] }));
-    toast.success(urls.length === 1 ? 'Photo added to poster' : `${urls.length} photos added to poster`);
+    setData((prev) => ({
+      ...prev,
+      photoBlocks: prev.photoBlocks.length > 0
+        ? prev.photoBlocks
+        : getDefaultPhotoBlocks(urls, prev.canvasWidth || 1080, prev.canvasHeight || 1080),
+    }));
+    toast.success(urls.length === 1 ? 'Photo added to library' : `${urls.length} photos added to library`);
   }, [setData]);
 
   const removePersonalPhoto = useCallback((index: number) => {
     setPersonalPhotos((prev) => {
       const removed = prev[index];
-      if (removed?.startsWith('blob:')) URL.revokeObjectURL(removed);
+      const stillPlaced = removed
+        ? data.photoBlocks.some((block) => block.src === removed)
+        : false;
+      if (removed?.startsWith('blob:') && !stillPlaced) URL.revokeObjectURL(removed);
       return prev.filter((_, i) => i !== index);
     });
-  }, []);
+  }, [data.photoBlocks]);
 
-  // ── Drag photo onto canvas — sets as main poster photo ─────────────────────
+  // ── Drag photo onto canvas — creates a freeform poster photo ───────────────
   const handleCanvasPhotoDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     const photoUrl = e.dataTransfer.getData('text/photo-url');
     if (photoUrl) {
-      setData((prev) => {
-        // Put the dropped photo first (main photo position)
-        const filtered = prev.photos.filter((u) => u !== photoUrl);
-        return { ...prev, photos: [photoUrl, ...filtered] };
+      if (!canvasRef.current) return;
+
+      const canvasRect = canvasRef.current.getBoundingClientRect();
+      const dropX = (e.clientX - canvasRect.left) / (scaleRef.current || 1);
+      const dropY = (e.clientY - canvasRect.top) / (scaleRef.current || 1);
+      const previewBlock = makePosterPhotoBlock(photoUrl, canvasW, canvasH, data.photoBlocks.length);
+      const positionedBlock = clampPhotoPosition(
+        previewBlock,
+        canvasW,
+        canvasH,
+        dropX - (previewBlock.width / 2),
+        dropY - (previewBlock.height / 2),
+      );
+
+      addPhotoBlock(photoUrl, {
+        preferredLeft: positionedBlock.left,
+        preferredTop: positionedBlock.top,
+        toastMessage: 'Photo added to poster',
       });
-      toast.success('Photo set as main image');
       return;
     }
+
     // Also handle file drops directly onto canvas
     const files = e.dataTransfer.files;
     if (files && files.length > 0) {
       const file = files[0];
       if (file.type.startsWith('image/')) {
         const url = URL.createObjectURL(file);
+        const canvasRect = canvasRef.current?.getBoundingClientRect();
+        const dropX = canvasRect ? (e.clientX - canvasRect.left) / (scaleRef.current || 1) : canvasW / 2;
+        const dropY = canvasRect ? (e.clientY - canvasRect.top) / (scaleRef.current || 1) : canvasH / 2;
         setPersonalPhotos((prev) => [url, ...prev]);
-        setData((prev) => ({ ...prev, photos: [url, ...prev.photos] }));
-        toast.success('Photo added and set as main image');
+
+        const previewBlock = makePosterPhotoBlock(url, canvasW, canvasH, data.photoBlocks.length);
+        const positionedBlock = clampPhotoPosition(
+          previewBlock,
+          canvasW,
+          canvasH,
+          dropX - (previewBlock.width / 2),
+          dropY - (previewBlock.height / 2),
+        );
+
+        addPhotoBlock(url, {
+          preferredLeft: positionedBlock.left,
+          preferredTop: positionedBlock.top,
+          toastMessage: 'Photo dropped onto poster',
+        });
       }
     }
-  }, [setData]);
+  }, [addPhotoBlock, canvasH, canvasW, data.photoBlocks.length, setData]);
 
   const handleCanvasPhotoDragOver = useCallback((e: React.DragEvent) => {
     if (e.dataTransfer.types.includes('text/photo-url') || e.dataTransfer.types.includes('Files')) {
@@ -1531,24 +1733,6 @@ export default function MarketingEditor() {
       const dy = (event.clientY - interaction.startClientY) / divisor;
 
       if (interaction.mode === 'move') {
-        // ── photo-N pan mode — drag shifts the image within its cell ────────
-        if (isPhotoIndexBlock(interaction.block)) {
-          const newX = interaction.startTransform.x + dx;
-          const newY = interaction.startTransform.y + dy;
-          updateBlockTransform(
-            interaction.block,
-            { ...interaction.startTransform, x: newX, y: newY },
-            interaction.committed,
-          );
-          interaction.committed = true;
-          // Live overlay stays at the cell rect (cell doesn't move, only the image inside pans)
-          forceOverlayUpdate((n) => n + 1);
-          setAlignGuides([]);
-          setSpacingGuides([]);
-          setDragHud({ x: Math.round(newX), y: Math.round(newY) });
-          return;
-        }
-
         const rawX = interaction.startTransform.x + dx;
         const rawY = interaction.startTransform.y + dy;
 
@@ -1616,27 +1800,6 @@ export default function MarketingEditor() {
       // Resize mode — no snapping, clear guides
       setAlignGuides([]);
       setSpacingGuides([]);
-
-      // ── photo-N zoom mode — drag changes zoom level within the cell ──────
-      if (isPhotoIndexBlock(interaction.block)) {
-        const baseSize = Math.max(interaction.baseRect.width, interaction.baseRect.height, 120);
-        const dominantDelta = Math.abs(dx) > Math.abs(dy) ? dx : dy;
-        const nextScale = Math.min(
-          5,
-          // photo-N zoom minimum is 1.0 — can't zoom out below filling the cell
-          Math.max(1, interaction.startTransform.scale * ((baseSize + dominantDelta) / baseSize)),
-        );
-        updateBlockTransform(
-          interaction.block,
-          {
-            ...interaction.startTransform,
-            scale: Number.isFinite(nextScale) ? nextScale : interaction.startTransform.scale,
-          },
-          interaction.committed,
-        );
-        interaction.committed = true;
-        return;
-      }
 
       const isGroupedInteraction = interaction.targets.length > 1;
 
@@ -1727,7 +1890,7 @@ export default function MarketingEditor() {
       // Delete / Backspace — reset selected block position
       if ((e.key === 'Delete' || e.key === 'Backspace') && selectedBlock) {
         e.preventDefault();
-        if (isCustomTextBlock(selectedBlock)) {
+        if (isCustomTextBlock(selectedBlock) || isPhotoCanvasBlock(selectedBlock)) {
           deleteBlock(selectedBlock);
           return;
         }
@@ -1783,8 +1946,7 @@ export default function MarketingEditor() {
     setSelectedBlock(block);
 
     // Locked blocks can be selected but not moved/resized.
-    // photo-N cells are also locked when the parent 'photo' block is locked.
-    const effectiveLocked = lockedBlocks.has(block) || (isPhotoIndexBlock(block) && lockedBlocks.has('photo'));
+    const effectiveLocked = lockedBlocks.has(block);
     if (effectiveLocked) return;
 
     const currentTransform = data.blockTransforms?.[block];
@@ -1938,12 +2100,7 @@ export default function MarketingEditor() {
                 <div className="pb-3 border-b mb-2">
                   <div className="flex items-center justify-between mb-2">
                     <div className="text-xs font-semibold text-foreground">Property Photos</div>
-                    {data.photos.length > 1 ? (
-                      <span className="text-[9px] text-muted-foreground flex items-center gap-0.5">
-                        <GripVertical className="h-2.5 w-2.5" />
-                        Drag to reorder
-                      </span>
-                    ) : dealPhotos.length > 0 ? (
+                    {dealPhotos.length > 0 ? (
                       <span className="text-[9px] text-muted-foreground">{dealPhotos.length} from deal</span>
                     ) : null}
                   </div>
@@ -1966,36 +2123,25 @@ export default function MarketingEditor() {
                           key={src + i}
                           className="relative group cursor-grab active:cursor-grabbing"
                           draggable
+                          onClick={() => addPhotoBlock(src, { toastMessage: 'Photo added to poster' })}
                           onDragStart={(e) => {
-                            photoDragIndexRef.current = i;
                             e.dataTransfer.setData('text/photo-url', src);
-                            e.dataTransfer.effectAllowed = 'copyMove';
+                            e.dataTransfer.effectAllowed = 'copy';
                           }}
-                          onDragOver={(e) => { e.preventDefault(); }}
-                          onDrop={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            const from = photoDragIndexRef.current;
-                            if (from !== null && from !== i) reorderPhoto(from, i);
-                            photoDragIndexRef.current = null;
-                          }}
-                          onDragEnd={() => { photoDragIndexRef.current = null; }}
                         >
                           <img src={src} alt="" className="w-16 h-16 object-cover rounded border" />
                           <div className="absolute top-0 left-0 p-0.5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                            <GripVertical className="h-3 w-3 text-white drop-shadow" />
+                            <ImagePlus className="h-3 w-3 text-white drop-shadow" />
                           </div>
                           <button
-                            onClick={() => removePhoto(i)}
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              removePhoto(i);
+                            }}
                             className="absolute -top-1 -right-1 w-4 h-4 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                           >
                             <X className="h-2.5 w-2.5" />
                           </button>
-                          {i === 0 && (
-                            <div className="absolute bottom-0 left-0 right-0 text-[8px] bg-black/60 text-white text-center py-0.5 rounded-b">
-                              Main
-                            </div>
-                          )}
                         </div>
                       ))}
                       <button
@@ -2013,7 +2159,7 @@ export default function MarketingEditor() {
                 <div className="pb-4 border-b mb-2">
                   <div className="flex items-center justify-between mb-2">
                     <div className="text-xs font-semibold text-foreground">Personal Photos</div>
-                    <span className="text-[9px] text-muted-foreground">Drag onto poster</span>
+                    <span className="text-[9px] text-muted-foreground">Click or drag onto poster</span>
                   </div>
                   <input ref={personalPhotoInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handlePersonalPhotoUpload} />
                   {personalPhotos.length === 0 ? (
@@ -2031,6 +2177,7 @@ export default function MarketingEditor() {
                           key={src + i}
                           className="relative group cursor-grab active:cursor-grabbing"
                           draggable
+                          onClick={() => addPhotoBlock(src, { toastMessage: 'Photo added to poster' })}
                           onDragStart={(e) => {
                             e.dataTransfer.setData('text/photo-url', src);
                             e.dataTransfer.effectAllowed = 'copy';
@@ -2038,7 +2185,10 @@ export default function MarketingEditor() {
                         >
                           <img src={src} alt="" className="w-16 h-16 object-cover rounded border" />
                           <button
-                            onClick={() => removePersonalPhoto(i)}
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              removePersonalPhoto(i);
+                            }}
                             className="absolute -top-1 -right-1 w-4 h-4 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                           >
                             <X className="h-2.5 w-2.5" />
@@ -2086,32 +2236,9 @@ export default function MarketingEditor() {
                     </div>
 
                     <div className="space-y-2">
-                      <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">Photo Layout</div>
-                      <div className="grid grid-cols-2 gap-2">
-                        <OptionCard
-                          label="Hero"
-                          description="Single full-bleed photo"
-                          active={data.photoLayout === 'single'}
-                          preview={
-                            <div className={cn('w-14 h-8 rounded-md', data.photoLayout === 'single' ? 'bg-primary/30 border border-primary' : 'bg-muted-foreground/20')} />
-                          }
-                          onClick={() => setPhotoLayout('single')}
-                        />
-                        <OptionCard
-                          label="Collage"
-                          description="Independent multi-photo collage"
-                          active={data.photoLayout === 'collage'}
-                          preview={
-                            <div className="flex flex-col gap-0.5 w-14 h-8">
-                              <div className={cn('rounded-sm flex-[1.75]', data.photoLayout === 'collage' ? 'bg-primary/30 border border-primary' : 'bg-muted-foreground/20')} />
-                              <div className="flex gap-0.5 flex-1">
-                                <div className={cn('flex-1 rounded-sm', data.photoLayout === 'collage' ? 'bg-primary/20 border border-primary/50' : 'bg-muted-foreground/15')} />
-                                <div className={cn('flex-1 rounded-sm', data.photoLayout === 'collage' ? 'bg-primary/20 border border-primary/50' : 'bg-muted-foreground/15')} />
-                              </div>
-                            </div>
-                          }
-                          onClick={() => setPhotoLayout('collage')}
-                        />
+                      <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">Photo Canvas</div>
+                      <div className="rounded-xl border bg-muted/20 px-3 py-2 text-[11px] leading-4 text-muted-foreground">
+                        Start with one photo. Drag any photo onto the poster or click a thumbnail to add another one. Move and resize each photo independently.
                       </div>
                     </div>
                   </CollapsibleContent>
@@ -2148,7 +2275,7 @@ export default function MarketingEditor() {
                     <div className="flex items-center justify-between gap-2 rounded-xl border bg-background px-2.5 py-2">
                       <div>
                         <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Selected</div>
-                        <div className="text-xs font-semibold text-foreground">{getBlockLabel(selectedBlock, data.customTextBlocks)}</div>
+                        <div className="text-xs font-semibold text-foreground">{getBlockLabel(selectedBlock, data.customTextBlocks, data.photoBlocks)}</div>
                       </div>
                       <Button type="button" variant="outline" size="sm" className="h-7 text-[11px]" onClick={resetSelectedBlock}>
                         Reset
@@ -2626,31 +2753,26 @@ export default function MarketingEditor() {
                   if (!measuredRect) return null;
                   const block = blockKey as MarketingBlockKey;
 
-                  // photo-N blocks are only interactive in collage mode
-                  if (isPhotoIndexBlock(block) && data.photoLayout !== 'collage') return null;
-
                   // Use live-computed position during drag to eliminate render-lag;
                   // fall back to DOM-measured rect when idle.
                   const rect = liveOverlayRef.current[block] ?? measuredRect;
                   const selected = selectedBlock === block;
 
-                  const isPhotoCell = isPhotoIndexBlock(block);
-                  // photo-N cells inherit locked state from parent 'photo' block
-                  const isLocked = lockedBlocks.has(block) || (isPhotoCell && lockedBlocks.has('photo'));
-                  const isGrouped = !isPhotoCell && groupedBlocks.has(block);
+                  const isPhotoBlock = isPhotoCanvasBlock(block);
+                  const isLocked = lockedBlocks.has(block);
+                  const isGrouped = groupedBlocks.has(block);
                   const isCustomTextSelection = isCustomTextBlock(block);
-                  const visibilityKey = (block === 'agent' || block === 'photo' || isCustomTextSelection || isPhotoCell)
+                  const visibilityKey = (block === 'agent' || block === 'photo' || isCustomTextSelection || isPhotoBlock)
                     ? null
                     : block as keyof TemplateVisibility;
-                  const canDelete = visibilityKey !== null || isCustomTextSelection;
+                  const canDelete = visibilityKey !== null || isCustomTextSelection || isPhotoBlock;
 
                   return (
                     <div
                       key={block}
                       className={cn(
                         'absolute group/block',
-                        // photo cells get rounded corners matching the cell border-radius
-                        isPhotoCell ? 'rounded-md' : 'rounded-xl',
+                        isPhotoBlock ? 'rounded-md' : 'rounded-xl',
                         // Only animate when NOT dragging — during drag we want instant position
                         !isDraggingBlock && 'transition-all',
                         selected && isLocked
@@ -2672,11 +2794,11 @@ export default function MarketingEditor() {
                         type="button"
                         className={cn(
                           'absolute inset-0',
-                          isPhotoCell ? 'rounded-md' : 'rounded-xl',
-                          isLocked ? 'cursor-not-allowed' : isPhotoCell ? 'cursor-grab active:cursor-grabbing' : 'cursor-move',
+                          isPhotoBlock ? 'rounded-md' : 'rounded-xl',
+                          isLocked ? 'cursor-not-allowed' : 'cursor-move',
                         )}
                         onPointerDown={(event) => beginBlockInteraction(event, block, 'move')}
-                        aria-label={`${isPhotoCell ? 'Pan' : 'Move'} ${getBlockLabel(block, data.customTextBlocks)}`}
+                        aria-label={`Move ${getBlockLabel(block, data.customTextBlocks, data.photoBlocks)}`}
                       />
 
                       {/* ── Floating Action Toolbar — appears above selected block ── */}
@@ -2688,11 +2810,10 @@ export default function MarketingEditor() {
                         >
                           {/* Block label */}
                           <span className="px-2 text-[10px] font-semibold text-muted-foreground uppercase tracking-wide select-none">
-                            {getBlockLabel(block, data.customTextBlocks)}
+                            {getBlockLabel(block, data.customTextBlocks, data.photoBlocks)}
                           </span>
 
-                          {/* photo-N toolbar: just reset pan/zoom */}
-                          {isPhotoCell ? (
+                          {isPhotoBlock ? (
                             <>
                               <div className="w-px h-4 bg-border mx-0.5" />
                               <button
@@ -2701,7 +2822,7 @@ export default function MarketingEditor() {
                                 onClick={() => setPhotoFitMode(block, 'cover')}
                                 className={cn(
                                   'flex items-center justify-center h-7 px-2 rounded-lg text-[10px] font-semibold transition-colors',
-                                  (data.blockTransforms?.[block]?.fitMode ?? (block === 'photo-0' ? 'cover' : 'contain')) === 'cover'
+                                  (data.blockTransforms?.[block]?.fitMode ?? 'cover') === 'cover'
                                     ? 'bg-primary text-primary-foreground'
                                     : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                                 )}
@@ -2714,7 +2835,7 @@ export default function MarketingEditor() {
                                 onClick={() => setPhotoFitMode(block, 'contain')}
                                 className={cn(
                                   'flex items-center justify-center h-7 px-2 rounded-lg text-[10px] font-semibold transition-colors',
-                                  (data.blockTransforms?.[block]?.fitMode ?? (block === 'photo-0' ? 'cover' : 'contain')) === 'contain'
+                                  (data.blockTransforms?.[block]?.fitMode ?? 'cover') === 'contain'
                                     ? 'bg-primary text-primary-foreground'
                                     : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                                 )}
@@ -2722,35 +2843,56 @@ export default function MarketingEditor() {
                                 Fit
                               </button>
                               <div className="w-px h-4 bg-border mx-0.5" />
+
                               <button
                                 type="button"
-                                title="Reset pan & zoom"
+                                title={isLocked ? 'Unlock block' : 'Lock block'}
+                                className={cn(
+                                  'flex items-center justify-center h-7 w-7 rounded-lg transition-colors',
+                                  isLocked
+                                    ? 'bg-amber-100 text-amber-600 hover:bg-amber-200'
+                                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                                )}
+                                onClick={() => toggleLockBlock(block)}
+                              >
+                                {isLocked ? <Lock className="h-3.5 w-3.5" /> : <LockOpen className="h-3.5 w-3.5" />}
+                              </button>
+                              <button
+                                type="button"
+                                title="Reset block position"
                                 onClick={resetSelectedBlock}
                                 className="flex items-center justify-center h-7 w-7 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
                               >
                                 <Undo2 className="h-3.5 w-3.5" />
+                              </button>
+                              <div className="w-px h-4 bg-border mx-0.5" />
+                              <button
+                                type="button"
+                                title="Remove photo from poster"
+                                onClick={() => deleteBlock(block)}
+                                className="flex items-center justify-center h-7 w-7 rounded-lg text-muted-foreground hover:bg-red-50 hover:text-red-600 transition-colors"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
                               </button>
                             </>
                           ) : (
                             <>
                               <div className="w-px h-4 bg-border mx-0.5" />
 
-                              {/* Group / Ungroup */}
                               <button
                                 type="button"
                                 title={isGrouped ? 'Remove from group' : 'Add to group'}
-                                onClick={() => toggleGroupBlock(block)}
                                 className={cn(
                                   'flex items-center justify-center h-7 w-7 rounded-lg transition-colors',
                                   isGrouped
                                     ? 'bg-violet-100 text-violet-600 hover:bg-violet-200'
                                     : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                                 )}
+                                onClick={() => toggleGroupBlock(block)}
                               >
                                 {isGrouped ? <Link2Off className="h-3.5 w-3.5" /> : <Link2 className="h-3.5 w-3.5" />}
                               </button>
 
-                              {/* Lock / Unlock */}
                               <button
                                 type="button"
                                 title={isLocked ? 'Unlock block' : 'Lock block'}
@@ -2765,7 +2907,6 @@ export default function MarketingEditor() {
                                 {isLocked ? <Lock className="h-3.5 w-3.5" /> : <LockOpen className="h-3.5 w-3.5" />}
                               </button>
 
-                              {/* Duplicate — only for custom text blocks; template blocks get a Reset instead */}
                               {isCustomTextSelection ? (
                                 <button
                                   type="button"
@@ -2786,7 +2927,6 @@ export default function MarketingEditor() {
                                 </button>
                               )}
 
-                              {/* Delete (hide block) */}
                               {canDelete && (
                                 <>
                                   <div className="w-px h-4 bg-border mx-0.5" />
@@ -2812,11 +2952,10 @@ export default function MarketingEditor() {
                       )}>
                         {isLocked && <Lock className="h-2.5 w-2.5 text-amber-500" />}
                         {isGrouped && <Link2 className="h-2.5 w-2.5 text-violet-500" />}
-                        {getBlockLabel(block, data.customTextBlocks)}
+                        {getBlockLabel(block, data.customTextBlocks, data.photoBlocks)}
                       </div>
 
-                      {/* Resize handle — visible on hover OR when selected (disabled when locked).
-                          For photo cells this controls zoom level within the cell. */}
+                      {/* Resize handle — visible on hover or when selected (disabled when locked). */}
                       {!isLocked && (
                         <button
                           type="button"
@@ -2825,8 +2964,8 @@ export default function MarketingEditor() {
                             selected ? 'opacity-100' : 'opacity-0 group-hover/block:opacity-100'
                           )}
                           onPointerDown={(event) => beginBlockInteraction(event, block, 'resize')}
-                          aria-label={isPhotoCell ? `Zoom ${getBlockLabel(block, data.customTextBlocks)}` : `Resize ${getBlockLabel(block, data.customTextBlocks)}`}
-                          title={isPhotoCell ? 'Drag to zoom' : 'Drag to resize'}
+                          aria-label={`Resize ${getBlockLabel(block, data.customTextBlocks, data.photoBlocks)}`}
+                          title="Drag to resize"
                         >
                           <Maximize2 className="h-2.5 w-2.5 text-primary-foreground" />
                         </button>
