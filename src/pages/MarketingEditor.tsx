@@ -60,6 +60,7 @@ import {
   type HeadlineStyle,
   type MarketingBlockKey,
   type PhotoLayout,
+  type PhotoFitMode,
   type TemplateData,
   type TemplateCategory,
   type TemplateVisibility,
@@ -1006,6 +1007,9 @@ export default function MarketingEditor() {
   const selectedCustomTextBlock = selectedCustomTextId
     ? data.customTextBlocks.find((entry) => entry.id === selectedCustomTextId) ?? null
     : null;
+  const selectedPhotoFitMode = selectedBlock && isPhotoIndexBlock(selectedBlock)
+    ? (data.blockTransforms?.[selectedBlock]?.fitMode ?? (selectedBlock === 'photo-0' ? 'cover' : 'contain'))
+    : null;
 
   const updateVisibility = useCallback((field: keyof TemplateVisibility, checked: boolean) => {
     setData((prev) => ({
@@ -1057,7 +1061,7 @@ export default function MarketingEditor() {
   }, [customW, customH, setData]);
 
   const updateBlockTransforms = useCallback((
-    updates: Partial<Record<MarketingBlockKey, { x?: number; y?: number; scale?: number }>>,
+    updates: Partial<Record<MarketingBlockKey, { x?: number; y?: number; scale?: number; fitMode?: PhotoFitMode }>>,
     replace = false,
   ) => {
     const applyUpdate = replace ? replaceCurrentData : setData;
@@ -1066,7 +1070,7 @@ export default function MarketingEditor() {
 
       Object.entries(updates).forEach(([blockKey, patch]) => {
         const block = blockKey as MarketingBlockKey;
-        const current = nextTransforms[block] ?? { x: 0, y: 0, scale: 1 };
+        const current = nextTransforms[block] ?? { x: 0, y: 0, scale: 1, fitMode: 'cover' };
         nextTransforms[block] = {
           ...current,
           ...patch,
@@ -1082,10 +1086,15 @@ export default function MarketingEditor() {
 
   const updateBlockTransform = useCallback((
     block: MarketingBlockKey,
-    nextTransform: { x: number; y: number; scale: number },
+    nextTransform: { x: number; y: number; scale: number; fitMode?: PhotoFitMode },
     replace = false,
   ) => {
     updateBlockTransforms({ [block]: nextTransform }, replace);
+  }, [updateBlockTransforms]);
+
+  const setPhotoFitMode = useCallback((block: MarketingBlockKey, fitMode: PhotoFitMode) => {
+    if (!isPhotoIndexBlock(block)) return;
+    updateBlockTransforms({ [block]: { fitMode } });
   }, [updateBlockTransforms]);
 
   const resetSelectedBlock = useCallback(() => {
@@ -2090,7 +2099,7 @@ export default function MarketingEditor() {
                         />
                         <OptionCard
                           label="Collage"
-                          description="Main + 2 side photos"
+                          description="Independent multi-photo collage"
                           active={data.photoLayout === 'collage'}
                           preview={
                             <div className="flex flex-col gap-0.5 w-14 h-8">
@@ -2145,6 +2154,31 @@ export default function MarketingEditor() {
                         Reset
                       </Button>
                     </div>
+                    {selectedPhotoFitMode ? (
+                      <div className="mt-2 rounded-xl border bg-background px-2.5 py-2">
+                        <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Photo Fit</div>
+                        <div className="mt-2 grid grid-cols-2 gap-1.5">
+                          <Button
+                            type="button"
+                            variant={selectedPhotoFitMode === 'cover' ? 'default' : 'outline'}
+                            size="sm"
+                            className="h-7 text-[11px]"
+                            onClick={() => setPhotoFitMode(selectedBlock, 'cover')}
+                          >
+                            Fill
+                          </Button>
+                          <Button
+                            type="button"
+                            variant={selectedPhotoFitMode === 'contain' ? 'default' : 'outline'}
+                            size="sm"
+                            className="h-7 text-[11px]"
+                            onClick={() => setPhotoFitMode(selectedBlock, 'contain')}
+                          >
+                            Fit
+                          </Button>
+                        </div>
+                      </div>
+                    ) : null}
                   </div>
                 ) : null}
 
@@ -2660,6 +2694,33 @@ export default function MarketingEditor() {
                           {/* photo-N toolbar: just reset pan/zoom */}
                           {isPhotoCell ? (
                             <>
+                              <div className="w-px h-4 bg-border mx-0.5" />
+                              <button
+                                type="button"
+                                title="Fill frame"
+                                onClick={() => setPhotoFitMode(block, 'cover')}
+                                className={cn(
+                                  'flex items-center justify-center h-7 px-2 rounded-lg text-[10px] font-semibold transition-colors',
+                                  (data.blockTransforms?.[block]?.fitMode ?? (block === 'photo-0' ? 'cover' : 'contain')) === 'cover'
+                                    ? 'bg-primary text-primary-foreground'
+                                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                                )}
+                              >
+                                Fill
+                              </button>
+                              <button
+                                type="button"
+                                title="Show full photo"
+                                onClick={() => setPhotoFitMode(block, 'contain')}
+                                className={cn(
+                                  'flex items-center justify-center h-7 px-2 rounded-lg text-[10px] font-semibold transition-colors',
+                                  (data.blockTransforms?.[block]?.fitMode ?? (block === 'photo-0' ? 'cover' : 'contain')) === 'contain'
+                                    ? 'bg-primary text-primary-foreground'
+                                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                                )}
+                              >
+                                Fit
+                              </button>
                               <div className="w-px h-4 bg-border mx-0.5" />
                               <button
                                 type="button"

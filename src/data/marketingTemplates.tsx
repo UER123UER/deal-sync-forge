@@ -11,6 +11,7 @@ export type TemplateType = 'flyer' | 'post' | 'story';
 export type HeadlineStyle = 'h1' | 'h2' | 'h3';
 export type PhotoLayout = 'single' | 'collage';
 export type AgentLayout = 'single' | 'multi';
+export type PhotoFitMode = 'cover' | 'contain';
 
 // ── Canvas Dimensions ──────────────────────────────────────────────────────
 export interface CanvasDimension {
@@ -92,6 +93,7 @@ export interface MarketingBlockTransform {
   x: number;
   y: number;
   scale: number;
+  fitMode?: PhotoFitMode;
 }
 
 export type MarketingBlockTransforms = Partial<Record<MarketingBlockKey, MarketingBlockTransform>>;
@@ -529,6 +531,7 @@ function CollageCell({
   const t = getBlockTransform(data, blockKey);
   // x/y = pan offset in px; scale = zoom multiplier (>1 = zoomed in)
   const zoom = Math.max(1, t.scale);
+  const fitMode = t.fitMode ?? (index === 0 ? 'cover' : 'contain');
 
   return (
     <div
@@ -554,7 +557,8 @@ function CollageCell({
             // Zoom from centre, then shift by pan offset
             width: `${zoom * 100}%`,
             height: `${zoom * 100}%`,
-            objectFit: 'cover',
+            objectFit: fitMode,
+            objectPosition: 'center center',
             // Centre the zoomed image, then shift by pan (t.x / t.y in canvas-px)
             left: `${50 - zoom * 50}%`,
             top: `${50 - zoom * 50}%`,
@@ -618,15 +622,15 @@ function renderPhotoBlock(data: TemplateData) {
 
   // ── 2 photos ───────────────────────────────────────────────────────────────
   if (n === 2) {
-    if (isLandscape) {
-      return wrap(<>{cell(0)}{cell(1)}</>, { gridTemplateColumns: '1fr 1fr' });
+    if (isPortrait) {
+      return wrap(<>{cell(0)}{cell(1)}</>, { gridTemplateRows: '1fr 1fr' });
     }
-    return wrap(<>{cell(0)}{cell(1)}</>, { gridTemplateRows: '1.6fr 1fr' });
+    return wrap(<>{cell(0)}{cell(1)}</>, { gridTemplateColumns: '1fr 1fr' });
   }
 
   // ── 3 photos ───────────────────────────────────────────────────────────────
   if (n === 3) {
-    if (isLandscape) {
+    if (isLandscape || !isPortrait) {
       return wrap(
         <>
           {cell(0)}
@@ -634,18 +638,7 @@ function renderPhotoBlock(data: TemplateData) {
             {cell(1)}{cell(2)}
           </div>
         </>,
-        { gridTemplateColumns: '1.5fr 1fr' }
-      );
-    }
-    if (isPortrait) {
-      return wrap(
-        <>
-          {cell(0)}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap }}>
-            {cell(1)}{cell(2)}
-          </div>
-        </>,
-        { gridTemplateRows: '1.6fr 1fr' }
+        { gridTemplateColumns: isLandscape ? '1.5fr 1fr' : '1.2fr 1fr' }
       );
     }
     return wrap(
@@ -661,9 +654,6 @@ function renderPhotoBlock(data: TemplateData) {
 
   // ── 4 photos ───────────────────────────────────────────────────────────────
   if (n === 4) {
-    if (isLandscape) {
-      return wrap(<>{cell(0)}{cell(1)}{cell(2)}{cell(3)}</>, { gridTemplateColumns: '1fr 1fr 1fr 1fr' });
-    }
     return wrap(
       <>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap }}>
