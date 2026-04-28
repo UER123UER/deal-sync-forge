@@ -309,7 +309,13 @@ const E = ({
 // ─── Photo area ───────────────────────────────────────────────────────────────
 const Photo = ({ photos, style }: { photos: string[]; style?: React.CSSProperties }) =>
   photos[0] ? (
-    <img src={photos[0]} alt="Property" style={{ ...style, objectFit: 'cover', display: 'block' }} />
+    <img
+      src={photos[0]}
+      alt="Property"
+      crossOrigin="anonymous"
+      loading="eager"
+      style={{ ...style, objectFit: 'cover', display: 'block' }}
+    />
   ) : (
     <div
       style={{
@@ -342,7 +348,13 @@ const PhotoFrame = ({
   label?: string;
 }) =>
   src ? (
-    <img src={src} alt="Property" style={{ ...style, objectFit: 'cover', display: 'block' }} />
+    <img
+      src={src}
+      alt="Property"
+      crossOrigin="anonymous"
+      loading="eager"
+      style={{ ...style, objectFit: 'cover', display: 'block' }}
+    />
   ) : (
     <div
       style={{
@@ -365,6 +377,8 @@ const Logo = ({ width = 300 }: { width?: number }) => (
   <img
     src="/logo.png"
     alt="United Estates Realty"
+    crossOrigin="anonymous"
+    loading="eager"
     style={{ width, height: 'auto', objectFit: 'contain', display: 'block' }}
   />
 );
@@ -533,6 +547,8 @@ function CollageCell({
         <img
           src={src}
           alt={`Property ${index + 1}`}
+          crossOrigin="anonymous"
+          loading="eager"
           style={{
             position: 'absolute',
             // Zoom from centre, then shift by pan offset

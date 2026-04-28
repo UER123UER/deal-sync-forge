@@ -101,6 +101,110 @@ interface SnapResult {
   spacingGuides: SpacingGuide[];
 }
 
+function waitForImageToLoad(image: HTMLImageElement) {
+  if (image.complete && image.naturalWidth > 0) {
+    return Promise.resolve();
+  }
+
+  return new Promise<void>((resolve) => {
+    const handleDone = () => {
+      image.removeEventListener('load', handleDone);
+      image.removeEventListener('error', handleDone);
+      resolve();
+    };
+
+    image.addEventListener('load', handleDone, { once: true });
+    image.addEventListener('error', handleDone, { once: true });
+  });
+}
+
+async function waitForImages(root: HTMLElement) {
+  const images = Array.from(root.querySelectorAll('img'));
+  await Promise.all(images.map((image) => waitForImageToLoad(image as HTMLImageElement)));
+}
+
+function blobToDataUrl(blob: Blob) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      if (typeof reader.result === 'string') {
+        resolve(reader.result);
+        return;
+      }
+      reject(new Error('Unable to convert image blob to data URL.'));
+    };
+    reader.onerror = () => reject(reader.error ?? new Error('Unable to read image blob.'));
+    reader.readAsDataURL(blob);
+  });
+}
+
+async function inlineImagesForExport(sourceRoot: HTMLElement, cloneRoot: HTMLElement) {
+  const sourceImages = Array.from(sourceRoot.querySelectorAll('img')) as HTMLImageElement[];
+  const cloneImages = Array.from(cloneRoot.querySelectorAll('img')) as HTMLImageElement[];
+
+  await Promise.all(
+    cloneImages.map(async (cloneImage, index) => {
+      const sourceImage = sourceImages[index];
+      const source = sourceImage?.currentSrc || sourceImage?.getAttribute('src') || cloneImage.getAttribute('src');
+      if (!source || source.startsWith('data:')) {
+        return;
+      }
+
+      cloneImage.loading = 'eager';
+      cloneImage.decoding = 'sync';
+
+      try {
+        const response = await fetch(source, { cache: 'force-cache' });
+        if (!response.ok) {
+          throw new Error(`Image fetch failed with ${response.status}`);
+        }
+
+        const blob = await response.blob();
+        cloneImage.src = await blobToDataUrl(blob);
+      } catch (error) {
+        console.warn('Failed to inline export image:', source, error);
+      }
+
+      await waitForImageToLoad(cloneImage);
+    })
+  );
+}
+
+async function exportNodeToPng(node: HTMLElement, exportW: number, exportH: number) {
+  await waitForImages(node);
+
+  const wrapper = document.createElement('div');
+  wrapper.style.position = 'fixed';
+  wrapper.style.left = '-99999px';
+  wrapper.style.top = '0';
+  wrapper.style.width = `${exportW}px`;
+  wrapper.style.height = `${exportH}px`;
+  wrapper.style.pointerEvents = 'none';
+  wrapper.style.opacity = '0';
+  wrapper.style.zIndex = '-1';
+
+  const clone = node.cloneNode(true) as HTMLElement;
+  clone.style.width = `${exportW}px`;
+  clone.style.height = `${exportH}px`;
+
+  wrapper.appendChild(clone);
+  document.body.appendChild(wrapper);
+
+  try {
+    await inlineImagesForExport(node, clone);
+    await waitForImages(clone);
+
+    return await toPng(clone, {
+      width: exportW,
+      height: exportH,
+      pixelRatio: 2,
+      cacheBust: true,
+    });
+  } finally {
+    document.body.removeChild(wrapper);
+  }
+}
+
 /** Compute snap offset + guides for a block being dragged */
 function computeSnap(
   block: string,
@@ -811,9 +915,11 @@ export default function MarketingEditor() {
     root.render(t.render(entry.data, false) as any);
     await new Promise(r => setTimeout(r, 200));
     try {
-      const dataUrl = await toPng(container.firstElementChild as HTMLElement, {
-        width: exportW, height: exportH, pixelRatio: 2,
-      });
+      const exportTarget = container.firstElementChild as HTMLElement | null;
+      if (!exportTarget) {
+        throw new Error('Unable to render recent design for export.');
+      }
+      const dataUrl = await exportNodeToPng(exportTarget, exportW, exportH);
       const link = document.createElement('a');
       link.download = `${(entry.customName || t.name).replace(/\s+/g, '-').toLowerCase()}.png`;
       link.href = dataUrl;
@@ -1286,11 +1392,7 @@ export default function MarketingEditor() {
     const exportW = data.canvasWidth || 1080;
     const exportH = data.canvasHeight || 1080;
     try {
-      const dataUrl = await toPng(canvasRef.current, {
-        width: exportW,
-        height: exportH,
-        pixelRatio: 2,
-      });
+      const dataUrl = await exportNodeToPng(canvasRef.current, exportW, exportH);
       const link = document.createElement('a');
       link.download = `${template.name.replace(/\s+/g, '-').toLowerCase()}-${data.address.replace(/\s+/g, '-').toLowerCase()}.png`;
       link.href = dataUrl;
