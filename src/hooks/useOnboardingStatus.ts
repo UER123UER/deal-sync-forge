@@ -33,6 +33,32 @@ export type OnboardingStatus = {
   latestDepositAccount: DepositAccountSummary | null;
 };
 
+export const getFallbackOnboardingStatus = ({
+  user,
+  profile,
+}: {
+  user: User | null;
+  profile: Profile | null;
+}): OnboardingStatus => {
+  const agreementSigned = Boolean(
+    user?.user_metadata?.brokerage_agreement_accepted &&
+    user?.user_metadata?.brokerage_agreement_signed_at &&
+    user?.user_metadata?.brokerage_agreement_signed_name
+  );
+
+  return {
+    subscriptionStatus: profile?.subscription_status ?? 'pending',
+    agreementSigned,
+    agreementSignedAt: (user?.user_metadata?.brokerage_agreement_signed_at as string | undefined) ?? null,
+    agreementSignedName: (user?.user_metadata?.brokerage_agreement_signed_name as string | undefined) ?? null,
+    licenseNumber: profile?.license_number ?? (user?.user_metadata?.license_number as string | undefined) ?? null,
+    hasBillingAccount: false,
+    hasDepositAccount: false,
+    latestBillingAccount: null,
+    latestDepositAccount: null,
+  };
+};
+
 export const getNextOnboardingPath = (status: OnboardingStatus | null | undefined) => {
   if (!status) return '/onboarding/agreement';
   if (status.subscriptionStatus === 'active') return '/transactions';
@@ -62,7 +88,8 @@ export function useOnboardingStatus({
     ],
     enabled: !!user && !loading,
     queryFn: async () => {
-      const { data: authResult } = await supabase.auth.getUser();
+      const fallbackStatus = getFallbackOnboardingStatus({ user, profile });
+      const { data: authResult, error: authError } = await supabase.auth.getUser();
       const liveUser = authResult.user ?? user!;
       const [billingResult, depositResult] = await Promise.all([
         supabase
@@ -80,9 +107,15 @@ export function useOnboardingStatus({
           .limit(1)
           .maybeSingle(),
       ]);
-
-      if (billingResult.error) throw billingResult.error;
-      if (depositResult.error) throw depositResult.error;
+      if (authError) {
+        console.warn('Unable to refresh auth user during onboarding status lookup.', authError);
+      }
+      if (billingResult.error) {
+        console.warn('Unable to load billing account during onboarding status lookup.', billingResult.error);
+      }
+      if (depositResult.error) {
+        console.warn('Unable to load deposit account during onboarding status lookup.', depositResult.error);
+      }
 
       const agreementSigned = Boolean(
         liveUser.user_metadata?.brokerage_agreement_accepted &&
@@ -91,15 +124,15 @@ export function useOnboardingStatus({
       );
 
       return {
-        subscriptionStatus: profile?.subscription_status ?? 'pending',
+        subscriptionStatus: fallbackStatus.subscriptionStatus,
         agreementSigned,
         agreementSignedAt: (liveUser.user_metadata?.brokerage_agreement_signed_at as string | undefined) ?? null,
         agreementSignedName: (liveUser.user_metadata?.brokerage_agreement_signed_name as string | undefined) ?? null,
-        licenseNumber: profile?.license_number ?? (liveUser.user_metadata?.license_number as string | undefined) ?? null,
+        licenseNumber: fallbackStatus.licenseNumber ?? (liveUser.user_metadata?.license_number as string | undefined) ?? null,
         hasBillingAccount: !!billingResult.data,
         hasDepositAccount: !!depositResult.data,
-        latestBillingAccount: billingResult.data as BillingAccountSummary | null,
-        latestDepositAccount: depositResult.data as DepositAccountSummary | null,
+        latestBillingAccount: (billingResult.data as BillingAccountSummary | null) ?? null,
+        latestDepositAccount: (depositResult.data as DepositAccountSummary | null) ?? null,
       } satisfies OnboardingStatus;
     },
   });

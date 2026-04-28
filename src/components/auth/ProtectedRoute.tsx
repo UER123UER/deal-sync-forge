@@ -1,7 +1,7 @@
 import { Navigate, useLocation } from 'react-router-dom';
 
 import { useAuth } from '@/hooks/useAuth';
-import { getNextOnboardingPath, useOnboardingStatus } from '@/hooks/useOnboardingStatus';
+import { getFallbackOnboardingStatus, getNextOnboardingPath, useOnboardingStatus } from '@/hooks/useOnboardingStatus';
 
 const ONBOARDING_PATHS = new Set([
   '/onboarding/agreement',
@@ -33,8 +33,11 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   }
 
   const isOnboardingRoute = ONBOARDING_PATHS.has(location.pathname);
-  const nextPath = getNextOnboardingPath(onboardingError ? null : onboardingStatus);
-  const subscriptionStatus = profile?.subscription_status ?? onboardingStatus?.subscriptionStatus ?? 'pending';
+  const effectiveStatus = onboardingError
+    ? getFallbackOnboardingStatus({ user, profile })
+    : onboardingStatus ?? getFallbackOnboardingStatus({ user, profile });
+  const nextPath = getNextOnboardingPath(effectiveStatus);
+  const subscriptionStatus = effectiveStatus.subscriptionStatus;
 
   if (isAgreementRoute && subscriptionStatus !== 'active') {
     return <>{children}</>;

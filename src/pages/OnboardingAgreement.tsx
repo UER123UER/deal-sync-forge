@@ -10,7 +10,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/hooks/useAuth';
-import { useOnboardingStatus } from '@/hooks/useOnboardingStatus';
+import { getFallbackOnboardingStatus, useOnboardingStatus } from '@/hooks/useOnboardingStatus';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -35,6 +35,13 @@ export default function OnboardingAgreement() {
       setSignatureName(defaultSignatureName);
     }
   }, [defaultSignatureName, signatureName]);
+
+  const currentStatus =
+    onboardingStatus ??
+    getFallbackOnboardingStatus({
+      user,
+      profile,
+    });
 
   if (authLoading || !user) {
     return (
@@ -79,10 +86,19 @@ export default function OnboardingAgreement() {
       return;
     }
 
+    queryClient.setQueriesData({ queryKey: ['onboarding_status'] }, (existing) => ({
+      ...((existing && typeof existing === 'object') ? existing as Record<string, unknown> : {}),
+      ...currentStatus,
+      agreementSigned: true,
+      agreementSignedAt: signedAt,
+      agreementSignedName: signatureName.trim(),
+      licenseNumber: currentStatus.licenseNumber ?? profile?.license_number ?? null,
+    }));
+
     await refreshProfile?.();
-    await queryClient.invalidateQueries({ queryKey: ['onboarding_status'] });
+    void queryClient.invalidateQueries({ queryKey: ['onboarding_status'] });
     toast({ title: 'Agreement signed', description: 'Next up: your billing setup.' });
-    navigate('/onboarding/billing');
+    navigate('/onboarding/billing', { replace: true });
     setLoading(false);
   };
 

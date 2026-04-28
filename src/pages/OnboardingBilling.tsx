@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useAuth } from '@/hooks/useAuth';
-import { useOnboardingStatus } from '@/hooks/useOnboardingStatus';
+import { getFallbackOnboardingStatus, useOnboardingStatus } from '@/hooks/useOnboardingStatus';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { validateAccountConfirm, validateAccountNumber, validateRoutingNumber } from '@/lib/bankingValidation';
@@ -39,31 +39,36 @@ export default function OnboardingBilling() {
   const [confirmAccountNumber, setConfirmAccountNumber] = useState('');
   const [accountType, setAccountType] = useState('checking');
   const [saving, setSaving] = useState(false);
+  const currentStatus =
+    onboardingStatus ??
+    getFallbackOnboardingStatus({
+      user,
+      profile,
+    });
 
   const defaultAccountHolderName = useMemo(
     () =>
-      onboardingStatus?.latestBillingAccount?.account_holder_name ||
+      currentStatus.latestBillingAccount?.account_holder_name ||
       [profile?.first_name, profile?.last_name].filter(Boolean).join(' ').trim(),
-    [onboardingStatus?.latestBillingAccount?.account_holder_name, profile?.first_name, profile?.last_name]
+    [currentStatus.latestBillingAccount?.account_holder_name, profile?.first_name, profile?.last_name]
   );
 
   useEffect(() => {
-    if (!onboardingStatus) return;
     if (!accountHolderName && defaultAccountHolderName) setAccountHolderName(defaultAccountHolderName);
-    if (!routingNumber && onboardingStatus.latestBillingAccount?.routing_number) {
-      setRoutingNumber(onboardingStatus.latestBillingAccount.routing_number);
+    if (!routingNumber && currentStatus.latestBillingAccount?.routing_number) {
+      setRoutingNumber(currentStatus.latestBillingAccount.routing_number);
     }
-    if (onboardingStatus.latestBillingAccount?.account_type) {
-      setAccountType(onboardingStatus.latestBillingAccount.account_type);
+    if (currentStatus.latestBillingAccount?.account_type) {
+      setAccountType(currentStatus.latestBillingAccount.account_type);
     }
   }, [
     accountHolderName,
     defaultAccountHolderName,
-    onboardingStatus,
+    currentStatus,
     routingNumber,
   ]);
 
-  if (isLoading || !user || !onboardingStatus) {
+  if (isLoading || !user) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-primary" />
@@ -94,7 +99,7 @@ export default function OnboardingBilling() {
       account_type: accountType,
     };
 
-    const existingBillingId = onboardingStatus.latestBillingAccount?.id;
+    const existingBillingId = currentStatus.latestBillingAccount?.id;
     const response = existingBillingId
       ? await supabase.from('bank_accounts').update(billingPayload).eq('id', existingBillingId)
       : await supabase.from('bank_accounts').insert(billingPayload);
@@ -105,9 +110,21 @@ export default function OnboardingBilling() {
       return;
     }
 
-    await queryClient.invalidateQueries({ queryKey: ['onboarding_status'] });
+    queryClient.setQueriesData({ queryKey: ['onboarding_status'] }, (existing) => ({
+      ...((existing && typeof existing === 'object') ? existing as Record<string, unknown> : {}),
+      ...currentStatus,
+      hasBillingAccount: true,
+      latestBillingAccount: {
+        id: existingBillingId ?? 'pending-billing-account',
+        account_holder_name: billingPayload.account_holder_name,
+        routing_number: billingPayload.routing_number,
+        account_number_last4: billingPayload.account_number_last4,
+        account_type: billingPayload.account_type,
+      },
+    }));
+    void queryClient.invalidateQueries({ queryKey: ['onboarding_status'] });
     toast({ title: 'Billing saved', description: 'Next up: choose your deposit account.' });
-    navigate('/onboarding/deposit');
+    navigate('/onboarding/deposit', { replace: true });
     setSaving(false);
   };
 

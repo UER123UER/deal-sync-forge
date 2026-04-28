@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useAuth } from '@/hooks/useAuth';
-import { useOnboardingStatus } from '@/hooks/useOnboardingStatus';
+import { getFallbackOnboardingStatus, useOnboardingStatus } from '@/hooks/useOnboardingStatus';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { validateAccountConfirm, validateAccountNumber, validateRoutingNumber } from '@/lib/bankingValidation';
@@ -43,37 +43,36 @@ export default function OnboardingDeposit() {
   const [accountType, setAccountType] = useState('checking');
   const [saving, setSaving] = useState(false);
 
+  const currentStatus =
+    onboardingStatus ??
+    getFallbackOnboardingStatus({
+      user,
+      profile,
+    });
+
   const defaultAgentName = useMemo(
     () =>
-      onboardingStatus?.latestDepositAccount?.agent_name ||
+      currentStatus.latestDepositAccount?.agent_name ||
       [profile?.first_name, profile?.last_name].filter(Boolean).join(' ').trim(),
-    [onboardingStatus?.latestDepositAccount?.agent_name, profile?.first_name, profile?.last_name]
+    [currentStatus.latestDepositAccount?.agent_name, profile?.first_name, profile?.last_name]
   );
 
   useEffect(() => {
-    if (!onboardingStatus) return;
-
     if (!agentName && defaultAgentName) setAgentName(defaultAgentName);
 
-    if (onboardingStatus.latestDepositAccount) {
-      if (!bankName && onboardingStatus.latestDepositAccount.bank_name) {
-        setBankName(onboardingStatus.latestDepositAccount.bank_name);
+    if (currentStatus.latestDepositAccount) {
+      if (!bankName && currentStatus.latestDepositAccount.bank_name) {
+        setBankName(currentStatus.latestDepositAccount.bank_name);
       }
-      if (!routingNumber) setRoutingNumber(onboardingStatus.latestDepositAccount.routing_number);
-      setAccountType(onboardingStatus.latestDepositAccount.account_type);
-    } else if (onboardingStatus.latestBillingAccount) {
+      if (!routingNumber) setRoutingNumber(currentStatus.latestDepositAccount.routing_number);
+      setAccountType(currentStatus.latestDepositAccount.account_type);
+    } else if (currentStatus.latestBillingAccount) {
       setUseBillingAccount(true);
-      setAccountType(onboardingStatus.latestBillingAccount.account_type);
+      setAccountType(currentStatus.latestBillingAccount.account_type);
     }
-  }, [
-    agentName,
-    bankName,
-    defaultAgentName,
-    onboardingStatus,
-    routingNumber,
-  ]);
+  }, [agentName, bankName, currentStatus, defaultAgentName, routingNumber]);
 
-  if (isLoading || !user || !onboardingStatus) {
+  if (isLoading || !user) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-primary" />
@@ -93,7 +92,7 @@ export default function OnboardingDeposit() {
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!agentName.trim()) return;
-    if (useBillingAccount && !onboardingStatus.latestBillingAccount) {
+    if (useBillingAccount && !currentStatus.latestBillingAccount) {
       toast({ title: 'Billing account missing', description: 'Please finish billing first.', variant: 'destructive' });
       return;
     }
@@ -106,9 +105,9 @@ export default function OnboardingDeposit() {
           owner_id: user.id,
           agent_name: agentName.trim(),
           bank_name: bankName.trim() || null,
-          routing_number: onboardingStatus.latestBillingAccount!.routing_number,
-          account_number_last4: onboardingStatus.latestBillingAccount!.account_number_last4,
-          account_type: onboardingStatus.latestBillingAccount!.account_type,
+          routing_number: currentStatus.latestBillingAccount!.routing_number,
+          account_number_last4: currentStatus.latestBillingAccount!.account_number_last4,
+          account_type: currentStatus.latestBillingAccount!.account_type,
         }
       : {
           owner_id: user.id,
@@ -119,7 +118,7 @@ export default function OnboardingDeposit() {
           account_type: accountType,
         };
 
-    const existingDepositId = onboardingStatus.latestDepositAccount?.id;
+    const existingDepositId = currentStatus.latestDepositAccount?.id;
     const depositResponse = existingDepositId
       ? await supabase.from('direct_deposits').update(depositPayload).eq('id', existingDepositId)
       : await supabase.from('direct_deposits').insert(depositPayload);
@@ -143,10 +142,25 @@ export default function OnboardingDeposit() {
       return;
     }
 
+    queryClient.setQueriesData({ queryKey: ['onboarding_status'] }, (existing) => ({
+      ...((existing && typeof existing === 'object') ? existing as Record<string, unknown> : {}),
+      ...currentStatus,
+      subscriptionStatus: 'active',
+      hasDepositAccount: true,
+      latestDepositAccount: {
+        id: existingDepositId ?? 'pending-deposit-account',
+        agent_name: depositPayload.agent_name,
+        bank_name: depositPayload.bank_name,
+        routing_number: depositPayload.routing_number,
+        account_number_last4: depositPayload.account_number_last4,
+        account_type: depositPayload.account_type,
+      },
+    }));
+
     await refreshProfile?.();
-    await queryClient.invalidateQueries({ queryKey: ['onboarding_status'] });
+    void queryClient.invalidateQueries({ queryKey: ['onboarding_status'] });
     toast({ title: 'Welcome aboard', description: 'Your brokerage account is active.' });
-    navigate('/transactions');
+    navigate('/transactions', { replace: true });
     setSaving(false);
   };
 
@@ -207,11 +221,11 @@ export default function OnboardingDeposit() {
                   <ShieldCheck className="h-4 w-4 text-emerald-500" />
                   Billing account will also be used for deposits
                 </div>
-                {onboardingStatus.latestBillingAccount ? (
+                {currentStatus.latestBillingAccount ? (
                   <div className="mt-3 space-y-1 text-sm text-muted-foreground">
-                    <p>{onboardingStatus.latestBillingAccount.account_holder_name}</p>
+                    <p>{currentStatus.latestBillingAccount.account_holder_name}</p>
                     <p className="capitalize">
-                      {onboardingStatus.latestBillingAccount.account_type} • ending in {onboardingStatus.latestBillingAccount.account_number_last4}
+                      {currentStatus.latestBillingAccount.account_type} - ending in {currentStatus.latestBillingAccount.account_number_last4}
                     </p>
                   </div>
                 ) : (
@@ -296,7 +310,7 @@ export default function OnboardingDeposit() {
             <Button
               type="submit"
               className="w-full"
-              disabled={saving || (!useBillingAccount && !canSubmitDifferentAccount) || (useBillingAccount && !onboardingStatus.latestBillingAccount)}
+              disabled={saving || (!useBillingAccount && !canSubmitDifferentAccount) || (useBillingAccount && !currentStatus.latestBillingAccount)}
             >
               {saving ? 'Finishing setup...' : 'Finish Setup'}
             </Button>
