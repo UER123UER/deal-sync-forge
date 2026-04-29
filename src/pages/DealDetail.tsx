@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from 'react';
 import { TEMPLATES, TEMPLATE_CATEGORIES, getDefaultTemplateData, type TemplateCategory } from '@/data/marketingTemplates';
-import { type RecentEntry } from '@/pages/MarketingEditor';
+import { loadMarketingRecents, type RecentEntry } from '@/lib/marketingRecents';
 // import { useSignatureRequests } from '@/hooks/useSignatureRequests';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { ChevronDown, Eye, Mail, Plus, GripVertical, Download, Trash2, Bell, UserPlus, Check, X, Upload, Image, Clock } from 'lucide-react';
@@ -102,8 +102,7 @@ export default function DealDetail() {
   // Load saved marketing sessions for this deal from localStorage
   const dealRecents: RecentEntry[] = (() => {
     try {
-      const raw = localStorage.getItem(`uer_marketing_recents_${id}`);
-      return raw ? (JSON.parse(raw) as RecentEntry[]) : [];
+      return id ? loadMarketingRecents(id) : [];
     } catch { return []; }
   })();
 

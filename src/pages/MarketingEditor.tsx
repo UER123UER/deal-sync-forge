@@ -65,6 +65,11 @@ import {
   type TemplateCategory,
   type TemplateVisibility,
 } from '@/data/marketingTemplates';
+import {
+  loadMarketingRecents,
+  saveMarketingRecents,
+  type RecentEntry,
+} from '@/lib/marketingRecents';
 import { cn } from '@/lib/utils';
 
 // ── Layout constants ─────────────────────────────────────────────────────────
@@ -392,52 +397,7 @@ function computeSnap(
   return { x: snapDX, y: snapDY, guides, spacingGuides };
 }
 
-// ── Recents persistence (localStorage, keyed per deal) ──────────────────────
-
-export interface RecentEntry {
-  templateId: string;
-  data: TemplateData;
-  lastEdited: number; // ms timestamp
-  customName?: string; // user-defined name
-}
-
-const RECENTS_LIMIT = 20;
 const HISTORY_LIMIT = 100; // cap undo stack to prevent memory bloat
-
-function recentsKey(dealId: string) {
-  return `uer_marketing_recents_${dealId}`;
-}
-
-function loadRecents(dealId: string): RecentEntry[] {
-  try {
-    const raw = localStorage.getItem(recentsKey(dealId));
-    return raw ? (JSON.parse(raw) as RecentEntry[]) : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveRecents(dealId: string, entries: RecentEntry[]): boolean {
-  try {
-    localStorage.setItem(recentsKey(dealId), JSON.stringify(entries.slice(0, RECENTS_LIMIT)));
-    return true;
-  } catch (err) {
-    // QuotaExceededError — caller should surface this to the user
-    console.warn('[Marketing] localStorage quota exceeded:', err);
-    return false;
-  }
-}
-
-/** Upsert a recent entry for a given deal+template, then sort by lastEdited desc */
-function upsertRecent(dealId: string, templateId: string, data: TemplateData) {
-  const entries = loadRecents(dealId).filter((e) => e.templateId !== templateId);
-  const updated: RecentEntry[] = [
-    { templateId, data, lastEdited: Date.now() },
-    ...entries,
-  ];
-  saveRecents(dealId, updated);
-  return updated;
-}
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -775,6 +735,8 @@ export default function MarketingEditor() {
     index: 0,
   });
   const data = hist.stack[hist.index] ?? getDefaultTemplateData(undefined, template.category);
+  const canvasW = data.canvasWidth || 1080;
+  const canvasH = data.canvasHeight || 1080;
 
   const setData = useCallback((updater: TemplateData | ((prev: TemplateData) => TemplateData)) => {
     setHist((h) => {
@@ -860,8 +822,10 @@ export default function MarketingEditor() {
 
   // ── Recents state ─────────────────────────────────────────────────────────
   const [recents, setRecents] = useState<RecentEntry[]>(() =>
-    id ? loadRecents(id) : []
+    id ? loadMarketingRecents(id) : []
   );
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+  const saveStatusTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Auto-save: debounce 800ms after any data change
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -870,9 +834,9 @@ export default function MarketingEditor() {
     setSaveStatus('saving');
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     saveTimerRef.current = setTimeout(() => {
-      const entries = loadRecents(id).filter((e) => e.templateId !== templateId);
+      const entries = loadMarketingRecents(id).filter((e) => e.templateId !== templateId);
       const updated: RecentEntry[] = [{ templateId, data, lastEdited: Date.now() }, ...entries];
-      const saved = saveRecents(id, updated);
+      const saved = saveMarketingRecents(id, updated);
       if (saved) {
         setRecents(updated);
       } else {
@@ -906,9 +870,6 @@ export default function MarketingEditor() {
   const [lockedBlocks, setLockedBlocks] = useState<Set<MarketingBlockKey>>(new Set());
   const [isDraggingBlock, setIsDraggingBlock] = useState(false); // hides toolbar while moving
   const [blockRects, setBlockRects] = useState<Partial<Record<MarketingBlockKey, MarketingBlockRect>>>({});
-  // Save-status indicator
-  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
-  const saveStatusTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Keyboard shortcut overlay
   const [showShortcuts, setShowShortcuts] = useState(false);
   // Pending delete (for undo-toast pattern)
@@ -931,7 +892,7 @@ export default function MarketingEditor() {
     // Optimistically remove
     const before = [...recents];
     const updated = recents.filter((e) => e.templateId !== entryTemplateId);
-    saveRecents(id, updated);
+    saveMarketingRecents(id, updated);
     setRecents(updated);
     pendingDeleteRef.current = { id: entryTemplateId, entries: before };
     toast('Design removed', {
@@ -939,7 +900,7 @@ export default function MarketingEditor() {
         label: 'Undo',
         onClick: () => {
           if (pendingDeleteRef.current?.id === entryTemplateId) {
-            saveRecents(id, before);
+            saveMarketingRecents(id, before);
             setRecents(before);
             pendingDeleteRef.current = null;
           }
@@ -959,7 +920,7 @@ export default function MarketingEditor() {
       lastEdited: Date.now(),
     };
     const updated = [copy, ...recents];
-    saveRecents(id, updated);
+    saveMarketingRecents(id, updated);
     setRecents(updated);
     toast.success('Design duplicated');
   }, [id, recents]);
@@ -969,7 +930,7 @@ export default function MarketingEditor() {
     const updated = recents.map((e) =>
       e.templateId === entryTemplateId ? { ...e, customName: newName } : e
     );
-    saveRecents(id, updated);
+    saveMarketingRecents(id, updated);
     setRecents(updated);
     setRenamingId(null);
   }, [id, recents]);
@@ -1019,7 +980,7 @@ export default function MarketingEditor() {
   // Auto-fill from deal data (preserve existing photos)
   useEffect(() => {
     if (deal) {
-      const saved = id ? loadRecents(id).find((r) => r.templateId === templateId) : null;
+      const saved = id ? loadMarketingRecents(id).find((r) => r.templateId === templateId) : null;
       if (saved) {
         setHist({
           stack: [hydrateTemplateData(getDefaultTemplateData(deal, template.category), saved.data)],
@@ -1042,7 +1003,7 @@ export default function MarketingEditor() {
   // Auto-populate deal photos on first load (only if no saved session)
   useEffect(() => {
     if (!photosInitialized && dealPhotos.length > 0) {
-      const saved = id ? loadRecents(id).find((r) => r.templateId === templateId) : null;
+      const saved = id ? loadMarketingRecents(id).find((r) => r.templateId === templateId) : null;
       if (!saved) {
         setData((prev) => {
           const nextPhotos = dealPhotos.map((p) => p.url);
@@ -1616,10 +1577,6 @@ export default function MarketingEditor() {
       setExporting(false);
     }
   }, [template, data.address]);
-
-  // Canvas dimensions — use data dimensions (which reflect selected dimension preset)
-  const canvasW = data.canvasWidth || 1080;
-  const canvasH = data.canvasHeight || 1080;
 
   // Scale canvas to viewport (subtract panel widths / header height)
   const maxCanvasWidth  = typeof window !== 'undefined' ? window.innerWidth  - LEFT_PANEL_WIDTH - 64 : 600;
