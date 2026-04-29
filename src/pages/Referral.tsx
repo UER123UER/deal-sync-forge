@@ -6,9 +6,18 @@ import { toast } from 'sonner';
 import { QRCodeSVG } from 'qrcode.react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
+import {
+  PageContent,
+  PageHeader,
+  PageHeaderHeading,
+  PageSection,
+  PageShell,
+  PageStack,
+} from '@/components/system/page-shell';
+import { MetricCard } from '@/components/system/metric-card';
 
 export default function Referral() {
-  const { user, profile } = useAuth();
+  const { profile } = useAuth();
   const [copied, setCopied] = useState(false);
   const [totalReferrals, setTotalReferrals] = useState(0);
   const [activeReferrals, setActiveReferrals] = useState(0);
@@ -19,7 +28,13 @@ export default function Referral() {
 
   // Load referred agents and compute monthly accruing earnings
   useEffect(() => {
-    if (!profile?.referral_code) return;
+    if (!profile?.referral_code) {
+      setTotalReferrals(0);
+      setActiveReferrals(0);
+      setTotalEarnings(0);
+      setLoadingCount(false);
+      return;
+    }
     (async () => {
       const { data } = await (supabase as any)
         .from('profiles')
@@ -70,118 +85,140 @@ export default function Referral() {
   };
 
   return (
-    <div className="flex-1 flex flex-col">
-      <div className="h-14 border-b flex items-center px-6">
-        <h1 className="text-lg font-semibold text-foreground">Referral Program</h1>
-      </div>
+    <PageShell>
+      <PageHeader>
+        <PageHeaderHeading
+          title="Referral Program"
+          meta="Invite agents with one permanent code and track monthly recurring rewards."
+        />
+      </PageHeader>
 
-      <div className="flex-1 overflow-auto p-6">
-        <div className="max-w-2xl mx-auto space-y-8">
+      <PageContent>
+        <PageStack className="max-w-5xl gap-6">
+          <PageSection
+            title="Referral Identity"
+            description="This code is tied to your profile and powers every referral link you share."
+            bodyClassName="p-6"
+          >
+            <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+              <div className="space-y-2">
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Your Referral Code
+                </p>
+                <p className="font-mono text-3xl font-semibold tracking-widest text-primary">
+                  {referralCode}
+                </p>
+              </div>
+              <div className="grid gap-2 text-sm text-muted-foreground lg:text-right">
+                <p>Tied directly to your brokerage account.</p>
+                <p>Permanent, unique, and reusable across every signup flow.</p>
+              </div>
+            </div>
+          </PageSection>
 
-          {/* Your code badge */}
-          <div className="flex items-center justify-between p-4 rounded-xl border bg-primary/5 border-primary/20">
-            <div>
-              <p className="text-xs text-muted-foreground uppercase tracking-wide mb-0.5">Your Referral Code</p>
-              <p className="text-2xl font-bold tracking-widest text-primary font-mono">{referralCode}</p>
-            </div>
-            <div className="text-right">
-              <p className="text-xs text-muted-foreground">Tied to your account</p>
-              <p className="text-xs text-muted-foreground">Permanent &amp; unique</p>
-            </div>
+          <div className="grid gap-4 md:grid-cols-3">
+            <MetricCard
+              icon={DollarSign}
+              label="Total Earned"
+              value={loadingCount ? '—' : `$${totalEarnings}`}
+              description="Accrued recurring rewards from active referred subscriptions."
+              tone="primary"
+            />
+            <MetricCard
+              icon={Users}
+              label="Total Referrals"
+              value={
+                loadingCount ? (
+                  <span className="inline-flex items-center gap-2">
+                    <RefreshCw className="h-4 w-4 animate-spin text-muted-foreground" />
+                    Loading
+                  </span>
+                ) : (
+                  totalReferrals
+                )
+              }
+              description={
+                loadingCount
+                  ? 'Loading referral performance.'
+                  : `${activeReferrals} currently active and contributing monthly rewards.`
+              }
+            />
+            <MetricCard
+              icon={Gift}
+              label="Per Active Referral"
+              value={`$${earningsPerMonth}`}
+              description="Recurring monthly reward for each active paying subscription."
+              tone="success"
+            />
           </div>
 
-          {/* Earnings Cards */}
-          <div className="grid grid-cols-3 gap-4">
-            <div className="border rounded-lg p-5 bg-background">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                  <DollarSign className="w-4 h-4 text-primary" />
-                </div>
-                <span className="text-xs text-muted-foreground">Total Earned</span>
-              </div>
-              <div className="text-2xl font-bold text-foreground">
-                {loadingCount ? '—' : `$${totalEarnings}`}
-              </div>
-            </div>
-            <div className="border rounded-lg p-5 bg-background">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                  <Users className="w-4 h-4 text-primary" />
-                </div>
-                <span className="text-xs text-muted-foreground">Referrals</span>
-              </div>
-              <div className="text-2xl font-bold text-foreground flex items-center gap-1.5">
-                {loadingCount
-                  ? <RefreshCw className="w-4 h-4 animate-spin text-muted-foreground" />
-                  : totalReferrals}
-              </div>
-            </div>
-            <div className="border rounded-lg p-5 bg-background">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                  <Gift className="w-4 h-4 text-primary" />
-                </div>
-                <span className="text-xs text-muted-foreground">Per Month / Active</span>
-              </div>
-              <div className="text-2xl font-bold text-foreground">${earningsPerMonth}</div>
-            </div>
-          </div>
-
-          {/* QR Code & Link */}
-          <div className="border rounded-lg p-8 bg-background flex flex-col items-center gap-6">
-            <h2 className="text-lg font-semibold text-foreground">Share Your Referral</h2>
-            <p className="text-sm text-muted-foreground text-center max-w-md">
-              Earn <span className="font-semibold text-foreground">${earningsPerMonth}</span> every month for each agent you refer who keeps an active subscription.
-            </p>
-            {referralLink ? (
-              <div className="p-4 bg-white border rounded-xl shadow-sm">
-                <QRCodeSVG value={referralLink} size={180} level="M" />
-              </div>
-            ) : (
-              <div className="w-[212px] h-[212px] border rounded-xl flex items-center justify-center bg-muted/30">
-                <RefreshCw className="w-6 h-6 animate-spin text-muted-foreground" />
-              </div>
-            )}
-            <div className="flex w-full max-w-md gap-2">
-              <Input
-                value={referralLink}
-                readOnly
-                className="text-sm font-mono"
-                placeholder="Loading your link…"
-              />
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-1.5 flex-shrink-0"
-                onClick={handleCopy}
-                disabled={!referralLink}
-              >
-                {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                {copied ? 'Copied' : 'Copy'}
-              </Button>
-            </div>
-          </div>
-
-          {/* How it works */}
-          <div className="border rounded-lg p-6 bg-background">
-            <h3 className="text-sm font-semibold text-foreground mb-4">How It Works</h3>
-            <div className="space-y-3">
-              {[
-                { step: '1', text: 'Share your referral link with fellow agents' },
-                { step: '2', text: 'They sign up using your unique link' },
-                { step: '3', text: 'You earn $20 every month they remain an active paying agent' },
-              ].map((item) => (
-                <div key={item.step} className="flex items-center gap-3">
-                  <div className="w-7 h-7 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold shrink-0">
-                    {item.step}
+          <PageSection
+            title="Share Your Referral"
+            description="Use the QR code or direct link. Both resolve to the same tracked signup path."
+            bodyClassName="p-6"
+          >
+            <div className="grid gap-8 lg:grid-cols-2 lg:items-center">
+              <div className="flex justify-center lg:justify-start">
+                {referralLink ? (
+                  <div className="rounded-xl border bg-white p-4 shadow-surface">
+                    <QRCodeSVG value={referralLink} size={180} level="M" />
                   </div>
-                  <span className="text-sm text-foreground">{item.text}</span>
+                ) : (
+                  <div className="flex h-52 w-52 items-center justify-center rounded-xl border bg-muted/30">
+                    <RefreshCw className="h-6 w-6 animate-spin text-muted-foreground" />
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-5">
+                <p className="max-w-xl text-sm leading-6 text-muted-foreground">
+                  Earn <span className="font-semibold text-foreground">${earningsPerMonth}</span> every month for each
+                  referred agent who stays on an active subscription.
+                </p>
+                <div className="flex flex-col gap-3 sm:flex-row">
+                  <Input
+                    value={referralLink}
+                    readOnly
+                    className="font-mono text-sm"
+                    placeholder="Loading your referral link..."
+                  />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5 sm:min-w-28"
+                    onClick={handleCopy}
+                    disabled={!referralLink}
+                  >
+                    {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                    {copied ? 'Copied' : 'Copy Link'}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </PageSection>
+
+          <PageSection
+            title="How It Works"
+            description="The referral flow stays simple: share the link, let the agent sign up, and recurring rewards post automatically."
+            bodyClassName="p-6"
+          >
+            <div className="grid gap-3">
+              {[
+                'Share your referral link with fellow agents.',
+                'They sign up using your unique code or referral URL.',
+                'You earn $20 each month while their subscription stays active.',
+              ].map((step, index) => (
+                <div key={step} className="app-surface-subtle flex items-start gap-4 px-4 py-4">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
+                    {index + 1}
+                  </div>
+                  <p className="text-sm leading-6 text-foreground">{step}</p>
                 </div>
               ))}
             </div>
-          </div>
-        </div>
-      </div>
-    </div>
+          </PageSection>
+        </PageStack>
+      </PageContent>
+    </PageShell>
   );
 }

@@ -2,6 +2,17 @@ import { useDeals } from '@/hooks/useDeals';
 import { DollarSign, TrendingUp, Home } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import { format, parseISO } from 'date-fns';
+import {
+  EmptyState,
+  PageContent,
+  PageHeader,
+  PageHeaderHeading,
+  PageShell,
+  PageStack,
+  PageSection,
+} from '@/components/system/page-shell';
+import { MetricCard } from '@/components/system/metric-card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 function parseDollar(s: string | null): number {
   if (!s) return 0;
@@ -52,107 +63,160 @@ export default function Finances() {
   const fmt = (n: number) => '$' + n.toLocaleString('en-US', { maximumFractionDigits: 0 });
 
   return (
-    <div className="flex-1 flex flex-col">
-      <div className="h-14 border-b flex items-center px-6">
-        <h1 className="text-lg font-semibold text-foreground">Finances</h1>
-      </div>
+    <PageShell>
+      <PageHeader>
+        <PageHeaderHeading
+          title="Finances"
+          meta={`${activeDeals.length} active deals contributing to brokerage totals`}
+        />
+      </PageHeader>
 
-      {isLoading ? (
-        <div className="flex-1 overflow-auto p-6 space-y-6">
-          {/* Summary card skeletons */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {[0, 1, 2].map((i) => (
-              <div key={i} className="border rounded-lg p-5 bg-card animate-pulse">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 rounded-lg bg-muted" />
-                  <div className="h-3 w-28 rounded bg-muted" />
+      <PageContent>
+        <PageStack className="max-w-none gap-6">
+          {isLoading ? (
+            <>
+              <div className="grid gap-4 md:grid-cols-3">
+                {[0, 1, 2].map((i) => (
+                  <section key={i} className="app-surface animate-pulse p-5">
+                    <div className="mb-4 flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-lg bg-muted" />
+                      <div className="h-3 w-28 rounded bg-muted" />
+                    </div>
+                    <div className="h-8 w-28 rounded bg-muted" />
+                  </section>
+                ))}
+              </div>
+              <section className="app-surface animate-pulse p-6">
+                <div className="mb-4 h-4 w-40 rounded bg-muted" />
+                <div className="h-80 rounded-lg bg-muted/60" />
+              </section>
+              <section className="app-surface overflow-hidden animate-pulse">
+                <div className="border-b px-6 py-4">
+                  <div className="h-4 w-32 rounded bg-muted" />
                 </div>
-                <div className="h-7 w-24 rounded bg-muted" />
-              </div>
-            ))}
-          </div>
-          {/* Chart skeleton */}
-          <div className="border rounded-lg p-5 bg-card animate-pulse">
-            <div className="h-4 w-40 rounded bg-muted mb-4" />
-            <div className="h-[300px] rounded bg-muted/60" />
-          </div>
-          {/* Table skeleton */}
-          <div className="border rounded-lg bg-card animate-pulse">
-            <div className="px-5 py-3 border-b"><div className="h-4 w-32 rounded bg-muted" /></div>
-            {[0, 1, 2, 3].map((i) => (
-              <div key={i} className="px-5 py-3 flex items-center justify-between border-b last:border-0">
-                <div className="space-y-1.5">
-                  <div className="h-3.5 w-48 rounded bg-muted" />
-                  <div className="h-3 w-32 rounded bg-muted/60" />
+                <div className="divide-y">
+                  {[0, 1, 2, 3].map((i) => (
+                    <div key={i} className="flex items-center justify-between px-6 py-4">
+                      <div className="space-y-2">
+                        <div className="h-3.5 w-56 rounded bg-muted" />
+                        <div className="h-3 w-32 rounded bg-muted/70" />
+                      </div>
+                      <div className="h-3.5 w-20 rounded bg-muted" />
+                    </div>
+                  ))}
                 </div>
-                <div className="h-3.5 w-20 rounded bg-muted" />
+              </section>
+            </>
+          ) : (
+            <>
+              <div className="grid gap-4 md:grid-cols-3">
+                <MetricCard
+                  icon={DollarSign}
+                  label="Total Volume"
+                  value={fmt(totalVolume)}
+                  description="Combined list price across all non-archived deals."
+                  tone="primary"
+                />
+                <MetricCard
+                  icon={TrendingUp}
+                  label="Expected Commissions"
+                  value={fmt(totalCommission)}
+                  description="Derived from active deal pricing and assigned commission rules."
+                  tone="success"
+                />
+                <MetricCard
+                  icon={Home}
+                  label="Active Deals"
+                  value={activeDeals.length}
+                  description="Deals still in play and contributing to financial reporting."
+                />
               </div>
-            ))}
-          </div>
-        </div>
-      ) : (
-        <div className="flex-1 overflow-auto p-6 space-y-6">
-          {/* Summary Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="border rounded-lg p-5 bg-card">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center"><DollarSign className="w-5 h-5 text-primary" /></div>
-                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Total Volume</span>
-              </div>
-              <p className="text-2xl font-bold text-foreground">{fmt(totalVolume)}</p>
-            </div>
-            <div className="border rounded-lg p-5 bg-card">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center"><TrendingUp className="w-5 h-5 text-success" /></div>
-                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Expected Commissions</span>
-              </div>
-              <p className="text-2xl font-bold text-foreground">{fmt(totalCommission)}</p>
-            </div>
-            <div className="border rounded-lg p-5 bg-card">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-10 h-10 rounded-lg bg-accent flex items-center justify-center"><Home className="w-5 h-5 text-accent-foreground" /></div>
-                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Active Deals</span>
-              </div>
-              <p className="text-2xl font-bold text-foreground">{activeDeals.length}</p>
-            </div>
-          </div>
 
-          {/* Monthly Volume Chart */}
-          <div className="border rounded-lg p-5 bg-card">
-            <h3 className="text-sm font-semibold text-foreground mb-4">Monthly Deal Volume</h3>
-            {chartData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                  <XAxis dataKey="month" className="text-xs fill-muted-foreground" tick={{ fontSize: 11 }} />
-                  <YAxis tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} className="text-xs fill-muted-foreground" tick={{ fontSize: 11 }} />
-                  <Tooltip formatter={(v: number) => fmt(v)} />
-                  <Bar dataKey="volume" className="fill-primary" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            ) : (
-              <p className="text-sm text-muted-foreground text-center py-8">No deal data to chart yet.</p>
-            )}
-          </div>
+              <PageSection
+                title="Monthly Deal Volume"
+                description="Tracks rolling deal volume for the most recent 12 creation months."
+                bodyClassName="p-6"
+              >
+                {chartData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={320}>
+                    <BarChart data={chartData}>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                      <XAxis
+                        dataKey="month"
+                        className="fill-muted-foreground text-xs"
+                        tick={{ fontSize: 11 }}
+                        tickLine={false}
+                        axisLine={false}
+                      />
+                      <YAxis
+                        tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`}
+                        className="fill-muted-foreground text-xs"
+                        tick={{ fontSize: 11 }}
+                        tickLine={false}
+                        axisLine={false}
+                      />
+                      <Tooltip formatter={(v: number) => fmt(v)} />
+                      <Bar dataKey="volume" className="fill-primary" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <EmptyState
+                    icon={TrendingUp}
+                    title="No volume data yet"
+                    description="Once deals are created, monthly volume will appear here automatically."
+                  />
+                )}
+              </PageSection>
 
-          {/* Per-deal breakdown */}
-          <div className="border rounded-lg bg-card">
-            <div className="px-5 py-3 border-b"><h3 className="text-sm font-semibold text-foreground">Deal Breakdown</h3></div>
-            <div className="divide-y">
-              {activeDeals.map((d) => (
-                <div key={d.id} className="px-5 py-3 flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-foreground">{d.address}</p>
-                    <p className="text-xs text-muted-foreground">{d.city}, {d.state} · <span className="capitalize">{d.status}</span></p>
-                  </div>
-                  <span className="text-sm font-medium text-foreground">{d.price || '$0'}</span>
-                </div>
-              ))}
-              {activeDeals.length === 0 && <div className="px-5 py-8 text-center text-sm text-muted-foreground">No deals yet.</div>}
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+              <PageSection
+                title="Deal Breakdown"
+                description="Every active deal listed with its location, current status, and recorded price."
+                bodyClassName="p-0"
+              >
+                {activeDeals.length > 0 ? (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Address</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Created</TableHead>
+                        <TableHead className="text-right">Price</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {activeDeals.map((deal) => (
+                        <TableRow key={deal.id}>
+                          <TableCell>
+                            <div className="space-y-1">
+                              <div className="text-sm font-semibold text-foreground">{deal.address}</div>
+                              <div className="text-sm text-muted-foreground">
+                                {deal.city}, {deal.state} {deal.zip}
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell className="capitalize text-muted-foreground">{deal.status}</TableCell>
+                          <TableCell className="text-muted-foreground">
+                            {deal.created_at ? format(parseISO(deal.created_at), 'MMM d, yyyy') : '—'}
+                          </TableCell>
+                          <TableCell className="text-right font-medium text-foreground">
+                            {deal.price || '$0'}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                ) : (
+                  <EmptyState
+                    icon={Home}
+                    title="No active deals to report"
+                    description="Financial breakdown appears once the brokerage has active or pending business."
+                  />
+                )}
+              </PageSection>
+            </>
+          )}
+        </PageStack>
+      </PageContent>
+    </PageShell>
   );
 }

@@ -1,12 +1,24 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Download, Plus, Trash2, ArrowUpDown } from 'lucide-react';
+import { Search, Download, Plus, Trash2, ArrowUpDown, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useDeals, useDeleteDeal, DealRow } from '@/hooks/useDeals';
 import { cn } from '@/lib/utils';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
+import {
+  EmptyState,
+  PageContent,
+  PageHeader,
+  PageHeaderActions,
+  PageHeaderHeading,
+  PageShell,
+  PageStack,
+  PageToolbar,
+  PageToolbarGroup,
+} from '@/components/system/page-shell';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 const TABS = ['All Deals', 'Draft', 'Active', 'Pending', 'Archive'] as const;
 type TabType = typeof TABS[number];
@@ -20,10 +32,10 @@ const statusMap: Record<TabType, string> = {
 };
 
 const statusColors: Record<string, string> = {
-  draft: 'bg-muted text-muted-foreground',
-  active: 'bg-success/10 text-success',
-  pending: 'bg-warning/10 text-warning',
-  archive: 'bg-muted text-muted-foreground',
+  draft: 'border-border bg-muted text-muted-foreground',
+  active: 'border-success/15 bg-success/10 text-success',
+  pending: 'border-warning/15 bg-warning/10 text-warning',
+  archive: 'border-border bg-muted text-muted-foreground',
 };
 
 type SortKey = 'address' | 'status' | 'price' | 'listing_expiration' | 'primary_agent';
@@ -90,83 +102,141 @@ export default function Transactions() {
   };
 
   const SortHeader = ({ label, sortKeyName }: { label: string; sortKeyName: SortKey }) => (
-    <th className="text-left text-xs font-medium text-muted-foreground px-4 py-3 cursor-pointer select-none hover:text-foreground" onClick={() => toggleSort(sortKeyName)}>
+    <TableHead className="cursor-pointer select-none hover:text-foreground" onClick={() => toggleSort(sortKeyName)}>
       <span className="flex items-center gap-1">
         {label}
         <ArrowUpDown className={cn('w-3 h-3', sortKey === sortKeyName ? 'text-foreground' : 'text-muted-foreground/50')} />
       </span>
-    </th>
+    </TableHead>
   );
 
   return (
-    <div className="flex-1 flex flex-col">
-      <div className="h-14 border-b flex items-center px-6 gap-4">
-        <h1 className="text-lg font-semibold text-foreground">Transactions</h1>
-        <div className="flex-1" />
-        <div className="relative w-80">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input placeholder="Search deals by address, MLS# or agent name" className="pl-9 h-9 text-sm" value={search} onChange={(e) => setSearch(e.target.value)} />
-        </div>
-      </div>
+    <PageShell>
+      <PageHeader>
+        <PageHeaderHeading title="Transactions" meta={`${filtered.length} visible • ${deals.length} total`} />
+        <PageHeaderActions>
+          <div className="relative w-full max-w-80">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input placeholder="Search by address, MLS, or agent" className="pl-9" value={search} onChange={(e) => setSearch(e.target.value)} />
+          </div>
+        </PageHeaderActions>
+      </PageHeader>
 
-      <div className="px-6 pt-4 pb-2 flex items-center gap-2">
-        <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={handleExport}><Download className="w-3.5 h-3.5" /> Export Deals</Button>
-        
-        {selectedDeals.length > 0 && (
-          <Button variant="outline" size="sm" className="gap-1.5 text-xs text-destructive" onClick={handleBulkDelete}><Trash2 className="w-3.5 h-3.5" /> Delete ({selectedDeals.length})</Button>
-        )}
-        <div className="flex-1" />
-        <Button size="sm" className="gap-1.5 text-xs" onClick={() => navigate('/transactions/new')}><Plus className="w-3.5 h-3.5" /> New Deal</Button>
-      </div>
-
-      <div className="px-6 border-b">
-        <div className="flex gap-0">
+      <PageToolbar>
+        <PageToolbarGroup className="app-segmented">
           {TABS.map((tab) => (
-            <button key={tab} onClick={() => setActiveTab(tab)} className={cn('px-4 py-2.5 text-sm font-medium border-b-2 transition-colors', activeTab === tab ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground')}>{tab}</button>
+            <button
+              key={tab}
+              type="button"
+              data-state={activeTab === tab ? 'active' : 'inactive'}
+              onClick={() => setActiveTab(tab)}
+              className="app-segmented-item"
+            >
+              {tab}
+            </button>
           ))}
-        </div>
-      </div>
+        </PageToolbarGroup>
 
-      <div className="flex-1 overflow-auto">
-        {isLoading ? (
-          <div className="flex items-center justify-center py-12"><p className="text-muted-foreground text-sm">Loading deals...</p></div>
-        ) : (
-          <table className="w-full">
-            <thead>
-              <tr className="border-b">
-                <th className="text-left px-6 py-3 w-8"><Checkbox checked={selectedDeals.length === filtered.length && filtered.length > 0} onCheckedChange={toggleAll} /></th>
-                <SortHeader label="Address" sortKeyName="address" />
-                <SortHeader label="Status" sortKeyName="status" />
-                <SortHeader label="Price" sortKeyName="price" />
-                <SortHeader label="Critical Dates" sortKeyName="listing_expiration" />
-                <SortHeader label="Primary Agent" sortKeyName="primary_agent" />
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((deal) => (
-                <tr key={deal.id} className="border-b hover:bg-muted/50 cursor-pointer transition-colors" onClick={() => navigate(`/transactions/${deal.id}`)}>
-                  <td className="px-6 py-3" onClick={(e) => e.stopPropagation()}><Checkbox checked={selectedDeals.includes(deal.id)} onCheckedChange={() => toggleSelect(deal.id)} /></td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded bg-muted flex items-center justify-center flex-shrink-0"><Building2Icon /></div>
-                      <div>
-                        <div className="text-sm font-medium text-foreground">{deal.address}</div>
-                        <div className="text-xs text-muted-foreground">{deal.city}, {deal.state} {deal.zip}</div>
+        <PageToolbarGroup className="ml-auto">
+          <Button variant="outline" size="sm" className="gap-1.5" onClick={handleExport}>
+            <Download className="h-3.5 w-3.5" />
+            Export
+          </Button>
+          {selectedDeals.length > 0 ? (
+            <Button variant="outline" size="sm" className="gap-1.5 text-destructive hover:text-destructive" onClick={handleBulkDelete}>
+              <Trash2 className="h-3.5 w-3.5" />
+              Delete ({selectedDeals.length})
+            </Button>
+          ) : null}
+          <Button size="sm" className="gap-1.5" onClick={() => navigate('/transactions/new')}>
+            <Plus className="h-3.5 w-3.5" />
+            New Deal
+          </Button>
+        </PageToolbarGroup>
+      </PageToolbar>
+
+      <PageContent className="py-4">
+        <PageStack className="max-w-none gap-4">
+          <section className="app-surface overflow-hidden">
+            {isLoading ? (
+              <div className="divide-y">
+                {[0, 1, 2, 3, 4].map((i) => (
+                  <div key={i} className="flex items-center gap-4 px-6 py-4 animate-pulse">
+                    <div className="h-4 w-4 rounded bg-muted" />
+                    <div className="flex min-w-0 flex-1 items-center gap-3">
+                      <div className="h-10 w-10 rounded-lg bg-muted" />
+                      <div className="space-y-2">
+                        <div className="h-3.5 w-48 rounded bg-muted" />
+                        <div className="h-3 w-28 rounded bg-muted/70" />
                       </div>
                     </div>
-                  </td>
-                  <td className="px-4 py-3"><span className={cn('text-xs font-medium px-2 py-1 rounded-full capitalize', statusColors[deal.status] || 'bg-muted text-muted-foreground')}>{deal.status}</span></td>
-                  <td className="px-4 py-3 text-sm text-foreground">{deal.price}</td>
-                  <td className="px-4 py-3 text-sm text-muted-foreground">{deal.listing_expiration || '—'}</td>
-                  <td className="px-4 py-3 text-sm text-foreground">{deal.primary_agent}</td>
-                </tr>
-              ))}
-              {filtered.length === 0 && <tr><td colSpan={6} className="text-center py-12 text-muted-foreground text-sm">No deals found</td></tr>}
-            </tbody>
-          </table>
-        )}
-      </div>
-    </div>
+                    <div className="h-6 w-20 rounded-full bg-muted" />
+                    <div className="h-3.5 w-20 rounded bg-muted" />
+                    <div className="h-3.5 w-24 rounded bg-muted" />
+                    <div className="h-3.5 w-24 rounded bg-muted" />
+                  </div>
+                ))}
+              </div>
+            ) : filtered.length === 0 ? (
+              <EmptyState
+                icon={Home}
+                title="No transactions found"
+                description={search ? 'Clear the current filters or search term to see more transactions.' : 'Create your first deal to start tracking listings, contracts, and office follow-up in one system.'}
+                action={
+                  <Button size="sm" className="gap-1.5" onClick={() => navigate('/transactions/new')}>
+                    <Plus className="h-3.5 w-3.5" />
+                    Create Deal
+                  </Button>
+                }
+              />
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-10">
+                      <Checkbox checked={selectedDeals.length === filtered.length && filtered.length > 0} onCheckedChange={toggleAll} />
+                    </TableHead>
+                    <SortHeader label="Address" sortKeyName="address" />
+                    <SortHeader label="Status" sortKeyName="status" />
+                    <SortHeader label="Price" sortKeyName="price" />
+                    <SortHeader label="Critical Dates" sortKeyName="listing_expiration" />
+                    <SortHeader label="Primary Agent" sortKeyName="primary_agent" />
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filtered.map((deal) => (
+                    <TableRow key={deal.id} className="cursor-pointer" onClick={() => navigate(`/transactions/${deal.id}`)}>
+                      <TableCell className="w-10" onClick={(e) => e.stopPropagation()}>
+                        <Checkbox checked={selectedDeals.includes(deal.id)} onCheckedChange={() => toggleSelect(deal.id)} />
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted">
+                            <Building2Icon />
+                          </div>
+                          <div className="min-w-0">
+                            <div className="truncate text-sm font-semibold text-foreground">{deal.address}</div>
+                            <div className="truncate text-sm text-muted-foreground">{deal.city}, {deal.state} {deal.zip}</div>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <span className={cn('inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-semibold capitalize leading-none', statusColors[deal.status] || 'border-border bg-muted text-muted-foreground')}>
+                          {deal.status}
+                        </span>
+                      </TableCell>
+                      <TableCell className="font-medium text-foreground">{deal.price || '—'}</TableCell>
+                      <TableCell className="text-muted-foreground">{deal.listing_expiration || '—'}</TableCell>
+                      <TableCell>{deal.primary_agent || '—'}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </section>
+        </PageStack>
+      </PageContent>
+    </PageShell>
   );
 }
 

@@ -1,16 +1,41 @@
 import { useState } from 'react';
-import { Search, Plus, ChevronDown, X, CheckSquare, Phone, Users, StickyNote, MoreHorizontal, Calendar, Trash2, Edit } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
+import {
+  Calendar,
+  CheckSquare,
+  Edit,
+  Phone,
+  Plus,
+  Search,
+  StickyNote,
+  Trash2,
+  Users,
+  X,
+} from 'lucide-react';
+import { format } from 'date-fns';
+import { toast } from 'sonner';
+
 import { Button } from '@/components/ui/button';
+import { Calendar as CalendarComponent } from '@/components/ui/calendar';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { cn } from '@/lib/utils';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useTasks, useCreateTask, useUpdateTask, useDeleteTask, TaskRow } from '@/hooks/useTasks';
-import { format } from 'date-fns';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Calendar as CalendarComponent } from '@/components/ui/calendar';
-import { toast } from 'sonner';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  EmptyState,
+  PageContent,
+  PageHeader,
+  PageHeaderActions,
+  PageHeaderHeading,
+  PageShell,
+  PageStack,
+  PageToolbar,
+  PageToolbarGroup,
+} from '@/components/system/page-shell';
+import { useCreateTask, useDeleteTask, useTasks, TaskRow, useUpdateTask } from '@/hooks/useTasks';
+import { cn } from '@/lib/utils';
 
 const TASK_TYPES = [
   { key: 'todo' as const, label: 'Todo', icon: CheckSquare },
@@ -19,11 +44,19 @@ const TASK_TYPES = [
   { key: 'note' as const, label: 'Note', icon: StickyNote },
 ];
 
+const typeBadgeClasses: Record<string, string> = {
+  todo: 'border-primary/15 bg-primary/10 text-primary',
+  call: 'border-warning/15 bg-warning/10 text-warning',
+  meeting: 'border-success/15 bg-success/10 text-success',
+  note: 'border-border bg-muted text-muted-foreground',
+};
+
 export default function Tasks() {
   const { data: tasks = [], isLoading, isError } = useTasks();
   const createTask = useCreateTask();
   const updateTask = useUpdateTask();
   const deleteTask = useDeleteTask();
+
   const [search, setSearch] = useState('');
   const [panelOpen, setPanelOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<TaskRow | null>(null);
@@ -31,17 +64,18 @@ export default function Tasks() {
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [newTaskDescription, setNewTaskDescription] = useState('');
   const [newTaskDueDate, setNewTaskDueDate] = useState<Date | undefined>();
-  // Optimistic completion state — falls back to DB value on re-render
   const [optimisticCompleted, setOptimisticCompleted] = useState<Record<string, boolean>>({});
-
-  // Filters
   const [filterType, setFilterType] = useState<string>('all');
 
-  const filtered = tasks.filter((t) => {
-    if (filterType !== 'all' && t.type !== filterType) return false;
+  const filtered = tasks.filter((task) => {
+    if (filterType !== 'all' && task.type !== filterType) return false;
     if (!search) return true;
     const term = search.toLowerCase();
-    return t.title.toLowerCase().includes(term) || (t.description || '').toLowerCase().includes(term);
+    return (
+      task.title.toLowerCase().includes(term) ||
+      (task.description || '').toLowerCase().includes(term) ||
+      (task.assignee || '').toLowerCase().includes(term)
+    );
   });
 
   const openCreate = () => {
@@ -64,6 +98,7 @@ export default function Tasks() {
 
   const handleSave = async () => {
     if (!newTaskTitle.trim()) return;
+
     try {
       if (editingTask) {
         await updateTask.mutateAsync({
@@ -91,6 +126,7 @@ export default function Tasks() {
 
   const handleDelete = async (id: string) => {
     if (!window.confirm('Delete this task? This cannot be undone.')) return;
+
     try {
       await deleteTask.mutateAsync(id);
       toast.success('Task deleted');
@@ -100,222 +136,334 @@ export default function Tasks() {
   };
 
   const toggleComplete = async (task: TaskRow) => {
-    const next = !task.completed;
-    // Optimistic update so UI is instant
-    setOptimisticCompleted((prev) => ({ ...prev, [task.id]: next }));
+    const nextCompleted = !task.completed;
+    setOptimisticCompleted((previous) => ({ ...previous, [task.id]: nextCompleted }));
+
     try {
-      await updateTask.mutateAsync({ id: task.id, completed: next });
+      await updateTask.mutateAsync({ id: task.id, completed: nextCompleted });
     } catch {
-      // Revert optimistic on failure
-      setOptimisticCompleted((prev) => ({ ...prev, [task.id]: task.completed }));
+      setOptimisticCompleted((previous) => ({ ...previous, [task.id]: task.completed }));
       toast.error('Failed to update task');
     }
   };
 
+  const isSaving = createTask.isPending || updateTask.isPending;
+
   return (
-    <div className="flex-1 flex flex-col">
-      {/* Header */}
-      <div className="h-14 border-b flex items-center px-6 gap-4">
-        <h1 className="text-lg font-semibold text-foreground">Tasks</h1>
-        <div className="flex-1" />
-        <div className="relative w-72">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Search tasks..."
-            className="pl-9 h-9 text-sm"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
-      </div>
-
-      {/* Filters & Actions */}
-      <div className="px-6 pt-4 pb-2 flex items-center gap-2">
-        <Button variant={filterType === 'all' ? 'default' : 'outline'} size="sm" className="text-xs" onClick={() => setFilterType('all')}>
-          All
-        </Button>
-        {TASK_TYPES.map((t) => (
-          <Button key={t.key} variant={filterType === t.key ? 'default' : 'outline'} size="sm" className="text-xs gap-1" onClick={() => setFilterType(t.key)}>
-            <t.icon className="w-3 h-3" /> {t.label}
-          </Button>
-        ))}
-        <div className="flex-1" />
-        <Button size="sm" className="text-xs gap-1.5" onClick={openCreate}>
-          <Plus className="w-3.5 h-3.5" /> New Task
-        </Button>
-      </div>
-
-      {/* Table header */}
-      <div className="border-b">
-        <div className="flex px-6 py-3">
-          <span className="w-8" />
-          <span className="text-xs font-medium text-muted-foreground flex-1">Task</span>
-          <span className="text-xs font-medium text-muted-foreground w-48">Assignee</span>
-          <span className="text-xs font-medium text-muted-foreground w-32">Due Date</span>
-          <span className="text-xs font-medium text-muted-foreground w-32">Type</span>
-          <span className="text-xs font-medium text-muted-foreground w-20">Actions</span>
-        </div>
-      </div>
-
-      {/* Content */}
-      {isLoading ? (
-        <div className="flex-1 overflow-auto">
-          {[0, 1, 2, 3, 4].map((i) => (
-            <div key={i} className="flex items-center px-6 py-3 border-b animate-pulse">
-              <div className="w-8"><div className="w-4 h-4 rounded bg-muted" /></div>
-              <div className="flex-1 space-y-1.5">
-                <div className="h-3.5 rounded bg-muted w-2/5" />
-                <div className="h-3 rounded bg-muted/60 w-1/4" />
-              </div>
-              <div className="w-48"><div className="h-3 rounded bg-muted w-24" /></div>
-              <div className="w-32"><div className="h-3 rounded bg-muted w-20" /></div>
-              <div className="w-32"><div className="h-5 rounded-full bg-muted w-14" /></div>
-              <div className="w-20 flex gap-1">
-                <div className="h-6 w-6 rounded bg-muted" />
-                <div className="h-6 w-6 rounded bg-muted" />
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : isError ? (
-        <div className="flex-1 flex flex-col items-center justify-center gap-3">
-          <p className="text-sm text-destructive font-medium">Failed to load tasks</p>
-          <p className="text-xs text-muted-foreground">Check your connection and try refreshing the page.</p>
-        </div>
-      ) : filtered.length === 0 ? (
-        <div className="flex-1 flex flex-col items-center justify-center">
-          <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
-            <CheckSquare className="w-8 h-8 text-muted-foreground" />
+    <PageShell>
+      <PageHeader>
+        <PageHeaderHeading
+          title="Tasks"
+          meta={`${filtered.length} visible • ${tasks.length} total tasks`}
+        />
+        <PageHeaderActions>
+          <div className="relative w-full max-w-80">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Search tasks, descriptions, or assignees"
+              className="pl-9"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+            />
           </div>
-          <p className="text-sm text-muted-foreground">Click the Add Task button to create a new task.</p>
-        </div>
-      ) : (
-        <div className="flex-1 overflow-auto">
-          {filtered.map((task) => {
-            const isComplete = task.id in optimisticCompleted ? optimisticCompleted[task.id] : task.completed;
-            return (
-              <div key={task.id} className={cn('flex items-center px-6 py-3 border-b hover:bg-muted/50', isComplete && 'opacity-50')}>
-                <div className="w-8">
-                  <Checkbox checked={isComplete} onCheckedChange={() => toggleComplete(task)} />
-                </div>
-                <div className="flex-1">
-                  <p className={cn('text-sm text-foreground', isComplete && 'line-through')}>{task.title}</p>
-                  {task.description && <p className="text-xs text-muted-foreground">{task.description}</p>}
-                </div>
-                <div className="w-48 text-sm text-muted-foreground">{task.assignee || '—'}</div>
-                <div className="w-32 text-sm text-muted-foreground">
-                  {task.due_date ? format(new Date(task.due_date), 'MMM d, yyyy') : '—'}
-                </div>
-                <div className="w-32">
-                  <span className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full capitalize">{task.type}</span>
-                </div>
-                <div className="w-20 flex items-center gap-1">
-                  <button onClick={() => openEdit(task)} className="p-1 hover:bg-muted rounded"><Edit className="w-3.5 h-3.5 text-muted-foreground" /></button>
-                  <button onClick={() => handleDelete(task.id)} className="p-1 hover:bg-muted rounded"><Trash2 className="w-3.5 h-3.5 text-destructive" /></button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
+        </PageHeaderActions>
+      </PageHeader>
 
-      {/* New/Edit Task Slide-over */}
+      <PageToolbar>
+        <PageToolbarGroup className="app-segmented">
+          <button
+            type="button"
+            data-state={filterType === 'all' ? 'active' : 'inactive'}
+            className="app-segmented-item"
+            onClick={() => setFilterType('all')}
+          >
+            All
+          </button>
+          {TASK_TYPES.map((taskType) => (
+            <button
+              key={taskType.key}
+              type="button"
+              data-state={filterType === taskType.key ? 'active' : 'inactive'}
+              className="app-segmented-item inline-flex items-center gap-1.5"
+              onClick={() => setFilterType(taskType.key)}
+            >
+              <taskType.icon className="h-3.5 w-3.5" />
+              {taskType.label}
+            </button>
+          ))}
+        </PageToolbarGroup>
+
+        <PageToolbarGroup className="ml-auto">
+          <Button size="sm" className="gap-1.5" onClick={openCreate}>
+            <Plus className="h-3.5 w-3.5" />
+            New Task
+          </Button>
+        </PageToolbarGroup>
+      </PageToolbar>
+
+      <PageContent className="py-4">
+        <PageStack className="max-w-none gap-4">
+          <section className="app-surface overflow-hidden">
+            {isLoading ? (
+              <div className="divide-y">
+                {[0, 1, 2, 3, 4].map((row) => (
+                  <div key={row} className="flex items-center gap-4 px-6 py-4 animate-pulse">
+                    <div className="h-4 w-4 rounded bg-muted" />
+                    <div className="min-w-0 flex-1 space-y-2">
+                      <div className="h-3.5 w-52 rounded bg-muted" />
+                      <div className="h-3 w-32 rounded bg-muted/70" />
+                    </div>
+                    <div className="h-3.5 w-20 rounded bg-muted" />
+                    <div className="h-3.5 w-24 rounded bg-muted" />
+                    <div className="h-6 w-16 rounded-full bg-muted" />
+                    <div className="flex gap-2">
+                      <div className="h-8 w-8 rounded bg-muted" />
+                      <div className="h-8 w-8 rounded bg-muted" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : isError ? (
+              <EmptyState
+                icon={StickyNote}
+                title="Tasks could not be loaded"
+                description="Check the network or Supabase connection, then reload this page."
+              />
+            ) : filtered.length === 0 ? (
+              <EmptyState
+                icon={CheckSquare}
+                title={search || filterType !== 'all' ? 'No tasks match the current filters' : 'No tasks yet'}
+                description={
+                  search || filterType !== 'all'
+                    ? 'Clear the search or filter state to see more results.'
+                    : 'Create your first task to keep brokerage follow-up standardized.'
+                }
+                action={
+                  !search && filterType === 'all' ? (
+                    <Button size="sm" className="gap-1.5" onClick={openCreate}>
+                      <Plus className="h-3.5 w-3.5" />
+                      Create Task
+                    </Button>
+                  ) : undefined
+                }
+              />
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-10" />
+                    <TableHead>Task</TableHead>
+                    <TableHead>Due Date</TableHead>
+                    <TableHead>Assignee</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead className="w-28 text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filtered.map((task) => {
+                    const isCompleted =
+                      task.id in optimisticCompleted ? optimisticCompleted[task.id] : task.completed;
+                    const taskType = TASK_TYPES.find((candidate) => candidate.key === task.type);
+
+                    return (
+                      <TableRow key={task.id} data-state={isCompleted ? 'selected' : undefined}>
+                        <TableCell className="w-10 align-top">
+                          <Checkbox
+                            checked={isCompleted}
+                            onCheckedChange={() => toggleComplete(task)}
+                            aria-label={`Mark ${task.title} as ${isCompleted ? 'incomplete' : 'complete'}`}
+                          />
+                        </TableCell>
+                        <TableCell className="align-top">
+                          <div className="space-y-1">
+                            <div
+                              className={cn(
+                                'text-sm font-semibold text-foreground',
+                                isCompleted && 'line-through text-muted-foreground',
+                              )}
+                            >
+                              {task.title}
+                            </div>
+                            {task.description ? (
+                              <div className="max-w-xl text-sm leading-6 text-muted-foreground">
+                                {task.description}
+                              </div>
+                            ) : (
+                              <div className="text-sm text-muted-foreground">No description</div>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell className="align-top text-sm text-muted-foreground">
+                          {task.due_date ? format(new Date(task.due_date), 'MMM d, yyyy') : '—'}
+                        </TableCell>
+                        <TableCell className="align-top text-sm text-muted-foreground">
+                          {task.assignee || 'Unassigned'}
+                        </TableCell>
+                        <TableCell className="align-top">
+                          <span
+                            className={cn(
+                              'inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-semibold leading-none',
+                              typeBadgeClasses[task.type] || typeBadgeClasses.note,
+                            )}
+                          >
+                            {taskType ? <taskType.icon className="h-3 w-3" /> : null}
+                            {taskType?.label || task.type}
+                          </span>
+                        </TableCell>
+                        <TableCell className="align-top">
+                          <div className="flex justify-end gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={() => openEdit(task)}
+                              aria-label={`Edit ${task.title}`}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-destructive hover:text-destructive"
+                              onClick={() => handleDelete(task.id)}
+                              aria-label={`Delete ${task.title}`}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            )}
+          </section>
+        </PageStack>
+      </PageContent>
+
       <AnimatePresence>
-        {panelOpen && (
+        {panelOpen ? (
           <>
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-foreground/20 z-40"
+              className="fixed inset-0 z-40 bg-black/40"
               onClick={() => setPanelOpen(false)}
             />
-            <motion.div
+            <motion.aside
               initial={{ x: '100%' }}
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
-              transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-              className="fixed right-0 top-0 bottom-0 w-[420px] bg-background border-l shadow-xl z-50 flex flex-col"
+              transition={{ duration: 0.18, ease: 'easeOut' }}
+              className="fixed inset-y-0 right-0 z-50 flex w-full max-w-xl flex-col border-l bg-background shadow-floating"
             >
-              <div className="h-14 border-b flex items-center px-4 justify-between flex-shrink-0">
-                <h2 className="text-sm font-semibold text-foreground">{editingTask ? 'Edit Task' : 'New Task'}</h2>
-                <button onClick={() => setPanelOpen(false)} className="p-1.5 rounded-md hover:bg-muted transition-colors">
-                  <X className="w-4 h-4 text-muted-foreground" />
-                </button>
-              </div>
-
-              {/* Type Tabs */}
-              <div className="px-4 pt-4 pb-2 flex gap-1 flex-wrap">
-                {TASK_TYPES.map((t) => (
-                  <button
-                    key={t.key}
-                    onClick={() => setNewTaskType(t.key)}
-                    className={cn(
-                      'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors border',
-                      newTaskType === t.key
-                        ? 'bg-primary text-primary-foreground border-primary'
-                        : 'bg-background text-muted-foreground border-border hover:bg-muted'
-                    )}
-                  >
-                    <t.icon className="w-3.5 h-3.5" />
-                    {t.label}
-                  </button>
-                ))}
-              </div>
-
-              {/* Body */}
-              <div className="flex-1 overflow-auto p-4 space-y-4">
+              <div className="flex items-center justify-between border-b px-5 py-4">
                 <div>
-                  <Input
-                    placeholder="Task title"
-                    value={newTaskTitle}
-                    onChange={(e) => setNewTaskTitle(e.target.value)}
-                    className="text-sm"
-                  />
+                  <h2 className="text-base font-semibold text-foreground">
+                    {editingTask ? 'Edit Task' : 'New Task'}
+                  </h2>
+                  <p className="text-sm text-muted-foreground">
+                    Define the task type, core details, and due date in one place.
+                  </p>
                 </div>
-
-                <div>
-                  <Input
-                    placeholder="Add description (optional)"
-                    value={newTaskDescription}
-                    onChange={(e) => setNewTaskDescription(e.target.value)}
-                    className="text-sm"
-                  />
-                </div>
-
-                <div>
-                  <Label className="text-xs">Due Date</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <div className="mt-1 flex items-center gap-2 border rounded-md px-3 py-2 text-sm cursor-pointer hover:bg-muted/50">
-                        <Calendar className="w-4 h-4 text-muted-foreground" />
-                        <span className={newTaskDueDate ? 'text-foreground' : 'text-muted-foreground'}>
-                          {newTaskDueDate ? format(newTaskDueDate, 'MMM d, yyyy') : 'Select date'}
-                        </span>
-                      </div>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <CalendarComponent
-                        mode="single"
-                        selected={newTaskDueDate}
-                        onSelect={setNewTaskDueDate}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </div>
-              </div>
-
-              {/* Footer */}
-              <div className="border-t p-4 flex items-center justify-end flex-shrink-0">
-                <Button size="sm" disabled={!newTaskTitle.trim() || createTask.isPending || updateTask.isPending} onClick={handleSave}>
-                  {createTask.isPending || updateTask.isPending ? 'Saving...' : 'Save'}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9"
+                  onClick={() => setPanelOpen(false)}
+                  aria-label="Close task panel"
+                >
+                  <X className="h-4 w-4" />
                 </Button>
               </div>
-            </motion.div>
+
+              <div className="flex-1 overflow-auto p-5">
+                <div className="app-form-grid">
+                  <div className="app-form-field">
+                    <Label>Task Type</Label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {TASK_TYPES.map((taskType) => (
+                        <button
+                          key={taskType.key}
+                          type="button"
+                          onClick={() => setNewTaskType(taskType.key)}
+                          className={cn(
+                            'flex items-center gap-2 rounded-lg border px-3 py-3 text-left text-sm font-medium transition-standard',
+                            newTaskType === taskType.key
+                              ? 'border-primary bg-primary/5 text-primary'
+                              : 'border-border bg-background text-foreground hover:bg-muted/50',
+                          )}
+                        >
+                          <taskType.icon className="h-4 w-4" />
+                          {taskType.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="app-form-field">
+                    <Label>Title</Label>
+                    <Input
+                      placeholder="Task title"
+                      value={newTaskTitle}
+                      onChange={(event) => setNewTaskTitle(event.target.value)}
+                    />
+                  </div>
+
+                  <div className="app-form-field">
+                    <Label>Description</Label>
+                    <Textarea
+                      placeholder="Add context, next steps, or handoff details"
+                      value={newTaskDescription}
+                      onChange={(event) => setNewTaskDescription(event.target.value)}
+                    />
+                  </div>
+
+                  <div className="app-form-field">
+                    <Label>Due Date</Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <button
+                          type="button"
+                          className="flex h-10 items-center gap-2 rounded-md border border-input bg-background px-3 text-sm text-left transition-standard hover:bg-muted/40"
+                        >
+                          <Calendar className="h-4 w-4 text-muted-foreground" />
+                          <span className={newTaskDueDate ? 'text-foreground' : 'text-muted-foreground'}>
+                            {newTaskDueDate ? format(newTaskDueDate, 'MMM d, yyyy') : 'Select date'}
+                          </span>
+                        </button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <CalendarComponent
+                          mode="single"
+                          selected={newTaskDueDate}
+                          onSelect={setNewTaskDueDate}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 border-t px-5 py-4">
+                <Button variant="outline" size="sm" onClick={() => setPanelOpen(false)}>
+                  Cancel
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={handleSave}
+                  disabled={!newTaskTitle.trim() || isSaving}
+                >
+                  {isSaving ? 'Saving...' : 'Save Task'}
+                </Button>
+              </div>
+            </motion.aside>
           </>
-        )}
+        ) : null}
       </AnimatePresence>
-    </div>
+    </PageShell>
   );
 }

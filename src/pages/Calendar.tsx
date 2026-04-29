@@ -9,6 +9,15 @@ import { useOpenHouses } from '@/hooks/useOpenHouses';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, getDay, addMonths, subMonths, isSameDay } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import {
+  PageContent,
+  PageHeader,
+  PageHeaderActions,
+  PageHeaderHeading,
+  PageShell,
+  PageStack,
+  PageSection,
+} from '@/components/system/page-shell';
 
 // US Federal Holidays (fixed dates; floating ones approximated for current year)
 function getHolidays(year: number): { date: Date; name: string }[] {
@@ -92,69 +101,74 @@ export default function CalendarPage() {
   };
 
   return (
-    <div className="flex-1 flex flex-col">
-      <div className="h-14 border-b flex items-center px-6 gap-4">
-        <h1 className="text-lg font-semibold text-foreground">Calendar</h1>
-        <div className="flex-1" />
-        <Button size="sm" className="text-xs gap-1.5" onClick={() => openNewEvent()}>
-          <Plus className="w-3.5 h-3.5" /> New Event
-        </Button>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}><ChevronLeft className="w-4 h-4" /></Button>
-          <span className="text-sm font-medium text-foreground w-40 text-center">{format(currentMonth, 'MMMM yyyy')}</span>
-          <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}><ChevronRight className="w-4 h-4" /></Button>
-        </div>
-      </div>
+    <PageShell>
+      <PageHeader>
+        <PageHeaderHeading title="Calendar" meta="Tasks, open houses, and federal holidays in one view" />
+        <PageHeaderActions>
+          <Button size="sm" className="gap-1.5" onClick={() => openNewEvent()}>
+            <Plus className="w-3.5 h-3.5" /> New Event
+          </Button>
+          <div className="app-surface-subtle flex items-center gap-2 px-2 py-1.5">
+            <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}><ChevronLeft className="w-4 h-4" /></Button>
+            <span className="w-40 text-center text-sm font-semibold text-foreground">{format(currentMonth, 'MMMM yyyy')}</span>
+            <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}><ChevronRight className="w-4 h-4" /></Button>
+          </div>
+        </PageHeaderActions>
+      </PageHeader>
 
-      <div className="flex-1 overflow-auto p-4">
-        <div className="grid grid-cols-7 gap-px bg-border rounded-lg overflow-hidden">
-          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d) => (
-            <div key={d} className="bg-muted px-2 py-2 text-xs font-medium text-muted-foreground text-center">{d}</div>
-          ))}
-          {Array.from({ length: startPad }).map((_, i) => (
-            <div key={`pad-${i}`} className="bg-background min-h-[100px]" />
-          ))}
-          {days.map((day) => {
-            const events = getEventsForDay(day);
-            const isToday = isSameDay(day, today);
-            const dateStr = format(day, 'yyyy-MM-dd');
-            return (
-              <div
-                key={day.toISOString()}
-                className={cn('bg-background min-h-[100px] p-1.5 border-t cursor-pointer hover:bg-muted/30 transition-colors', isToday && 'bg-primary/5')}
-                onClick={() => openNewEvent(dateStr)}
-              >
-                <div className={cn('text-xs font-medium mb-1', isToday ? 'text-primary' : 'text-foreground')}>{format(day, 'd')}</div>
-                <div className="space-y-0.5">
-                  {events.slice(0, 3).map((ev, i) => (
-                    <div key={i} className={cn('text-[10px] leading-tight px-1 py-0.5 rounded truncate',
-                      ev.type === 'holiday' ? 'bg-destructive/10 text-destructive' :
-                      ev.type === 'task' ? 'bg-primary/10 text-primary' :
-                      'bg-accent text-accent-foreground'
-                    )}>
-                      {ev.label}
+      <PageContent>
+        <PageStack className="max-w-none">
+          <PageSection title="Month View" description="Select any day to add a new calendar event." bodyClassName="p-4">
+            <div className="grid grid-cols-7 gap-px overflow-hidden rounded-lg border bg-border">
+              {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d) => (
+                <div key={d} className="bg-muted px-2 py-2 text-center text-xs font-semibold uppercase tracking-wide text-muted-foreground">{d}</div>
+              ))}
+              {Array.from({ length: startPad }).map((_, i) => (
+                <div key={`pad-${i}`} className="min-h-[100px] bg-background" />
+              ))}
+              {days.map((day) => {
+                const events = getEventsForDay(day);
+                const isToday = isSameDay(day, today);
+                const dateStr = format(day, 'yyyy-MM-dd');
+                return (
+                  <div
+                    key={day.toISOString()}
+                    className={cn('min-h-[100px] cursor-pointer border-t bg-background p-1.5 transition-standard hover:bg-muted/30', isToday && 'bg-primary/5')}
+                    onClick={() => openNewEvent(dateStr)}
+                  >
+                    <div className={cn('mb-1 text-xs font-semibold', isToday ? 'text-primary' : 'text-foreground')}>{format(day, 'd')}</div>
+                    <div className="space-y-0.5">
+                      {events.slice(0, 3).map((ev, i) => (
+                        <div key={i} className={cn('truncate rounded px-1 py-0.5 text-[10px] leading-tight',
+                          ev.type === 'holiday' ? 'bg-destructive/10 text-destructive' :
+                          ev.type === 'task' ? 'bg-primary/10 text-primary' :
+                          'bg-accent text-accent-foreground'
+                        )}>
+                          {ev.label}
+                        </div>
+                      ))}
+                      {events.length > 3 && <div className="px-1 text-[10px] text-muted-foreground">+{events.length - 3} more</div>}
                     </div>
-                  ))}
-                  {events.length > 3 && <div className="text-[10px] text-muted-foreground px-1">+{events.length - 3} more</div>}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
+                  </div>
+                );
+              })}
+            </div>
+          </PageSection>
+        </PageStack>
+      </PageContent>
 
       {/* Create Event Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-sm">
           <DialogHeader><DialogTitle>New Event</DialogTitle></DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label className="text-sm">Title</Label>
-              <Input value={eventTitle} onChange={(e) => setEventTitle(e.target.value)} placeholder="Event title" className="mt-1" />
+          <div className="app-form-grid">
+            <div className="app-form-field">
+              <Label>Title</Label>
+              <Input value={eventTitle} onChange={(e) => setEventTitle(e.target.value)} placeholder="Event title" />
             </div>
-            <div>
-              <Label className="text-sm">Date</Label>
-              <Input type="date" value={eventDate} onChange={(e) => setEventDate(e.target.value)} className="mt-1" />
+            <div className="app-form-field">
+              <Label>Date</Label>
+              <Input type="date" value={eventDate} onChange={(e) => setEventDate(e.target.value)} />
             </div>
             <div className="flex justify-end gap-2">
               <Button variant="outline" size="sm" onClick={() => setDialogOpen(false)}>Cancel</Button>
@@ -165,6 +179,6 @@ export default function CalendarPage() {
           </div>
         </DialogContent>
       </Dialog>
-    </div>
+    </PageShell>
   );
 }

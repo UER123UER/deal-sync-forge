@@ -64,8 +64,10 @@ export function AppSidebar() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  const navButtonBase = 'group flex h-12 w-12 flex-col items-center justify-center gap-1 rounded-lg border border-transparent text-[10px] font-medium leading-none transition-standard focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--sidebar-ring))] focus-visible:ring-offset-0';
+
   return (
-    <div className="w-16 min-h-screen flex flex-col items-center py-4 gap-1 relative" style={{ backgroundColor: 'hsl(var(--sidebar-bg))' }}>
+    <aside className="relative flex min-h-screen w-16 shrink-0 flex-col items-center gap-1 border-r border-[hsl(var(--sidebar-border))] bg-[hsl(var(--sidebar-background))] py-4">
       {/* Logo */}
       <div className="w-14 mb-4 flex items-center justify-center">
         <UERLogo width={48} />
@@ -85,23 +87,22 @@ export function AppSidebar() {
                 ref={buttonRef}
                 onClick={() => setSubmenuOpen(!submenuOpen)}
                 className={cn(
-                  'w-12 h-12 rounded-lg flex flex-col items-center justify-center gap-0.5 transition-colors',
-                  isActive ? 'bg-opacity-20' : 'hover:bg-opacity-10'
+                  navButtonBase,
+                  isActive || submenuOpen
+                    ? 'bg-[hsl(var(--sidebar-accent))]'
+                    : 'hover:border-white/5 hover:bg-white/[0.05]'
                 )}
-                style={{
-                  backgroundColor: isActive || submenuOpen ? 'hsl(var(--sidebar-hover))' : undefined,
-                }}
                 title={item.label}
               >
                 <div className="relative">
-                  <item.icon className="w-5 h-5" style={{ color: isActive ? 'hsl(var(--sidebar-active))' : 'hsl(var(--sidebar-fg))' }} />
+                  <item.icon className={cn('h-5 w-5', isActive ? 'text-[hsl(var(--sidebar-primary))]' : 'text-[hsl(var(--sidebar-foreground))]')} />
                   {overdueCount > 0 && (
                     <span className="absolute -top-1.5 -right-1.5 min-w-[14px] h-[14px] rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center px-0.5 leading-none">
                       {overdueCount > 99 ? '99+' : overdueCount}
                     </span>
                   )}
                 </div>
-                <span className="text-[9px] leading-none" style={{ color: isActive ? 'hsl(var(--sidebar-active))' : 'hsl(var(--sidebar-fg))' }}>
+                <span className={cn('leading-none', isActive ? 'text-[hsl(var(--sidebar-primary))]' : 'text-[hsl(var(--sidebar-foreground))]')}>
                   {item.label}
                 </span>
               </button>
@@ -109,7 +110,7 @@ export function AppSidebar() {
               {submenuOpen && (
                 <div
                   ref={submenuRef}
-                  className="absolute left-full top-0 ml-2 bg-popover border rounded-md shadow-lg py-1 w-40 z-50"
+                  className="absolute left-full top-0 z-50 ml-3 w-44 rounded-lg border bg-popover py-1 shadow-floating"
                 >
                   {peopleSubmenu.map((sub) => {
                     const subActive = location.pathname.startsWith(sub.path);
@@ -118,7 +119,7 @@ export function AppSidebar() {
                         key={sub.path}
                         onClick={() => { navigate(sub.path); setSubmenuOpen(false); }}
                         className={cn(
-                          'w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors',
+                          'flex w-full items-center gap-2 px-3 py-2.5 text-sm font-medium transition-standard',
                           subActive ? 'bg-accent text-accent-foreground' : 'text-foreground hover:bg-accent'
                         )}
                       >
@@ -138,16 +139,15 @@ export function AppSidebar() {
             key={item.path}
             onClick={() => navigate(item.path)}
             className={cn(
-              'w-12 h-12 rounded-lg flex flex-col items-center justify-center gap-0.5 transition-colors',
-              isActive ? 'bg-opacity-20' : 'hover:bg-opacity-10'
+              navButtonBase,
+              isActive
+                ? 'bg-[hsl(var(--sidebar-accent))]'
+                : 'hover:border-white/5 hover:bg-white/[0.05]'
             )}
-            style={{
-              backgroundColor: isActive ? 'hsl(var(--sidebar-hover))' : undefined,
-            }}
             title={item.label}
           >
-            <item.icon className="w-5 h-5" style={{ color: isActive ? 'hsl(var(--sidebar-active))' : 'hsl(var(--sidebar-fg))' }} />
-            <span className="text-[9px] leading-none" style={{ color: isActive ? 'hsl(var(--sidebar-active))' : 'hsl(var(--sidebar-fg))' }}>
+            <item.icon className={cn('h-5 w-5', isActive ? 'text-[hsl(var(--sidebar-primary))]' : 'text-[hsl(var(--sidebar-foreground))]')} />
+            <span className={cn('leading-none', isActive ? 'text-[hsl(var(--sidebar-primary))]' : 'text-[hsl(var(--sidebar-foreground))]')}>
               {item.label}
             </span>
           </button>
@@ -160,7 +160,7 @@ export function AppSidebar() {
         onClick={() => navigate('/profile')}
         title="My Profile"
         className={cn(
-          'mt-2 w-10 h-10 rounded-full overflow-hidden flex items-center justify-center transition-all ring-2 shrink-0',
+          'mt-2 flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full ring-2 transition-standard',
           profileActive
             ? 'ring-[hsl(var(--sidebar-active))] scale-105'
             : 'ring-transparent hover:ring-white/30 hover:scale-105'
@@ -186,6 +186,6 @@ export function AppSidebar() {
           </span>
         )}
       </button>
-    </div>
+    </aside>
   );
 }

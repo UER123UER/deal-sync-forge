@@ -36,7 +36,48 @@
     --input: 214 20% 88%;
     --ring: 218 60% 26%;
 
-    --radius: 0.4rem;
+    /* ── Design system: spacing / type / radius / motion ── */
+    --space-1: 0.25rem;
+    --space-2: 0.5rem;
+    --space-3: 0.75rem;
+    --space-4: 1rem;
+    --space-5: 1.25rem;
+    --space-6: 1.5rem;
+    --space-8: 2rem;
+    --space-10: 2.5rem;
+    --space-12: 3rem;
+
+    --font-size-100: 0.75rem;
+    --font-size-200: 0.875rem;
+    --font-size-300: 1rem;
+    --font-size-400: 1.125rem;
+    --font-size-500: 1.5rem;
+    --font-size-600: 2rem;
+
+    --line-height-tight: 1.2;
+    --line-height-body: 1.5;
+    --line-height-relaxed: 1.65;
+
+    --radius-sm: 0.375rem;
+    --radius-md: 0.625rem;
+    --radius-lg: 0.875rem;
+    --radius-xl: 1rem;
+    --radius: var(--radius-md);
+
+    --shadow-1: 0 1px 2px rgba(15, 23, 42, 0.06), 0 0 0 1px rgba(15, 23, 42, 0.02);
+    --shadow-2: 0 10px 30px rgba(15, 23, 42, 0.08), 0 0 0 1px rgba(15, 23, 42, 0.03);
+    --shadow-focus: 0 0 0 3px hsla(var(--ring), 0.18);
+
+    --duration-fast: 140ms;
+    --duration-base: 180ms;
+    --duration-slow: 240ms;
+    --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+
+    --page-max-width: 96rem;
+    --page-padding-x: 1.5rem;
+    --page-padding-y: 1.5rem;
+    --page-header-height: 4rem;
+    --toolbar-height: 3.5rem;
 
     /* ── Sidebar: deep navy ── */
     --sidebar-bg: 222 62% 16%;
@@ -107,11 +148,181 @@
 }
 
 @layer base {
+  html,
+  body,
+  #root {
+    min-height: 100%;
+  }
+
   * {
     @apply border-border;
   }
+
   body {
     @apply bg-background text-foreground;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    font-size: var(--font-size-300);
+    line-height: var(--line-height-body);
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  ::selection {
+    background: hsla(var(--primary), 0.16);
+    color: hsl(var(--foreground));
+  }
+}
+
+@layer components {
+  .app-shell {
+    @apply min-h-screen bg-background text-foreground;
+  }
+
+  .app-page {
+    @apply flex min-h-0 flex-1 flex-col bg-background;
+  }
+
+  .app-page-header {
+    @apply flex shrink-0 items-center border-b bg-background;
+    min-height: var(--page-header-height);
+    padding-inline: var(--page-padding-x);
+    gap: var(--space-4);
+  }
+
+  .app-page-heading {
+    @apply flex min-w-0 items-center gap-3;
+  }
+
+  .app-page-title {
+    font-size: var(--font-size-500);
+    line-height: var(--line-height-tight);
+    letter-spacing: -0.02em;
+    @apply font-semibold text-foreground;
+  }
+
+  .app-page-meta {
+    font-size: var(--font-size-100);
+    line-height: 1.4;
+    letter-spacing: 0.02em;
+    @apply font-medium text-muted-foreground;
+  }
+
+  .app-page-actions {
+    @apply ml-auto flex items-center gap-3;
+  }
+
+  .app-page-toolbar {
+    @apply flex shrink-0 items-center border-b bg-background;
+    min-height: var(--toolbar-height);
+    padding-inline: var(--page-padding-x);
+    padding-block: var(--space-3);
+    gap: var(--space-3);
+  }
+
+  .app-page-toolbar-group {
+    @apply flex items-center gap-2;
+  }
+
+  .app-page-content {
+    @apply flex-1 overflow-auto;
+    padding: var(--page-padding-y) var(--page-padding-x);
+  }
+
+  .app-page-stack {
+    @apply mx-auto flex w-full max-w-[var(--page-max-width)] flex-col;
+    gap: var(--space-6);
+  }
+
+  .app-surface {
+    @apply rounded-[var(--radius-lg)] border bg-card text-card-foreground;
+    box-shadow: var(--shadow-1);
+  }
+
+  .app-surface-subtle {
+    @apply rounded-[var(--radius-lg)] border bg-muted/20 text-card-foreground;
+  }
+
+  .app-section-header {
+    @apply flex items-start justify-between border-b;
+    padding: var(--space-5) var(--space-6);
+    gap: var(--space-4);
+  }
+
+  .app-section-body {
+    padding: var(--space-6);
+  }
+
+  .app-section-title {
+    font-size: var(--font-size-400);
+    line-height: var(--line-height-tight);
+    letter-spacing: -0.015em;
+    @apply font-semibold text-foreground;
+  }
+
+  .app-section-description {
+    font-size: var(--font-size-200);
+    line-height: var(--line-height-body);
+    @apply mt-1 text-muted-foreground;
+  }
+
+  .app-empty-state {
+    @apply flex flex-col items-center justify-center text-center;
+    gap: var(--space-3);
+    min-height: 18rem;
+    padding: var(--space-8);
+  }
+
+  .app-empty-icon {
+    @apply flex items-center justify-center rounded-full bg-muted text-muted-foreground;
+    width: 4rem;
+    height: 4rem;
+  }
+
+  .app-empty-title {
+    font-size: var(--font-size-300);
+    line-height: var(--line-height-tight);
+    @apply font-semibold text-foreground;
+  }
+
+  .app-empty-copy {
+    font-size: var(--font-size-200);
+    line-height: var(--line-height-body);
+    @apply max-w-md text-muted-foreground;
+  }
+
+  .app-form-grid {
+    @apply grid;
+    gap: var(--space-4);
+  }
+
+  .app-form-field {
+    @apply flex flex-col;
+    gap: var(--space-2);
+  }
+
+  .app-segmented {
+    @apply inline-flex items-center rounded-[var(--radius-md)] border bg-muted/40 p-1;
+    gap: var(--space-1);
+  }
+
+  .app-segmented-item {
+    @apply inline-flex items-center justify-center rounded-[calc(var(--radius-md)-2px)] px-3 py-2 text-sm font-semibold text-muted-foreground transition-colors;
+  }
+
+  .app-segmented-item[data-state='active'] {
+    @apply bg-background text-foreground;
+    box-shadow: var(--shadow-1);
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .transition-standard {
+    transition-duration: var(--duration-base);
+    transition-timing-function: var(--ease-standard);
   }
 }
