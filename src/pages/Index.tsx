@@ -24,42 +24,48 @@ const offerings = [
     description:
       "Default forms adjust around the property type so condo, single-family, land, lease, and referral deals start with the right checklist.",
     icon: ListChecks,
-    iconClassName: "bg-[#e8f1ff] text-[#1b3a6b]",
+    // primary tint
+    iconClassName: "bg-primary/10 text-primary",
   },
   {
     title: "Searchable form library",
     description:
       "Keep the core checklist clean, hide the long-tail forms, then search and add the extras only when the file actually needs them.",
     icon: ScrollText,
-    iconClassName: "bg-[#fff1e6] text-[#b45309]",
+    // warning tint
+    iconClassName: "bg-warning/10 text-warning",
   },
   {
     title: "Brokerage dashboard",
     description:
       "Track listings, contracts, notes, due dates, and office activity from one workspace instead of bouncing between files, inboxes, and side conversations.",
     icon: LayoutDashboard,
-    iconClassName: "bg-[#eefbf3] text-[#0f766e]",
+    // success tint
+    iconClassName: "bg-success/10 text-success",
   },
   {
     title: "Marketing tools",
     description:
       "Build branded listing and social assets from inside the same system your agents use for brokerage-approved workflow and follow-up.",
     icon: Megaphone,
-    iconClassName: "bg-[#f7edff] text-[#7c3aed]",
+    // muted accent
+    iconClassName: "bg-accent text-accent-foreground",
   },
   {
     title: "Team visibility",
     description:
       "Give agents, coordinators, and leadership a shared view of live files, current status, and what still needs to get crossed off.",
     icon: Users2,
-    iconClassName: "bg-[#ffe9ec] text-[#be123c]",
+    // destructive tint
+    iconClassName: "bg-destructive/10 text-destructive",
   },
   {
     title: "Office-ready workflows",
     description:
       "Standardize your process with one place for forms, tasks, people, and compliance tracking without bringing back editing clutter.",
     icon: ShieldCheck,
-    iconClassName: "bg-[#edf7f1] text-[#166534]",
+    // success tint (darker read)
+    iconClassName: "bg-success/10 text-success",
   },
 ] as const;
 
@@ -130,13 +136,14 @@ export default function Index() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur">
+      {/* Nav — solid background, no blur; elevation earned only by the border */}
+      <header className="sticky top-0 z-40 border-b bg-background">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
           <Link to="/" className="flex items-center" aria-label="United Estates Agent home">
             <UERLogo width={188} className="w-[132px] sm:w-[168px] lg:w-[188px]" />
           </Link>
 
-          <nav className="hidden items-center gap-6 text-sm text-slate-700 md:flex">
+          <nav className="hidden items-center gap-6 text-sm text-muted-foreground md:flex">
             <a href="#offerings" className="transition-colors hover:text-primary">
               What We Offer
             </a>
@@ -163,6 +170,7 @@ export default function Index() {
       </header>
 
       <main>
+        {/* Hero — image-backed, no blur overlay, gradient is intentional for text legibility */}
         <section className="relative overflow-hidden">
           <div
             className="min-h-[74vh] bg-cover bg-center bg-no-repeat"
@@ -208,37 +216,39 @@ export default function Index() {
           </div>
         </section>
 
-        <section className="border-b border-slate-200 bg-[#f5f7fb]">
+        {/* Value strip — muted wash, no raw hex */}
+        <section className="border-b bg-muted/40">
           <div className="mx-auto grid max-w-6xl gap-8 px-4 py-8 sm:px-6 md:grid-cols-3 lg:px-8">
             <div>
               <p className="text-sm font-semibold uppercase tracking-[0.16em] text-primary">Built for active files</p>
-              <p className="mt-2 text-sm leading-6 text-slate-600">
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">
                 Start with the right checklist for condo, single-family, land, lease, commercial, or referral files.
               </p>
             </div>
             <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#0f766e]">Made for the office</p>
-              <p className="mt-2 text-sm leading-6 text-slate-600">
+              <p className="text-sm font-semibold uppercase tracking-[0.16em] text-success">Made for the office</p>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">
                 Give agents, coordinators, and leadership one operating view instead of separate spreadsheets and texts.
               </p>
             </div>
             <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#b45309]">Ready for growth</p>
-              <p className="mt-2 text-sm leading-6 text-slate-600">
+              <p className="text-sm font-semibold uppercase tracking-[0.16em] text-warning">Ready for growth</p>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">
                 Keep the default process tight, hide the extra forms, and add exactly what the file needs when the moment comes.
               </p>
             </div>
           </div>
         </section>
 
-        <section id="offerings" className="bg-white py-16 sm:py-20">
+        {/* Offerings */}
+        <section id="offerings" className="bg-background py-16 sm:py-20">
           <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
             <div className="max-w-3xl">
               <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">What We Offer</p>
-              <h2 className="mt-3 text-3xl font-semibold text-slate-950 sm:text-4xl">
+              <h2 className="mt-3 text-3xl font-semibold text-foreground sm:text-4xl">
                 A cleaner operating system for your brokerage, agents, and staff.
               </h2>
-              <p className="mt-4 text-base leading-7 text-slate-600">
+              <p className="mt-4 text-base leading-7 text-muted-foreground">
                 United Estates Agent is built around how a brokerage actually runs: active listings, changing paperwork,
                 office standards, agent support, and the daily follow-up that has to stay organized.
               </p>
@@ -246,13 +256,13 @@ export default function Index() {
 
             <div className="mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
               {offerings.map(({ title, description, icon: Icon, iconClassName }) => (
-                <Card key={title} className="h-full border-slate-200 shadow-none">
+                <Card key={title} className="h-full shadow-none">
                   <CardContent className="flex h-full flex-col p-6">
                     <div className={`flex h-12 w-12 items-center justify-center rounded-md ${iconClassName}`}>
                       <Icon className="h-5 w-5" />
                     </div>
-                    <h3 className="mt-5 text-xl font-semibold text-slate-950">{title}</h3>
-                    <p className="mt-3 text-sm leading-6 text-slate-600">{description}</p>
+                    <h3 className="mt-5 text-xl font-semibold text-foreground">{title}</h3>
+                    <p className="mt-3 text-sm leading-6 text-muted-foreground">{description}</p>
                   </CardContent>
                 </Card>
               ))}
@@ -260,14 +270,15 @@ export default function Index() {
           </div>
         </section>
 
-        <section id="pricing" className="border-y border-slate-200 bg-[#fff8f2] py-16 sm:py-20">
+        {/* Pricing — secondary muted wash to break rhythm, not a brand color */}
+        <section id="pricing" className="border-y bg-muted/30 py-16 sm:py-20">
           <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
             <div className="max-w-3xl">
-              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#b45309]">Pricing</p>
-              <h2 className="mt-3 text-3xl font-semibold text-slate-950 sm:text-4xl">
+              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-warning">Pricing</p>
+              <h2 className="mt-3 text-3xl font-semibold text-foreground sm:text-4xl">
                 Pricing built around how your office wants to roll out.
               </h2>
-              <p className="mt-4 text-base leading-7 text-slate-600">
+              <p className="mt-4 text-base leading-7 text-muted-foreground">
                 United Estates Agent can be set up for an individual agent, a growing team, or a brokerage-wide rollout. We
                 match pricing to the headcount, setup, and workflow support your office needs.
               </p>
@@ -278,29 +289,29 @@ export default function Index() {
                 <Card
                   key={name}
                   className={[
-                    "h-full border shadow-none",
-                    featured ? "border-primary bg-white" : "border-[#efd8c6] bg-white/90",
+                    "h-full shadow-none",
+                    featured ? "border-primary" : "",
                   ].join(" ")}
                 >
                   <CardContent className="flex h-full flex-col p-6">
                     <div className="flex items-center justify-between gap-3">
                       <div>
-                        <p className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">{name}</p>
-                        <p className="mt-3 text-2xl font-semibold text-slate-950">{pricing}</p>
+                        <p className="text-sm font-semibold uppercase tracking-[0.16em] text-muted-foreground">{name}</p>
+                        <p className="mt-3 text-2xl font-semibold text-foreground">{pricing}</p>
                       </div>
                       {featured ? (
-                        <span className="rounded-md bg-primary px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-white">
+                        <span className="rounded-md bg-primary px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-primary-foreground">
                           Most Popular
                         </span>
                       ) : null}
                     </div>
 
-                    <p className="mt-4 text-sm leading-6 text-slate-600">{description}</p>
+                    <p className="mt-4 text-sm leading-6 text-muted-foreground">{description}</p>
 
                     <ul className="mt-6 space-y-3">
                       {features.map((feature) => (
-                        <li key={feature} className="flex items-start gap-3 text-sm text-slate-700">
-                          <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#0f766e]" />
+                        <li key={feature} className="flex items-start gap-3 text-sm text-foreground">
+                          <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-success" />
                           <span>{feature}</span>
                         </li>
                       ))}
@@ -321,14 +332,15 @@ export default function Index() {
           </div>
         </section>
 
-        <section id="how-it-works" className="bg-white py-16 sm:py-20">
+        {/* How It Works */}
+        <section id="how-it-works" className="bg-background py-16 sm:py-20">
           <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
             <div className="max-w-3xl">
               <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">How It Works</p>
-              <h2 className="mt-3 text-3xl font-semibold text-slate-950 sm:text-4xl">
+              <h2 className="mt-3 text-3xl font-semibold text-foreground sm:text-4xl">
                 Keep the process simple without oversimplifying the work.
               </h2>
-              <p className="mt-4 text-base leading-7 text-slate-600">
+              <p className="mt-4 text-base leading-7 text-muted-foreground">
                 The goal is not more screens. The goal is one place where your office can see what has been started, what is
                 complete, and what still needs attention on every live file.
               </p>
@@ -336,19 +348,20 @@ export default function Index() {
 
             <div className="mt-10 grid gap-5 lg:grid-cols-3">
               {workflowSteps.map(({ title, description }, index) => (
-                <div key={title} className="border border-slate-200 bg-[#f8fafc] p-6">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-md bg-primary text-sm font-semibold text-white">
+                <div key={title} className="border bg-muted/40 p-6">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-md bg-primary text-sm font-semibold text-primary-foreground">
                     0{index + 1}
                   </div>
-                  <h3 className="mt-5 text-xl font-semibold text-slate-950">{title}</h3>
-                  <p className="mt-3 text-sm leading-6 text-slate-600">{description}</p>
+                  <h3 className="mt-5 text-xl font-semibold text-foreground">{title}</h3>
+                  <p className="mt-3 text-sm leading-6 text-muted-foreground">{description}</p>
                 </div>
               ))}
             </div>
           </div>
         </section>
 
-        <section className="bg-[#121926] py-16 text-white sm:py-20">
+        {/* CTA — uses the same deep navy as the sidebar: one intentional dark surface, not a random color */}
+        <section className="py-16 text-white sm:py-20" style={{ backgroundColor: "hsl(var(--sidebar-bg))" }}>
           <div className="mx-auto flex max-w-6xl flex-col gap-8 px-4 sm:px-6 lg:flex-row lg:items-end lg:justify-between lg:px-8">
             <div className="max-w-3xl">
               <p className="text-sm font-semibold uppercase tracking-[0.18em] text-white/70">United Estates Agent</p>
@@ -362,7 +375,7 @@ export default function Index() {
             </div>
 
             <div className="flex flex-wrap gap-3">
-              <Button asChild size="lg" className="bg-white text-slate-950 hover:bg-white/90">
+              <Button asChild size="lg" className="bg-background text-foreground hover:bg-background/90">
                 <Link to={primaryHref}>
                   <Building2 className="h-4 w-4" />
                   {primaryLabel}
