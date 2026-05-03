@@ -430,6 +430,76 @@ export type Database = {
           },
         ]
       }
+      onboarding_signature_events: {
+        Row: {
+          agreed_to_esign: boolean
+          agreed_to_terms: boolean
+          consent_text: string
+          created_at: string
+          document_body: string
+          document_hash: string
+          document_key: string
+          document_title: string
+          document_version: string
+          evidence: Json
+          id: string
+          ip_address: string | null
+          origin_url: string | null
+          request_headers: Json
+          signature_type: string
+          signature_value: string
+          signed_at: string
+          signer_email: string | null
+          signer_name: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          agreed_to_esign?: boolean
+          agreed_to_terms?: boolean
+          consent_text: string
+          created_at?: string
+          document_body: string
+          document_key: string
+          document_title: string
+          document_version: string
+          evidence?: Json
+          id?: string
+          ip_address?: string | null
+          origin_url?: string | null
+          request_headers?: Json
+          signature_type?: string
+          signature_value: string
+          signed_at?: string
+          signer_email?: string | null
+          signer_name: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          agreed_to_esign?: boolean
+          agreed_to_terms?: boolean
+          consent_text?: string
+          created_at?: string
+          document_body?: string
+          document_key?: string
+          document_title?: string
+          document_version?: string
+          evidence?: Json
+          id?: string
+          ip_address?: string | null
+          origin_url?: string | null
+          request_headers?: Json
+          signature_type?: string
+          signature_value?: string
+          signed_at?: string
+          signer_email?: string | null
+          signer_name?: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null

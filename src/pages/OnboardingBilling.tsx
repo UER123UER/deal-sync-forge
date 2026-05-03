@@ -1,10 +1,18 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AlertCircle, CheckCircle2, CreditCard, ShieldCheck, XCircle } from 'lucide-react';
+import {
+  AlertCircle,
+  CheckCircle2,
+  CreditCard,
+  FileSignature,
+  ShieldCheck,
+  XCircle,
+} from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -12,6 +20,12 @@ import { useAuth } from '@/hooks/useAuth';
 import { getFallbackOnboardingStatus, useOnboardingStatus } from '@/hooks/useOnboardingStatus';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import {
+  ACH_ESIGN_CONSENT_TEXT,
+  buildDocumentBody,
+  getAchPaymentAuthorizationDocument,
+} from '@/lib/onboardingLegalDocuments';
+import { recordOnboardingSignatures } from '@/lib/onboardingSignatureRecorder';
 import { validateAccountConfirm, validateAccountNumber, validateRoutingNumber } from '@/lib/bankingValidation';
 import { cn } from '@/lib/utils';
 
@@ -34,10 +48,14 @@ export default function OnboardingBilling() {
   const queryClient = useQueryClient();
 
   const [accountHolderName, setAccountHolderName] = useState('');
+  const [bankName, setBankName] = useState('');
   const [routingNumber, setRoutingNumber] = useState('');
   const [accountNumber, setAccountNumber] = useState('');
   const [confirmAccountNumber, setConfirmAccountNumber] = useState('');
   const [accountType, setAccountType] = useState('checking');
+  const [authorizationSignature, setAuthorizationSignature] = useState('');
+  const [agreedToAchTerms, setAgreedToAchTerms] = useState(false);
+  const [agreedToEsign, setAgreedToEsign] = useState(false);
   const [saving, setSaving] = useState(false);
   const currentStatus =
     onboardingStatus ??
@@ -53,20 +71,23 @@ export default function OnboardingBilling() {
     [currentStatus.latestBillingAccount?.account_holder_name, profile?.first_name, profile?.last_name]
   );
 
+  const defaultSignatureName = useMemo(
+    () => [profile?.first_name, profile?.last_name].filter(Boolean).join(' ').trim(),
+    [profile?.first_name, profile?.last_name]
+  );
+
   useEffect(() => {
     if (!accountHolderName && defaultAccountHolderName) setAccountHolderName(defaultAccountHolderName);
     if (!routingNumber && currentStatus.latestBillingAccount?.routing_number) {
       setRoutingNumber(currentStatus.latestBillingAccount.routing_number);
     }
+    if (!authorizationSignature && defaultSignatureName) {
+      setAuthorizationSignature(defaultSignatureName);
+    }
     if (currentStatus.latestBillingAccount?.account_type) {
       setAccountType(currentStatus.latestBillingAccount.account_type);
     }
-  }, [
-    accountHolderName,
-    defaultAccountHolderName,
-    currentStatus,
-    routingNumber,
-  ]);
+  }, [accountHolderName, authorizationSignature, currentStatus, defaultAccountHolderName, defaultSignatureName, routingNumber]);
 
   if (isLoading || !user) {
     return (
@@ -81,6 +102,9 @@ export default function OnboardingBilling() {
   const confirmResult = validateAccountConfirm(accountNumber, confirmAccountNumber);
   const canSubmit =
     accountHolderName.trim().length > 0 &&
+    authorizationSignature.trim().length > 0 &&
+    agreedToAchTerms &&
+    agreedToEsign &&
     routingResult.valid &&
     accountResult.valid &&
     confirmResult.valid;
@@ -111,7 +135,7 @@ export default function OnboardingBilling() {
     }
 
     queryClient.setQueriesData({ queryKey: ['onboarding_status'] }, (existing) => ({
-      ...((existing && typeof existing === 'object') ? existing as Record<string, unknown> : {}),
+      ...((existing && typeof existing === 'object') ? (existing as Record<string, unknown>) : {}),
       ...currentStatus,
       hasBillingAccount: true,
       latestBillingAccount: {
@@ -122,15 +146,60 @@ export default function OnboardingBilling() {
         account_type: billingPayload.account_type,
       },
     }));
+
+    const achDocument = getAchPaymentAuthorizationDocument({
+      bankName,
+      accountHolderName: billingPayload.account_holder_name,
+      accountNumberLast4: billingPayload.account_number_last4,
+      accountType: billingPayload.account_type,
+    });
+
+    try {
+      await recordOnboardingSignatures([
+        {
+          documentKey: achDocument.key,
+          documentTitle: achDocument.title,
+          documentVersion: achDocument.version,
+          documentBody: buildDocumentBody(achDocument),
+          signedName: authorizationSignature.trim(),
+          signerEmail: user.email ?? null,
+          signatureType: 'typed_name',
+          signatureValue: authorizationSignature.trim(),
+          consentText: ACH_ESIGN_CONSENT_TEXT,
+          agreedToTerms: true,
+          agreedToEsign: true,
+          evidence: {
+            onboarding_step: 'billing',
+            monthly_fee_amount: 98,
+            bank_name: bankName.trim() || null,
+            account_holder_name: billingPayload.account_holder_name,
+            account_type: billingPayload.account_type,
+            account_number_last4: billingPayload.account_number_last4,
+          },
+        },
+      ]);
+    } catch (error) {
+      setSaving(false);
+      toast({
+        title: 'Billing saved but authorization record failed',
+        description:
+          error instanceof Error
+            ? error.message
+            : 'The ACH authorization signature record could not be stored.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     void queryClient.invalidateQueries({ queryKey: ['onboarding_status'] });
-    toast({ title: 'Billing saved', description: 'Next up: choose your deposit account.' });
+    toast({ title: 'Billing authorization saved', description: 'Next up: choose your deposit account.' });
     navigate('/onboarding/deposit', { replace: true });
     setSaving(false);
   };
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted/30 p-4">
-      <Card className="w-full max-w-xl">
+      <Card className="w-full max-w-2xl">
         <CardHeader className="text-center">
           <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-primary">
             <CreditCard className="h-7 w-7 text-primary-foreground" />
@@ -144,7 +213,9 @@ export default function OnboardingBilling() {
             <div className="flex items-start gap-2.5 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2.5">
               <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-blue-500" />
               <p className="text-xs leading-relaxed text-blue-700">
-                Enter the account you want us to use for billing. We only store the routing number and the last 4 digits of the account number.
+                Enter the account you want us to use for billing. United Estates Realty stores your ACH authorization
+                together with the signed document version, timestamp, and audit details. The operational bank table only
+                keeps the routing number and the last 4 digits of the account number.
               </p>
             </div>
 
@@ -156,6 +227,16 @@ export default function OnboardingBilling() {
                 value={accountHolderName}
                 onChange={(event) => setAccountHolderName(event.target.value)}
                 required
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="billing-bank-name">Bank Name</Label>
+              <Input
+                id="billing-bank-name"
+                placeholder="Optional"
+                value={bankName}
+                onChange={(event) => setBankName(event.target.value)}
               />
             </div>
 
@@ -230,13 +311,78 @@ export default function OnboardingBilling() {
               </RadioGroup>
             </div>
 
+            <div className="rounded-2xl border bg-muted/15 p-5">
+              <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                <FileSignature className="h-4 w-4 text-primary" />
+                ACH payment authorization
+              </div>
+
+              <div className="mt-4 rounded-xl border bg-background px-4 py-4 text-sm leading-6 text-foreground/90">
+                <p>
+                  The sole payment method accepted by United Estates Realty is ACH bank draft. By signing below, you
+                  authorize recurring monthly ACH debit entries of <strong>$98.00</strong> from the designated account
+                  on the <strong>1st day of each calendar month</strong>.
+                </p>
+                <p className="mt-3">
+                  This authorization remains in effect until terminated in writing by either party with at least ten
+                  (10) business days&apos; notice before the next scheduled draft date.
+                </p>
+                <ul className="mt-3 space-y-1 pl-5">
+                  <li className="list-disc">Bank name: {bankName || 'Not entered yet'}</li>
+                  <li className="list-disc">Account holder: {accountHolderName || 'Not entered yet'}</li>
+                  <li className="list-disc">Account type: {accountType}</li>
+                  <li className="list-disc">Account ending in: {accountNumber.slice(-4) || '____'}</li>
+                </ul>
+                <p className="mt-3">
+                  By signing, you also certify that the onboarding information you provided is true, accurate, and complete.
+                </p>
+              </div>
+
+              <div className="mt-4 grid gap-4 sm:grid-cols-[1.35fr_0.65fr]">
+                <div className="space-y-2">
+                  <Label htmlFor="billing-signature-name">Typed Legal Name</Label>
+                  <Input
+                    id="billing-signature-name"
+                    placeholder="Type your full legal name"
+                    value={authorizationSignature}
+                    onChange={(event) => setAuthorizationSignature(event.target.value)}
+                    className="text-lg italic"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Date</Label>
+                  <div className="flex h-10 items-center rounded-md border bg-background px-3 text-sm text-foreground">
+                    {new Date().toLocaleDateString('en-US', {
+                      month: 'long',
+                      day: 'numeric',
+                      year: 'numeric',
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              <label className="mt-4 flex items-start gap-3 rounded-xl border bg-background px-4 py-3">
+                <Checkbox checked={agreedToAchTerms} onCheckedChange={(checked) => setAgreedToAchTerms(checked === true)} />
+                <span className="text-sm leading-6 text-foreground/90">
+                  I authorize United Estates Realty to debit the designated account for $98.00 on the 1st of each month.
+                  I understand returned payments and uncured ACH failures are governed by the Independent Contractor Agreement.
+                </span>
+              </label>
+
+              <label className="mt-3 flex items-start gap-3 rounded-xl border bg-background px-4 py-3">
+                <Checkbox checked={agreedToEsign} onCheckedChange={(checked) => setAgreedToEsign(checked === true)} />
+                <span className="text-sm leading-6 text-foreground/90">{ACH_ESIGN_CONSENT_TEXT}</span>
+              </label>
+            </div>
+
             <Button type="submit" className="w-full" disabled={saving || !canSubmit}>
               {saving ? 'Saving billing...' : 'Continue to Deposit Setup'}
             </Button>
 
             <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
               <ShieldCheck className="h-3.5 w-3.5" />
-              <span>Securely stored. Full account numbers are not saved.</span>
+              <span>Securely stored. Full account numbers are not saved to your operational banking records.</span>
             </div>
           </form>
         </CardContent>
