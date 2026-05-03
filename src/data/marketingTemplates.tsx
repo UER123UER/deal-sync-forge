@@ -210,10 +210,10 @@ export function createMarketingPhotoBlock(
 }
 
 export const DEFAULT_TEMPLATE_VISIBILITY: TemplateVisibility = {
-  headline: false,
-  address: false,
+  headline: true,
+  address: true,
   price: false,
-  stats: false,
+  stats: true,
   description: false,
   agentName: false,
   agentTitle: false,
