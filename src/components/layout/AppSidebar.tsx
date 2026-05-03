@@ -64,18 +64,20 @@ export function AppSidebar() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const navButtonBase = 'group flex h-12 w-12 flex-col items-center justify-center gap-1 rounded-lg border border-transparent text-[10px] font-medium leading-none transition-standard focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--sidebar-ring))] focus-visible:ring-offset-0';
+  const navButtonBase = 'group flex min-h-[4.5rem] w-[4.5rem] flex-col items-center justify-center gap-1.5 rounded-2xl border px-2 py-2 text-[11px] font-medium leading-tight transition-standard focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--sidebar-ring))] focus-visible:ring-offset-0';
+  const navButtonActive = 'border-white/10 bg-white/[0.08] text-[hsl(var(--sidebar-primary-foreground))] shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]';
+  const navButtonIdle = 'border-transparent text-[hsl(var(--sidebar-foreground))] hover:border-white/5 hover:bg-white/[0.05] hover:text-white';
 
   return (
-    <aside className="relative flex min-h-screen w-16 shrink-0 flex-col items-center gap-1 border-r border-[hsl(var(--sidebar-border))] bg-[hsl(var(--sidebar-background))] py-4">
+    <aside className="relative flex min-h-screen w-24 shrink-0 flex-col items-center gap-2 border-r border-[hsl(var(--sidebar-border))] bg-[hsl(var(--sidebar-background))] px-2 py-4">
       {/* Logo */}
-      <div className="w-14 mb-4 flex items-center justify-center">
-        <UERLogo width={48} />
+      <div className="mb-4 flex w-full items-center justify-center">
+        <UERLogo width={56} />
       </div>
 
       {/* Nav items — flex-1 so profile stays at bottom */}
-      <div className="flex flex-col items-center gap-1 flex-1 w-full">
-      {navItems.map((item) => {
+      <div className="flex w-full flex-1 flex-col items-center gap-2">
+        {navItems.map((item) => {
         const isActive = item.path === '/transactions/new'
           ? location.pathname === '/transactions/new'
           : location.pathname.startsWith(item.path);
@@ -89,20 +91,34 @@ export function AppSidebar() {
                 className={cn(
                   navButtonBase,
                   isActive || submenuOpen
-                    ? 'bg-[hsl(var(--sidebar-accent))]'
-                    : 'hover:border-white/5 hover:bg-white/[0.05]'
+                    ? navButtonActive
+                    : navButtonIdle
                 )}
                 title={item.label}
               >
                 <div className="relative">
-                  <item.icon className={cn('h-5 w-5', isActive ? 'text-[hsl(var(--sidebar-primary))]' : 'text-[hsl(var(--sidebar-foreground))]')} />
+                  <item.icon
+                    className={cn(
+                      'h-5 w-5',
+                      isActive || submenuOpen
+                        ? 'text-[hsl(var(--sidebar-primary-foreground))]'
+                        : 'text-[hsl(var(--sidebar-foreground))] group-hover:text-white'
+                    )}
+                  />
                   {overdueCount > 0 && (
                     <span className="absolute -top-1.5 -right-1.5 min-w-[14px] h-[14px] rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center px-0.5 leading-none">
                       {overdueCount > 99 ? '99+' : overdueCount}
                     </span>
                   )}
                 </div>
-                <span className={cn('leading-none', isActive ? 'text-[hsl(var(--sidebar-primary))]' : 'text-[hsl(var(--sidebar-foreground))]')}>
+                <span
+                  className={cn(
+                    'max-w-full text-center break-words',
+                    isActive || submenuOpen
+                      ? 'text-[hsl(var(--sidebar-primary-foreground))]'
+                      : 'text-[hsl(var(--sidebar-foreground))] group-hover:text-white'
+                  )}
+                >
                   {item.label}
                 </span>
               </button>
@@ -141,18 +157,32 @@ export function AppSidebar() {
             className={cn(
               navButtonBase,
               isActive
-                ? 'bg-[hsl(var(--sidebar-accent))]'
-                : 'hover:border-white/5 hover:bg-white/[0.05]'
+                ? navButtonActive
+                : navButtonIdle
             )}
             title={item.label}
           >
-            <item.icon className={cn('h-5 w-5', isActive ? 'text-[hsl(var(--sidebar-primary))]' : 'text-[hsl(var(--sidebar-foreground))]')} />
-            <span className={cn('leading-none', isActive ? 'text-[hsl(var(--sidebar-primary))]' : 'text-[hsl(var(--sidebar-foreground))]')}>
+            <item.icon
+              className={cn(
+                'h-5 w-5',
+                isActive
+                  ? 'text-[hsl(var(--sidebar-primary-foreground))]'
+                  : 'text-[hsl(var(--sidebar-foreground))] group-hover:text-white'
+              )}
+            />
+            <span
+              className={cn(
+                'max-w-full text-center break-words',
+                isActive
+                  ? 'text-[hsl(var(--sidebar-primary-foreground))]'
+                  : 'text-[hsl(var(--sidebar-foreground))] group-hover:text-white'
+              )}
+            >
               {item.label}
             </span>
           </button>
         );
-      })}
+        })}
       </div>
 
       {/* Profile avatar — pinned to bottom */}
