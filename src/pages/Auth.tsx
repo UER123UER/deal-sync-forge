@@ -141,12 +141,17 @@ export default function Auth() {
             </>
           ) : (
             <>
-              <div className="space-y-1">
+              <div className="space-y-2">
                 <h2 className="text-2xl font-bold text-foreground">Sign in to your account</h2>
-                <p className="text-sm text-muted-foreground">
-                  New to United Estates Realty?{' '}
-                  <Link to="/signup" className="text-primary font-medium hover:underline">Create an account</Link>
-                </p>
+                <p className="text-sm text-muted-foreground">Access your United Estates Realty account.</p>
+                <div>
+                  <Link
+                    to="/signup"
+                    className="inline-flex text-sm font-medium text-primary transition-colors hover:text-primary/80 hover:underline"
+                  >
+                    Create an account
+                  </Link>
+                </div>
               </div>
 
               <form onSubmit={handleSignIn} className="space-y-4">
