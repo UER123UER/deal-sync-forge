@@ -3,7 +3,6 @@ import { ArrowRight, Check } from "lucide-react";
 
 import { UERLogo } from "@/components/UERLogo";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/hooks/useAuth";
 
 const whyUs = [
   {
@@ -36,10 +35,8 @@ const softwareFeatures = [
 ] as const;
 
 export default function Index() {
-  const { user, loading } = useAuth();
-
-  const primaryHref = !loading && user ? "/transactions" : "/signup";
-  const primaryLabel = !loading && user ? "Open Workspace" : "Join the Brokerage";
+  const primaryHref = "/signup";
+  const primaryLabel = "Sign Up";
 
   return (
     <div className="min-h-screen bg-background text-foreground">
