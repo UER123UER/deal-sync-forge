@@ -285,7 +285,10 @@ export default function Index() {
             </div>
 
             <div className="mt-10 grid gap-5 lg:grid-cols-3">
-              {pricingTiers.map(({ name, pricing, description, features, featured }) => (
+              {pricingTiers.map((tier) => {
+                const { name, pricing, description, features } = tier;
+                const featured = (tier as { featured?: boolean }).featured;
+                return (
                 <Card
                   key={name}
                   className={[
