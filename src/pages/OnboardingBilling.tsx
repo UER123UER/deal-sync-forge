@@ -213,11 +213,7 @@ export default function OnboardingBilling() {
               <p className="mt-2 text-xs text-destructive">
                 That code is not valid. Use {FREE_BILLING_PROMO_CODE} to make the monthly fee $0.
               </p>
-            ) : (
-              <p className="mt-2 text-xs text-muted-foreground">
-                A valid promo code waives Stripe billing for this membership.
-              </p>
-            )}
+            ) : null}
           </div>
 
           {promoApplied ? (
