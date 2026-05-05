@@ -16,6 +16,15 @@ export type OnboardingSignatureSubmission = {
   evidence?: Record<string, unknown>;
 };
 
+function toErrorMessage(error: unknown) {
+  if (error instanceof Error) return error.message;
+  if (error && typeof error === 'object' && 'message' in error) {
+    const message = (error as { message?: unknown }).message;
+    if (typeof message === 'string') return message;
+  }
+  return String(error);
+}
+
 function buildClientSideRows(userId: string, signatures: OnboardingSignatureSubmission[]) {
   const userAgent = typeof navigator !== 'undefined' ? navigator.userAgent : null;
   const language = typeof navigator !== 'undefined' ? navigator.language : null;
@@ -50,36 +59,61 @@ function buildClientSideRows(userId: string, signatures: OnboardingSignatureSubm
 }
 
 export async function recordOnboardingSignatures(signatures: OnboardingSignatureSubmission[]) {
-  const { data, error } = await supabase.functions.invoke('record-onboarding-signatures', {
-    body: { signatures },
-  });
+  try {
+    const { data, error } = await supabase.functions.invoke('record-onboarding-signatures', {
+      body: { signatures },
+    });
 
-  if (!error) return data;
+    if (!error) return data;
 
-  console.warn('record-onboarding-signatures edge function unavailable; falling back to direct insert.', error);
-
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !user) {
-    throw error;
+    console.warn('record-onboarding-signatures edge function unavailable; falling back to direct insert.', error);
+  } catch (error) {
+    console.warn('record-onboarding-signatures edge function failed before fallback.', error);
   }
 
-  const rows = buildClientSideRows(user.id, signatures);
-  const { data: fallbackData, error: fallbackError } = await supabase
-    .from('onboarding_signature_events')
-    .insert(rows)
-    .select('id, document_key, document_version, document_hash, signed_at');
+  try {
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
 
-  if (fallbackError) {
-    throw fallbackError;
+    if (authError || !user) {
+      return {
+        success: false,
+        records: [],
+        fallback: 'metadata-only',
+        error: toErrorMessage(authError ?? 'No authenticated user was available for the signature fallback.'),
+      };
+    }
+
+    const rows = buildClientSideRows(user.id, signatures);
+    const { data: fallbackData, error: fallbackError } = await supabase
+      .from('onboarding_signature_events')
+      .insert(rows)
+      .select('id, document_key, document_version, document_hash, signed_at');
+
+    if (fallbackError) {
+      console.warn('Unable to save onboarding signatures with direct insert; continuing with auth metadata only.', fallbackError);
+      return {
+        success: false,
+        records: [],
+        fallback: 'metadata-only',
+        error: toErrorMessage(fallbackError),
+      };
+    }
+
+    return {
+      success: true,
+      records: fallbackData ?? [],
+      fallback: 'direct-db-insert',
+    };
+  } catch (error) {
+    console.warn('Unable to save onboarding signatures; continuing with auth metadata only.', error);
+    return {
+      success: false,
+      records: [],
+      fallback: 'metadata-only',
+      error: toErrorMessage(error),
+    };
   }
-
-  return {
-    success: true,
-    records: fallbackData ?? [],
-    fallback: 'direct-db-insert',
-  };
 }

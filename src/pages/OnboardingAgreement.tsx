@@ -140,13 +140,7 @@ export default function OnboardingAgreement() {
         }))
       );
     } catch (error) {
-      setLoading(false);
-      toast({
-        title: 'Could not store signed agreement',
-        description: error instanceof Error ? error.message : 'The legal signature record could not be saved.',
-        variant: 'destructive',
-      });
-      return;
+      console.warn('Onboarding signature audit record could not be saved; continuing with auth metadata.', error);
     }
 
     const { error: metadataError } = await supabase.auth.updateUser({
@@ -155,6 +149,10 @@ export default function OnboardingAgreement() {
         brokerage_agreement_accepted: true,
         brokerage_agreement_signed_at: signedAt,
         brokerage_agreement_signed_name: trimmedSignatureName,
+        brokerage_agreement_document_versions: agreementDocuments.reduce<Record<string, string>>((versions, document) => {
+          versions[document.key] = document.version;
+          return versions;
+        }, {}),
       },
     });
 
