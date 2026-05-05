@@ -22,7 +22,7 @@ import { cn } from '@/lib/utils';
 
 export default function OnboardingBilling() {
   const { user, profile, loading: authLoading } = useAuth();
-  const { data: onboardingStatus, isLoading } = useOnboardingStatus({ user, profile, loading: authLoading });
+  const { data: onboardingStatus } = useOnboardingStatus({ user, profile, loading: authLoading });
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -70,7 +70,7 @@ export default function OnboardingBilling() {
     };
   }, [status, user, queryClient, setParams, toast]);
 
-  if (isLoading || authLoading || !user) {
+  if (authLoading || !user) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-primary" />

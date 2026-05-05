@@ -19,8 +19,9 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
     error: onboardingError,
     isLoading: onboardingLoading,
   } = useOnboardingStatus({ user, profile, loading });
+  const isOnboardingRoute = ONBOARDING_PATHS.has(location.pathname);
 
-  if (loading || (!isAgreementRoute && onboardingLoading)) {
+  if (loading || (!isOnboardingRoute && onboardingLoading)) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-primary" />
@@ -32,7 +33,6 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
     return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 
-  const isOnboardingRoute = ONBOARDING_PATHS.has(location.pathname);
   const effectiveStatus = onboardingError
     ? getFallbackOnboardingStatus({ user, profile })
     : onboardingStatus ?? getFallbackOnboardingStatus({ user, profile });
