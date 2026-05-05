@@ -1,214 +1,107 @@
 import { Link } from "react-router-dom";
-import {
-  ArrowRight,
-  BadgeDollarSign,
-  Building2,
-  CalendarCheck2,
-  CheckCircle2,
-  LayoutDashboard,
-  ListChecks,
-  Megaphone,
-  ScrollText,
-  ShieldCheck,
-  Users2,
-} from "lucide-react";
+import { ArrowRight, Check } from "lucide-react";
 
 import { UERLogo } from "@/components/UERLogo";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { useAuth } from "@/hooks/useAuth";
 
-const offerings = [
+const whyUs = [
   {
-    title: "Property-aware checklists",
-    description:
-      "Default forms adjust around the property type so condo, single-family, land, lease, and referral deals start with the right checklist.",
-    icon: ListChecks,
-    // primary tint
-    iconClassName: "bg-primary/10 text-primary",
+    heading: "$98 / month. That's it.",
+    body: "One flat monthly fee covers everything. No desk fees, no royalty cuts, no per-transaction charges on top. What you close is yours.",
   },
   {
-    title: "Searchable form library",
-    description:
-      "Keep the core checklist clean, hide the long-tail forms, then search and add the extras only when the file actually needs them.",
-    icon: ScrollText,
-    // warning tint
-    iconClassName: "bg-warning/10 text-warning",
+    heading: "No transaction fees.",
+    body: "Other brokerages take a piece of every deal. We don't. Keep 100% of your commission split — every single closing.",
   },
   {
-    title: "Brokerage dashboard",
-    description:
-      "Track listings, contracts, notes, due dates, and office activity from one workspace instead of bouncing between files, inboxes, and side conversations.",
-    icon: LayoutDashboard,
-    // success tint
-    iconClassName: "bg-success/10 text-success",
+    heading: "Software built for agents.",
+    body: "Manage your listings, contracts, contacts, tasks, and marketing from one place. Built for how agents actually work, not how a vendor imagined it.",
   },
   {
-    title: "Marketing tools",
-    description:
-      "Build branded listing and social assets from inside the same system your agents use for brokerage-approved workflow and follow-up.",
-    icon: Megaphone,
-    // muted accent
-    iconClassName: "bg-accent text-accent-foreground",
-  },
-  {
-    title: "Team visibility",
-    description:
-      "Give agents, coordinators, and leadership a shared view of live files, current status, and what still needs to get crossed off.",
-    icon: Users2,
-    // destructive tint
-    iconClassName: "bg-destructive/10 text-destructive",
-  },
-  {
-    title: "Office-ready workflows",
-    description:
-      "Standardize your process with one place for forms, tasks, people, and compliance tracking without bringing back editing clutter.",
-    icon: ShieldCheck,
-    // success tint (darker read)
-    iconClassName: "bg-success/10 text-success",
+    heading: "Earn from referrals.",
+    body: "Refer a fellow agent and earn $20 every month they stay active. No cap, no expiration — it compounds as your network grows.",
   },
 ] as const;
 
-const pricingTiers = [
-  {
-    name: "Independent Agent",
-    pricing: "Custom monthly pricing",
-    description:
-      "For agents who want one clean place to work inside the brokerage's process for forms, contacts, listings, and marketing.",
-    features: [
-      "Personal agent workspace",
-      "Property-specific default checklists",
-      "PDF view and download access",
-      "Marketing and referral tools",
-    ],
-  },
-  {
-    name: "Team Rollout",
-    pricing: "Office pricing by headcount",
-    description:
-      "For small teams that need shared visibility, consistent deal flow, and a smoother handoff between agents and support staff.",
-    features: [
-      "Shared deal visibility",
-      "Standardized form library",
-      "People pipeline tracking",
-      "Centralized checklist process",
-    ],
-    featured: true,
-  },
-  {
-    name: "Brokerage Setup",
-    pricing: "Custom rollout pricing",
-    description:
-      "For brokerages that want a tailored setup around office structure, onboarding, templates, and the workflow standards they enforce.",
-    features: [
-      "Brokerage-wide form standards",
-      "Onboarding and rollout support",
-      "Office-level oversight",
-      "Configuration around your process",
-    ],
-  },
-] as const;
-
-const workflowSteps = [
-  {
-    title: "Start the deal with the right file type",
-    description:
-      "Create a listing, contract, lease, land, or referral file and let the office checklist match the kind of property you picked.",
-  },
-  {
-    title: "Work the checklist as the transaction moves",
-    description:
-      "Check items off manually, open the linked PDF when you need it, and add hidden forms only when the file calls for them.",
-  },
-  {
-    title: "Keep the whole office aligned",
-    description:
-      "Use the same workspace for tasks, people, notes, marketing, and reporting so updates do not get trapped in side channels.",
-  },
+const softwareFeatures = [
+  "Transaction management & checklists",
+  "Contact and client CRM",
+  "Listing pipeline and status tracking",
+  "Marketing asset builder",
+  "Task management and reminders",
+  "Document storage and PDF access",
+  "Calendar and deadline tracking",
+  "Referral program with live earnings dashboard",
 ] as const;
 
 export default function Index() {
   const { user, loading } = useAuth();
 
   const primaryHref = !loading && user ? "/transactions" : "/signup";
-  const primaryLabel = !loading && user ? "Open Workspace" : "Get Started";
-  const headerPrimaryLabel = !loading && user ? "Workspace" : "Start";
+  const primaryLabel = !loading && user ? "Open Workspace" : "Join the Brokerage";
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      {/* Nav — solid background, no blur; elevation earned only by the border */}
       <header className="sticky top-0 z-40 border-b bg-background">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
-          <Link to="/" className="flex items-center" aria-label="United Estates Agent home">
+          <Link to="/" className="flex items-center" aria-label="United Estates Realty">
             <UERLogo width={188} className="w-[132px] sm:w-[168px] lg:w-[188px]" />
           </Link>
 
           <nav className="hidden items-center gap-6 text-sm text-muted-foreground md:flex">
-            <a href="#offerings" className="transition-colors hover:text-primary">
-              What We Offer
-            </a>
-            <a href="#pricing" className="transition-colors hover:text-primary">
-              Pricing
-            </a>
-            <a href="#how-it-works" className="transition-colors hover:text-primary">
-              How It Works
-            </a>
+            <a href="#why-us" className="transition-colors hover:text-primary">Why Us</a>
+            <a href="#pricing" className="transition-colors hover:text-primary">Pricing</a>
+            <a href="#software" className="transition-colors hover:text-primary">Software</a>
           </nav>
 
           <div className="flex items-center gap-2">
             <Button variant="ghost" asChild className="px-2.5 sm:px-4">
-              <Link to="/auth">Sign In</Link>
+              <Link to="/auth">Agent Login</Link>
             </Button>
             <Button asChild>
-              <Link to={primaryHref}>
-                <ArrowRight className="h-4 w-4" />
-                {headerPrimaryLabel}
-              </Link>
+              <Link to={primaryHref}>{primaryLabel}</Link>
             </Button>
           </div>
         </div>
       </header>
 
       <main>
-        {/* Hero — image-backed, no blur overlay, gradient is intentional for text legibility */}
+        {/* Hero */}
         <section className="relative overflow-hidden">
           <div
-            className="min-h-[74vh] bg-cover bg-center bg-no-repeat"
+            className="min-h-[78vh] bg-cover bg-center bg-no-repeat"
             style={{
               backgroundImage:
-                "linear-gradient(180deg, rgba(8, 15, 29, 0.46) 0%, rgba(8, 15, 29, 0.62) 46%, rgba(8, 15, 29, 0.76) 100%), linear-gradient(90deg, rgba(8, 15, 29, 0.84) 0%, rgba(8, 15, 29, 0.62) 42%, rgba(8, 15, 29, 0.26) 100%), url('/home-hero.jpg')",
+                "linear-gradient(180deg, rgba(8,15,29,0.52) 0%, rgba(8,15,29,0.68) 50%, rgba(8,15,29,0.82) 100%), linear-gradient(90deg, rgba(8,15,29,0.88) 0%, rgba(8,15,29,0.60) 45%, rgba(8,15,29,0.20) 100%), url('/home-hero.jpg')",
             }}
           >
-            <div className="mx-auto flex min-h-[74vh] max-w-6xl items-end px-4 pb-14 pt-16 sm:px-6 lg:px-8 lg:pb-20">
-              <div className="max-w-3xl drop-shadow-[0_10px_30px_rgba(8,15,29,0.28)]">
-                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-white/80">
-                  Brokerage operations platform
+            <div className="mx-auto flex min-h-[78vh] max-w-6xl flex-col justify-end px-4 pb-16 pt-20 sm:px-6 lg:px-8 lg:pb-24">
+              <div className="max-w-2xl">
+                <p className="text-sm font-semibold uppercase tracking-[0.2em] text-white/70">
+                  United Estates Realty — Licensed Brokerage
                 </p>
-                <h1 className="mt-4 max-w-3xl text-4xl font-semibold leading-tight text-white sm:text-5xl lg:text-6xl">
-                  United Estates Realty keeps your agents, listings, contracts, and office follow-up in one place.
+                <h1 className="mt-4 text-4xl font-bold leading-tight text-white sm:text-5xl lg:text-[3.25rem]">
+                  Keep more of what you earn. $98 a month, no transaction fees.
                 </h1>
-                <p className="mt-5 hidden max-w-2xl text-base leading-7 text-white/90 sm:block sm:text-lg">
-                  Run your brokerage from one workspace with property-specific checklists, searchable forms, office visibility,
-                  marketing tools, and the structure your team needs to keep agents supported and files moving.
+                <p className="mt-5 max-w-xl text-base leading-7 text-white/85 sm:text-lg">
+                  United Estates Realty is a full-service brokerage. Join for $98/month flat — no desk fees, no royalties, no per-deal charges. Everything you close is yours.
                 </p>
 
                 <div className="mt-8 flex flex-wrap gap-3">
-                  <Button size="lg" asChild className="shadow-sm">
+                  <Button size="lg" asChild>
                     <Link to={primaryHref}>
-                      <ArrowRight className="h-4 w-4" />
                       {primaryLabel}
+                      <ArrowRight className="h-4 w-4" />
                     </Link>
                   </Button>
                   <Button
                     size="lg"
                     variant="outline"
                     asChild
-                    className="border-white/45 bg-white/10 text-white hover:bg-white/20 hover:text-white"
+                    className="border-white/40 bg-white/10 text-white hover:bg-white/18 hover:text-white"
                   >
-                    <a href="#pricing">
-                      <BadgeDollarSign className="h-4 w-4" />
-                      View Pricing
-                    </a>
+                    <a href="#pricing">See Pricing</a>
                   </Button>
                 </div>
               </div>
@@ -216,190 +109,204 @@ export default function Index() {
           </div>
         </section>
 
-        {/* Value strip — muted wash, no raw hex */}
+        {/* Three hard facts — the real pitch */}
         <section className="border-b bg-muted/40">
-          <div className="mx-auto grid max-w-6xl gap-8 px-4 py-8 sm:px-6 md:grid-cols-3 lg:px-8">
-            <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.16em] text-primary">Built for active files</p>
-              <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                Start with the right checklist for condo, single-family, land, lease, commercial, or referral files.
-              </p>
-            </div>
-            <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.16em] text-success">Made for the office</p>
-              <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                Give agents, coordinators, and leadership one operating view instead of separate spreadsheets and texts.
-              </p>
-            </div>
-            <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.16em] text-warning">Ready for growth</p>
-              <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                Keep the default process tight, hide the extra forms, and add exactly what the file needs when the moment comes.
-              </p>
-            </div>
+          <div className="mx-auto grid max-w-6xl divide-y px-4 sm:px-6 md:grid-cols-3 md:divide-x md:divide-y-0 lg:px-8">
+            {[
+              { stat: "$98", label: "Flat monthly fee" },
+              { stat: "$0", label: "Transaction fees" },
+              { stat: "$20/mo", label: "Per referred agent" },
+            ].map(({ stat, label }) => (
+              <div key={label} className="px-6 py-8 text-center">
+                <p className="text-4xl font-bold text-primary">{stat}</p>
+                <p className="mt-2 text-sm font-medium text-muted-foreground">{label}</p>
+              </div>
+            ))}
           </div>
         </section>
 
-        {/* Offerings */}
-        <section id="offerings" className="bg-background py-16 sm:py-20">
+        {/* Why join */}
+        <section id="why-us" className="bg-background py-16 sm:py-20">
           <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-            <div className="max-w-3xl">
-              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">What We Offer</p>
-              <h2 className="mt-3 text-3xl font-semibold text-foreground sm:text-4xl">
-                A cleaner operating system for your brokerage, agents, and staff.
+            <div className="max-w-2xl">
+              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">Why Agents Join</p>
+              <h2 className="mt-3 text-3xl font-bold text-foreground sm:text-4xl">
+                A brokerage built around the agent, not around the office overhead.
               </h2>
               <p className="mt-4 text-base leading-7 text-muted-foreground">
-                United Estates Agent is built around how a brokerage actually runs: active listings, changing paperwork,
-                office standards, agent support, and the daily follow-up that has to stay organized.
+                Most brokerages charge you a monthly fee and then take a cut of every deal on top of it. We don't. One flat fee, real software, and you keep your commissions.
               </p>
             </div>
 
-            <div className="mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-              {offerings.map(({ title, description, icon: Icon, iconClassName }) => (
-                <Card key={title} className="h-full shadow-none">
-                  <CardContent className="flex h-full flex-col p-6">
-                    <div className={`flex h-12 w-12 items-center justify-center rounded-md ${iconClassName}`}>
-                      <Icon className="h-5 w-5" />
-                    </div>
-                    <h3 className="mt-5 text-xl font-semibold text-foreground">{title}</h3>
-                    <p className="mt-3 text-sm leading-6 text-muted-foreground">{description}</p>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* Pricing — secondary muted wash to break rhythm, not a brand color */}
-        <section id="pricing" className="border-y bg-muted/30 py-16 sm:py-20">
-          <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-            <div className="max-w-3xl">
-              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-warning">Pricing</p>
-              <h2 className="mt-3 text-3xl font-semibold text-foreground sm:text-4xl">
-                Pricing built around how your office wants to roll out.
-              </h2>
-              <p className="mt-4 text-base leading-7 text-muted-foreground">
-                United Estates Agent can be set up for an individual agent, a growing team, or a brokerage-wide rollout. We
-                match pricing to the headcount, setup, and workflow support your office needs.
-              </p>
-            </div>
-
-            <div className="mt-10 grid gap-5 lg:grid-cols-3">
-              {pricingTiers.map((tier) => {
-                const { name, pricing, description, features } = tier;
-                const featured = (tier as { featured?: boolean }).featured;
-                return (
-                <Card
-                  key={name}
-                  className={[
-                    "h-full shadow-none",
-                    featured ? "border-primary" : "",
-                  ].join(" ")}
-                >
-                  <CardContent className="flex h-full flex-col p-6">
-                    <div className="flex items-center justify-between gap-3">
-                      <div>
-                        <p className="text-sm font-semibold uppercase tracking-[0.16em] text-muted-foreground">{name}</p>
-                        <p className="mt-3 text-2xl font-semibold text-foreground">{pricing}</p>
-                      </div>
-                      {featured ? (
-                        <span className="rounded-md bg-primary px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-primary-foreground">
-                          Most Popular
-                        </span>
-                      ) : null}
-                    </div>
-
-                    <p className="mt-4 text-sm leading-6 text-muted-foreground">{description}</p>
-
-                    <ul className="mt-6 space-y-3">
-                      {features.map((feature) => (
-                        <li key={feature} className="flex items-start gap-3 text-sm text-foreground">
-                          <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-success" />
-                          <span>{feature}</span>
-                        </li>
-                      ))}
-                    </ul>
-
-                    <div className="mt-8">
-                      <Button asChild variant={featured ? "default" : "outline"} className="w-full">
-                        <Link to="/signup">
-                          <ArrowRight className="h-4 w-4" />
-                          Request Access
-                        </Link>
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-                );
-              })}
-            </div>
-          </div>
-        </section>
-
-        {/* How It Works */}
-        <section id="how-it-works" className="bg-background py-16 sm:py-20">
-          <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-            <div className="max-w-3xl">
-              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">How It Works</p>
-              <h2 className="mt-3 text-3xl font-semibold text-foreground sm:text-4xl">
-                Keep the process simple without oversimplifying the work.
-              </h2>
-              <p className="mt-4 text-base leading-7 text-muted-foreground">
-                The goal is not more screens. The goal is one place where your office can see what has been started, what is
-                complete, and what still needs attention on every live file.
-              </p>
-            </div>
-
-            <div className="mt-10 grid gap-5 lg:grid-cols-3">
-              {workflowSteps.map(({ title, description }, index) => (
-                <div key={title} className="border bg-muted/40 p-6">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-md bg-primary text-sm font-semibold text-primary-foreground">
-                    0{index + 1}
-                  </div>
-                  <h3 className="mt-5 text-xl font-semibold text-foreground">{title}</h3>
-                  <p className="mt-3 text-sm leading-6 text-muted-foreground">{description}</p>
+            <div className="mt-12 grid gap-8 md:grid-cols-2">
+              {whyUs.map(({ heading, body }) => (
+                <div key={heading} className="border-l-2 border-primary pl-6">
+                  <h3 className="text-lg font-semibold text-foreground">{heading}</h3>
+                  <p className="mt-2 text-sm leading-6 text-muted-foreground">{body}</p>
                 </div>
               ))}
             </div>
           </div>
         </section>
 
-        {/* CTA — uses the same deep navy as the sidebar: one intentional dark surface, not a random color */}
-        <section className="py-16 text-white sm:py-20" style={{ backgroundColor: "hsl(var(--sidebar-bg))" }}>
-          <div className="mx-auto flex max-w-6xl flex-col gap-8 px-4 sm:px-6 lg:flex-row lg:items-end lg:justify-between lg:px-8">
-            <div className="max-w-3xl">
-              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-white/70">United Estates Agent</p>
-              <h2 className="mt-3 text-3xl font-semibold sm:text-4xl">
-                Give your agents one homepage, one workspace, and one cleaner way to run the file.
+        {/* Pricing — one card, honest numbers */}
+        <section id="pricing" className="border-y bg-muted/30 py-16 sm:py-20">
+          <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+            <div className="max-w-2xl">
+              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">Pricing</p>
+              <h2 className="mt-3 text-3xl font-bold text-foreground sm:text-4xl">
+                Simple pricing. No surprises.
               </h2>
-              <p className="mt-4 text-base leading-7 text-white/80">
-                Launch with a public front door at <span className="font-semibold text-white">unitedestatesagent.com</span>,
-                then move directly into the workspace your team uses every day.
+              <p className="mt-4 text-base leading-7 text-muted-foreground">
+                One plan. Every agent pays the same flat monthly rate and gets full access to everything — software, support, and the brokerage.
               </p>
             </div>
 
-            <div className="flex flex-wrap gap-3">
-              <Button asChild size="lg" className="bg-background text-foreground hover:bg-background/90">
-                <Link to={primaryHref}>
-                  <Building2 className="h-4 w-4" />
-                  {primaryLabel}
-                </Link>
-              </Button>
-              <Button
-                asChild
-                size="lg"
-                variant="outline"
-                className="border-white/25 bg-transparent text-white hover:bg-white/10 hover:text-white"
-              >
-                <a href="#offerings">
-                  <CalendarCheck2 className="h-4 w-4" />
-                  Explore Features
-                </a>
-              </Button>
+            <div className="mt-10 max-w-md">
+              <div className="border-2 border-primary bg-background p-8">
+                <p className="text-sm font-semibold uppercase tracking-[0.16em] text-muted-foreground">Agent Membership</p>
+                <div className="mt-4 flex items-end gap-2">
+                  <span className="text-5xl font-bold text-foreground">$98</span>
+                  <span className="mb-1 text-lg text-muted-foreground">/ month</span>
+                </div>
+                <p className="mt-3 text-sm text-muted-foreground">No transaction fees. No desk fees. No royalties.</p>
+
+                <ul className="mt-8 space-y-3">
+                  {[
+                    "Licensed brokerage — hang your license here",
+                    "Full transaction management software",
+                    "No fee on any closing — keep 100% of your split",
+                    "CRM, listings, marketing, and calendar tools",
+                    "Referral program — earn $20/mo per active agent you refer",
+                    "Brokerage support and compliance",
+                  ].map((item) => (
+                    <li key={item} className="flex items-start gap-3 text-sm">
+                      <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                      <span className="text-foreground">{item}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                <div className="mt-8">
+                  <Button asChild size="lg" className="w-full">
+                    <Link to="/signup">
+                      Join United Estates Realty
+                      <ArrowRight className="h-4 w-4" />
+                    </Link>
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Software — what agents actually get */}
+        <section id="software" className="bg-background py-16 sm:py-20">
+          <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+            <div className="grid gap-12 lg:grid-cols-2 lg:items-center">
+              <div>
+                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">The Software</p>
+                <h2 className="mt-3 text-3xl font-bold text-foreground sm:text-4xl">
+                  Everything you need to run your business, built in.
+                </h2>
+                <p className="mt-4 text-base leading-7 text-muted-foreground">
+                  Your membership includes full access to the United Estates Realty agent platform. Not a third-party tool — our own software, built specifically for how agents work.
+                </p>
+                <div className="mt-8">
+                  <Button asChild>
+                    <Link to="/signup">
+                      Get Started
+                      <ArrowRight className="h-4 w-4" />
+                    </Link>
+                  </Button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {softwareFeatures.map((feature) => (
+                  <div key={feature} className="flex items-start gap-3 border bg-muted/30 px-4 py-3">
+                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                    <span className="text-sm text-foreground">{feature}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Referral */}
+        <section className="border-y bg-muted/40 py-16 sm:py-20">
+          <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+            <div className="grid gap-10 lg:grid-cols-2 lg:items-center">
+              <div>
+                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">Referral Program</p>
+                <h2 className="mt-3 text-3xl font-bold text-foreground sm:text-4xl">
+                  Refer an agent. Earn every month they stay.
+                </h2>
+                <p className="mt-4 text-base leading-7 text-muted-foreground">
+                  Every agent you refer to United Estates Realty earns you $20 per month for as long as they keep their license here. Refer five agents and that's $100 a month — more than covering your own membership.
+                </p>
+                <p className="mt-4 text-base leading-7 text-muted-foreground">
+                  There's no cap, no expiration, and no approval process. Share your referral link and the tracking is automatic.
+                </p>
+              </div>
+              <div className="space-y-4">
+                {[
+                  { step: "01", text: "Get your unique referral link from your agent dashboard." },
+                  { step: "02", text: "Share it with any licensed agent looking for a better brokerage." },
+                  { step: "03", text: "Earn $20 every month they stay active — automatically." },
+                ].map(({ step, text }) => (
+                  <div key={step} className="flex items-start gap-5 border bg-background px-5 py-4">
+                    <span className="mt-0.5 min-w-[2rem] text-sm font-bold text-primary">{step}</span>
+                    <p className="text-sm leading-6 text-foreground">{text}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* CTA */}
+        <section className="py-16 text-white sm:py-20" style={{ backgroundColor: "hsl(var(--sidebar-bg))" }}>
+          <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+            <div className="max-w-2xl">
+              <h2 className="text-3xl font-bold sm:text-4xl">
+                Ready to hang your license with a brokerage that actually works for you?
+              </h2>
+              <p className="mt-4 text-base leading-7 text-white/80">
+                $98 a month. No transaction fees. Full software. Join United Estates Realty today.
+              </p>
+              <div className="mt-8 flex flex-wrap gap-3">
+                <Button asChild size="lg" className="bg-background text-foreground hover:bg-background/90">
+                  <Link to="/signup">
+                    Join the Brokerage
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </Button>
+                <Button
+                  asChild
+                  size="lg"
+                  variant="outline"
+                  className="border-white/30 bg-transparent text-white hover:bg-white/10 hover:text-white"
+                >
+                  <Link to="/auth">Agent Login</Link>
+                </Button>
+              </div>
             </div>
           </div>
         </section>
       </main>
+
+      <footer className="border-t bg-background py-8">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <UERLogo width={140} />
+            <p className="text-xs text-muted-foreground">
+              © {new Date().getFullYear()} United Estates Realty. Licensed Real Estate Brokerage.
+            </p>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
