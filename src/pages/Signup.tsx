@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Mail, Lock, User, Eye, EyeOff, CheckCircle2, Home } from 'lucide-react';
+import { Mail, Lock, User, Eye, EyeOff, CheckCircle2, Home, ArrowRight } from 'lucide-react';
 import { AuthBrandPanel } from '@/components/auth/AuthBrandPanel';
 import { UERLogo } from '@/components/UERLogo';
 import { cn } from '@/lib/utils';
