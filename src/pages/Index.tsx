@@ -265,8 +265,7 @@ export default function Index() {
                     <p className="mt-3 text-sm leading-6 text-muted-foreground">{description}</p>
                   </CardContent>
                 </Card>
-                );
-              })}
+              ))}
             </div>
           </div>
         </section>
@@ -331,7 +330,8 @@ export default function Index() {
                     </div>
                   </CardContent>
                 </Card>
-              ))}
+                );
+              })}
             </div>
           </div>
         </section>
