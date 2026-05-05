@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Mail, Lock, Eye, EyeOff, CheckCircle2, Home, User } from 'lucide-react';
+import { AuthBrandPanel } from '@/components/auth/AuthBrandPanel';
 import { UERLogo } from '@/components/UERLogo';
 
 export default function Auth() {
@@ -49,48 +50,15 @@ export default function Auth() {
 
   return (
     <div className="min-h-screen flex">
-      {/* Left panel — branding (matches Signup layout) */}
-      <div className="hidden lg:flex lg:w-1/2 flex-col justify-between p-12 relative overflow-hidden" style={{ backgroundColor: 'hsl(var(--sidebar-bg))' }}>
-        <div className="absolute inset-0 opacity-5">
-          <div className="absolute top-20 left-20 w-64 h-64 rounded-full border-[40px] border-white" />
-          <div className="absolute bottom-40 right-10 w-96 h-96 rounded-full border-[60px] border-white" />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full border-[80px] border-white" />
-        </div>
-
-        <div className="relative z-10">
-          <div className="inline-flex rounded-2xl border border-white/20 bg-white/95 px-5 py-4 shadow-xl shadow-black/10 backdrop-blur">
-            <UERLogo width={180} />
-          </div>
-        </div>
-
-        <div className="relative z-10 space-y-8">
-          <div>
-            <h1 className="text-3xl font-bold text-white leading-tight">
-              Welcome back.<br />Pick up where you left off.
-            </h1>
-            <p className="mt-3 text-white/60 text-sm leading-relaxed max-w-sm">
-              Your listings, transactions, contacts, and office workflows are waiting.
-            </p>
-          </div>
-
-          <div className="space-y-3">
-            {[
-              { icon: Home, text: 'All active deals and listings in one place' },
-              { icon: User, text: 'Your contacts, tasks, and office activity' },
-              { icon: CheckCircle2, text: 'Forms, signing, and brokerage workflows' },
-            ].map((item) => (
-              <div key={item.text} className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center shrink-0">
-                  <item.icon className="w-4 h-4 text-white" />
-                </div>
-                <span className="text-sm text-white/80">{item.text}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <p className="relative z-10 text-white/30 text-xs">© {new Date().getFullYear()} United Estates Realty</p>
-      </div>
+      <AuthBrandPanel
+        title={'Welcome back.\nPick up where you left off.'}
+        description="Your listings, transactions, contacts, and office workflows are waiting."
+        items={[
+          { icon: Home, text: 'All active deals and listings in one place' },
+          { icon: User, text: 'Your contacts, tasks, and office activity' },
+          { icon: CheckCircle2, text: 'Forms, signing, and brokerage workflows' },
+        ]}
+      />
 
       {/* Right panel — form */}
       <div className="flex-1 flex items-center justify-center p-6 bg-background overflow-auto">
