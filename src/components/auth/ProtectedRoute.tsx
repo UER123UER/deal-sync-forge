@@ -38,18 +38,19 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
     : onboardingStatus ?? getFallbackOnboardingStatus({ user, profile });
   const nextPath = getNextOnboardingPath(effectiveStatus);
   const subscriptionStatus = effectiveStatus.subscriptionStatus;
+  const billingComplete = subscriptionStatus === 'active' || effectiveStatus.billingWaived;
 
   if (isAgreementRoute && subscriptionStatus !== 'active') {
     return <>{children}</>;
   }
 
-  if (subscriptionStatus !== 'active') {
+  if (!billingComplete || !effectiveStatus.hasDepositAccount) {
     if (!isOnboardingRoute || location.pathname !== nextPath) {
       return <Navigate to={nextPath} replace />;
     }
   }
 
-  if (subscriptionStatus === 'active' && isOnboardingRoute) {
+  if (billingComplete && effectiveStatus.hasDepositAccount && isOnboardingRoute) {
     return <Navigate to="/transactions" replace />;
   }
 
