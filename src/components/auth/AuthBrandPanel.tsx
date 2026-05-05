@@ -16,12 +16,6 @@ type AuthBrandPanelProps = {
 export function AuthBrandPanel({ title, description, items }: AuthBrandPanelProps) {
   return (
     <div className="relative hidden overflow-hidden border-r bg-white p-12 lg:flex lg:w-1/2 lg:flex-col lg:justify-between">
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -left-10 top-24 h-64 w-64 rounded-full border-[36px] border-[hsl(var(--sidebar-bg)/0.08)]" />
-        <div className="absolute bottom-32 right-0 h-96 w-96 rounded-full border-[52px] border-[hsl(var(--sidebar-bg)/0.07)]" />
-        <div className="absolute left-1/2 top-1/2 h-[520px] w-[520px] -translate-x-1/2 -translate-y-1/2 rounded-full border-[72px] border-[hsl(var(--sidebar-bg)/0.05)]" />
-      </div>
-
       <div className="relative z-10">
         <UERLogo width={220} />
       </div>
