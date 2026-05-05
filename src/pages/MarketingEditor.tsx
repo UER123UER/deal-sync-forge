@@ -74,7 +74,6 @@ import { cn } from '@/lib/utils';
 
 // ── Layout constants ─────────────────────────────────────────────────────────
 const LEFT_PANEL_WIDTH  = 260; // px — left edit panel width
-const TOP_BAR_HEIGHT    = 56;  // px — top toolbar height
 
 // ── Alignment / Snap Guide System ───────────────────────────────────────────
 
@@ -721,6 +720,7 @@ export default function MarketingEditor() {
   const { data: dealPhotos = [] } = useDealPhotos(id);
   const uploadDealPhoto = useUploadDealPhoto();
   const canvasRef = useRef<HTMLDivElement>(null);
+  const canvasViewportRef = useRef<HTMLDivElement>(null);
   const previewShellRef = useRef<HTMLDivElement>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
   const scaleRef = useRef(1);
@@ -737,6 +737,10 @@ export default function MarketingEditor() {
   const data = hist.stack[hist.index] ?? getDefaultTemplateData(undefined, template.category);
   const canvasW = data.canvasWidth || 1080;
   const canvasH = data.canvasHeight || 1080;
+  const [viewportWidth, setViewportWidth] = useState(() => typeof window !== 'undefined' ? window.innerWidth : 1440);
+  const [canvasViewportSize, setCanvasViewportSize] = useState({ width: 0, height: 0 });
+  const isCompactEditor = viewportWidth < 1280;
+  const isMobileEditor = viewportWidth < 768;
 
   const setData = useCallback((updater: TemplateData | ((prev: TemplateData) => TemplateData)) => {
     setHist((h) => {
@@ -881,6 +885,7 @@ export default function MarketingEditor() {
   const [dragHud, setDragHud] = useState<{ x: number; y: number } | null>(null);
   // Dimension picker
   const [showDimensionPicker, setShowDimensionPicker] = useState(false);
+  const [compactToolsOpen, setCompactToolsOpen] = useState(false);
   const [customW, setCustomW] = useState('1080');
   const [customH, setCustomH] = useState('1080');
   const [lockAspect, setLockAspect] = useState(false);
@@ -1578,9 +1583,33 @@ export default function MarketingEditor() {
     }
   }, [template, data.address]);
 
-  // Scale canvas to viewport (subtract panel widths / header height)
-  const maxCanvasWidth  = typeof window !== 'undefined' ? window.innerWidth  - LEFT_PANEL_WIDTH - 64 : 600;
-  const maxCanvasHeight = typeof window !== 'undefined' ? window.innerHeight - TOP_BAR_HEIGHT   - 64 : 600;
+  useEffect(() => {
+    const handleResize = () => setViewportWidth(window.innerWidth);
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    const viewport = canvasViewportRef.current;
+    if (!viewport || typeof ResizeObserver === 'undefined') return;
+
+    const updateViewportSize = () => {
+      setCanvasViewportSize({
+        width: viewport.clientWidth,
+        height: viewport.clientHeight,
+      });
+    };
+
+    updateViewportSize();
+    const observer = new ResizeObserver(updateViewportSize);
+    observer.observe(viewport);
+    return () => observer.disconnect();
+  }, [isCompactEditor]);
+
+  const canvasPadding = isMobileEditor ? 24 : 64;
+  const maxCanvasWidth = Math.max((canvasViewportSize.width || 600) - canvasPadding, 240);
+  const maxCanvasHeight = Math.max((canvasViewportSize.height || 600) - canvasPadding, 240);
   const naturalScale = Math.min(maxCanvasWidth / canvasW, maxCanvasHeight / canvasH, 1);
   const scale = naturalScale * zoom;
   scaleRef.current = scale;
@@ -1929,23 +1958,37 @@ export default function MarketingEditor() {
   return (
     <div className="h-screen flex flex-col bg-muted/20">
       {/* ── Top Toolbar ── */}
-      <div className="h-14 border-b bg-background flex items-center justify-between px-4 shrink-0 gap-4">
-        <div className="flex items-center gap-3">
+      <div className="shrink-0 border-b bg-background px-3 py-3 sm:px-4">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+        <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
           <Button variant="ghost" size="icon" onClick={() => navigate(`/transactions/${id}?tab=Marketing`)}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
-          <div className="flex items-center gap-2">
-            <span className="font-semibold text-sm">{template.name}</span>
+          {isCompactEditor ? (
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5"
+              onClick={() => setCompactToolsOpen((open) => !open)}
+            >
+              <LayoutGrid className="h-3.5 w-3.5" />
+              {compactToolsOpen ? 'Hide Tools' : 'Tools'}
+            </Button>
+          ) : null}
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+            <span className="truncate font-semibold text-sm">{template.name}</span>
             <span className={cn('text-[10px] font-semibold px-2 py-0.5 rounded-full', CATEGORY_COLORS[template.category])}>
               {template.category}
             </span>
             <span className="text-xs text-muted-foreground">
               {TYPE_LABELS[template.type]} · {canvasW}×{canvasH}
             </span>
+            </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex w-full items-center gap-2 overflow-x-auto pb-1 sm:w-auto sm:flex-1 sm:justify-end sm:pb-0">
           {/* Dimension picker button */}
           <button
             onClick={() => setShowDimensionPicker(true)}
@@ -1968,9 +2011,7 @@ export default function MarketingEditor() {
             <span className="text-muted-foreground">
               {CANVAS_DIMENSIONS.find(d => d.id === data.canvasDimensionId)?.aspectLabel ?? `${canvasW}×${canvasH}`}
             </span>
-            <span className="font-semibold text-foreground">
-              {canvasW}×{canvasH}
-            </span>
+            {!isMobileEditor ? <span className="font-semibold text-foreground">{canvasW}×{canvasH}</span> : null}
             <ChevronDown className="h-3 w-3 text-muted-foreground" />
           </button>
 
@@ -2032,24 +2073,37 @@ export default function MarketingEditor() {
           </div>
 
           {/* Keyboard shortcuts button */}
-          <Button
-            variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground"
-            onClick={() => setShowShortcuts(true)}
-            title="Keyboard shortcuts (?)"
-          >
-            <Keyboard className="h-3.5 w-3.5" />
-          </Button>
+          {!isMobileEditor ? (
+            <Button
+              variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground"
+              onClick={() => setShowShortcuts(true)}
+              title="Keyboard shortcuts (?)"
+            >
+              <Keyboard className="h-3.5 w-3.5" />
+            </Button>
+          ) : null}
 
           <Button onClick={handleExport} size="sm" disabled={exporting} className="gap-2">
             {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-            {exporting ? 'Exporting…' : 'Download PNG'}
+            {exporting ? 'Exporting…' : isMobileEditor ? 'PNG' : 'Download PNG'}
           </Button>
+        </div>
         </div>
       </div>
 
-      <div className="flex flex-1 overflow-hidden">
+      <div className={cn('flex flex-1 overflow-hidden', isCompactEditor && 'flex-col')}>
         {/* ── Left Panel ── */}
-        <div className="w-[260px] border-r bg-background shrink-0 flex flex-col">
+        <div
+          className={cn(
+            'shrink-0 bg-background flex flex-col',
+            isCompactEditor
+              ? compactToolsOpen
+                ? 'h-[min(26rem,44vh)] w-full border-b'
+                : 'hidden'
+              : 'border-r'
+          )}
+          style={isCompactEditor ? undefined : { width: LEFT_PANEL_WIDTH }}
+        >
           {/* ── Edit Panel ── */}
           <ScrollArea className="flex-1">
             <div className="p-3 space-y-1">
@@ -2506,7 +2560,8 @@ export default function MarketingEditor() {
 
         {/* ── Canvas Area ── */}
         <div
-          className="flex-1 overflow-auto flex items-start justify-center p-8 bg-[repeating-conic-gradient(#e5e7eb_0%_25%,transparent_0%_50%)] [background-size:20px_20px] relative"
+          ref={canvasViewportRef}
+          className="relative flex min-h-0 flex-1 items-start justify-center overflow-auto bg-[repeating-conic-gradient(#e5e7eb_0%_25%,transparent_0%_50%)] p-3 [background-size:20px_20px] sm:p-4 lg:p-8"
           onDragOver={handleCanvasPhotoDragOver}
           onDrop={handleCanvasPhotoDrop}
         >
@@ -2933,13 +2988,14 @@ export default function MarketingEditor() {
               </div>
             </div>
           </div>
-          {/* Keyboard shortcut hint — bottom-right of canvas area */}
-          <div className="absolute bottom-4 right-4 pointer-events-none">
-            <span className="text-[10px] text-muted-foreground/50 flex items-center gap-1">
-              <Keyboard className="h-3 w-3" />
-              Press <kbd className="px-1 py-0.5 rounded bg-muted/80 text-foreground/60 text-[9px] font-mono">?</kbd> for shortcuts
-            </span>
-          </div>
+          {!isMobileEditor ? (
+            <div className="pointer-events-none absolute bottom-4 right-4">
+              <span className="flex items-center gap-1 text-[10px] text-muted-foreground/50">
+                <Keyboard className="h-3 w-3" />
+                Press <kbd className="rounded bg-muted/80 px-1 py-0.5 font-mono text-[9px] text-foreground/60">?</kbd> for shortcuts
+              </span>
+            </div>
+          ) : null}
         </div>
       </div>
 

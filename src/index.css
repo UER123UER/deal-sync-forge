@@ -184,8 +184,9 @@
   }
 
   .app-page-header {
-    @apply flex shrink-0 items-center border-b bg-background;
+    @apply flex shrink-0 flex-wrap items-center border-b bg-background;
     min-height: var(--page-header-height);
+    padding-block: var(--space-4);
     padding-inline: var(--page-padding-x);
     gap: var(--space-4);
   }
@@ -209,11 +210,11 @@
   }
 
   .app-page-actions {
-    @apply ml-auto flex items-center gap-3;
+    @apply ml-auto flex max-w-full items-center gap-3;
   }
 
   .app-page-toolbar {
-    @apply flex shrink-0 items-center border-b bg-background;
+    @apply flex shrink-0 flex-wrap items-center border-b bg-background;
     min-height: var(--toolbar-height);
     padding-inline: var(--page-padding-x);
     padding-block: var(--space-3);
@@ -221,7 +222,7 @@
   }
 
   .app-page-toolbar-group {
-    @apply flex items-center gap-2;
+    @apply flex min-w-0 items-center gap-2;
   }
 
   .app-page-content {
@@ -302,7 +303,7 @@
   }
 
   .app-segmented {
-    @apply inline-flex items-center rounded-[var(--radius-md)] border bg-muted/40 p-1;
+    @apply inline-flex max-w-full items-center rounded-[var(--radius-md)] border bg-muted/40 p-1;
     gap: var(--space-1);
   }
 
@@ -313,6 +314,73 @@
   .app-segmented-item[data-state='active'] {
     @apply bg-background text-foreground;
     box-shadow: var(--shadow-1);
+  }
+}
+
+@media (max-width: 1023px) {
+  :root {
+    --page-padding-x: 1rem;
+    --page-padding-y: 1rem;
+    --page-header-height: auto;
+    --toolbar-height: auto;
+  }
+
+  .app-page-actions {
+    @apply ml-0 w-full flex-wrap;
+  }
+
+  .app-page-toolbar-group {
+    @apply flex-wrap;
+  }
+
+  .app-section-header {
+    @apply flex-wrap;
+  }
+}
+
+@media (max-width: 767px) {
+  :root {
+    --page-padding-x: 0.75rem;
+    --page-padding-y: 0.75rem;
+  }
+
+  .app-page-title {
+    font-size: var(--font-size-400);
+  }
+
+  .app-page-actions > * {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .app-page-toolbar-group {
+    @apply w-full overflow-x-auto;
+    padding-bottom: 2px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .app-page-toolbar-group.ml-auto {
+    @apply justify-start;
+  }
+
+  .app-segmented {
+    width: max-content;
+    min-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .app-section-header {
+    padding: var(--space-4);
+  }
+
+  .app-section-body {
+    padding: var(--space-4);
+  }
+
+  .app-empty-state {
+    min-height: 14rem;
+    padding: var(--space-6);
   }
 }
 

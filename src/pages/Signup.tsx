@@ -137,7 +137,7 @@ export default function Signup() {
   // Google OAuth is intentionally disabled for now.
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex flex-col xl:flex-row">
       <AuthBrandPanel
         title={'Run the brokerage,\nsupport every agent.'}
         description="United Estates Realty gives your office one place for listings, contracts, contacts, marketing, onboarding, and payouts."
@@ -149,11 +149,12 @@ export default function Signup() {
       />
 
       {/* Right panel — form */}
-      <div className="flex-1 flex items-center justify-center p-6 bg-background overflow-auto">
+      <div className="flex-1 overflow-auto bg-background px-4 py-6 sm:px-6 lg:px-8">
+        <div className="flex min-h-full items-center justify-center">
         <div className="w-full max-w-md space-y-6">
 
           {/* Header */}
-          <div className="text-center space-y-1 lg:hidden">
+          <div className="space-y-1 text-center xl:hidden">
             <UERLogo width={160} />
           </div>
           <div className="space-y-1">
@@ -179,7 +180,7 @@ export default function Signup() {
 
           {/* Form */}
           <form onSubmit={handleSignUp} className="space-y-4">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div className="space-y-1.5">
                 <Label htmlFor="first-name">First Name</Label>
                 <div className="relative">
@@ -310,6 +311,7 @@ export default function Signup() {
               <span className="underline cursor-pointer">Privacy Policy</span>.
             </p>
           </form>
+        </div>
         </div>
       </div>
     </div>

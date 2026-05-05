@@ -248,34 +248,23 @@ export default function Tasks() {
                 }
               />
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-10" />
-                    <TableHead>Task</TableHead>
-                    <TableHead>Due Date</TableHead>
-                    <TableHead>Assignee</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead className="w-28 text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
+              <>
+                <div className="divide-y md:hidden">
                   {filtered.map((task) => {
                     const isCompleted =
                       task.id in optimisticCompleted ? optimisticCompleted[task.id] : task.completed;
                     const taskType = TASK_TYPES.find((candidate) => candidate.key === task.type);
 
                     return (
-                      <TableRow key={task.id} data-state={isCompleted ? 'selected' : undefined}>
-                        <TableCell className="w-10 align-top">
+                      <div key={task.id} className="space-y-3 px-4 py-4">
+                        <div className="flex items-start gap-3">
                           <Checkbox
                             checked={isCompleted}
                             onCheckedChange={() => toggleComplete(task)}
                             aria-label={`Mark ${task.title} as ${isCompleted ? 'incomplete' : 'complete'}`}
+                            className="mt-0.5"
                           />
-                        </TableCell>
-                        <TableCell className="align-top">
-                          <div className="space-y-1">
+                          <div className="min-w-0 flex-1 space-y-1">
                             <div
                               className={cn(
                                 'text-sm font-semibold text-foreground',
@@ -284,59 +273,154 @@ export default function Tasks() {
                             >
                               {task.title}
                             </div>
-                            {task.description ? (
-                              <div className="max-w-xl text-sm leading-6 text-muted-foreground">
-                                {task.description}
-                              </div>
-                            ) : (
-                              <div className="text-sm text-muted-foreground">No description</div>
-                            )}
+                            <div className="text-sm leading-6 text-muted-foreground">
+                              {task.description || 'No description'}
+                            </div>
                           </div>
-                        </TableCell>
-                        <TableCell className="align-top text-sm text-muted-foreground">
-                          {task.due_date ? format(new Date(task.due_date), 'MMM d, yyyy') : '—'}
-                        </TableCell>
-                        <TableCell className="align-top text-sm text-muted-foreground">
-                          {task.assignee || 'Unassigned'}
-                        </TableCell>
-                        <TableCell className="align-top">
-                          <span
-                            className={cn(
-                              'inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-semibold leading-none',
-                              typeBadgeClasses[task.type] || typeBadgeClasses.note,
-                            )}
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3 pl-7 text-sm">
+                          <div className="space-y-1">
+                            <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Due Date</div>
+                            <div className="text-muted-foreground">{task.due_date ? format(new Date(task.due_date), 'MMM d, yyyy') : '—'}</div>
+                          </div>
+                          <div className="space-y-1">
+                            <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Assignee</div>
+                            <div className="text-muted-foreground">{task.assignee || 'Unassigned'}</div>
+                          </div>
+                          <div className="space-y-1">
+                            <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Type</div>
+                            <span
+                              className={cn(
+                                'inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-semibold leading-none',
+                                typeBadgeClasses[task.type] || typeBadgeClasses.note,
+                              )}
+                            >
+                              {taskType ? <taskType.icon className="h-3 w-3" /> : null}
+                              {taskType?.label || task.type}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="flex justify-end gap-1.5 pl-7">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="gap-1.5"
+                            onClick={() => openEdit(task)}
+                            aria-label={`Edit ${task.title}`}
                           >
-                            {taskType ? <taskType.icon className="h-3 w-3" /> : null}
-                            {taskType?.label || task.type}
-                          </span>
-                        </TableCell>
-                        <TableCell className="align-top">
-                          <div className="flex justify-end gap-1">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8"
-                              onClick={() => openEdit(task)}
-                              aria-label={`Edit ${task.title}`}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-destructive hover:text-destructive"
-                              onClick={() => handleDelete(task.id)}
-                              aria-label={`Delete ${task.title}`}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
+                            <Edit className="h-3.5 w-3.5" />
+                            Edit
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="gap-1.5 text-destructive hover:text-destructive"
+                            onClick={() => handleDelete(task.id)}
+                            aria-label={`Delete ${task.title}`}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                            Delete
+                          </Button>
+                        </div>
+                      </div>
                     );
                   })}
-                </TableBody>
-              </Table>
+                </div>
+
+                <div className="hidden md:block">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-10" />
+                        <TableHead>Task</TableHead>
+                        <TableHead>Due Date</TableHead>
+                        <TableHead>Assignee</TableHead>
+                        <TableHead>Type</TableHead>
+                        <TableHead className="w-28 text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filtered.map((task) => {
+                        const isCompleted =
+                          task.id in optimisticCompleted ? optimisticCompleted[task.id] : task.completed;
+                        const taskType = TASK_TYPES.find((candidate) => candidate.key === task.type);
+
+                        return (
+                          <TableRow key={task.id} data-state={isCompleted ? 'selected' : undefined}>
+                            <TableCell className="w-10 align-top">
+                              <Checkbox
+                                checked={isCompleted}
+                                onCheckedChange={() => toggleComplete(task)}
+                                aria-label={`Mark ${task.title} as ${isCompleted ? 'incomplete' : 'complete'}`}
+                              />
+                            </TableCell>
+                            <TableCell className="align-top">
+                              <div className="space-y-1">
+                                <div
+                                  className={cn(
+                                    'text-sm font-semibold text-foreground',
+                                    isCompleted && 'line-through text-muted-foreground',
+                                  )}
+                                >
+                                  {task.title}
+                                </div>
+                                {task.description ? (
+                                  <div className="max-w-xl text-sm leading-6 text-muted-foreground">
+                                    {task.description}
+                                  </div>
+                                ) : (
+                                  <div className="text-sm text-muted-foreground">No description</div>
+                                )}
+                              </div>
+                            </TableCell>
+                            <TableCell className="align-top text-sm text-muted-foreground">
+                              {task.due_date ? format(new Date(task.due_date), 'MMM d, yyyy') : '—'}
+                            </TableCell>
+                            <TableCell className="align-top text-sm text-muted-foreground">
+                              {task.assignee || 'Unassigned'}
+                            </TableCell>
+                            <TableCell className="align-top">
+                              <span
+                                className={cn(
+                                  'inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-semibold leading-none',
+                                  typeBadgeClasses[task.type] || typeBadgeClasses.note,
+                                )}
+                              >
+                                {taskType ? <taskType.icon className="h-3 w-3" /> : null}
+                                {taskType?.label || task.type}
+                              </span>
+                            </TableCell>
+                            <TableCell className="align-top">
+                              <div className="flex justify-end gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8"
+                                  onClick={() => openEdit(task)}
+                                  aria-label={`Edit ${task.title}`}
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 text-destructive hover:text-destructive"
+                                  onClick={() => handleDelete(task.id)}
+                                  aria-label={`Delete ${task.title}`}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+              </>
             )}
           </section>
         </PageStack>

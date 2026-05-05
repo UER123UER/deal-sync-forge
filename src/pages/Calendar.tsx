@@ -119,39 +119,41 @@ export default function CalendarPage() {
       <PageContent>
         <PageStack className="max-w-none">
           <PageSection title="Month View" description="Select any day to add a new calendar event." bodyClassName="p-4">
-            <div className="grid grid-cols-7 gap-px overflow-hidden rounded-lg border bg-border">
-              {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d) => (
-                <div key={d} className="bg-muted px-2 py-2 text-center text-xs font-semibold uppercase tracking-wide text-muted-foreground">{d}</div>
-              ))}
-              {Array.from({ length: startPad }).map((_, i) => (
-                <div key={`pad-${i}`} className="min-h-[100px] bg-background" />
-              ))}
-              {days.map((day) => {
-                const events = getEventsForDay(day);
-                const isToday = isSameDay(day, today);
-                const dateStr = format(day, 'yyyy-MM-dd');
-                return (
-                  <div
-                    key={day.toISOString()}
-                    className={cn('min-h-[100px] cursor-pointer border-t bg-background p-1.5 transition-standard hover:bg-muted/30', isToday && 'bg-primary/5')}
-                    onClick={() => openNewEvent(dateStr)}
-                  >
-                    <div className={cn('mb-1 text-xs font-semibold', isToday ? 'text-primary' : 'text-foreground')}>{format(day, 'd')}</div>
-                    <div className="space-y-0.5">
-                      {events.slice(0, 3).map((ev, i) => (
-                        <div key={i} className={cn('truncate rounded px-1 py-0.5 text-[10px] leading-tight',
-                          ev.type === 'holiday' ? 'bg-destructive/10 text-destructive' :
-                          ev.type === 'task' ? 'bg-primary/10 text-primary' :
-                          'bg-accent text-accent-foreground'
-                        )}>
-                          {ev.label}
-                        </div>
-                      ))}
-                      {events.length > 3 && <div className="px-1 text-[10px] text-muted-foreground">+{events.length - 3} more</div>}
+            <div className="overflow-x-auto">
+              <div className="grid min-w-[44rem] grid-cols-7 gap-px overflow-hidden rounded-lg border bg-border">
+                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d) => (
+                  <div key={d} className="bg-muted px-2 py-2 text-center text-xs font-semibold uppercase tracking-wide text-muted-foreground">{d}</div>
+                ))}
+                {Array.from({ length: startPad }).map((_, i) => (
+                  <div key={`pad-${i}`} className="min-h-[100px] bg-background" />
+                ))}
+                {days.map((day) => {
+                  const events = getEventsForDay(day);
+                  const isToday = isSameDay(day, today);
+                  const dateStr = format(day, 'yyyy-MM-dd');
+                  return (
+                    <div
+                      key={day.toISOString()}
+                      className={cn('min-h-[100px] cursor-pointer border-t bg-background p-1.5 transition-standard hover:bg-muted/30', isToday && 'bg-primary/5')}
+                      onClick={() => openNewEvent(dateStr)}
+                    >
+                      <div className={cn('mb-1 text-xs font-semibold', isToday ? 'text-primary' : 'text-foreground')}>{format(day, 'd')}</div>
+                      <div className="space-y-0.5">
+                        {events.slice(0, 3).map((ev, i) => (
+                          <div key={i} className={cn('truncate rounded px-1 py-0.5 text-[10px] leading-tight',
+                            ev.type === 'holiday' ? 'bg-destructive/10 text-destructive' :
+                            ev.type === 'task' ? 'bg-primary/10 text-primary' :
+                            'bg-accent text-accent-foreground'
+                          )}>
+                            {ev.label}
+                          </div>
+                        ))}
+                        {events.length > 3 && <div className="px-1 text-[10px] text-muted-foreground">+{events.length - 3} more</div>}
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
           </PageSection>
         </PageStack>

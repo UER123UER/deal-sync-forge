@@ -190,48 +190,102 @@ export default function Transactions() {
                 }
               />
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-10">
-                      <Checkbox checked={selectedDeals.length === filtered.length && filtered.length > 0} onCheckedChange={toggleAll} />
-                    </TableHead>
-                    <SortHeader label="Address" sortKeyName="address" />
-                    <SortHeader label="Status" sortKeyName="status" />
-                    <SortHeader label="Price" sortKeyName="price" />
-                    <SortHeader label="Critical Dates" sortKeyName="listing_expiration" />
-                    <SortHeader label="Primary Agent" sortKeyName="primary_agent" />
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
+              <>
+                <div className="divide-y md:hidden">
+                  <div className="flex items-center justify-between gap-3 px-4 py-3">
+                    <span className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">Select visible deals</span>
+                    <Checkbox checked={selectedDeals.length === filtered.length && filtered.length > 0} onCheckedChange={toggleAll} />
+                  </div>
                   {filtered.map((deal) => (
-                    <TableRow key={deal.id} className="cursor-pointer" onClick={() => navigate(`/transactions/${deal.id}`)}>
-                      <TableCell className="w-10" onClick={(e) => e.stopPropagation()}>
-                        <Checkbox checked={selectedDeals.includes(deal.id)} onCheckedChange={() => toggleSelect(deal.id)} />
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-3">
+                    <button
+                      key={deal.id}
+                      type="button"
+                      className="flex w-full flex-col gap-3 px-4 py-4 text-left transition-standard hover:bg-muted/20"
+                      onClick={() => navigate(`/transactions/${deal.id}`)}
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="pt-0.5" onClick={(e) => e.stopPropagation()}>
+                          <Checkbox checked={selectedDeals.includes(deal.id)} onCheckedChange={() => toggleSelect(deal.id)} />
+                        </div>
+                        <div className="flex min-w-0 flex-1 items-start gap-3">
                           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted">
                             <Building2Icon />
                           </div>
-                          <div className="min-w-0">
+                          <div className="min-w-0 flex-1">
                             <div className="truncate text-sm font-semibold text-foreground">{deal.address}</div>
                             <div className="truncate text-sm text-muted-foreground">{deal.city}, {deal.state} {deal.zip}</div>
                           </div>
                         </div>
-                      </TableCell>
-                      <TableCell>
-                        <span className={cn('inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-semibold capitalize leading-none', statusColors[deal.status] || 'border-border bg-muted text-muted-foreground')}>
-                          {deal.status}
-                        </span>
-                      </TableCell>
-                      <TableCell className="font-medium text-foreground">{deal.price || '—'}</TableCell>
-                      <TableCell className="text-muted-foreground">{deal.listing_expiration || '—'}</TableCell>
-                      <TableCell>{deal.primary_agent || '—'}</TableCell>
-                    </TableRow>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3 pl-7 text-sm">
+                        <div className="space-y-1">
+                          <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Status</div>
+                          <span className={cn('inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-semibold capitalize leading-none', statusColors[deal.status] || 'border-border bg-muted text-muted-foreground')}>
+                            {deal.status}
+                          </span>
+                        </div>
+                        <div className="space-y-1">
+                          <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Price</div>
+                          <div className="font-medium text-foreground">{deal.price || '—'}</div>
+                        </div>
+                        <div className="space-y-1">
+                          <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Critical Date</div>
+                          <div className="text-muted-foreground">{deal.listing_expiration || '—'}</div>
+                        </div>
+                        <div className="space-y-1">
+                          <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Primary Agent</div>
+                          <div className="text-muted-foreground">{deal.primary_agent || '—'}</div>
+                        </div>
+                      </div>
+                    </button>
                   ))}
-                </TableBody>
-              </Table>
+                </div>
+
+                <div className="hidden md:block">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-10">
+                          <Checkbox checked={selectedDeals.length === filtered.length && filtered.length > 0} onCheckedChange={toggleAll} />
+                        </TableHead>
+                        <SortHeader label="Address" sortKeyName="address" />
+                        <SortHeader label="Status" sortKeyName="status" />
+                        <SortHeader label="Price" sortKeyName="price" />
+                        <SortHeader label="Critical Dates" sortKeyName="listing_expiration" />
+                        <SortHeader label="Primary Agent" sortKeyName="primary_agent" />
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filtered.map((deal) => (
+                        <TableRow key={deal.id} className="cursor-pointer" onClick={() => navigate(`/transactions/${deal.id}`)}>
+                          <TableCell className="w-10" onClick={(e) => e.stopPropagation()}>
+                            <Checkbox checked={selectedDeals.includes(deal.id)} onCheckedChange={() => toggleSelect(deal.id)} />
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-3">
+                              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted">
+                                <Building2Icon />
+                              </div>
+                              <div className="min-w-0">
+                                <div className="truncate text-sm font-semibold text-foreground">{deal.address}</div>
+                                <div className="truncate text-sm text-muted-foreground">{deal.city}, {deal.state} {deal.zip}</div>
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <span className={cn('inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-semibold capitalize leading-none', statusColors[deal.status] || 'border-border bg-muted text-muted-foreground')}>
+                              {deal.status}
+                            </span>
+                          </TableCell>
+                          <TableCell className="font-medium text-foreground">{deal.price || '—'}</TableCell>
+                          <TableCell className="text-muted-foreground">{deal.listing_expiration || '—'}</TableCell>
+                          <TableCell>{deal.primary_agent || '—'}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </>
             )}
           </section>
         </PageStack>

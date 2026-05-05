@@ -420,12 +420,12 @@ export default function DealDetail() {
   const isVisibleToOffice = deal.visible_to_office;
 
   return (
-    <div className="flex-1 flex flex-col">
+    <div className="flex flex-1 flex-col overflow-hidden">
       {/* Header */}
-      <div className="border-b px-6 py-4">
-        <div className="flex items-start justify-between">
+      <div className="border-b px-4 py-4 sm:px-6">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <h1 className="text-xl font-semibold text-foreground">{deal.address}</h1>
               <span className={cn('text-xs font-medium px-2 py-0.5 rounded-full capitalize',
                 deal.status === 'active' ? 'bg-success/10 text-success' :
@@ -436,7 +436,7 @@ export default function DealDetail() {
             </div>
             <p className="text-sm text-muted-foreground">{deal.city}, {deal.state} {deal.zip}</p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 self-start lg:self-auto">
             {contacts.slice(0, 3).map((c) => (
               <div key={c.id} className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-medium" title={`${c.firstName} ${c.lastName}`}>
                 {c.firstName[0]}{c.lastName[0]}
@@ -446,7 +446,7 @@ export default function DealDetail() {
         </div>
 
         {/* Action Bar */}
-        <div className="flex items-center gap-2 mt-4 flex-wrap">
+        <div className="mt-4 flex flex-wrap items-stretch gap-2">
           <Button variant="outline" size="sm" className="text-xs gap-1.5" onClick={handleToggleVisibility}>
             <Eye className="w-3.5 h-3.5" /> {isVisibleToOffice ? 'Sent to Office' : 'Send to Office'}
           </Button>
@@ -480,21 +480,23 @@ export default function DealDetail() {
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-0 mt-4 -mb-4">
+        <div className="-mx-4 mt-4 overflow-x-auto px-4 sm:-mx-6 sm:px-6">
+          <div className="flex w-max min-w-full gap-1 sm:gap-0">
           {TABS.map((tab) => (
             <button key={tab} onClick={() => setActiveTab(tab)} className={cn(
-              'px-4 py-2.5 text-sm font-medium border-b-2 transition-colors',
+              'whitespace-nowrap px-4 py-2.5 text-sm font-medium border-b-2 transition-colors',
               activeTab === tab ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'
             )}>{tab}</button>
           ))}
+          </div>
         </div>
       </div>
 
       {/* Checklists Tab */}
       {activeTab === 'Checklists' && (
-        <div className="flex-1 flex overflow-hidden">
+        <div className="flex flex-1 flex-col overflow-hidden xl:flex-row">
           {/* Left Panel */}
-          <div className="w-80 border-r overflow-auto p-4 space-y-6 flex-shrink-0">
+          <div className="w-full overflow-auto border-b p-4 space-y-6 xl:w-80 xl:flex-shrink-0 xl:border-b-0 xl:border-r">
             {/* Timeline */}
             <div>
               <div className="flex items-center justify-between mb-3">
@@ -505,14 +507,14 @@ export default function DealDetail() {
                 <div className="absolute left-[5px] top-2 bottom-2 w-px bg-border" />
                 <div className="flex items-start gap-3 relative">
                   <div className="w-[11px] h-[11px] rounded-full border-2 border-muted-foreground bg-background flex-shrink-0 mt-0.5 z-10" />
-                  <div className="flex justify-between flex-1 text-sm">
+                  <div className="flex flex-1 flex-col gap-1 text-sm sm:flex-row sm:items-start sm:justify-between">
                     <span className="text-muted-foreground">Listing Expiration</span>
                     <span className="text-foreground">{deal.listing_expiration || '—'}</span>
                   </div>
                 </div>
                 <div className="flex items-start gap-3 relative">
                   <div className="w-[11px] h-[11px] rounded-full border-2 border-muted-foreground bg-background flex-shrink-0 mt-0.5 z-10" />
-                  <div className="flex justify-between flex-1 text-sm">
+                  <div className="flex flex-1 flex-col gap-1 text-sm sm:flex-row sm:items-start sm:justify-between">
                     <span className="text-muted-foreground">Listing Start Date</span>
                     <span className="text-foreground">{deal.listing_start_date || '—'}</span>
                   </div>
@@ -524,7 +526,7 @@ export default function DealDetail() {
             <div>
               <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Details</h3>
               <div className="space-y-2">
-                <div className="flex justify-between text-sm">
+                <div className="flex flex-col gap-2 text-sm sm:flex-row sm:items-start sm:justify-between">
                   <span className="text-muted-foreground">MLS#</span>
                   {editingMls ? (
                     <div className="flex items-center gap-1">
@@ -538,11 +540,11 @@ export default function DealDetail() {
                     <button onClick={() => { setMlsValue(''); setEditingMls(true); }} className="text-primary text-sm hover:underline">Add MLS# Number</button>
                   )}
                 </div>
-                <div className="flex justify-between text-sm">
+                <div className="flex flex-col gap-1 text-sm sm:flex-row sm:justify-between">
                   <span className="text-muted-foreground">Side</span>
                   <span className="text-foreground capitalize">{deal.representation_side}</span>
                 </div>
-                <div className="flex justify-between text-sm">
+                <div className="flex flex-col gap-1 text-sm sm:flex-row sm:justify-between">
                   <span className="text-muted-foreground">Type</span>
                   <span className="text-foreground">{deal.property_type}</span>
                 </div>
@@ -556,8 +558,11 @@ export default function DealDetail() {
                 {contacts.map((c) => (
                   <div key={c.id} className="flex items-center gap-2">
                     <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-medium flex-shrink-0">{c.firstName[0]}{c.lastName[0]}</div>
-                    <div className="flex-1 min-w-0"><div className="text-sm text-foreground">{c.firstName} {c.lastName}</div></div>
-                    <span className="text-xs text-muted-foreground">{c.role}</span>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm text-foreground">{c.firstName} {c.lastName}</div>
+                      <div className="text-xs text-muted-foreground sm:hidden">{c.role}</div>
+                    </div>
+                    <span className="hidden text-xs text-muted-foreground sm:inline">{c.role}</span>
                   </div>
                 ))}
                 <button onClick={() => setAddContactDialogOpen(true)} className="text-sm text-primary hover:underline flex items-center gap-1">
@@ -569,10 +574,10 @@ export default function DealDetail() {
             {/* Offers */}
             {dealOffers.length > 0 && (
               <div>
-                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Offers ({dealOffers.length})</h3>
-                <div className="space-y-2">
-                  {dealOffers.map((o) => (
-                    <div key={o.id} className="flex items-center justify-between text-sm border rounded-md px-3 py-2">
+              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Offers ({dealOffers.length})</h3>
+              <div className="space-y-2">
+                {dealOffers.map((o) => (
+                    <div key={o.id} className="flex flex-col gap-2 rounded-md border px-3 py-2 text-sm sm:flex-row sm:items-center sm:justify-between">
                       <div>
                         <span className="text-foreground font-medium">{o.amount}</span>
                         <span className="text-muted-foreground ml-2">— {o.buyer_name}</span>
@@ -587,7 +592,7 @@ export default function DealDetail() {
             {/* CDA */}
             <div>
               <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">CDA Information</h3>
-              <div className="flex justify-between text-sm">
+              <div className="flex flex-col gap-1 text-sm sm:flex-row sm:justify-between">
                 <span className="text-muted-foreground">Deal #</span>
                 <span className="text-foreground">{deal.id.slice(0, 8)}</span>
               </div>
@@ -596,7 +601,7 @@ export default function DealDetail() {
             {/* Listing Info */}
             <div>
               <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Listing Information</h3>
-              <div className="flex justify-between text-sm">
+              <div className="flex flex-col gap-2 text-sm sm:flex-row sm:items-start sm:justify-between">
                 <span className="text-muted-foreground">List Price</span>
                 {editingPrice ? (
                   <div className="flex items-center gap-1">
@@ -616,10 +621,10 @@ export default function DealDetail() {
           </div>
 
           {/* Right Panel - Checklists */}
-          <div className="flex-1 overflow-auto p-4">
-            <div className="flex items-center justify-between mb-4">
+          <div className="flex-1 overflow-auto p-4 sm:p-5">
+            <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <h3 className="text-sm font-semibold text-foreground">Checklist</h3>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <div className="text-xs text-muted-foreground">
                   {completedChecklistCount} of {checklistItems.length} completed
                 </div>
@@ -716,8 +721,8 @@ export default function DealDetail() {
 
       {/* Photos Tab */}
       {activeTab === 'Photos' && (
-        <div className="flex-1 overflow-auto p-6">
-          <div className="flex items-center justify-between mb-4">
+        <div className="flex-1 overflow-auto p-4 sm:p-6">
+          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <h3 className="text-sm font-semibold text-foreground">Photos ({dealPhotos.length})</h3>
             <div>
               <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handlePhotoUpload} />
@@ -733,7 +738,7 @@ export default function DealDetail() {
               <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>Choose Files</Button>
             </div>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {dealPhotos.map((photo) => (
                 <div key={photo.name} className="relative group rounded-lg overflow-hidden border bg-muted">
                   <img src={photo.url} alt={photo.name} className="w-full h-40 object-cover" />
@@ -749,7 +754,7 @@ export default function DealDetail() {
 
       {/* Tasks Tab */}
       {activeTab === 'Tasks' && (
-        <div className="flex-1 overflow-auto p-6">
+        <div className="flex-1 overflow-auto p-4 sm:p-6">
           <div className="flex items-center gap-2 mb-4">
             <Input placeholder="Add a task for this deal..." value={newTaskTitle} onChange={(e) => setNewTaskTitle(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleAddDealTask()} className="text-sm" />
             <Button size="sm" onClick={handleAddDealTask} disabled={!newTaskTitle.trim()}>Add</Button>
@@ -772,8 +777,8 @@ export default function DealDetail() {
 
       {/* Notes Tab */}
       {activeTab === 'Notes' && (
-        <div className="flex-1 overflow-auto p-6">
-          <div className="flex items-start gap-2 mb-4">
+        <div className="flex-1 overflow-auto p-4 sm:p-6">
+          <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-start">
             <Textarea placeholder="Write a note..." value={newNote} onChange={(e) => setNewNote(e.target.value)} className="text-sm min-h-[80px]" />
             <Button size="sm" onClick={handleAddNote} disabled={!newNote.trim() || createNote.isPending}>Add</Button>
           </div>
@@ -797,8 +802,8 @@ export default function DealDetail() {
 
       {/* Marketing Tab — Template Gallery */}
       {activeTab === 'Marketing' && (
-        <div className="flex-1 overflow-auto p-6">
-          <div className="flex items-center justify-between mb-6">
+        <div className="flex-1 overflow-auto p-4 sm:p-6">
+          <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <h3 className="text-lg font-semibold text-foreground">Marketing Studio</h3>
           </div>
           {/* Category filter chips */}
@@ -843,7 +848,7 @@ export default function DealDetail() {
               <p className="text-sm text-muted-foreground">New designs are being built to order.</p>
             </div>
           )}
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
             {TEMPLATES.filter((t) => {
               if (showRecentOnly) return dealRecents.some((r) => r.templateId === t.id);
               return !marketingCategory || t.category === marketingCategory;
@@ -921,7 +926,7 @@ export default function DealDetail() {
           <DialogHeader><DialogTitle>Schedule Open House</DialogTitle></DialogHeader>
           <div className="space-y-4 pt-2">
             <div><Label className="text-xs">Date *</Label><Input type="date" value={ohForm.scheduled_date} onChange={(e) => setOhForm((f) => ({ ...f, scheduled_date: e.target.value }))} className="mt-1" /></div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div><Label className="text-xs">Start Time</Label><Input value={ohForm.start_time} onChange={(e) => setOhForm((f) => ({ ...f, start_time: e.target.value }))} className="mt-1" /></div>
               <div><Label className="text-xs">End Time</Label><Input value={ohForm.end_time} onChange={(e) => setOhForm((f) => ({ ...f, end_time: e.target.value }))} className="mt-1" /></div>
             </div>

@@ -81,7 +81,7 @@ export default function OpenHouse() {
                   <Label>Date</Label>
                   <Input type="date" value={form.scheduled_date} onChange={(e) => setForm((f) => ({ ...f, scheduled_date: e.target.value }))} />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div className="app-form-field">
                     <Label>Start Time</Label>
                     <Input value={form.start_time} onChange={(e) => setForm((f) => ({ ...f, start_time: e.target.value }))} />
@@ -121,7 +121,7 @@ export default function OpenHouse() {
           ) : (
             <PageSection title="Scheduled Events" description="Every open house is linked back to its transaction." bodyClassName="space-y-3 p-6">
               {openHouses.map((oh) => (
-                <div key={oh.id} className="app-surface-subtle flex items-center gap-4 px-4 py-4">
+                <div key={oh.id} className="app-surface-subtle flex flex-col gap-4 px-4 py-4 sm:flex-row sm:items-center">
                   <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-primary/10">
                     <Calendar className="w-5 h-5 text-primary" />
                   </div>
@@ -134,7 +134,7 @@ export default function OpenHouse() {
                     </p>
                     {oh.notes ? <p className="mt-1 text-sm text-muted-foreground">{oh.notes}</p> : null}
                   </div>
-                  <Button variant="ghost" size="icon" onClick={() => handleDelete(oh.id)} aria-label="Delete open house">
+                  <Button variant="ghost" size="icon" className="self-end sm:self-auto" onClick={() => handleDelete(oh.id)} aria-label="Delete open house">
                     <Trash2 className="w-4 h-4 text-destructive" />
                   </Button>
                 </div>

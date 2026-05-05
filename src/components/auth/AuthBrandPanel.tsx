@@ -15,7 +15,7 @@ type AuthBrandPanelProps = {
 
 export function AuthBrandPanel({ title, description, items }: AuthBrandPanelProps) {
   return (
-    <div className="relative hidden overflow-hidden border-r bg-white p-12 lg:flex lg:w-1/2 lg:flex-col lg:justify-between">
+    <div className="relative hidden overflow-hidden border-r bg-white p-10 xl:flex xl:w-[46%] xl:flex-col xl:justify-between 2xl:p-12">
       <div className="relative z-10">
         <UERLogo width={220} />
       </div>

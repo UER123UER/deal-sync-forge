@@ -49,7 +49,7 @@ export default function Auth() {
   };
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex flex-col xl:flex-row">
       <AuthBrandPanel
         title={'Welcome back.\nPick up where you left off.'}
         description="Your listings, transactions, contacts, and office workflows are waiting."
@@ -61,11 +61,12 @@ export default function Auth() {
       />
 
       {/* Right panel — form */}
-      <div className="flex-1 flex items-center justify-center p-6 bg-background overflow-auto">
+      <div className="flex-1 overflow-auto bg-background px-4 py-6 sm:px-6 lg:px-8">
+        <div className="flex min-h-full items-center justify-center">
         <div className="w-full max-w-md space-y-6">
 
           {/* Logo on mobile only */}
-          <div className="text-center lg:hidden">
+          <div className="text-center xl:hidden">
             <UERLogo width={160} />
           </div>
 
@@ -178,6 +179,7 @@ export default function Auth() {
               </form>
             </>
           )}
+        </div>
         </div>
       </div>
     </div>

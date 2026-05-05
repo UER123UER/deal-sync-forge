@@ -174,37 +174,70 @@ export default function Finances() {
                 bodyClassName="p-0"
               >
                 {activeDeals.length > 0 ? (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Address</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Created</TableHead>
-                        <TableHead className="text-right">Price</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
+                  <>
+                    <div className="divide-y md:hidden">
                       {activeDeals.map((deal) => (
-                        <TableRow key={deal.id}>
-                          <TableCell>
+                        <div key={deal.id} className="space-y-3 px-4 py-4">
+                          <div className="space-y-1">
+                            <div className="text-sm font-semibold text-foreground">{deal.address}</div>
+                            <div className="text-sm text-muted-foreground">
+                              {deal.city}, {deal.state} {deal.zip}
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-2 gap-3 text-sm">
                             <div className="space-y-1">
-                              <div className="text-sm font-semibold text-foreground">{deal.address}</div>
-                              <div className="text-sm text-muted-foreground">
-                                {deal.city}, {deal.state} {deal.zip}
+                              <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Status</div>
+                              <div className="capitalize text-muted-foreground">{deal.status}</div>
+                            </div>
+                            <div className="space-y-1">
+                              <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Created</div>
+                              <div className="text-muted-foreground">
+                                {deal.created_at ? format(parseISO(deal.created_at), 'MMM d, yyyy') : '—'}
                               </div>
                             </div>
-                          </TableCell>
-                          <TableCell className="capitalize text-muted-foreground">{deal.status}</TableCell>
-                          <TableCell className="text-muted-foreground">
-                            {deal.created_at ? format(parseISO(deal.created_at), 'MMM d, yyyy') : '—'}
-                          </TableCell>
-                          <TableCell className="text-right font-medium text-foreground">
-                            {deal.price || '$0'}
-                          </TableCell>
-                        </TableRow>
+                            <div className="space-y-1">
+                              <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Price</div>
+                              <div className="font-medium text-foreground">{deal.price || '$0'}</div>
+                            </div>
+                          </div>
+                        </div>
                       ))}
-                    </TableBody>
-                  </Table>
+                    </div>
+
+                    <div className="hidden md:block">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Address</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead>Created</TableHead>
+                            <TableHead className="text-right">Price</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {activeDeals.map((deal) => (
+                            <TableRow key={deal.id}>
+                              <TableCell>
+                                <div className="space-y-1">
+                                  <div className="text-sm font-semibold text-foreground">{deal.address}</div>
+                                  <div className="text-sm text-muted-foreground">
+                                    {deal.city}, {deal.state} {deal.zip}
+                                  </div>
+                                </div>
+                              </TableCell>
+                              <TableCell className="capitalize text-muted-foreground">{deal.status}</TableCell>
+                              <TableCell className="text-muted-foreground">
+                                {deal.created_at ? format(parseISO(deal.created_at), 'MMM d, yyyy') : '—'}
+                              </TableCell>
+                              <TableCell className="text-right font-medium text-foreground">
+                                {deal.price || '$0'}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </>
                 ) : (
                   <EmptyState
                     icon={Home}
