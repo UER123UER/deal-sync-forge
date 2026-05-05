@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
+import { Navigate, useSearchParams } from 'react-router-dom';
 import {
   ArrowRight,
   Building2,
@@ -19,7 +19,6 @@ import { supabase } from '@/integrations/supabase/client';
 export default function OnboardingBilling() {
   const { user, profile, loading: authLoading } = useAuth();
   const { data: onboardingStatus } = useOnboardingStatus({ user, profile, loading: authLoading });
-  useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [params, setParams] = useSearchParams();
