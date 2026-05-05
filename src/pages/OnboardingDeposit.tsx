@@ -69,6 +69,8 @@ export default function OnboardingDeposit() {
     } else if (currentStatus.latestBillingAccount) {
       setUseBillingAccount(true);
       setAccountType(currentStatus.latestBillingAccount.account_type);
+    } else if (currentStatus.billingWaived) {
+      setUseBillingAccount(false);
     }
   }, [agentName, bankName, currentStatus, defaultAgentName, routingNumber]);
 
@@ -188,6 +190,11 @@ export default function OnboardingDeposit() {
               />
             </div>
 
+            {currentStatus.billingWaived && !currentStatus.latestBillingAccount ? (
+              <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm leading-6 text-emerald-900">
+                Monthly billing is waived with promo code {currentStatus.billingPromoCode ?? 'on file'}. Enter the account where commissions should be deposited.
+              </div>
+            ) : (
             <label className="flex items-start gap-3 rounded-xl border bg-muted/20 px-4 py-3">
               <Checkbox
                 checked={useBillingAccount}
@@ -200,6 +207,7 @@ export default function OnboardingDeposit() {
                 </div>
               </div>
             </label>
+            )}
 
             <div className="space-y-1.5">
               <Label htmlFor="deposit-bank-name">Bank Name</Label>

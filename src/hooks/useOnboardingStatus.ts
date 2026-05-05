@@ -4,6 +4,7 @@ import type { User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import type { Profile } from '@/hooks/useAuth';
 import { AGREEMENT_DOCUMENT_KEYS } from '@/lib/onboardingLegalDocuments';
+import { isFreeBillingPromoCode, normalizePromoCode } from '@/lib/billingPromoCodes';
 
 type BillingAccountSummary = {
   id: string;
@@ -35,6 +36,9 @@ export type OnboardingStatus = {
   agreementSignedName: string | null;
   licenseNumber: string | null;
   hasBillingAccount: boolean;
+  billingWaived: boolean;
+  billingPromoCode: string | null;
+  billingMonthlyFeeAmount: number;
   hasDepositAccount: boolean;
   latestBillingAccount: BillingAccountSummary | null;
   latestDepositAccount: DepositAccountSummary | null;
@@ -52,6 +56,17 @@ export const getFallbackOnboardingStatus = ({
     user?.user_metadata?.brokerage_agreement_signed_at &&
     user?.user_metadata?.brokerage_agreement_signed_name
   );
+  const billingPromoCode =
+    typeof user?.user_metadata?.billing_promo_code === 'string'
+      ? normalizePromoCode(user.user_metadata.billing_promo_code)
+      : null;
+  const billingWaived = Boolean(user?.user_metadata?.billing_waived) || (billingPromoCode ? isFreeBillingPromoCode(billingPromoCode) : false);
+  const billingMonthlyFeeAmount =
+    typeof user?.user_metadata?.billing_monthly_fee_amount === 'number'
+      ? user.user_metadata.billing_monthly_fee_amount
+      : billingWaived
+        ? 0
+        : 98;
 
   return {
     subscriptionStatus: profile?.subscription_status ?? 'pending',
@@ -59,7 +74,10 @@ export const getFallbackOnboardingStatus = ({
     agreementSignedAt: (user?.user_metadata?.brokerage_agreement_signed_at as string | undefined) ?? null,
     agreementSignedName: (user?.user_metadata?.brokerage_agreement_signed_name as string | undefined) ?? null,
     licenseNumber: profile?.license_number ?? (user?.user_metadata?.license_number as string | undefined) ?? null,
-    hasBillingAccount: false,
+    hasBillingAccount: billingWaived,
+    billingWaived,
+    billingPromoCode,
+    billingMonthlyFeeAmount,
     hasDepositAccount: false,
     latestBillingAccount: null,
     latestDepositAccount: null,
@@ -91,12 +109,29 @@ export function useOnboardingStatus({
       profile?.license_number,
       user?.user_metadata?.brokerage_agreement_signed_at,
       user?.user_metadata?.brokerage_agreement_signed_name,
+      user?.user_metadata?.billing_promo_code,
+      user?.user_metadata?.billing_waived,
+      user?.user_metadata?.billing_monthly_fee_amount,
     ],
     enabled: !!user && !loading,
     queryFn: async () => {
       const fallbackStatus = getFallbackOnboardingStatus({ user, profile });
       const { data: authResult, error: authError } = await supabase.auth.getUser();
       const liveUser = authResult.user ?? user!;
+      const liveBillingPromoCode =
+        typeof liveUser.user_metadata?.billing_promo_code === 'string'
+          ? normalizePromoCode(liveUser.user_metadata.billing_promo_code)
+          : fallbackStatus.billingPromoCode;
+      const liveBillingWaived =
+        Boolean(liveUser.user_metadata?.billing_waived) ||
+        (liveBillingPromoCode ? isFreeBillingPromoCode(liveBillingPromoCode) : false) ||
+        fallbackStatus.billingWaived;
+      const liveBillingMonthlyFeeAmount =
+        typeof liveUser.user_metadata?.billing_monthly_fee_amount === 'number'
+          ? liveUser.user_metadata.billing_monthly_fee_amount
+          : liveBillingWaived
+            ? 0
+            : fallbackStatus.billingMonthlyFeeAmount;
       const [billingResult, depositResult, agreementSignaturesResult] = await Promise.all([
         supabase
           .from('bank_accounts')
@@ -166,7 +201,10 @@ export function useOnboardingStatus({
           (liveUser.user_metadata?.brokerage_agreement_signed_name as string | undefined) ??
           null,
         licenseNumber: fallbackStatus.licenseNumber ?? (liveUser.user_metadata?.license_number as string | undefined) ?? null,
-        hasBillingAccount: !!billingResult.data,
+        hasBillingAccount: !!billingResult.data || liveBillingWaived,
+        billingWaived: liveBillingWaived,
+        billingPromoCode: liveBillingPromoCode ?? null,
+        billingMonthlyFeeAmount: liveBillingMonthlyFeeAmount,
         hasDepositAccount: !!depositResult.data,
         latestBillingAccount: (billingResult.data as BillingAccountSummary | null) ?? null,
         latestDepositAccount: (depositResult.data as DepositAccountSummary | null) ?? null,

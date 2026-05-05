@@ -50,6 +50,7 @@ serve(async (req) => {
       },
       line_items: [{ price: PRICE_ID, quantity: 1 }],
       mode: "subscription",
+      allow_promotion_codes: true,
       success_url: `${origin}/onboarding/billing?status=success&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/onboarding/billing?status=cancelled`,
     });

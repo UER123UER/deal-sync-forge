@@ -69,7 +69,7 @@ export function getIndependentContractorAgreementDocument(): OnboardingLegalDocu
         title: '3. Compensation',
         bullets: [
           'Associate retains one hundred percent (100%) of all gross commissions earned on transactions closed by Associate, subject only to deductions required by law or court order.',
-          'Associate shall pay Broker a flat monthly fee of $98.00 due on the 1st day of each calendar month via ACH bank draft from the designated bank account on file.',
+          'Associate shall pay Broker a flat monthly fee of $98.00 due on the 1st day of each calendar month via ACH bank draft from the designated bank account on file, unless the fee is waived by an approved promo code or written brokerage authorization.',
           'Failure to maintain valid ACH information on file, or failure to cure a failed ACH draft within ten (10) calendar days, constitutes a material breach of this Agreement.',
           'Associate may earn a $20.00 monthly referral bonus for each qualifying active associate personally referred to Broker while both parties remain active and in good standing.',
           'Commissions shall be disbursed to Associate within five (5) business days of Broker receiving and clearing commission funds from the closing agent or title company.',
@@ -227,7 +227,7 @@ export function getPolicyAcknowledgmentDocument(): OnboardingLegalDocument {
       {
         title: '5. Monthly Fee & ACH Payment Policy',
         paragraphs: [
-          'The $98.00 monthly fee is due on the 1st of each calendar month via ACH bank draft. ACH is the sole accepted payment method. Associate must maintain current, valid banking information on file at all times. A failed ACH draft not cured within ten (10) calendar days constitutes a material breach, and no proration is provided for partial months.',
+          'The $98.00 monthly fee is due on the 1st of each calendar month via ACH bank draft unless waived by an approved promo code or written brokerage authorization. ACH is the sole accepted payment method when a monthly fee is owed. Associate must maintain current, valid banking information on file whenever ACH billing applies. A failed ACH draft not cured within ten (10) calendar days constitutes a material breach, and no proration is provided for partial months.',
         ],
       },
       {
