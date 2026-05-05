@@ -87,7 +87,7 @@ export async function recordOnboardingSignatures(signatures: OnboardingSignature
     }
 
     const rows = buildClientSideRows(user.id, signatures);
-    const { data: fallbackData, error: fallbackError } = await supabase
+    const { data: fallbackData, error: fallbackError } = await (supabase as any)
       .from('onboarding_signature_events')
       .insert(rows)
       .select('id, document_key, document_version, document_hash, signed_at');
