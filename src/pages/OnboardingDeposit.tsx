@@ -120,8 +120,8 @@ export default function OnboardingDeposit() {
 
     const existingDepositId = currentStatus.latestDepositAccount?.id;
     const depositResponse = existingDepositId
-      ? await supabase.from('direct_deposits').update(depositPayload).eq('id', existingDepositId)
-      : await supabase.from('direct_deposits').insert(depositPayload);
+      ? await (supabase.from('direct_deposits') as any).update(depositPayload).eq('id', existingDepositId)
+      : await (supabase.from('direct_deposits') as any).insert(depositPayload);
 
     if (depositResponse.error) {
       setSaving(false);
