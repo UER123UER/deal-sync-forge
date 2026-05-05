@@ -106,14 +106,14 @@ export function useOnboardingStatus({
           .order('created_at', { ascending: false })
           .limit(1)
           .maybeSingle(),
-        supabase
+        (supabase as any)
           .from('direct_deposits')
           .select('id, agent_name, bank_name, routing_number, account_number_last4, account_type')
           .eq('owner_id', user!.id)
           .order('created_at', { ascending: false })
           .limit(1)
           .maybeSingle(),
-        supabase
+        (supabase as any)
           .from('onboarding_signature_events')
           .select('document_key, signed_at, signer_name')
           .eq('user_id', user!.id)
