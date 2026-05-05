@@ -68,11 +68,10 @@ export const getFallbackOnboardingStatus = ({
 
 export const getNextOnboardingPath = (status: OnboardingStatus | null | undefined) => {
   if (!status) return '/onboarding/agreement';
-  if (status.subscriptionStatus === 'active') return '/transactions';
   if (!status.agreementSigned) return '/onboarding/agreement';
-  if (!status.hasBillingAccount) return '/onboarding/billing';
+  if (status.subscriptionStatus !== 'active') return '/onboarding/billing';
   if (!status.hasDepositAccount) return '/onboarding/deposit';
-  return '/onboarding/deposit';
+  return '/transactions';
 };
 
 export function useOnboardingStatus({
