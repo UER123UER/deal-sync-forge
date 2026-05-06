@@ -66,11 +66,6 @@ export default function OnboardingDeposit() {
       }
       if (!routingNumber) setRoutingNumber(currentStatus.latestDepositAccount.routing_number);
       setAccountType(currentStatus.latestDepositAccount.account_type);
-    } else if (currentStatus.latestBillingAccount) {
-      setUseBillingAccount(true);
-      setAccountType(currentStatus.latestBillingAccount.account_type);
-    } else if (currentStatus.billingWaived) {
-      setUseBillingAccount(false);
     }
   }, [agentName, bankName, currentStatus, defaultAgentName, routingNumber]);
 
