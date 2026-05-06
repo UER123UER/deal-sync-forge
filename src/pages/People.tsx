@@ -874,7 +874,8 @@ export default function People() {
               <Button size="sm" onClick={openNew} className="gap-1.5"><Plus className="w-3.5 h-3.5" /> Add Contact</Button>
             </div>
           ) : view === 'list' ? (
-            <table className="w-full">
+            <div className="overflow-x-auto">
+            <table className="w-full min-w-[900px]">
               <thead>
                 <tr className="border-b bg-muted/30">
                   <th className="text-left text-[10px] font-semibold text-muted-foreground uppercase tracking-wide px-6 py-2.5">Contact</th>
@@ -947,6 +948,7 @@ export default function People() {
                 })}
               </tbody>
             </table>
+            </div>
           ) : (
             <div className="flex gap-4 p-5 h-full overflow-x-auto items-start">
               {boardColumns.map((col) => (
