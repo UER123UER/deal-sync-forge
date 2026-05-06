@@ -58,7 +58,8 @@ export default function Signup() {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
-  const [agentNumber, setAgentNumber] = useState('');
+  const [licensePrefix, setLicensePrefix] = useState<'BK' | 'SL'>('SL');
+  const [licenseDigits, setLicenseDigits] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -68,6 +69,8 @@ export default function Signup() {
   const passwordsMatch = confirmPassword.length > 0 && password === confirmPassword;
   const passwordMismatch = confirmPassword.length > 0 && password !== confirmPassword;
   const passwordReady = password.length >= 6 && /[A-Z]/.test(password) && /[a-z]/.test(password) && /[0-9]/.test(password);
+  const licenseReady = /^\d{7}$/.test(licenseDigits);
+  const fullLicense = `${licensePrefix}-${licenseDigits}`;
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -75,8 +78,8 @@ export default function Signup() {
       toast({ title: 'Password too weak', description: 'Must be 6+ characters with uppercase, lowercase, and a number.', variant: 'destructive' });
       return;
     }
-    if (!agentNumber.trim()) {
-      toast({ title: 'Agent number required', description: 'Please enter your real estate agent number.', variant: 'destructive' });
+    if (!licenseReady) {
+      toast({ title: 'License number required', description: 'Enter a valid 7-digit license number.', variant: 'destructive' });
       return;
     }
     if (password !== confirmPassword) {
@@ -92,7 +95,7 @@ export default function Signup() {
         data: {
           first_name: firstName,
           last_name: lastName,
-          license_number: agentNumber.trim(),
+          license_number: fullLicense,
           referral_code: refCode || undefined,
         },
         emailRedirectTo: window.location.origin,
@@ -124,7 +127,7 @@ export default function Signup() {
     if (signInData.user) {
       await (supabase.from('profiles') as any)
         .update({
-          license_number: agentNumber.trim(),
+          license_number: fullLicense,
           brokerage_name: 'United Estates Realty',
         })
         .eq('id', signInData.user.id);
