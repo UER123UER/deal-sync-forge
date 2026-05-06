@@ -864,7 +864,7 @@ export default function People() {
 
       {/* ── Main ── */}
       <div className="flex flex-1 overflow-hidden">
-        <div className={cn('flex-1 overflow-auto', panelOpen ? 'mr-[440px]' : '')}>
+        <div className={cn('flex-1 overflow-auto', panelOpen ? 'md:mr-[440px]' : '')}>
           {isLoading ? (
             <div className="flex items-center justify-center py-20 text-sm text-muted-foreground">Loading contacts...</div>
           ) : filtered.length === 0 ? (
@@ -1028,9 +1028,9 @@ export default function People() {
         <AnimatePresence>
           {panelOpen && (
             <motion.div
-              initial={{ x: 440 }} animate={{ x: 0 }} exit={{ x: 440 }}
+              initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-              className="fixed right-0 top-0 bottom-0 w-[440px] bg-background border-l shadow-xl z-50 flex flex-col"
+              className="fixed right-0 top-0 bottom-0 w-full md:w-[440px] max-w-full bg-background border-l shadow-xl z-50 flex flex-col"
             >
               {/* Panel header */}
               <div className="border-b flex items-center px-4 gap-2 shrink-0 py-3">
