@@ -506,7 +506,7 @@ export default function Profile() {
               </div>
 
               <form onSubmit={handleSaveProfile} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
                     <Label htmlFor="first-name">First Name</Label>
                     <Input id="first-name" placeholder="John" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
