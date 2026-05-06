@@ -44,16 +44,20 @@ serve(async (req) => {
 
     const subs = await stripe.subscriptions.list({
       customer: customers.data[0].id,
-      status: "active",
-      limit: 1,
+      status: "all",
+      limit: 10,
     });
-    const hasActive = subs.data.length > 0;
+    // ACH debits stay in "incomplete"/"processing" for days before turning active.
+    // Treat any non-canceled subscription as good-to-proceed so the user isn't blocked.
+    const validStatuses = ["active", "trialing", "past_due", "incomplete", "processing", "unpaid"];
+    const validSub = subs.data.find((s) => validStatuses.includes(s.status));
+    const hasActive = !!validSub;
     let subscriptionEnd: string | null = null;
 
-    if (hasActive) {
-      subscriptionEnd = new Date(
-        subs.data[0].current_period_end * 1000,
-      ).toISOString();
+    if (validSub) {
+      subscriptionEnd = validSub.current_period_end
+        ? new Date(validSub.current_period_end * 1000).toISOString()
+        : null;
 
       await supabaseClient
         .from("profiles")
