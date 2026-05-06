@@ -34,7 +34,7 @@ export default function OnboardingDeposit() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const [useBillingAccount, setUseBillingAccount] = useState(true);
+  const [useBillingAccount, setUseBillingAccount] = useState(false);
   const [agentName, setAgentName] = useState('');
   const [bankName, setBankName] = useState('');
   const [routingNumber, setRoutingNumber] = useState('');
