@@ -194,20 +194,7 @@ export default function OnboardingDeposit() {
               <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm leading-6 text-emerald-900">
                 Monthly billing is waived with promo code {currentStatus.billingPromoCode ?? 'on file'}. Enter the account where commissions should be deposited.
               </div>
-            ) : (
-            <label className="flex items-start gap-3 rounded-xl border bg-muted/20 px-4 py-3">
-              <Checkbox
-                checked={useBillingAccount}
-                onCheckedChange={(checked) => setUseBillingAccount(checked === true)}
-              />
-              <div className="space-y-1">
-                <div className="text-sm font-medium text-foreground">Same as billing information</div>
-                <div className="text-xs leading-5 text-muted-foreground">
-                  Use the billing account you just entered for commission deposits too.
-                </div>
-              </div>
-            </label>
-            )}
+            ) : null}
 
             <div className="space-y-1.5">
               <Label htmlFor="deposit-bank-name">Bank Name</Label>
