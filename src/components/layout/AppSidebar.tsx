@@ -10,7 +10,7 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '
 const navItems = [
   { icon: Plus, label: 'Create', path: '/transactions/new' },
   { icon: Users, label: 'People', path: '/people', hasSubmenu: true },
-  { icon: Home, label: 'Transactions', path: '/transactions' },
+  { icon: Home, label: 'Deals', path: '/transactions' },
   { icon: DollarSign, label: 'Finances', path: '/finances' },
   { icon: Gift, label: 'Referral', path: '/referral' },
   { icon: Phone, label: 'Brokerage', path: '/contact-brokerage' },
