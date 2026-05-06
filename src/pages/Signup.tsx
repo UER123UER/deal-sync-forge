@@ -139,12 +139,12 @@ export default function Signup() {
   return (
     <div className="min-h-screen flex flex-col xl:flex-row">
       <AuthBrandPanel
-        title={'Run the brokerage,\nsupport every agent.'}
-        description="United Estates Realty gives your office one place for listings, contracts, contacts, marketing, onboarding, and payouts."
+        title={'Keep 100% of your commission.\n$98 a month, nothing else.'}
+        description="United Estates Realty is a full-service licensed brokerage. One flat fee. No transaction fees. No desk fees. Everything you close stays with you."
         items={[
-          { icon: Home, text: 'Track listings, contracts, and office tasks' },
-          { icon: User, text: 'Built-in CRM and agent support tools' },
-          { icon: CheckCircle2, text: 'Marketing, signing, and brokerage workflows' },
+          { icon: CheckCircle2, text: '100% commission — no per-deal charges, ever' },
+          { icon: Home, text: 'Full agent software included with membership' },
+          { icon: User, text: 'Earn $20/mo for every agent you refer' },
         ]}
       />
 

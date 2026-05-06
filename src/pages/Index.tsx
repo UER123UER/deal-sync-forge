@@ -6,12 +6,12 @@ import { Button } from "@/components/ui/button";
 
 const whyUs = [
   {
-    heading: "$98 / month. That's it.",
-    body: "One flat monthly fee covers everything. No desk fees, no royalty cuts, no per-transaction charges on top. What you close is yours.",
+    heading: "Keep 100% of your commission.",
+    body: "Every dollar of your commission split stays with you. We don't touch it. No transaction fees, no royalty cuts, no per-deal charges — ever. Close a $10,000 commission, keep $10,000.",
   },
   {
-    heading: "No transaction fees.",
-    body: "Other brokerages take a piece of every deal. We don't. Keep 100% of your commission split — every single closing.",
+    heading: "$98 a month. Nothing else.",
+    body: "One flat monthly fee is all you pay. No desk fees on top. No E&O add-ons. No hidden charges when you close a big deal. Just $98, every month, and that's the entire cost of your brokerage.",
   },
   {
     heading: "Software built for agents.",
@@ -79,10 +79,10 @@ export default function Index() {
                   United Estates Realty — Licensed Brokerage
                 </p>
                 <h1 className="mt-4 text-4xl font-bold leading-tight text-white sm:text-5xl lg:text-[3.25rem]">
-                  Keep 100% of your commission, no transaction fees, only $98 a month.
+                  Keep 100% of your commission. $98 a month, no transaction fees.
                 </h1>
                 <p className="mt-5 max-w-xl text-base leading-7 text-white/85 sm:text-lg">
-                  United Estates Realty is a full-service brokerage. Join for $98/month flat — no desk fees, no royalties, no per-deal charges. Everything you close is yours.
+                  United Estates Realty is a full-service licensed brokerage. Pay one flat monthly fee and keep every dollar you earn — no splits to the brokerage, no per-deal charges, no royalties. What you close is yours.
                 </p>
 
                 <div className="mt-8 flex flex-wrap gap-3">
@@ -110,9 +110,9 @@ export default function Index() {
         <section className="border-b bg-muted/40">
           <div className="mx-auto grid max-w-6xl divide-y px-4 sm:px-6 md:grid-cols-3 md:divide-x md:divide-y-0 lg:px-8">
             {[
+              { stat: "100%", label: "Commission you keep" },
               { stat: "$98", label: "Flat monthly fee" },
               { stat: "$0", label: "Transaction fees" },
-              { stat: "$20/mo", label: "Per referred agent" },
             ].map(({ stat, label }) => (
               <div key={label} className="px-6 py-8 text-center">
                 <p className="text-4xl font-bold text-primary">{stat}</p>
@@ -170,9 +170,10 @@ export default function Index() {
 
                 <ul className="mt-8 space-y-3">
                   {[
+                    "Keep 100% of your commission — every closing, no exceptions",
+                    "No transaction fees. Not $100. Not $50. Zero.",
                     "Licensed brokerage — hang your license here",
-                    "Full transaction management software",
-                    "No fee on any closing — keep 100% of your split",
+                    "Full transaction management software included",
                     "CRM, listings, marketing, and calendar tools",
                     "Referral program — earn $20/mo per active agent you refer",
                     "Brokerage support and compliance",
@@ -268,10 +269,10 @@ export default function Index() {
           <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
             <div className="max-w-2xl">
               <h2 className="text-3xl font-bold sm:text-4xl">
-                Ready to hang your license with a brokerage that actually works for you?
+                Stop giving away your commission. Join a brokerage that lets you keep it.
               </h2>
               <p className="mt-4 text-base leading-7 text-white/80">
-                $98 a month. No transaction fees. Full software. Join United Estates Realty today.
+                100% commission. $98 a month flat. No transaction fees. No surprises. Join United Estates Realty today.
               </p>
               <div className="mt-8 flex flex-wrap gap-3">
                 <Button asChild size="lg" className="bg-background text-foreground hover:bg-background/90">
