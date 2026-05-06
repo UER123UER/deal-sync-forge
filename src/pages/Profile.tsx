@@ -1017,9 +1017,6 @@ export default function Profile() {
                 >
                   {cancelLoading ? 'Opening Stripe…' : 'Manage in Stripe'}
                 </Button>
-                    </div>
-                  </div>
-                )}
               </div>
 
               {/* Delete account */}
