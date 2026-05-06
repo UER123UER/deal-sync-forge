@@ -449,7 +449,7 @@ export default function AdminPdfEditor() {
           </Button>
         </div>
 
-        {/* Font toolbar — shown when a text object is selected */}
+        {/* Font toolbar - shown when a text object is selected */}
         {selectedFontStyle && (
           <div className="flex items-center gap-1 ml-2 border-l pl-2">
             <input
@@ -594,7 +594,7 @@ export default function AdminPdfEditor() {
                 </span>
               </div>
 
-              {/* All pages stacked — scroll to navigate */}
+              {/* All pages stacked - scroll to navigate */}
               <div className="flex flex-col items-center gap-6">
                 {pages.map((page, idx) => (
                   <div key={idx} className="flex flex-col items-center gap-1">

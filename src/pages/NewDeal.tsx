@@ -333,7 +333,7 @@ export default function NewDeal() {
               </div>
             )}
 
-            {/* Step 4: Agent Search — uses real contacts */}
+            {/* Step 4: Agent Search - uses real contacts */}
             {step === 4 && (
               <div>
                 <h2 className="text-xl font-semibold mb-1 text-foreground">Seller's Agent</h2>

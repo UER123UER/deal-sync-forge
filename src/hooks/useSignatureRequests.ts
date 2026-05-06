@@ -128,7 +128,7 @@ export function useSignDocument() {
         .eq('id', recipientId);
       if (error) throw error;
 
-      // Check if all recipients signed — if so, mark request as signed
+      // Check if all recipients signed - if so, mark request as signed
       const { data: recipient } = await (supabase as any)
         .from('signature_recipients')
         .select('signature_request_id')

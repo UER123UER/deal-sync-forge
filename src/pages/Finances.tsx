@@ -16,7 +16,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 
 function parseDollar(s: string | null): number {
   if (!s) return 0;
-  // Remove currency symbols, spaces, commas — keep only digits and first decimal point
+  // Remove currency symbols, spaces, commas - keep only digits and first decimal point
   const stripped = s.replace(/[^0-9.]/g, '');
   const firstDot = stripped.indexOf('.');
   const clean = firstDot === -1
@@ -192,7 +192,7 @@ export default function Finances() {
                             <div className="space-y-1">
                               <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Created</div>
                               <div className="text-muted-foreground">
-                                {deal.created_at ? format(parseISO(deal.created_at), 'MMM d, yyyy') : '—'}
+                                {deal.created_at ? format(parseISO(deal.created_at), 'MMM d, yyyy') : '-'}
                               </div>
                             </div>
                             <div className="space-y-1">
@@ -227,7 +227,7 @@ export default function Finances() {
                               </TableCell>
                               <TableCell className="capitalize text-muted-foreground">{deal.status}</TableCell>
                               <TableCell className="text-muted-foreground">
-                                {deal.created_at ? format(parseISO(deal.created_at), 'MMM d, yyyy') : '—'}
+                                {deal.created_at ? format(parseISO(deal.created_at), 'MMM d, yyyy') : '-'}
                               </TableCell>
                               <TableCell className="text-right font-medium text-foreground">
                                 {deal.price || '$0'}

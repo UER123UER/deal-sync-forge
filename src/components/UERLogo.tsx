@@ -1,5 +1,5 @@
 interface UERLogoProps {
-  /** width in pixels — height auto-scales to preserve aspect ratio */
+  /** width in pixels - height auto-scales to preserve aspect ratio */
   width?: number;
   className?: string;
 }

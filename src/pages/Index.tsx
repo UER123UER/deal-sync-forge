@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 const whyUs = [
   {
     heading: "Keep 100% of your commission.",
-    body: "Every dollar of your commission split stays with you. We don't touch it. No transaction fees, no royalty cuts, no per-deal charges — ever. Close a $10,000 commission, keep $10,000.",
+    body: "Every dollar of your commission split stays with you. We don't touch it. No transaction fees, no royalty cuts, no per-deal charges - ever. Close a $10,000 commission, keep $10,000.",
   },
   {
     heading: "$98 a month. Nothing else.",
@@ -19,7 +19,7 @@ const whyUs = [
   },
   {
     heading: "Earn from referrals.",
-    body: "Refer a fellow agent and earn $20 every month they stay active. No cap, no expiration — it compounds as your network grows.",
+    body: "Refer a fellow agent and earn $20 every month they stay active. No cap, no expiration - it compounds as your network grows.",
   },
 ] as const;
 
@@ -76,13 +76,13 @@ export default function Index() {
             <div className="mx-auto flex min-h-[78vh] max-w-6xl flex-col justify-end px-4 pb-16 pt-20 sm:px-6 lg:px-8 lg:pb-24">
               <div className="max-w-2xl">
                 <p className="text-sm font-semibold uppercase tracking-[0.2em] text-white/70">
-                  United Estates Realty — Licensed Brokerage
+                  United Estates Realty - Licensed Brokerage
                 </p>
                 <h1 className="mt-4 text-4xl font-bold leading-tight text-white sm:text-5xl lg:text-[3.25rem]">
                   Keep 100% of your commission. No transaction fees. Only $98 a month.
                 </h1>
                 <p className="mt-5 max-w-xl text-base leading-7 text-white/85 sm:text-lg">
-                  United Estates Realty is a full-service licensed brokerage. Pay one flat monthly fee and keep every dollar you earn — no splits to the brokerage, no per-deal charges, no royalties. What you close is yours.
+                  United Estates Realty is a full-service licensed brokerage. Pay one flat monthly fee and keep every dollar you earn - no splits to the brokerage, no per-deal charges, no royalties. What you close is yours.
                 </p>
 
                 <div className="mt-8 flex flex-wrap gap-3">
@@ -106,7 +106,7 @@ export default function Index() {
           </div>
         </section>
 
-        {/* Three hard facts — the real pitch */}
+        {/* Three hard facts - the real pitch */}
         <section className="border-b bg-muted/40">
           <div className="mx-auto grid max-w-6xl divide-y px-4 sm:px-6 md:grid-cols-3 md:divide-x md:divide-y-0 lg:px-8">
             {[
@@ -146,7 +146,7 @@ export default function Index() {
           </div>
         </section>
 
-        {/* Pricing — one card, honest numbers */}
+        {/* Pricing - one card, honest numbers */}
         <section id="pricing" className="border-y bg-muted/30 py-16 sm:py-20">
           <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
             <div className="max-w-2xl">
@@ -155,7 +155,7 @@ export default function Index() {
                 Simple pricing. No surprises.
               </h2>
               <p className="mt-4 text-base leading-7 text-muted-foreground">
-                One plan. Every agent pays the same flat monthly rate and gets full access to everything — software, support, and the brokerage.
+                One plan. Every agent pays the same flat monthly rate and gets full access to everything - software, support, and the brokerage.
               </p>
             </div>
 
@@ -170,12 +170,12 @@ export default function Index() {
 
                 <ul className="mt-8 space-y-3">
                   {[
-                    "Keep 100% of your commission — every closing, no exceptions",
+                    "Keep 100% of your commission - every closing, no exceptions",
                     "No transaction fees. Not $100. Not $50. Zero.",
-                    "Licensed brokerage — hang your license here",
+                    "Licensed brokerage - hang your license here",
                     "Full transaction management software included",
                     "CRM, listings, marketing, and calendar tools",
-                    "Referral program — earn $20/mo per active agent you refer",
+                    "Referral program - earn $20/mo per active agent you refer",
                     "Brokerage support and compliance",
                   ].map((item) => (
                     <li key={item} className="flex items-start gap-3 text-sm">
@@ -198,7 +198,7 @@ export default function Index() {
           </div>
         </section>
 
-        {/* Software — what agents actually get */}
+        {/* Software - what agents actually get */}
         <section id="software" className="bg-background py-16 sm:py-20">
           <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
             <div className="grid gap-12 lg:grid-cols-2 lg:items-center">
@@ -208,7 +208,7 @@ export default function Index() {
                   Everything you need to run your business, built in.
                 </h2>
                 <p className="mt-4 text-base leading-7 text-muted-foreground">
-                  Your membership includes full access to the United Estates Realty agent platform. Not a third-party tool — our own software, built specifically for how agents work.
+                  Your membership includes full access to the United Estates Realty agent platform. Not a third-party tool - our own software, built specifically for how agents work.
                 </p>
                 <div className="mt-8">
                   <Button asChild>
@@ -242,7 +242,7 @@ export default function Index() {
                   Refer an agent. Earn every month they stay.
                 </h2>
                 <p className="mt-4 text-base leading-7 text-muted-foreground">
-                  Every agent you refer to United Estates Realty earns you $20 per month for as long as they keep their license here. Refer five agents and that's $100 a month — more than covering your own membership.
+                  Every agent you refer to United Estates Realty earns you $20 per month for as long as they keep their license here. Refer five agents and that's $100 a month - more than covering your own membership.
                 </p>
                 <p className="mt-4 text-base leading-7 text-muted-foreground">
                   There's no cap, no expiration, and no approval process. Share your referral link and the tracking is automatic.
@@ -252,7 +252,7 @@ export default function Index() {
                 {[
                   { step: "01", text: "Get your unique referral link from your agent dashboard." },
                   { step: "02", text: "Share it with any licensed agent looking for a better brokerage." },
-                  { step: "03", text: "Earn $20 every month they stay active — automatically." },
+                  { step: "03", text: "Earn $20 every month they stay active - automatically." },
                 ].map(({ step, text }) => (
                   <div key={step} className="flex items-start gap-5 border bg-background px-5 py-4">
                     <span className="mt-0.5 min-w-[2rem] text-sm font-bold text-primary">{step}</span>

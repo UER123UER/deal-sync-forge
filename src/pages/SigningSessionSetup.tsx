@@ -1331,7 +1331,7 @@ export default function SigningSessionSetup() {
                   <SelectContent>
                     {dealPeople.map((person) => (
                       <SelectItem key={person.id} value={person.id}>
-                        {person.first_name} {person.last_name} — {person.role}
+                        {person.first_name} {person.last_name} - {person.role}
                       </SelectItem>
                     ))}
                   </SelectContent>

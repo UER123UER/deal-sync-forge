@@ -419,7 +419,7 @@ export function useSaveSessionFields() {
           .in('id', oldIds);
         if (deleteError) {
           console.error('Failed to clean up old fields:', deleteError);
-          // Not fatal — new fields are already saved
+          // Not fatal - new fields are already saved
         }
       }
     },

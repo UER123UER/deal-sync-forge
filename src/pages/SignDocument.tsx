@@ -94,7 +94,7 @@ function getFieldsForRole(role: string | null | undefined): SignField[] {
 // ─── Session-based signing view ───
 function SessionSigningView({ token }: { token: string }) {
   const { data, isLoading, error } = useSessionByToken(token);
-  // pages[i] = { url, width, height } — rendered at 1.5x scale, displayed at natural CSS px
+  // pages[i] = { url, width, height } - rendered at 1.5x scale, displayed at natural CSS px
   const [pages, setPages] = useState<{ url: string; renderScale: number; naturalW: number; naturalH: number }[]>([]);
   const [pdfLoading, setPdfLoading] = useState(false);
   // fields with their position data
@@ -167,7 +167,7 @@ function SessionSigningView({ token }: { token: string }) {
     const rawFields = data.fields;
 
     if (rawFields.length === 0) {
-      // No fields placed — show defaults without position (below-doc fallback)
+      // No fields placed - show defaults without position (below-doc fallback)
       const defaults: PositionedField[] = [
         { id: 'default-sig', type: 'signature', label: 'Sign Here', value: '', status: 'active', page: 0, x: 0, y: 0, w: 0, h: 0 },
         { id: 'default-date', type: 'date', label: 'Date Signed', value: '', status: 'empty', page: 0, x: 0, y: 0, w: 0, h: 0 },

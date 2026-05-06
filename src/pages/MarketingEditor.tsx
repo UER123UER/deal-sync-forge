@@ -73,11 +73,11 @@ import {
 import { cn } from '@/lib/utils';
 
 // ── Layout constants ─────────────────────────────────────────────────────────
-const LEFT_PANEL_WIDTH  = 260; // px — left edit panel width
+const LEFT_PANEL_WIDTH  = 260; // px - left edit panel width
 
 // ── Alignment / Snap Guide System ───────────────────────────────────────────
 
-const SNAP_THRESHOLD = 8;   // px — snap when within this many canvas-px
+const SNAP_THRESHOLD = 8;   // px - snap when within this many canvas-px
 const GUIDE_COLOR = '#a855f7'; // purple-500
 
 interface AlignGuide {
@@ -290,7 +290,7 @@ function computeSnap(
     }
   }
 
-  // ── 3. Spacing guides — Canva-style: only show when meaningful ─────────────
+  // ── 3. Spacing guides - Canva-style: only show when meaningful ─────────────
   const snappedLeft = proposed.left + snapDX;
   const snappedTop  = proposed.top  + snapDY;
   const snappedCX   = snappedLeft + proposed.width  / 2;
@@ -335,9 +335,9 @@ function computeSnap(
 
   // ── Decide which gaps are worth showing ──────────────────────────────────
   // Strategy: only show guides/labels when there is a meaningful spacing relationship.
-  // Rule 1 — Equal gaps: two or more gaps on the same axis are equal (or within 3px)
-  // Rule 2 — Centered: the dragged block sits centered between two others (gaps are equal on both sides)
-  // Rule 3 — Near-equal snap: one gap is within SNAP_THRESHOLD of another existing gap
+  // Rule 1 - Equal gaps: two or more gaps on the same axis are equal (or within 3px)
+  // Rule 2 - Centered: the dragged block sits centered between two others (gaps are equal on both sides)
+  // Rule 3 - Near-equal snap: one gap is within SNAP_THRESHOLD of another existing gap
 
   const NEAR_EQUAL = threshold * 1.5; // px within which two gaps are considered "matching"
 
@@ -378,7 +378,7 @@ function computeSnap(
     // Also check centered case (2 gaps of equal value from a single group)
     const centered = isCentered(gaps);
 
-    if (meaningfulGroups.length === 0 && !centered) return []; // nothing useful — stay quiet
+    if (meaningfulGroups.length === 0 && !centered) return []; // nothing useful - stay quiet
 
     const result: SpacingGuide[] = [];
     const usedGaps = centered ? gaps : meaningfulGroups.flat();
@@ -844,7 +844,7 @@ export default function MarketingEditor() {
       if (saved) {
         setRecents(updated);
       } else {
-        toast.error('Auto-save failed — browser storage is full. Try clearing old designs.');
+        toast.error('Auto-save failed - browser storage is full. Try clearing old designs.');
       }
       setSaveStatus('saved');
       if (saveStatusTimerRef.current) clearTimeout(saveStatusTimerRef.current);
@@ -1177,7 +1177,7 @@ export default function MarketingEditor() {
         toast.success('Block unlocked');
       } else {
         next.add(block);
-        toast('Block locked — position is frozen');
+        toast('Block locked - position is frozen');
       }
       return next;
     });
@@ -1212,8 +1212,8 @@ export default function MarketingEditor() {
       return;
     }
 
-    // Template blocks can't be truly duplicated — reset position instead (already in toolbar via Reset)
-    toast('Template blocks can\'t be duplicated — use Reset to clear position');
+    // Template blocks can't be truly duplicated - reset position instead (already in toolbar via Reset)
+    toast('Template blocks can\'t be duplicated - use Reset to clear position');
   }, [data.blockTransforms, setData]);
 
   const deleteBlock = useCallback((block: MarketingBlockKey) => {
@@ -1388,14 +1388,14 @@ export default function MarketingEditor() {
     }
   }, [setData]);
 
-  // ── Photo upload — persists to Supabase storage ───────────────────────────
+  // ── Photo upload - persists to Supabase storage ───────────────────────────
   const handlePhotoUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     e.target.value = '';
 
     if (!id) {
-      // No deal context — fall back to temporary blob URL with a warning
+      // No deal context - fall back to temporary blob URL with a warning
       const url = URL.createObjectURL(file);
       setData((prev) => {
         const nextPhotos = [url, ...prev.photos];
@@ -1407,7 +1407,7 @@ export default function MarketingEditor() {
             : getDefaultPhotoBlocks(nextPhotos, prev.canvasWidth || 1080, prev.canvasHeight || 1080),
         };
       });
-      toast.warning('Photo added locally only — open this template from a deal to save photos permanently.');
+      toast.warning('Photo added locally only - open this template from a deal to save photos permanently.');
       return;
     }
 
@@ -1454,9 +1454,9 @@ export default function MarketingEditor() {
     }));
   }, [setData]);
 
-  // ── Personal photo upload — session-only blob URLs ─────────────────────────
+  // ── Personal photo upload - session-only blob URLs ─────────────────────────
   const handlePersonalPhotoUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    // Snapshot files BEFORE resetting the input — some browsers clear FileList on value reset
+    // Snapshot files BEFORE resetting the input - some browsers clear FileList on value reset
     const fileList = e.target.files;
     const fileArray = fileList ? Array.from(fileList) : [];
     // Reset input so the same file can be re-selected later
@@ -1485,7 +1485,7 @@ export default function MarketingEditor() {
     });
   }, [data.photoBlocks]);
 
-  // ── Drag photo onto canvas — creates a freeform poster photo ───────────────
+  // ── Drag photo onto canvas - creates a freeform poster photo ───────────────
   const handleCanvasPhotoDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     const photoUrl = e.dataTransfer.getData('text/photo-url');
@@ -1577,7 +1577,7 @@ export default function MarketingEditor() {
       toast.success('Downloaded successfully!', { id: toastId });
     } catch (err) {
       console.error('Export failed:', err);
-      toast.error('Export failed — please try again.', { id: toastId });
+      toast.error('Export failed - please try again.', { id: toastId });
     } finally {
       setExporting(false);
     }
@@ -1671,7 +1671,7 @@ export default function MarketingEditor() {
 
   // Keep a ref to blockRects so pointer handler can read latest without re-registering
   const blockRectsRef = useRef<Partial<Record<MarketingBlockKey, MarketingBlockRect>>>({});
-  // Live overlay positions during drag — updated every pointermove frame, no setState lag
+  // Live overlay positions during drag - updated every pointermove frame, no setState lag
   const liveOverlayRef = useRef<Partial<Record<MarketingBlockKey, MarketingBlockRect>>>({});
   const [, forceOverlayUpdate] = useState(0);
   useEffect(() => { blockRectsRef.current = blockRects; }, [blockRects]);
@@ -1733,7 +1733,7 @@ export default function MarketingEditor() {
           height: baseRect.height,
         };
 
-        // Compute snapping — convert other rects (they're in canvas-px already)
+        // Compute snapping - convert other rects (they're in canvas-px already)
         const snap = computeSnap(
           interaction.block,
           proposed,
@@ -1783,7 +1783,7 @@ export default function MarketingEditor() {
         return;
       }
 
-      // Resize mode — no snapping, clear guides
+      // Resize mode - no snapping, clear guides
       setAlignGuides([]);
       setSpacingGuides([]);
 
@@ -1870,10 +1870,10 @@ export default function MarketingEditor() {
       // Canvas shortcuts only when not in an input
       if (isInput) return;
 
-      // Escape — deselect block
+      // Escape - deselect block
       if (e.key === 'Escape') { setSelectedBlock(null); return; }
 
-      // Delete / Backspace — reset selected block position
+      // Delete / Backspace - reset selected block position
       if ((e.key === 'Delete' || e.key === 'Backspace') && selectedBlock) {
         e.preventDefault();
         if (isCustomTextBlock(selectedBlock) || isPhotoCanvasBlock(selectedBlock)) {
@@ -1884,7 +1884,7 @@ export default function MarketingEditor() {
         return;
       }
 
-      // Arrow keys — nudge selected block
+      // Arrow keys - nudge selected block
       if (selectedBlock && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
         e.preventDefault();
         const nudge = e.shiftKey ? 10 : 1;
@@ -1910,11 +1910,11 @@ export default function MarketingEditor() {
         return;
       }
 
-      // +/- — zoom
+      // +/- - zoom
       if (e.key === '+' || e.key === '=') { setZoom((z) => Math.min(1.5, +(z + 0.1).toFixed(2))); return; }
       if (e.key === '-') { setZoom((z) => Math.max(0.15, +(z - 0.1).toFixed(2))); return; }
       if (e.key === '0') { setZoom(1); return; }
-      // ? — toggle shortcut overlay
+      // ? - toggle shortcut overlay
       if (e.key === '?') { setShowShortcuts((s) => !s); return; }
     };
     window.addEventListener('keydown', onKey);
@@ -2033,7 +2033,7 @@ export default function MarketingEditor() {
             </Button>
           </div>
 
-          {/* Zoom — presets + fine-tune */}
+          {/* Zoom - presets + fine-tune */}
           <div className="flex items-center gap-1 border rounded-md px-1">
             <Button variant="ghost" size="icon" className="h-7 w-7" title="Zoom out (-)" onClick={() => setZoom((z) => Math.max(0.15, +(z - 0.1).toFixed(2)))}>
               <ZoomOut className="h-3.5 w-3.5" />
@@ -2166,7 +2166,7 @@ export default function MarketingEditor() {
                   )}
                 </div>
 
-                {/* Personal Photos — session-only, not saved to deal */}
+                {/* Personal Photos - session-only, not saved to deal */}
                 <div className="pb-4 border-b mb-2">
                   <div className="flex items-center justify-between mb-2">
                     <div className="text-xs font-semibold text-foreground">Personal Photos</div>
@@ -2649,7 +2649,7 @@ export default function MarketingEditor() {
                     )
                   ))}
 
-                  {/* Spacing guides — only rendered when equal/centered spacing detected */}
+                  {/* Spacing guides - only rendered when equal/centered spacing detected */}
                   {spacingGuides.map((sg, i) => {
                     const gapPx = Math.round(sg.value);
                     if (gapPx < 2) return null;
@@ -2669,7 +2669,7 @@ export default function MarketingEditor() {
                           {/* End caps */}
                           <div style={{ position: 'absolute', left: sg.from, top: midY - 4, width: 1, height: 8, background: color, opacity: 0.9 }} />
                           <div style={{ position: 'absolute', left: sg.to - 1, top: midY - 4, width: 1, height: 8, background: color, opacity: 0.9 }} />
-                          {/* Label — only when showLabel */}
+                          {/* Label - only when showLabel */}
                           {sg.showLabel && (
                             <span style={{
                               position: 'absolute',
@@ -2702,7 +2702,7 @@ export default function MarketingEditor() {
                           {/* End caps */}
                           <div style={{ position: 'absolute', top: sg.from, left: midX - 4, width: 8, height: 1, background: color, opacity: 0.9 }} />
                           <div style={{ position: 'absolute', top: sg.to - 1, left: midX - 4, width: 8, height: 1, background: color, opacity: 0.9 }} />
-                          {/* Label — only when showLabel */}
+                          {/* Label - only when showLabel */}
                           {sg.showLabel && (
                             <span style={{
                               position: 'absolute',
@@ -2785,7 +2785,7 @@ export default function MarketingEditor() {
                       className={cn(
                         'absolute group/block',
                         isPhotoBlock ? 'rounded-md' : 'rounded-xl',
-                        // Only animate when NOT dragging — during drag we want instant position
+                        // Only animate when NOT dragging - during drag we want instant position
                         !isDraggingBlock && 'transition-all',
                         selected && isLocked
                           ? 'border-2 border-amber-400 bg-amber-400/5 shadow-[0_0_0_1px_rgba(255,255,255,0.95)]'
@@ -2813,7 +2813,7 @@ export default function MarketingEditor() {
                         aria-label={`Move ${getBlockLabel(block, data.customTextBlocks, data.photoBlocks)}`}
                       />
 
-                      {/* ── Floating Action Toolbar — appears above selected block ── */}
+                      {/* ── Floating Action Toolbar - appears above selected block ── */}
                       {selected && !isDraggingBlock && (
                         <div
                           className="absolute left-1/2 -translate-x-1/2 flex items-center gap-0.5 rounded-xl border bg-background/95 shadow-xl backdrop-blur-sm px-1 py-1"
@@ -2957,7 +2957,7 @@ export default function MarketingEditor() {
                         </div>
                       )}
 
-                      {/* Label — always visible when locked; visible on hover or select otherwise */}
+                      {/* Label - always visible when locked; visible on hover or select otherwise */}
                       <div className={cn(
                         'pointer-events-none absolute left-2 top-2 rounded-full bg-background/95 px-2 py-1 text-[10px] font-semibold text-foreground shadow-sm transition-opacity flex items-center gap-1',
                         selected || isLocked ? 'opacity-100' : 'opacity-0 group-hover/block:opacity-100'
@@ -2967,7 +2967,7 @@ export default function MarketingEditor() {
                         {getBlockLabel(block, data.customTextBlocks, data.photoBlocks)}
                       </div>
 
-                      {/* Resize handle — visible on hover or when selected (disabled when locked). */}
+                      {/* Resize handle - visible on hover or when selected (disabled when locked). */}
                       {!isLocked && (
                         <button
                           type="button"
@@ -3023,7 +3023,7 @@ export default function MarketingEditor() {
             <div className="grid grid-cols-2 gap-2 mb-5">
               {CANVAS_DIMENSIONS.filter(d => d.id !== 'custom').map((dim) => {
                 const isActive = data.canvasDimensionId === dim.id;
-                // Visual aspect ratio preview box — max 40px wide or tall
+                // Visual aspect ratio preview box - max 40px wide or tall
                 const previewMaxSize = 36;
                 const previewW = dim.width >= dim.height
                   ? previewMaxSize

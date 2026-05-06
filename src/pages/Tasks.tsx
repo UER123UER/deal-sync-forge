@@ -282,7 +282,7 @@ export default function Tasks() {
                         <div className="grid grid-cols-2 gap-3 pl-7 text-sm">
                           <div className="space-y-1">
                             <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Due Date</div>
-                            <div className="text-muted-foreground">{task.due_date ? format(new Date(task.due_date), 'MMM d, yyyy') : '—'}</div>
+                            <div className="text-muted-foreground">{task.due_date ? format(new Date(task.due_date), 'MMM d, yyyy') : '-'}</div>
                           </div>
                           <div className="space-y-1">
                             <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Assignee</div>
@@ -376,7 +376,7 @@ export default function Tasks() {
                               </div>
                             </TableCell>
                             <TableCell className="align-top text-sm text-muted-foreground">
-                              {task.due_date ? format(new Date(task.due_date), 'MMM d, yyyy') : '—'}
+                              {task.due_date ? format(new Date(task.due_date), 'MMM d, yyyy') : '-'}
                             </TableCell>
                             <TableCell className="align-top text-sm text-muted-foreground">
                               {task.assignee || 'Unassigned'}

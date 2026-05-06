@@ -226,15 +226,15 @@ export default function Transactions() {
                         </div>
                         <div className="space-y-1">
                           <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Price</div>
-                          <div className="font-medium text-foreground">{deal.price || '—'}</div>
+                          <div className="font-medium text-foreground">{deal.price || '-'}</div>
                         </div>
                         <div className="space-y-1">
                           <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Critical Date</div>
-                          <div className="text-muted-foreground">{deal.listing_expiration || '—'}</div>
+                          <div className="text-muted-foreground">{deal.listing_expiration || '-'}</div>
                         </div>
                         <div className="space-y-1">
                           <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Primary Agent</div>
-                          <div className="text-muted-foreground">{deal.primary_agent || '—'}</div>
+                          <div className="text-muted-foreground">{deal.primary_agent || '-'}</div>
                         </div>
                       </div>
                     </button>
@@ -277,9 +277,9 @@ export default function Transactions() {
                               {deal.status}
                             </span>
                           </TableCell>
-                          <TableCell className="font-medium text-foreground">{deal.price || '—'}</TableCell>
-                          <TableCell className="text-muted-foreground">{deal.listing_expiration || '—'}</TableCell>
-                          <TableCell>{deal.primary_agent || '—'}</TableCell>
+                          <TableCell className="font-medium text-foreground">{deal.price || '-'}</TableCell>
+                          <TableCell className="text-muted-foreground">{deal.listing_expiration || '-'}</TableCell>
+                          <TableCell>{deal.primary_agent || '-'}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>

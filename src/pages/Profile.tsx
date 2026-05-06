@@ -78,13 +78,13 @@ export default function Profile() {
   // Sign out state
   const [signingOut, setSigningOut] = useState(false);
 
-  // Live validation — billing form
+  // Live validation - billing form
   const billingRoutingResult = validateRoutingNumber(newRouting);
   const billingAccountResult = validateAccountNumber(newAccountNum);
   const billingConfirmResult = validateAccountConfirm(newAccountNum, newAccountNumConfirm);
   const billingFormValid = newAcctHolder.trim().length > 0 && billingRoutingResult.valid && billingAccountResult.valid && billingConfirmResult.valid;
 
-  // Live validation — direct deposit form
+  // Live validation - direct deposit form
   const ddRoutingResult = validateRoutingNumber(ddRouting);
   const ddAccountResult = validateAccountNumber(ddAccountNum);
   const ddFormValid = ddAgentName.trim().length > 0 && ddRoutingResult.valid && ddAccountResult.valid;
@@ -460,7 +460,7 @@ export default function Profile() {
               {/* Email (read-only) */}
               <div className="mb-5">
                 <Label className="text-xs text-muted-foreground uppercase tracking-wide">Email Address</Label>
-                <p className="mt-1 text-sm font-medium text-foreground">{user?.email ?? '—'}</p>
+                <p className="mt-1 text-sm font-medium text-foreground">{user?.email ?? '-'}</p>
               </div>
 
               <form onSubmit={handleSaveProfile} className="space-y-4">
@@ -623,7 +623,7 @@ export default function Profile() {
               <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50 border">
                 <div>
                   <p className="text-xs text-muted-foreground uppercase tracking-wide">Subscription Status</p>
-                  <p className="text-sm font-semibold text-foreground capitalize">{profile?.subscription_status ?? '—'}</p>
+                  <p className="text-sm font-semibold text-foreground capitalize">{profile?.subscription_status ?? '-'}</p>
                 </div>
                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                   profile?.subscription_status === 'active'

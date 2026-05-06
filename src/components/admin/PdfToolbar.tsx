@@ -1,4 +1,4 @@
-// Tool mode types — UI toolbar replaced by PdfEditorSidebar
+// Tool mode types - UI toolbar replaced by PdfEditorSidebar
 export type ToolMode =
   | 'select'
   | 'text'

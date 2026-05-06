@@ -509,14 +509,14 @@ export default function DealDetail() {
                   <div className="w-[11px] h-[11px] rounded-full border-2 border-muted-foreground bg-background flex-shrink-0 mt-0.5 z-10" />
                   <div className="flex flex-1 flex-col gap-1 text-sm sm:flex-row sm:items-start sm:justify-between">
                     <span className="text-muted-foreground">Listing Expiration</span>
-                    <span className="text-foreground">{deal.listing_expiration || '—'}</span>
+                    <span className="text-foreground">{deal.listing_expiration || '-'}</span>
                   </div>
                 </div>
                 <div className="flex items-start gap-3 relative">
                   <div className="w-[11px] h-[11px] rounded-full border-2 border-muted-foreground bg-background flex-shrink-0 mt-0.5 z-10" />
                   <div className="flex flex-1 flex-col gap-1 text-sm sm:flex-row sm:items-start sm:justify-between">
                     <span className="text-muted-foreground">Listing Start Date</span>
-                    <span className="text-foreground">{deal.listing_start_date || '—'}</span>
+                    <span className="text-foreground">{deal.listing_start_date || '-'}</span>
                   </div>
                 </div>
               </div>
@@ -580,7 +580,7 @@ export default function DealDetail() {
                     <div key={o.id} className="flex flex-col gap-2 rounded-md border px-3 py-2 text-sm sm:flex-row sm:items-center sm:justify-between">
                       <div>
                         <span className="text-foreground font-medium">{o.amount}</span>
-                        <span className="text-muted-foreground ml-2">— {o.buyer_name}</span>
+                        <span className="text-muted-foreground ml-2">- {o.buyer_name}</span>
                       </div>
                       <button onClick={() => deleteOffer.mutateAsync({ id: o.id, dealId: id! })} className="text-destructive hover:bg-muted rounded p-0.5"><Trash2 className="w-3 h-3" /></button>
                     </div>
@@ -800,7 +800,7 @@ export default function DealDetail() {
         </div>
       )}
 
-      {/* Marketing Tab — Template Gallery */}
+      {/* Marketing Tab - Template Gallery */}
       {activeTab === 'Marketing' && (
         <div className="flex-1 overflow-auto p-4 sm:p-6">
           <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -808,7 +808,7 @@ export default function DealDetail() {
           </div>
           {/* Category filter chips */}
           <div className="flex flex-wrap gap-2 mb-6">
-            {/* Recent pill — shown only when there are saved sessions */}
+            {/* Recent pill - shown only when there are saved sessions */}
             {dealRecents.length > 0 && (
               <button
                 onClick={() => { setShowRecentOnly(!showRecentOnly); setMarketingCategory(null); }}
@@ -972,7 +972,7 @@ export default function DealDetail() {
                           setContactDropdownOpen(false);
                         }}
                       >
-                        {c.first_name} {c.last_name}{c.email ? ` — ${c.email}` : ''}
+                        {c.first_name} {c.last_name}{c.email ? ` - ${c.email}` : ''}
                       </button>
                     ))}
                   </div>

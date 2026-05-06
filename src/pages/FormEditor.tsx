@@ -19,7 +19,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.j
 
 const PDF_SCALE = 2.0;
 
-// Field coordinate map — calibrated from Ahmed Mendez autofilled ERS-21tb reference
+// Field coordinate map - calibrated from Ahmed Mendez autofilled ERS-21tb reference
 const FIELD_MAP: Record<string, { page: number; x: number; y: number; width: number; fontSize: number; fieldKey: string }> = {
   sellerName:        { page: 0, x: 55,  y: 62,  width: 480, fontSize: 11, fieldKey: 'sellerName' },
   brokerCompany:     { page: 0, x: 82,  y: 84,  width: 440, fontSize: 11, fieldKey: 'brokerCompany' },
@@ -630,7 +630,7 @@ export default function FormEditor() {
           )}
 
           <h1 className="text-sm font-semibold text-foreground truncate flex-1 text-center">
-            Prepare for Signing — {checklistItem?.name || 'Listing Agreement'}
+            Prepare for Signing - {checklistItem?.name || 'Listing Agreement'}
           </h1>
 
           <div className="flex items-center gap-2">
@@ -643,7 +643,7 @@ export default function FormEditor() {
 
         {/* Prep Body */}
         <div className="flex-1 flex overflow-hidden">
-          {/* PDF Canvas area — all pages stacked */}
+          {/* PDF Canvas area - all pages stacked */}
           <div className="flex-1 overflow-auto py-8">
             <div className="flex flex-col items-center gap-6">
               {pages.map((page, idx) => (
@@ -772,7 +772,7 @@ export default function FormEditor() {
         </button>
       </div>
 
-      {/* Document Body — all pages stacked */}
+      {/* Document Body - all pages stacked */}
       <div className="flex-1 overflow-auto py-8">
         <div className="flex flex-col items-center gap-6">
           {pages.map((page, idx) => (
