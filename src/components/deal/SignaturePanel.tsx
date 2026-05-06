@@ -128,7 +128,7 @@ export function SignaturePanel({ open, onClose, documentName, contacts, dealId, 
         initial={{ x: '100%' }}
         animate={{ x: 0 }}
         transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-        className="fixed right-0 top-0 bottom-0 w-full md:w-[400px] max-w-full bg-background border-l shadow-xl z-50 flex flex-col"
+        className="fixed right-0 top-0 bottom-16 lg:bottom-0 w-full md:w-[400px] max-w-full bg-background border-l shadow-xl z-50 flex flex-col"
       >
         {/* Header */}
         <div className="h-14 border-b flex items-center px-4 justify-between flex-shrink-0">
