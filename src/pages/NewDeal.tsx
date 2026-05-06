@@ -410,10 +410,10 @@ export default function NewDeal() {
                       </div>
                     )}
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div><Label className="text-xs">Role</Label><Input value={sellerForm.role} onChange={(e) => setSellerForm((f) => ({ ...f, role: e.target.value }))} className="mt-1" /></div>
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <Label className="text-xs">First Name <span className="text-destructive">*</span></Label>
                       <Input value={sellerForm.firstName} onChange={(e) => { setSellerForm((f) => ({ ...f, firstName: e.target.value })); setSellerErrors((e2) => ({ ...e2, firstName: false })); }} className={cn('mt-1', sellerErrors.firstName && 'border-destructive')} />
@@ -425,7 +425,7 @@ export default function NewDeal() {
                       {sellerErrors.lastName && <p className="text-xs text-destructive mt-1">Required</p>}
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div><Label className="text-xs">Email</Label><Input type="email" value={sellerForm.email} onChange={(e) => setSellerForm((f) => ({ ...f, email: e.target.value }))} className="mt-1" /></div>
                     <div><Label className="text-xs">Phone</Label><Input value={sellerForm.phone} onChange={(e) => setSellerForm((f) => ({ ...f, phone: e.target.value }))} className="mt-1" /></div>
                   </div>
@@ -444,10 +444,10 @@ export default function NewDeal() {
                 <h2 className="text-xl font-semibold mb-1 text-foreground">Seller Agent Details</h2>
                 <p className="text-sm text-muted-foreground mb-6">Complete the agent information.</p>
                 <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div><Label className="text-xs">Role</Label><Input value={agentForm.role} onChange={(e) => setAgentForm((f) => ({ ...f, role: e.target.value }))} className="mt-1" /></div>
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <Label className="text-xs">First Name <span className="text-destructive">*</span></Label>
                       <Input value={agentForm.firstName} onChange={(e) => { setAgentForm((f) => ({ ...f, firstName: e.target.value })); setAgentErrors((e2) => ({ ...e2, firstName: false })); }} className={cn('mt-1', agentErrors.firstName && 'border-destructive')} />
@@ -457,12 +457,12 @@ export default function NewDeal() {
                       <Input value={agentForm.lastName} onChange={(e) => { setAgentForm((f) => ({ ...f, lastName: e.target.value })); setAgentErrors((e2) => ({ ...e2, lastName: false })); }} className={cn('mt-1', agentErrors.lastName && 'border-destructive')} />
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div><Label className="text-xs">Email</Label><Input type="email" value={agentForm.email} onChange={(e) => setAgentForm((f) => ({ ...f, email: e.target.value }))} className="mt-1" /></div>
                     <div><Label className="text-xs">Phone</Label><Input value={agentForm.phone} onChange={(e) => setAgentForm((f) => ({ ...f, phone: e.target.value }))} className="mt-1" /></div>
                   </div>
                   <div><Label className="text-xs">Company / Trust</Label><Input value={agentForm.company} onChange={(e) => setAgentForm((f) => ({ ...f, company: e.target.value }))} className="mt-1" /></div>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div><Label className="text-xs">MLS ID</Label><Input value={agentForm.mlsId} onChange={(e) => setAgentForm((f) => ({ ...f, mlsId: e.target.value }))} className="mt-1" /></div>
                     <div>
                       <Label className="text-xs">MLS <span className="text-destructive">*</span></Label>
