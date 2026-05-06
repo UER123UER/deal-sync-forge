@@ -227,14 +227,28 @@ export default function Signup() {
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="agent-number">Agent Number</Label>
-              <Input
-                id="agent-number"
-                placeholder="Enter your active agent number"
-                value={agentNumber}
-                onChange={(e) => setAgentNumber(e.target.value)}
-                required
-              />
+              <Label htmlFor="license-digits">Real Estate License Number</Label>
+              <div className="flex gap-2">
+                <select
+                  value={licensePrefix}
+                  onChange={(e) => setLicensePrefix(e.target.value as 'BK' | 'SL')}
+                  className="h-10 rounded-md border border-input bg-background px-3 text-sm text-foreground focus-visible:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/20"
+                  aria-label="License type"
+                >
+                  <option value="SL">SL</option>
+                  <option value="BK">BK</option>
+                </select>
+                <span className="self-center text-muted-foreground">-</span>
+                <Input
+                  id="license-digits"
+                  inputMode="numeric"
+                  placeholder="1234567"
+                  maxLength={7}
+                  value={licenseDigits}
+                  onChange={(e) => setLicenseDigits(e.target.value.replace(/\D/g, '').slice(0, 7))}
+                  required
+                />
+              </div>
             </div>
 
             <div className="space-y-1.5">
