@@ -264,6 +264,28 @@ export default function Index() {
           </div>
         </section>
 
+        {/* Training — coming soon */}
+        <section className="bg-background py-16 sm:py-20">
+          <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+            <div className="flex flex-col gap-6 border-l-2 border-primary pl-6 md:flex-row md:items-center md:justify-between">
+              <div className="max-w-xl">
+                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">Coming Soon</p>
+                <h2 className="mt-2 text-2xl font-bold text-foreground sm:text-3xl">
+                  Agent training, built into the platform.
+                </h2>
+                <p className="mt-3 text-base leading-7 text-muted-foreground">
+                  We're building out a full training library for United Estates Realty agents — contracts, compliance, prospecting, and how to get the most out of the software. It'll be included with your membership, no extra cost.
+                </p>
+              </div>
+              <div className="shrink-0">
+                <span className="inline-block border border-primary/30 bg-primary/5 px-4 py-2 text-sm font-semibold text-primary">
+                  Training Coming Soon
+                </span>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* CTA */}
         <section className="py-16 text-white sm:py-20" style={{ backgroundColor: "hsl(var(--sidebar-bg))" }}>
           <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
