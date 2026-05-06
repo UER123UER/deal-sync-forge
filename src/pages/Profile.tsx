@@ -370,13 +370,13 @@ export default function Profile() {
     setCancelLoading(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      const res = await supabase.functions.invoke('cancel-subscription', {
+      const res = await supabase.functions.invoke('customer-portal', {
         headers: { Authorization: `Bearer ${session?.access_token}` },
       });
       if (res.error) throw new Error(res.error.message);
-      toast({ title: 'Subscription canceled', description: 'Your subscription has been canceled. You will not be charged again.' });
-      refreshProfile();
-      setCancelStep('idle');
+      const url = (res.data as { url?: string } | null)?.url;
+      if (!url) throw new Error('Could not open billing portal');
+      window.location.href = url;
     } catch (err: any) {
       toast({ title: 'Error', description: err.message, variant: 'destructive' });
     } finally {
