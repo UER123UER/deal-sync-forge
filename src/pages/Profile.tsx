@@ -370,13 +370,13 @@ export default function Profile() {
     setCancelLoading(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      const res = await supabase.functions.invoke('cancel-subscription', {
+      const res = await supabase.functions.invoke('customer-portal', {
         headers: { Authorization: `Bearer ${session?.access_token}` },
       });
       if (res.error) throw new Error(res.error.message);
-      toast({ title: 'Subscription canceled', description: 'Your subscription has been canceled. You will not be charged again.' });
-      refreshProfile();
-      setCancelStep('idle');
+      const url = (res.data as { url?: string } | null)?.url;
+      if (!url) throw new Error('Could not open billing portal');
+      window.location.href = url;
     } catch (err: any) {
       toast({ title: 'Error', description: err.message, variant: 'destructive' });
     } finally {
@@ -1003,34 +1003,20 @@ export default function Profile() {
               {/* Cancel subscription */}
               <div className="rounded-lg border bg-muted/30 p-4 space-y-3">
                 <div>
-                  <p className="text-sm font-semibold text-foreground">Cancel Subscription</p>
+                  <p className="text-sm font-semibold text-foreground">Manage Subscription</p>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    Stops future billing immediately. Your account and data remain accessible until the end of the current billing period.
+                    Opens Stripe's secure billing portal where you can cancel your subscription, update your card, download invoices, or change plans.
                   </p>
                 </div>
-                {cancelStep === 'idle' ? (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="border-destructive/40 text-destructive hover:bg-destructive/5 hover:text-destructive"
-                    onClick={() => setCancelStep('confirm')}
-                    disabled={profile?.subscription_status === 'canceled'}
-                  >
-                    {profile?.subscription_status === 'canceled' ? 'Subscription already canceled' : 'Cancel Subscription'}
-                  </Button>
-                ) : (
-                  <div className="space-y-2">
-                    <p className="text-xs font-medium text-destructive">Are you sure? This will stop your subscription immediately.</p>
-                    <div className="flex gap-2">
-                      <Button size="sm" variant="destructive" onClick={handleCancelSubscription} disabled={cancelLoading}>
-                        {cancelLoading ? 'Canceling…' : 'Yes, cancel it'}
-                      </Button>
-                      <Button size="sm" variant="outline" onClick={() => setCancelStep('idle')} disabled={cancelLoading}>
-                        Keep subscription
-                      </Button>
-                    </div>
-                  </div>
-                )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-destructive/40 text-destructive hover:bg-destructive/5 hover:text-destructive"
+                  onClick={handleCancelSubscription}
+                  disabled={cancelLoading}
+                >
+                  {cancelLoading ? 'Opening Stripe…' : 'Manage in Stripe'}
+                </Button>
               </div>
 
               {/* Delete account */}
