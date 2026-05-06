@@ -108,11 +108,11 @@ const ACTIVITY_COLORS: Record<ActivityType, string> = {
 const EMAIL_TEMPLATES = [
   { label: 'Follow-up check-in', body: `Hi {name},\n\nJust wanted to check in and see how things are going. Are you still looking for a property, or is there anything I can help with?\n\nBest,` },
   { label: 'New listing alert', body: `Hi {name},\n\nI just came across a listing I think you'd love! Let me know if you'd like more details or want to schedule a showing.\n\nBest,` },
-  { label: 'Market update', body: `Hi {name},\n\nI wanted to share a quick market update for your area. Values have been moving — would love to chat about what it means for you.\n\nBest,` },
+  { label: 'Market update', body: `Hi {name},\n\nI wanted to share a quick market update for your area. Values have been moving - would love to chat about what it means for you.\n\nBest,` },
   { label: 'Thank you after meeting', body: `Hi {name},\n\nThank you so much for your time today. It was great connecting! I'll follow up with the details we discussed.\n\nBest,` },
 ];
 const SMS_TEMPLATES = [
-  { label: 'Quick check-in', body: `Hey {name}! Just checking in — anything I can help with on your real estate journey?` },
+  { label: 'Quick check-in', body: `Hey {name}! Just checking in - anything I can help with on your real estate journey?` },
   { label: 'New listing', body: `Hi {name}! I found a listing that matches what you're looking for. Want me to send the details?` },
   { label: 'Reminder', body: `Hi {name}, just a friendly reminder about our appointment. Looking forward to connecting!` },
 ];
@@ -132,9 +132,9 @@ function getInitials(c: ContactRow) {
 }
 
 function formatDate(date: string | null): string {
-  if (!date) return '—';
+  if (!date) return '-';
   try { return format(parseISO(date), 'MMM d, yyyy'); }
-  catch { return '—'; }
+  catch { return '-'; }
 }
 
 function nextTouchStatus(date: string | null): { label: string; color: string } | null {
@@ -233,7 +233,7 @@ function CopyInfoRow({
   );
 }
 
-// ── Contact detail panel — activity timeline section ─────────────────────────
+// ── Contact detail panel - activity timeline section ─────────────────────────
 function ActivityTimeline({ contact }: { contact: ContactRow }) {
   const { data: activities = [], isLoading } = useContactActivities(contact.id);
   const createActivity = useCreateContactActivity();
@@ -910,7 +910,7 @@ export default function People() {
                       </td>
                       <td className="px-4 py-3"><StageBadge stageId={stage} /></td>
                       <td className="px-4 py-3"><PriorityBadge contact={contact} /></td>
-                      <td className="px-4 py-3 text-xs text-muted-foreground">{source || '—'}</td>
+                      <td className="px-4 py-3 text-xs text-muted-foreground">{source || '-'}</td>
                       <td className="px-4 py-3">
                         <div className="flex flex-col gap-0.5">
                           {contact.email && <span className="text-xs text-muted-foreground flex items-center gap-1"><Mail className="w-3 h-3" />{contact.email}</span>}
@@ -918,10 +918,10 @@ export default function People() {
                         </div>
                       </td>
                       <td className="px-4 py-3">
-                        {touch ? <span className={cn('text-xs', touch.color)}>{touch.label}</span> : <span className="text-xs text-muted-foreground">—</span>}
+                        {touch ? <span className={cn('text-xs', touch.color)}>{touch.label}</span> : <span className="text-xs text-muted-foreground">-</span>}
                       </td>
                       <td className="px-4 py-3">
-                        {dealCount > 0 ? <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full">{dealCount}</span> : <span className="text-xs text-muted-foreground">—</span>}
+                        {dealCount > 0 ? <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full">{dealCount}</span> : <span className="text-xs text-muted-foreground">-</span>}
                       </td>
                       <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                         <DropdownMenu>
@@ -1341,7 +1341,7 @@ export default function People() {
       {/* CSV Dialog */}
       <Dialog open={csvDialogOpen} onOpenChange={setCsvDialogOpen}>
         <DialogContent className="max-w-2xl">
-          <DialogHeader><DialogTitle>Import CSV — {csvPreview.length} rows</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>Import CSV - {csvPreview.length} rows</DialogTitle></DialogHeader>
           <div className="max-h-60 overflow-auto border rounded-lg">
             <table className="w-full text-xs">
               <thead><tr className="border-b bg-muted">{csvPreview[0] && Object.keys(csvPreview[0]).slice(0, 6).map((k) => <th key={k} className="px-3 py-1.5 text-left font-medium text-muted-foreground">{k}</th>)}</tr></thead>

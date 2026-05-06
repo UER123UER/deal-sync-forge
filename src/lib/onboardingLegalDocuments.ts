@@ -115,7 +115,7 @@ export function getIndependentContractorAgreementDocument(): OnboardingLegalDocu
         ],
       },
       {
-        title: '9. Legal Compliance — Consumer Protection & Communications Laws',
+        title: '9. Legal Compliance - Consumer Protection & Communications Laws',
         bullets: [
           'National Do Not Call Registry / TCPA: Associate shall scrub solicitation lists against the National Do Not Call Registry and any applicable state list, maintain an internal do-not-call list, honor opt-out requests within thirty (30) days, and bear all compliance costs.',
           'Telephone Consumer Protection Act: Associate shall not use auto-dialers, artificial voice, or prerecorded calls or texts where prior express written consent is required, and remains solely liable for TCPA claims and statutory damages.',
@@ -142,7 +142,7 @@ export function getIndependentContractorAgreementDocument(): OnboardingLegalDocu
         ],
       },
       {
-        title: '12. Commission Handling — Florida Law',
+        title: '12. Commission Handling - Florida Law',
         paragraphs: [
           'All commissions and compensation related to real estate transactions must flow through Broker\'s escrow or operating account as required by Florida Statute Section 475. Associate may not receive commission payments directly from buyers, sellers, landlords, tenants, closing agents, or title companies.',
         ],
@@ -237,7 +237,7 @@ export function getPolicyAcknowledgmentDocument(): OnboardingLegalDocument {
         ],
       },
       {
-        title: '7. Commission Handling — Florida Law',
+        title: '7. Commission Handling - Florida Law',
         paragraphs: [
           'All commissions must flow through Broker\'s account as required by Florida law. Associate may not receive commission payments directly from any party. Violation is grounds for immediate termination and DBPR reporting.',
         ],

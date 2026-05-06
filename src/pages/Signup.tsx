@@ -142,13 +142,13 @@ export default function Signup() {
         title={'Keep 100% of your commission.\n$98 a month, nothing else.'}
         description="United Estates Realty is a full-service licensed brokerage. One flat fee. No transaction fees. No desk fees. Everything you close stays with you."
         items={[
-          { icon: CheckCircle2, text: '100% commission — no per-deal charges, ever' },
+          { icon: CheckCircle2, text: '100% commission - no per-deal charges, ever' },
           { icon: Home, text: 'Full agent software included with membership' },
           { icon: User, text: 'Earn $20/mo for every agent you refer' },
         ]}
       />
 
-      {/* Right panel — form */}
+      {/* Right panel - form */}
       <div className="flex-1 overflow-auto bg-background px-4 py-6 sm:px-6 lg:px-8">
         <div className="flex min-h-full items-center justify-center">
         <div className="w-full max-w-md space-y-6">

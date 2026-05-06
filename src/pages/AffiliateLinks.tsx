@@ -140,7 +140,7 @@ export default function AffiliateLinks() {
       <div className="flex-1 overflow-auto p-6">
         <div className="max-w-4xl mx-auto space-y-6">
           <p className="text-sm text-muted-foreground">
-            Save and share referral links for your trusted partners — mortgage brokers, inspectors, title companies, and more.
+            Save and share referral links for your trusted partners - mortgage brokers, inspectors, title companies, and more.
             Copy a link any time to share it with a client.
           </p>
 
@@ -225,7 +225,7 @@ export default function AffiliateLinks() {
           <div className="space-y-4 py-2">
             <div>
               <Label htmlFor="aff-name">Partner Name</Label>
-              <Input id="aff-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. John Smith — ABC Mortgage" />
+              <Input id="aff-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. John Smith - ABC Mortgage" />
             </div>
             <div>
               <Label htmlFor="aff-category">Category</Label>

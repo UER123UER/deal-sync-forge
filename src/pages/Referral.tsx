@@ -67,7 +67,7 @@ export default function Referral() {
   }, [profile?.referral_code]);
 
   // Use the permanent code from the user's profile
-  const referralCode = profile?.referral_code ?? '—';
+  const referralCode = profile?.referral_code ?? '-';
   const referralLink = profile?.referral_code
     ? `${window.location.origin}/signup?ref=${profile.referral_code}`
     : '';
@@ -120,7 +120,7 @@ export default function Referral() {
             <MetricCard
               icon={DollarSign}
               label="Total Earned"
-              value={loadingCount ? '—' : `$${totalEarnings}`}
+              value={loadingCount ? '-' : `$${totalEarnings}`}
               description="Accrued recurring rewards from active referred subscriptions."
               tone="primary"
             />

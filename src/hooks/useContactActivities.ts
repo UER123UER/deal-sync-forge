@@ -23,7 +23,7 @@ export interface ContactActivity {
 // UNTIL a real contact_activities table is created. We use the note content as JSON.
 // Format stored: JSON string { type, content, contact_id }
 // We use the deal_notes table with deal_id = contact_id (Supabase allows any UUID)
-// This is a safe workaround — no schema change needed.
+// This is a safe workaround - no schema change needed.
 
 const ACTIVITY_KEY = (contactId: string) => ['contact_activities', contactId];
 

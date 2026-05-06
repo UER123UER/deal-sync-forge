@@ -39,7 +39,7 @@ export default function Inbox() {
         </div>
         <h2 className="text-lg font-semibold text-foreground mb-2">See your emails here!</h2>
         <p className="text-sm text-muted-foreground text-center max-w-md mb-8">
-          Connect your Google or Outlook account to see your emails, send messages, and stay on top of your communication — all in one place.
+          Connect your Google or Outlook account to see your emails, send messages, and stay on top of your communication - all in one place.
         </p>
         <div className="flex gap-3">
           <Button variant="outline" className="gap-2" onClick={() => setGoogleDialogOpen(true)}>

@@ -163,8 +163,8 @@ export function SignaturePanel({ open, onClose, documentName, contacts, dealId, 
                     className="rounded border-input"
                   />
                   {c.firstName} {c.lastName} ({c.role})
-                  {c.email && <span className="text-xs text-muted-foreground">— {c.email}</span>}
-                  {!c.email && <span className="text-xs text-destructive">— no email</span>}
+                  {c.email && <span className="text-xs text-muted-foreground">- {c.email}</span>}
+                  {!c.email && <span className="text-xs text-destructive">- no email</span>}
                 </label>
               ))}
               <button onClick={() => toast.info('Add recipient coming soon')} className="text-sm text-primary hover:underline flex items-center gap-1">

@@ -19,7 +19,7 @@ export function validateRoutingNumber(routing: string): {
     1 * (d[2] + d[5] + d[8]);
 
   if (checksum % 10 !== 0) {
-    return { valid: false, message: 'Invalid routing number — please double-check' };
+    return { valid: false, message: 'Invalid routing number - please double-check' };
   }
   return { valid: true, message: 'Valid routing number ✓' };
 }

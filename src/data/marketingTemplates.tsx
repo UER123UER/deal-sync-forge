@@ -511,7 +511,7 @@ function renderHeadlineBlock(
     );
   }
 
-  // h1 — Serif Split (default)
+  // h1 - Serif Split (default)
   return (
     <div
       style={{
@@ -629,7 +629,7 @@ function buildTemplate(
     name,
     category,
     type: 'post',
-    // Default size — overridden at render time by data.canvasWidth/canvasHeight
+    // Default size - overridden at render time by data.canvasWidth/canvasHeight
     width: 1080,
     height: 1080,
     thumbnail: '',
