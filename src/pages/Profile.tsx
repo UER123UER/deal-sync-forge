@@ -78,6 +78,12 @@ export default function Profile() {
   // Sign out state
   const [signingOut, setSigningOut] = useState(false);
 
+  // Leave brokerage state
+  const [cancelStep, setCancelStep] = useState<'idle' | 'confirm'>('idle');
+  const [cancelLoading, setCancelLoading] = useState(false);
+  const [deleteStep, setDeleteStep] = useState<'idle' | 'confirm'>('idle');
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
   // Live validation - billing form
   const billingRoutingResult = validateRoutingNumber(newRouting);
   const billingAccountResult = validateAccountNumber(newAccountNum);
@@ -357,6 +363,42 @@ export default function Profile() {
     setSigningOut(true);
     await signOut();
     navigate('/auth');
+  };
+
+  // Cancel subscription
+  const handleCancelSubscription = async () => {
+    setCancelLoading(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await supabase.functions.invoke('cancel-subscription', {
+        headers: { Authorization: `Bearer ${session?.access_token}` },
+      });
+      if (res.error) throw new Error(res.error.message);
+      toast({ title: 'Subscription canceled', description: 'Your subscription has been canceled. You will not be charged again.' });
+      refreshProfile();
+      setCancelStep('idle');
+    } catch (err: any) {
+      toast({ title: 'Error', description: err.message, variant: 'destructive' });
+    } finally {
+      setCancelLoading(false);
+    }
+  };
+
+  // Delete account
+  const handleDeleteAccount = async () => {
+    setDeleteLoading(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await supabase.functions.invoke('delete-account', {
+        headers: { Authorization: `Bearer ${session?.access_token}` },
+      });
+      if (res.error) throw new Error(res.error.message);
+      await signOut();
+      navigate('/');
+    } catch (err: any) {
+      toast({ title: 'Error', description: err.message, variant: 'destructive' });
+      setDeleteLoading(false);
+    }
   };
 
   return (
@@ -941,6 +983,86 @@ export default function Profile() {
               >
                 {signingOut ? 'Signing out…' : 'Sign Out'}
               </Button>
+            </CardContent>
+          </Card>
+
+          {/* Leave the Brokerage Card */}
+          <Card className="border-destructive/40">
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-lg bg-destructive/10 flex items-center justify-center">
+                  <XCircle className="w-4 h-4 text-destructive" />
+                </div>
+                <div>
+                  <CardTitle className="text-base">Leave the Brokerage</CardTitle>
+                  <CardDescription className="text-xs">Cancel your membership or permanently delete your account</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Cancel subscription */}
+              <div className="rounded-lg border bg-muted/30 p-4 space-y-3">
+                <div>
+                  <p className="text-sm font-semibold text-foreground">Cancel Subscription</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Stops future billing immediately. Your account and data remain accessible until the end of the current billing period.
+                  </p>
+                </div>
+                {cancelStep === 'idle' ? (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="border-destructive/40 text-destructive hover:bg-destructive/5 hover:text-destructive"
+                    onClick={() => setCancelStep('confirm')}
+                    disabled={profile?.subscription_status === 'canceled'}
+                  >
+                    {profile?.subscription_status === 'canceled' ? 'Subscription already canceled' : 'Cancel Subscription'}
+                  </Button>
+                ) : (
+                  <div className="space-y-2">
+                    <p className="text-xs font-medium text-destructive">Are you sure? This will stop your subscription immediately.</p>
+                    <div className="flex gap-2">
+                      <Button size="sm" variant="destructive" onClick={handleCancelSubscription} disabled={cancelLoading}>
+                        {cancelLoading ? 'Canceling…' : 'Yes, cancel it'}
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => setCancelStep('idle')} disabled={cancelLoading}>
+                        Keep subscription
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Delete account */}
+              <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4 space-y-3">
+                <div>
+                  <p className="text-sm font-semibold text-destructive">Delete Account</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Permanently deletes your account, cancels your Stripe subscription, and removes all your data. This cannot be undone.
+                  </p>
+                </div>
+                {deleteStep === 'idle' ? (
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => setDeleteStep('confirm')}
+                  >
+                    Delete My Account
+                  </Button>
+                ) : (
+                  <div className="space-y-2">
+                    <p className="text-xs font-medium text-destructive">This is permanent and cannot be reversed. All data will be lost.</p>
+                    <div className="flex gap-2">
+                      <Button size="sm" variant="destructive" onClick={handleDeleteAccount} disabled={deleteLoading}>
+                        {deleteLoading ? 'Deleting…' : 'Yes, delete everything'}
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => setDeleteStep('idle')} disabled={deleteLoading}>
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </CardContent>
           </Card>
 
