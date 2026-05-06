@@ -100,7 +100,7 @@ export function PdfEditorSidebar({
     <div className="flex h-full">
       {/* Panel content */}
       {activeTab && (
-        <div className="w-[350px] border-l bg-card flex flex-col overflow-hidden">
+        <div className="w-full md:w-[350px] max-w-full border-l bg-card flex flex-col overflow-hidden">
           <ScrollArea className="flex-1">
             <div className="p-4">
               {activeTab === 'signers' && (

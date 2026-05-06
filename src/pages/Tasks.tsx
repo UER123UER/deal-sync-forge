@@ -441,7 +441,7 @@ export default function Tasks() {
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ duration: 0.18, ease: 'easeOut' }}
-              className="fixed inset-y-0 right-0 z-50 flex w-full max-w-xl flex-col border-l bg-background shadow-floating"
+              className="fixed top-0 bottom-16 lg:bottom-0 right-0 z-50 flex w-full max-w-xl flex-col border-l bg-background shadow-floating"
             >
               <div className="flex items-center justify-between border-b px-5 py-4">
                 <div>
