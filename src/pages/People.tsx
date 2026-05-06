@@ -709,7 +709,7 @@ export default function People() {
     <div className="flex-1 flex flex-col overflow-hidden">
 
       {/* ── Header ── */}
-      <div className="h-14 border-b flex items-center px-6 gap-3 shrink-0 bg-background">
+      <div className="border-b shrink-0 bg-background px-3 md:px-6 py-2.5 md:py-0 md:h-14 flex flex-wrap items-center gap-2 md:gap-3">
         <h1 className="text-base font-semibold text-foreground">CRM</h1>
         <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">{contacts.length.toLocaleString()}</span>
         {stats.overdue > 0 && (
@@ -717,19 +717,19 @@ export default function People() {
             <AlertCircle className="w-3 h-3" />{stats.overdue} overdue
           </span>
         )}
-        <div className="flex-1" />
-        <div className="relative w-64">
+        <div className="hidden md:block flex-1" />
+        <div className="relative w-full md:w-64 order-last md:order-none">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-          <Input placeholder="Search..." className="pl-9 h-8 text-xs" value={search} onChange={(e) => setSearch(e.target.value)} />
+          <Input placeholder="Search..." className="pl-9 h-9 md:h-8 text-xs" value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
-        <div className="flex items-center border rounded-md overflow-hidden">
+        <div className="hidden md:flex items-center border rounded-md overflow-hidden">
           <button onClick={() => setView('list')} className={cn('px-2.5 py-1.5', view === 'list' ? 'bg-primary text-primary-foreground' : 'hover:bg-muted')}><List className="w-3.5 h-3.5" /></button>
           <button onClick={() => setView('board')} className={cn('px-2.5 py-1.5', view === 'board' ? 'bg-primary text-primary-foreground' : 'hover:bg-muted')}><LayoutGrid className="w-3.5 h-3.5" /></button>
         </div>
         <input ref={csvInputRef} type="file" accept=".csv" className="hidden" onChange={handleCsvFile} />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button size="sm" className="h-8 text-xs gap-1.5"><Plus className="w-3.5 h-3.5" /> Add Contact <ChevronDown className="w-3 h-3" /></Button>
+            <Button size="sm" className="h-9 md:h-8 text-xs gap-1.5 ml-auto md:ml-0"><Plus className="w-3.5 h-3.5" /> Add Contact <ChevronDown className="w-3 h-3" /></Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem onClick={openNew}><Plus className="w-3.5 h-3.5 mr-2" /> Add manually</DropdownMenuItem>
@@ -741,7 +741,7 @@ export default function People() {
       </div>
 
       {/* ── Stats Bar ── */}
-      <div className="grid grid-cols-4 gap-px bg-border border-b shrink-0">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-border border-b shrink-0">
         {([
           {
             label: 'Total Contacts', value: stats.total, icon: Users, color: 'text-foreground',
@@ -783,17 +783,17 @@ export default function People() {
       </div>
 
       {/* ── Filter Bar ── */}
-      <div className="flex items-center gap-2 px-6 py-2 border-b bg-background shrink-0 flex-wrap">
+      <div className="flex items-center gap-2 px-3 md:px-6 py-2 border-b bg-background shrink-0 flex-wrap">
         <Filter className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
         <Select value={stageFilter} onValueChange={(v) => { setStageFilter(v); setOverdueOnly(false); }}>
-          <SelectTrigger className="h-7 text-xs w-32"><SelectValue placeholder="Stage" /></SelectTrigger>
+          <SelectTrigger className="h-9 md:h-7 text-xs flex-1 min-w-[8rem] md:flex-none md:w-32"><SelectValue placeholder="Stage" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Stages</SelectItem>
             {PIPELINE_STAGES.map((s) => <SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>)}
           </SelectContent>
         </Select>
         <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-          <SelectTrigger className="h-7 text-xs w-32"><SelectValue placeholder="Priority" /></SelectTrigger>
+          <SelectTrigger className="h-9 md:h-7 text-xs flex-1 min-w-[8rem] md:flex-none md:w-32"><SelectValue placeholder="Priority" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Priorities</SelectItem>
             {PRIORITY_TAGS.map((p) => (
@@ -804,21 +804,21 @@ export default function People() {
           </SelectContent>
         </Select>
         <Select value={roleFilter} onValueChange={setRoleFilter}>
-          <SelectTrigger className="h-7 text-xs w-32"><SelectValue placeholder="Role" /></SelectTrigger>
+          <SelectTrigger className="h-9 md:h-7 text-xs flex-1 min-w-[8rem] md:flex-none md:w-32"><SelectValue placeholder="Role" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Roles</SelectItem>
             {CONTACT_ROLES.map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}
           </SelectContent>
         </Select>
         <Select value={sourceFilter} onValueChange={setSourceFilter}>
-          <SelectTrigger className="h-7 text-xs w-32"><SelectValue placeholder="Source" /></SelectTrigger>
+          <SelectTrigger className="h-9 md:h-7 text-xs flex-1 min-w-[8rem] md:flex-none md:w-32"><SelectValue placeholder="Source" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Sources</SelectItem>
             {CONTACT_SOURCES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
           </SelectContent>
         </Select>
         <Select value={sortBy} onValueChange={(v) => setSortBy(v as typeof sortBy)}>
-          <SelectTrigger className="h-7 text-xs w-36"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="h-9 md:h-7 text-xs flex-1 min-w-[9rem] md:flex-none md:w-36"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="created">Newest First</SelectItem>
             <SelectItem value="name">Name A→Z</SelectItem>
