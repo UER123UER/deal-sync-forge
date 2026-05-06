@@ -1032,7 +1032,7 @@ export default function People() {
             <motion.div
               initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-              className="fixed right-0 top-0 bottom-0 w-full md:w-[440px] max-w-full bg-background border-l shadow-xl z-50 flex flex-col"
+              className="fixed right-0 top-0 bottom-16 lg:bottom-0 w-full md:w-[440px] max-w-full bg-background border-l shadow-xl z-50 flex flex-col"
             >
               {/* Panel header */}
               <div className="border-b flex items-center px-4 gap-2 shrink-0 py-3">
@@ -1327,7 +1327,7 @@ export default function People() {
                       </div>
                     </div>
                   </ScrollArea>
-                  <div className="border-t p-4 flex gap-2">
+                  <div className="border-t p-4 flex gap-2 pb-[max(1rem,env(safe-area-inset-bottom))]">
                     <Button variant="outline" size="sm" className="flex-1" onClick={() => panelContact ? setPanelMode('detail') : closePanel()}>Cancel</Button>
                     <Button size="sm" className="flex-1" onClick={handleSave} disabled={createContact.isPending || updateContact.isPending}>
                       {createContact.isPending || updateContact.isPending ? 'Saving…' : 'Save Contact'}
