@@ -132,7 +132,12 @@ export function useOnboardingStatus({
           : liveBillingWaived
             ? 0
             : fallbackStatus.billingMonthlyFeeAmount;
-      const [billingResult, depositResult, agreementSignaturesResult] = await Promise.all([
+      const [profileResult, billingResult, depositResult, agreementSignaturesResult] = await Promise.all([
+        supabase
+          .from('profiles')
+          .select('subscription_status, license_number')
+          .eq('id', user!.id)
+          .maybeSingle(),
         supabase
           .from('bank_accounts')
           .select('id, account_holder_name, routing_number, account_number_last4, account_type')
@@ -157,6 +162,9 @@ export function useOnboardingStatus({
       if (authError) {
         console.warn('Unable to refresh auth user during onboarding status lookup.', authError);
       }
+      if (profileResult.error) {
+        console.warn('Unable to load live profile during onboarding status lookup.', profileResult.error);
+      }
       if (billingResult.error) {
         console.warn('Unable to load billing account during onboarding status lookup.', billingResult.error);
       }
@@ -166,6 +174,8 @@ export function useOnboardingStatus({
       if (agreementSignaturesResult.error) {
         console.warn('Unable to load onboarding agreement signatures.', agreementSignaturesResult.error);
       }
+
+      const liveProfile = profileResult.data as Pick<Profile, 'subscription_status' | 'license_number'> | null;
 
       const legacyAgreementSigned = Boolean(
         liveUser.user_metadata?.brokerage_agreement_accepted &&
@@ -190,7 +200,7 @@ export function useOnboardingStatus({
       const agreementSigned = agreementBundleSigned || legacyAgreementSigned;
 
       return {
-        subscriptionStatus: fallbackStatus.subscriptionStatus,
+        subscriptionStatus: liveProfile?.subscription_status ?? fallbackStatus.subscriptionStatus,
         agreementSigned,
         agreementSignedAt:
           latestAgreementSignature ??
@@ -200,7 +210,11 @@ export function useOnboardingStatus({
           agreementSignatureRows[0]?.signer_name ??
           (liveUser.user_metadata?.brokerage_agreement_signed_name as string | undefined) ??
           null,
-        licenseNumber: fallbackStatus.licenseNumber ?? (liveUser.user_metadata?.license_number as string | undefined) ?? null,
+        licenseNumber:
+          liveProfile?.license_number ??
+          fallbackStatus.licenseNumber ??
+          (liveUser.user_metadata?.license_number as string | undefined) ??
+          null,
         hasBillingAccount: !!billingResult.data || liveBillingWaived,
         billingWaived: liveBillingWaived,
         billingPromoCode: liveBillingPromoCode ?? null,
