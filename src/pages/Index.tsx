@@ -79,7 +79,7 @@ export default function Index() {
                   United Estates Realty — Licensed Brokerage
                 </p>
                 <h1 className="mt-4 text-4xl font-bold leading-tight text-white sm:text-5xl lg:text-[3.25rem]">
-                  Keep more of what you earn. $98 a month, no transaction fees.
+                  Keep 100% of your commission, no transaction fees, only $98 a month.
                 </h1>
                 <p className="mt-5 max-w-xl text-base leading-7 text-white/85 sm:text-lg">
                   United Estates Realty is a full-service brokerage. Join for $98/month flat — no desk fees, no royalties, no per-deal charges. Everything you close is yours.
