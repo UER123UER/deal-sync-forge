@@ -91,8 +91,8 @@ const DEFAULT_CHECKLIST_DEFINITIONS = [
       }
 
       return [
-        'Exclusive Right of Sale Listing Agreement',
         'Exclusive Right of Sale Listing Agreement Transaction Broker',
+        'Exclusive Right of Sale Listing Agreement',
         'Exclusive Right Of Sale Listing Agreement Single Agent',
         'Exclusive Right of Sale Listing Agreement Consent to Transition to Transaction Broker',
         'Exclusive Right of Sale Listing Agreement No Brokerage',
