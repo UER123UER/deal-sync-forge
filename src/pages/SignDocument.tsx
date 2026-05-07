@@ -348,32 +348,23 @@ function SessionSigningView({ token }: { token: string }) {
     if (!data?.recipient) return;
     const sigField = fields.find(f => f.type === 'signature');
     try {
-      await supabase
-        .from('session_recipients')
-        .update({
-          status: 'signed',
-          signed_at: new Date().toISOString(),
-          signature_data: sigField?.value || '',
-        })
-        .eq('id', data.recipient.id);
-
-      // Persist field values back to DB
-      for (const f of fields) {
-        if (f.value && !f.id.startsWith('default-')) {
-          const existingField = data.fields.find((sessionField) => sessionField.id === f.id);
-          await supabase
-            .from('session_fields')
-            .update({ value: buildSignedSessionFieldValue(existingField?.value || null, f.value) })
-            .eq('id', f.id);
-        }
-      }
-
-      // Check if all recipients signed → mark session completed
-      const { data: allRecipients } = await supabase
-        .from('session_recipients').select('status').eq('session_id', data.session.id);
-      if (allRecipients?.every(r => r.status === 'signed')) {
-        await supabase.from('signing_sessions').update({ status: 'completed' }).eq('id', data.session.id);
-      }
+      const fieldUpdates = fields
+        .filter((f) => f.value && !f.id.startsWith('default-'))
+        .map((f) => {
+          const existingField = data.fields.find((sf) => sf.id === f.id);
+          return {
+            id: f.id,
+            value: buildSignedSessionFieldValue(existingField?.value || null, f.value),
+          };
+        });
+      const { error: submitErr } = await supabase.functions.invoke('submit-signing-session', {
+        body: {
+          token,
+          signatureData: sigField?.value || '',
+          fields: fieldUpdates,
+        },
+      });
+      if (submitErr) throw submitErr;
 
       setFinished(true);
       toast.success('Document signed successfully!');
