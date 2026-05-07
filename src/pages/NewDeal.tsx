@@ -771,8 +771,7 @@ export default function NewDeal() {
                     <div><Label className="text-xs">MLS ID</Label><Input value={agentForm.mlsId} onChange={(e) => setAgentForm((f) => ({ ...f, mlsId: e.target.value }))} className="mt-1" /></div>
                     <div>
                       <Label className="text-xs">MLS <span className="text-destructive">*</span></Label>
-                      <Input value={agentForm.mls} onChange={(e) => { setAgentForm((f) => ({ ...f, mls: e.target.value })); setAgentErrors((e2) => ({ ...e2, mls: false })); }} className={cn('mt-1', agentErrors.mls && 'border-destructive')} />
-                      {agentErrors.mls && <p className="text-xs text-destructive mt-1">MLS is required</p>}
+                      <Input value={agentForm.mls} onChange={(e) => setAgentForm((f) => ({ ...f, mls: e.target.value }))} className="mt-1" />
                     </div>
                   </div>
                   <div>
