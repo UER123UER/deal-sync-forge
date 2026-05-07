@@ -770,7 +770,7 @@ export default function NewDeal() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div><Label className="text-xs">MLS ID</Label><Input value={agentForm.mlsId} onChange={(e) => setAgentForm((f) => ({ ...f, mlsId: e.target.value }))} className="mt-1" /></div>
                     <div>
-                      <Label className="text-xs">MLS <span className="text-destructive">*</span></Label>
+                      <Label className="text-xs">MLS</Label>
                       <Input value={agentForm.mls} onChange={(e) => setAgentForm((f) => ({ ...f, mls: e.target.value }))} className="mt-1" />
                     </div>
                   </div>
