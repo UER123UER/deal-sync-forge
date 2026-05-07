@@ -263,7 +263,6 @@ export default function NewDeal() {
 
   const handleSaveAgent = async () => {
     const errors: Record<string, boolean> = {};
-    if (!agentForm.mls) errors.mls = true;
     if (!agentForm.firstName) errors.firstName = true;
     if (!agentForm.lastName) errors.lastName = true;
     if (Object.keys(errors).length) {
@@ -771,9 +770,8 @@ export default function NewDeal() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div><Label className="text-xs">MLS ID</Label><Input value={agentForm.mlsId} onChange={(e) => setAgentForm((f) => ({ ...f, mlsId: e.target.value }))} className="mt-1" /></div>
                     <div>
-                      <Label className="text-xs">MLS <span className="text-destructive">*</span></Label>
-                      <Input value={agentForm.mls} onChange={(e) => { setAgentForm((f) => ({ ...f, mls: e.target.value })); setAgentErrors((e2) => ({ ...e2, mls: false })); }} className={cn('mt-1', agentErrors.mls && 'border-destructive')} />
-                      {agentErrors.mls && <p className="text-xs text-destructive mt-1">MLS is required</p>}
+                      <Label className="text-xs">MLS</Label>
+                      <Input value={agentForm.mls} onChange={(e) => setAgentForm((f) => ({ ...f, mls: e.target.value }))} className="mt-1" />
                     </div>
                   </div>
                   <div>
