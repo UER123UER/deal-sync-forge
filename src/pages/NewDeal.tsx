@@ -263,7 +263,6 @@ export default function NewDeal() {
 
   const handleSaveAgent = async () => {
     const errors: Record<string, boolean> = {};
-    if (!agentForm.mls) errors.mls = true;
     if (!agentForm.firstName) errors.firstName = true;
     if (!agentForm.lastName) errors.lastName = true;
     if (Object.keys(errors).length) {
