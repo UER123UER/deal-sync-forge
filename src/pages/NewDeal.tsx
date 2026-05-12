@@ -659,7 +659,7 @@ export default function NewDeal() {
                   )}
                 </div>
                 <div className="mt-4 pt-4 border-t">
-                  <Button variant="outline" size="sm" onClick={() => { setAgentForm((f) => ({ ...f, firstName: '', lastName: '' })); setStep(5); }}>
+                  <Button variant="outline" size="sm" onClick={() => { setAgentForm((f) => ({ ...f, firstName: '', lastName: '' })); setStep(6); }}>
                     Enter agent manually instead
                   </Button>
                 </div>
