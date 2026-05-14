@@ -35,6 +35,19 @@ import Profile from "@/pages/Profile";
 // import SigningSessionSetup from "@/pages/SigningSessionSetup";
 // import SigningSessionPrepare from "@/pages/SigningSessionPrepare";
 import NotFound from "@/pages/NotFound";
+import { Navigate } from "react-router-dom";
+
+const AGENT_HOSTS = new Set([
+  "unitedestatesagent.com",
+  "www.unitedestatesagent.com",
+]);
+
+function HostRoot() {
+  if (typeof window !== "undefined" && AGENT_HOSTS.has(window.location.hostname)) {
+    return <Navigate to="/auth" replace />;
+  }
+  return <Index />;
+}
 
 const queryClient = new QueryClient({
   defaultOptions: {
