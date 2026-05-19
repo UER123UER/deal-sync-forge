@@ -37,16 +37,8 @@ import Profile from "@/pages/Profile";
 import NotFound from "@/pages/NotFound";
 import { Navigate } from "react-router-dom";
 
-const AGENT_HOSTS = new Set([
-  "unitedestatesagent.com",
-  "www.unitedestatesagent.com",
-]);
-
 function HostRoot() {
-  if (typeof window !== "undefined" && AGENT_HOSTS.has(window.location.hostname)) {
-    return <Navigate to="/auth" replace />;
-  }
-  return <Index />;
+  return <Navigate to="/auth" replace />;
 }
 
 const queryClient = new QueryClient({
