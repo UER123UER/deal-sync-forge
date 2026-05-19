@@ -38,7 +38,7 @@ import NotFound from "@/pages/NotFound";
 import { Navigate } from "react-router-dom";
 
 function HostRoot() {
-  return <Navigate to="/auth" replace />;
+  return <Index />;
 }
 
 const queryClient = new QueryClient({
