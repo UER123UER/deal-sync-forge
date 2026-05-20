@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { SMTPClient } from 'https://deno.land/x/denomailer@1.6.0/mod.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -8,100 +9,9 @@ const corsHeaders = {
 const OFFICE_EMAIL = 'brokerage@unitedestatesagent.com';
 const BUCKET = 'deal-photos';
 
-function chunkBase64(b64: string, size = 76): string {
-  const lines: string[] = [];
-  for (let i = 0; i < b64.length; i += size) lines.push(b64.slice(i, i + size));
-  return lines.join('\r\n');
-}
-
-function toBase64(bytes: Uint8Array): string {
-  let bin = '';
-  for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
-  return btoa(bin);
-}
-
 function displayName(stored: string): string {
   const idx = stored.indexOf('__');
   return idx === -1 ? stored : stored.slice(idx + 2);
-}
-
-async function sendMailWithAttachments(opts: {
-  user: string;
-  pass: string;
-  to: string;
-  subject: string;
-  html: string;
-  attachments: { filename: string; content: Uint8Array; mime: string }[];
-}) {
-  const conn = await Deno.connectTls({ hostname: 'smtp.gmail.com', port: 465 });
-  const encoder = new TextEncoder();
-  const decoder = new TextDecoder();
-
-  async function read() {
-    const buf = new Uint8Array(8192);
-    const n = await conn.read(buf);
-    return n ? decoder.decode(buf.subarray(0, n)) : '';
-  }
-  async function cmd(c: string) {
-    await conn.write(encoder.encode(c + '\r\n'));
-    return await read();
-  }
-  async function writeRaw(s: string) {
-    // Chunk large writes
-    const data = encoder.encode(s);
-    let offset = 0;
-    while (offset < data.length) {
-      const slice = data.subarray(offset, offset + 16384);
-      await conn.write(slice);
-      offset += slice.length;
-    }
-  }
-
-  await read();
-  await cmd('EHLO localhost');
-  await cmd('AUTH LOGIN');
-  await cmd(btoa(opts.user));
-  await cmd(btoa(opts.pass));
-  await cmd(`MAIL FROM:<${opts.user}>`);
-  await cmd(`RCPT TO:<${opts.to}>`);
-  await cmd('DATA');
-
-  const boundary = `----=_Part_${crypto.randomUUID()}`;
-  const headers = [
-    `From: United Estates Realty <${opts.user}>`,
-    `To: ${opts.to}`,
-    `Subject: ${opts.subject}`,
-    `MIME-Version: 1.0`,
-    `Content-Type: multipart/mixed; boundary="${boundary}"`,
-    ``,
-    `--${boundary}`,
-    `Content-Type: text/html; charset=UTF-8`,
-    `Content-Transfer-Encoding: 7bit`,
-    ``,
-    opts.html,
-    ``,
-  ].join('\r\n');
-
-  await writeRaw(headers);
-
-  for (const att of opts.attachments) {
-    const b64 = chunkBase64(toBase64(att.content));
-    const part = [
-      `--${boundary}`,
-      `Content-Type: ${att.mime}; name="${att.filename}"`,
-      `Content-Transfer-Encoding: base64`,
-      `Content-Disposition: attachment; filename="${att.filename}"`,
-      ``,
-      b64,
-      ``,
-    ].join('\r\n');
-    await writeRaw(part);
-  }
-
-  await writeRaw(`--${boundary}--\r\n.\r\n`);
-  await read();
-  await cmd('QUIT');
-  try { conn.close(); } catch { /* ignore */ }
 }
 
 Deno.serve(async (req) => {
@@ -117,10 +27,10 @@ Deno.serve(async (req) => {
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const smtpUser = Deno.env.get('GMAIL_USER') ?? Deno.env.get('SMTP_USER');
-    const smtpPass = Deno.env.get('GMAIL_APP_PASSWORD') ?? Deno.env.get('SMTP_PASS');
-    if (!smtpUser || !smtpPass) {
-      return new Response(JSON.stringify({ error: 'SMTP not configured' }), {
+    const user = Deno.env.get('GMAIL_USER');
+    const pass = Deno.env.get('GMAIL_APP_PASSWORD');
+    if (!user || !pass) {
+      return new Response(JSON.stringify({ error: 'GMAIL_USER / GMAIL_APP_PASSWORD not configured' }), {
         status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
@@ -129,14 +39,12 @@ Deno.serve(async (req) => {
       auth: { persistSession: false, autoRefreshToken: false },
     });
 
-    // Get deal info
     const { data: deal } = await admin
       .from('deals')
       .select('address, city, state, zip, mls_number, status, price')
       .eq('id', dealId)
       .maybeSingle();
 
-    // List checklist item folders for this deal
     const root = `checklist-documents/${dealId}`;
     const { data: itemFolders, error: listErr } = await admin.storage
       .from(BUCKET)
@@ -145,7 +53,7 @@ Deno.serve(async (req) => {
       throw listErr;
     }
 
-    const attachments: { filename: string; content: Uint8Array; mime: string }[] = [];
+    const attachments: { filename: string; content: Uint8Array; contentType: string; encoding: 'binary' }[] = [];
     for (const entry of itemFolders || []) {
       if (!entry.name) continue;
       const sub = `${root}/${entry.name}`;
@@ -156,9 +64,12 @@ Deno.serve(async (req) => {
         const { data: blob, error: dlErr } = await admin.storage.from(BUCKET).download(path);
         if (dlErr || !blob) continue;
         const buf = new Uint8Array(await blob.arrayBuffer());
-        const filename = displayName(f.name);
-        const mime = (blob as Blob).type || 'application/octet-stream';
-        attachments.push({ filename, content: buf, mime });
+        attachments.push({
+          filename: displayName(f.name),
+          content: buf,
+          contentType: (blob as Blob).type || 'application/octet-stream',
+          encoding: 'binary',
+        });
       }
     }
 
@@ -181,19 +92,34 @@ Deno.serve(async (req) => {
       </div>
     `;
 
-    await sendMailWithAttachments({
-      user: smtpUser, pass: smtpPass, to: OFFICE_EMAIL,
-      subject: `Deal Sent to Office: ${addressLine}`,
-      html,
-      attachments,
+    const client = new SMTPClient({
+      connection: {
+        hostname: 'smtp.gmail.com',
+        port: 465,
+        tls: true,
+        auth: { username: user, password: pass },
+      },
     });
+
+    try {
+      await client.send({
+        from: `United Estates Realty <${user}>`,
+        to: OFFICE_EMAIL,
+        subject: `Deal Sent to Office: ${addressLine}`,
+        content: `${attachments.length} document(s) attached.`,
+        html,
+        attachments,
+      });
+    } finally {
+      await client.close();
+    }
 
     return new Response(JSON.stringify({ success: true, attachmentCount: attachments.length }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
     console.error('send-to-office error:', error);
-    return new Response(JSON.stringify({ error: String(error) }), {
+    return new Response(JSON.stringify({ error: (error as Error).message || String(error) }), {
       status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }

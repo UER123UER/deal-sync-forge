@@ -1,3 +1,5 @@
+import { SMTPClient } from 'https://deno.land/x/denomailer@1.6.0/mod.ts';
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -5,63 +7,16 @@ const corsHeaders = {
 
 const OFFICE_EMAIL = 'brokerage@unitedestatesagent.com';
 
-async function sendMail(opts: {
-  user: string;
-  pass: string;
-  to: string;
-  subject: string;
-  html: string;
-}) {
-  const conn = await Deno.connectTls({ hostname: 'smtp.gmail.com', port: 465 });
-  const encoder = new TextEncoder();
-  const decoder = new TextDecoder();
-
-  async function read() {
-    const buf = new Uint8Array(8192);
-    const n = await conn.read(buf);
-    return n ? decoder.decode(buf.subarray(0, n)) : '';
-  }
-  async function cmd(c: string) {
-    await conn.write(encoder.encode(c + '\r\n'));
-    return await read();
-  }
-
-  await read();
-  await cmd('EHLO localhost');
-  await cmd('AUTH LOGIN');
-  await cmd(btoa(opts.user));
-  await cmd(btoa(opts.pass));
-  await cmd(`MAIL FROM:<${opts.user}>`);
-  await cmd(`RCPT TO:<${opts.to}>`);
-  await cmd('DATA');
-
-  const message = [
-    `From: United Estates Realty <${opts.user}>`,
-    `To: ${opts.to}`,
-    `Subject: ${opts.subject}`,
-    `MIME-Version: 1.0`,
-    `Content-Type: text/html; charset=UTF-8`,
-    ``,
-    opts.html,
-    `.`,
-  ].join('\r\n');
-
-  await conn.write(encoder.encode(message + '\r\n'));
-  await read();
-  await cmd('QUIT');
-  try { conn.close(); } catch { /* ignore */ }
-}
-
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
   try {
     const { email, firstName, lastName, licenseNumber, referralCode } = await req.json();
 
-    const smtpUser = Deno.env.get('GMAIL_USER') ?? Deno.env.get('SMTP_USER');
-    const smtpPass = Deno.env.get('GMAIL_APP_PASSWORD') ?? Deno.env.get('SMTP_PASS');
-    if (!smtpUser || !smtpPass) {
-      return new Response(JSON.stringify({ error: 'SMTP not configured' }), {
+    const user = Deno.env.get('GMAIL_USER');
+    const pass = Deno.env.get('GMAIL_APP_PASSWORD');
+    if (!user || !pass) {
+      return new Response(JSON.stringify({ error: 'GMAIL_USER / GMAIL_APP_PASSWORD not configured' }), {
         status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
@@ -83,18 +38,33 @@ Deno.serve(async (req) => {
       </div>
     `;
 
-    await sendMail({
-      user: smtpUser, pass: smtpPass, to: OFFICE_EMAIL,
-      subject: `New Agent Signup: ${firstName || ''} ${lastName || ''}`.trim(),
-      html,
+    const client = new SMTPClient({
+      connection: {
+        hostname: 'smtp.gmail.com',
+        port: 465,
+        tls: true,
+        auth: { username: user, password: pass },
+      },
     });
+
+    try {
+      await client.send({
+        from: `United Estates Realty <${user}>`,
+        to: OFFICE_EMAIL,
+        subject: `New Agent Signup: ${(firstName || '').trim()} ${(lastName || '').trim()}`.trim(),
+        content: 'A new agent just signed up.',
+        html,
+      });
+    } finally {
+      await client.close();
+    }
 
     return new Response(JSON.stringify({ success: true }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
     console.error('send-signup-notification error:', error);
-    return new Response(JSON.stringify({ error: String(error) }), {
+    return new Response(JSON.stringify({ error: (error as Error).message || String(error) }), {
       status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
