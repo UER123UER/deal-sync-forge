@@ -108,19 +108,6 @@ export default function Signup() {
       return;
     }
 
-    // Notify the brokerage office of the new signup (best-effort, non-blocking)
-    supabase.functions
-      .invoke('send-signup-notification', {
-        body: {
-          email,
-          firstName,
-          lastName,
-          licenseNumber: fullLicense,
-          referralCode: refCode || null,
-        },
-      })
-      .catch((err) => console.warn('signup notification failed', err));
-
     // Auto sign-in
     const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
     if (signInError) {
@@ -144,6 +131,14 @@ export default function Signup() {
           brokerage_name: 'United Estates Realty',
         })
         .eq('id', signInData.user.id);
+    }
+
+    // Notify the office of the new signup (fire-and-forget)
+    if (signInData.session?.access_token) {
+      supabase.functions.invoke('notify-signup', {
+        headers: { Authorization: `Bearer ${signInData.session.access_token}` },
+        body: { firstName, lastName, email, licenseNumber: fullLicense, referredByCode: refCode || undefined },
+      }).catch(() => { /* non-blocking */ });
     }
 
     setLoading(false);

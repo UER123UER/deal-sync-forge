@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useQuery } from '@tanstack/react-query';
 import { useDeal, useUpdateDeal, useDeleteChecklistItem, useAddDealContact, useAddChecklistItems, useToggleChecklistItem } from '@/hooks/useDeals';
+import { useAuth } from '@/hooks/useAuth';
 import { useDealNotes, useCreateDealNote, useDeleteDealNote } from '@/hooks/useDealNotes';
 import { useOffers, useCreateOffer, useDeleteOffer } from '@/hooks/useOffers';
 import { useDealPhotos, useUploadDealPhoto, useDeleteDealPhoto } from '@/hooks/useDealPhotos';
@@ -62,6 +63,7 @@ export default function DealDetail() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { data: deal, isLoading } = useDeal(id);
+  const { user, profile } = useAuth();
   const updateDeal = useUpdateDeal();
   const deleteChecklist = useDeleteChecklistItem();
   const addDealContact = useAddDealContact();
@@ -76,6 +78,7 @@ export default function DealDetail() {
   const [hiddenFormSearch, setHiddenFormSearch] = useState('');
   const [selectedHiddenForms, setSelectedHiddenForms] = useState<Set<string>>(new Set());
   const [expandedChecklistItems, setExpandedChecklistItems] = useState<Set<string>>(new Set());
+  const [sendingToOffice, setSendingToOffice] = useState(false);
 
   // Inline editing states
   const [editingMls, setEditingMls] = useState(false);
@@ -192,22 +195,25 @@ export default function DealDetail() {
 
   const handleToggleVisibility = async () => {
     if (!deal) return;
+    const turningOn = !deal.visible_to_office;
     try {
-      await updateDeal.mutateAsync({ id: deal.id, visible_to_office: !deal.visible_to_office });
-      toast.success(deal.visible_to_office ? 'Hidden from office' : 'Visible to office');
-      if (!deal.visible_to_office) {
-        try {
-          const { error } = await supabase.functions.invoke('send-to-office', {
-            body: { dealId: deal.id },
-          });
-          if (error) throw error;
-          toast.success('Documents emailed to office');
-        } catch (err) {
-          console.error('send-to-office failed', err);
-          toast.error('Failed to email documents to office');
-        }
+      await updateDeal.mutateAsync({ id: deal.id, visible_to_office: turningOn });
+      if (turningOn) {
+        setSendingToOffice(true);
+        const { data: { session } } = await supabase.auth.getSession();
+        const agentName = [profile?.first_name, profile?.last_name].filter(Boolean).join(' ') || user?.email || '';
+        const dealAddress = [deal.address, deal.city, deal.state].filter(Boolean).join(', ');
+        const items = (deal.checklist_items || []).map((item: any) => ({ id: item.id, name: item.name }));
+        await supabase.functions.invoke('notify-office', {
+          headers: { Authorization: `Bearer ${session?.access_token}` },
+          body: { dealId: deal.id, dealAddress, agentName, agentEmail: user?.email || '', checklistItems: items },
+        });
+        toast.success('Deal sent to office — brokerage has been notified');
+      } else {
+        toast.success('Hidden from office');
       }
     } catch { toast.error('Failed to update visibility'); }
+    finally { setSendingToOffice(false); }
   };
 
   const handleEmail = () => {
@@ -459,8 +465,8 @@ export default function DealDetail() {
 
         {/* Action Bar */}
         <div className="mt-4 flex flex-wrap items-stretch gap-2">
-          <Button variant="outline" size="sm" className="text-xs gap-1.5" onClick={handleToggleVisibility}>
-            <Eye className="w-3.5 h-3.5" /> {isVisibleToOffice ? 'Sent to Office' : 'Send to Office'}
+          <Button variant="outline" size="sm" className="text-xs gap-1.5" onClick={handleToggleVisibility} disabled={sendingToOffice}>
+            <Eye className="w-3.5 h-3.5" /> {sendingToOffice ? 'Sending…' : isVisibleToOffice ? 'Sent to Office' : 'Send to Office'}
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
