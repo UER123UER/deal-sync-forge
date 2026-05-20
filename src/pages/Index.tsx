@@ -3,6 +3,7 @@ import { ArrowRight, Check } from "lucide-react";
 
 import { UERLogo } from "@/components/UERLogo";
 import { Button } from "@/components/ui/button";
+import { SeoHead } from "@/components/SeoHead";
 
 const whyUs = [
   {
@@ -40,6 +41,11 @@ export default function Index() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
+      <SeoHead
+        title="United Estates Realty — 100% Commission Brokerage"
+        description="Keep 100% of your real estate commission with United Estates Realty for a flat monthly fee of $98 and zero transaction fees."
+        path="/"
+      />
       <header className="sticky top-0 z-40 border-b bg-background">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
           <Link to="/" className="flex items-center" aria-label="United Estates Realty">
