@@ -11,51 +11,25 @@ const OFFICE_EMAIL = "brokerage@unitedestatesagent.com";
 const BUCKET = "deal-photos";
 const CHECKLIST_ROOT = "checklist-documents";
 
-async function sendGmail(
-  user: string,
-  appPassword: string,
-  to: string,
-  subject: string,
-  html: string,
-): Promise<void> {
-  const conn = await Deno.connectTls({ hostname: "smtp.gmail.com", port: 465 });
-  const enc = new TextEncoder();
-  const dec = new TextDecoder();
+async function sendEmail(to: string, subject: string, html: string): Promise<void> {
+  const apiKey = Deno.env.get("RESEND_API_KEY");
+  if (!apiKey) throw new Error("RESEND_API_KEY not configured");
 
-  async function read(): Promise<string> {
-    const buf = new Uint8Array(4096);
-    const n = await conn.read(buf);
-    return n ? dec.decode(buf.subarray(0, n)) : "";
+  const res = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: { "Authorization": `Bearer ${apiKey}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      from: "United Estates Realty <onboarding@resend.dev>",
+      to,
+      subject,
+      html,
+    }),
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Resend error: ${text}`);
   }
-  async function cmd(s: string): Promise<string> {
-    await conn.write(enc.encode(s + "\r\n"));
-    return await read();
-  }
-
-  await read(); // greeting
-  await cmd("EHLO localhost");
-  await cmd("AUTH LOGIN");
-  await cmd(btoa(user));
-  await cmd(btoa(appPassword));
-  await cmd(`MAIL FROM:<${user}>`);
-  await cmd(`RCPT TO:<${to}>`);
-  await cmd("DATA");
-
-  const msg = [
-    `From: United Estates Realty <${user}>`,
-    `To: ${to}`,
-    `Subject: ${subject}`,
-    `MIME-Version: 1.0`,
-    `Content-Type: text/html; charset=UTF-8`,
-    ``,
-    html,
-    `.`,
-  ].join("\r\n");
-
-  await conn.write(enc.encode(msg + "\r\n"));
-  await read();
-  await cmd("QUIT");
-  conn.close();
 }
 
 serve(async (req) => {
@@ -85,10 +59,6 @@ serve(async (req) => {
       agentEmail: string;
       checklistItems: { id: string; name: string }[];
     };
-
-    const smtpUser = Deno.env.get("SMTP_USER");
-    const smtpPass = Deno.env.get("SMTP_PASS");
-    if (!smtpUser || !smtpPass) throw new Error("SMTP credentials not configured");
 
     // Collect all uploaded documents across checklist items
     const documents: { checklistItemName: string; fileName: string; url: string }[] = [];
@@ -143,7 +113,7 @@ serve(async (req) => {
         <div style="text-align:center;padding:16px;color:#9ca3af;font-size:12px;">United Estates Realty · Brokerage Notification</div>
       </div>`;
 
-    await sendGmail(smtpUser, smtpPass, OFFICE_EMAIL, `Deal Submitted: ${dealAddress || dealId}`, html);
+    await sendEmail(OFFICE_EMAIL, `Deal Submitted: ${dealAddress || dealId}`, html);
 
     return new Response(JSON.stringify({ success: true, documentCount: documents.length }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

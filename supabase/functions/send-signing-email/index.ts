@@ -3,51 +3,25 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-async function sendGmail(
-  user: string,
-  appPassword: string,
-  to: string,
-  subject: string,
-  html: string,
-): Promise<void> {
-  const conn = await Deno.connectTls({ hostname: 'smtp.gmail.com', port: 465 });
-  const enc = new TextEncoder();
-  const dec = new TextDecoder();
+async function sendEmail(to: string, subject: string, html: string): Promise<void> {
+  const apiKey = Deno.env.get('RESEND_API_KEY');
+  if (!apiKey) throw new Error('RESEND_API_KEY not configured');
 
-  async function read(): Promise<string> {
-    const buf = new Uint8Array(4096);
-    const n = await conn.read(buf);
-    return n ? dec.decode(buf.subarray(0, n)) : '';
+  const res = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      from: 'United Estates Realty <onboarding@resend.dev>',
+      to,
+      subject,
+      html,
+    }),
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Resend error: ${text}`);
   }
-  async function cmd(s: string): Promise<string> {
-    await conn.write(enc.encode(s + '\r\n'));
-    return await read();
-  }
-
-  await read(); // greeting
-  await cmd('EHLO localhost');
-  await cmd('AUTH LOGIN');
-  await cmd(btoa(user));
-  await cmd(btoa(appPassword));
-  await cmd(`MAIL FROM:<${user}>`);
-  await cmd(`RCPT TO:<${to}>`);
-  await cmd('DATA');
-
-  const msg = [
-    `From: United Estates Realty <${user}>`,
-    `To: ${to}`,
-    `Subject: ${subject}`,
-    `MIME-Version: 1.0`,
-    `Content-Type: text/html; charset=UTF-8`,
-    ``,
-    html,
-    `.`,
-  ].join('\r\n');
-
-  await conn.write(enc.encode(msg + '\r\n'));
-  await read();
-  await cmd('QUIT');
-  conn.close();
 }
 
 Deno.serve(async (req) => {
@@ -65,16 +39,6 @@ Deno.serve(async (req) => {
       })
     }
 
-    const smtpUser = Deno.env.get('SMTP_USER')
-    const smtpPass = Deno.env.get('SMTP_PASS')
-
-    if (!smtpUser || !smtpPass) {
-      return new Response(JSON.stringify({ error: 'SMTP credentials not configured' }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
-    }
-
     const results: { email: string; success: boolean; error?: string }[] = []
 
     for (const recipient of recipients) {
@@ -82,7 +46,7 @@ Deno.serve(async (req) => {
       const recipientName = `${firstName} ${lastName}`.trim()
       const emailSubject = subject || `Signature Required: ${sessionName || 'Document'}`
 
-      const htmlBody = `
+      const html = `
         <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;">
           <div style="background:#1a1a2e;padding:24px;border-radius:8px 8px 0 0;text-align:center;">
             <h1 style="color:#ffffff;margin:0;font-size:20px;">United Estates Realty</h1>
@@ -107,7 +71,7 @@ Deno.serve(async (req) => {
         </div>`
 
       try {
-        await sendGmail(smtpUser, smtpPass, email, emailSubject, htmlBody)
+        await sendEmail(email, emailSubject, html)
         results.push({ email, success: true })
       } catch (err) {
         console.error(`Failed to send to ${email}:`, err)
