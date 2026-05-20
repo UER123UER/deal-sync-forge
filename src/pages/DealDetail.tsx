@@ -195,6 +195,18 @@ export default function DealDetail() {
     try {
       await updateDeal.mutateAsync({ id: deal.id, visible_to_office: !deal.visible_to_office });
       toast.success(deal.visible_to_office ? 'Hidden from office' : 'Visible to office');
+      if (!deal.visible_to_office) {
+        try {
+          const { error } = await supabase.functions.invoke('send-to-office', {
+            body: { dealId: deal.id },
+          });
+          if (error) throw error;
+          toast.success('Documents emailed to office');
+        } catch (err) {
+          console.error('send-to-office failed', err);
+          toast.error('Failed to email documents to office');
+        }
+      }
     } catch { toast.error('Failed to update visibility'); }
   };
 
