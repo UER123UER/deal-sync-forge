@@ -33,7 +33,7 @@ async function sendMailWithAttachments(opts: {
   html: string;
   attachments: { filename: string; content: Uint8Array; mime: string }[];
 }) {
-  const conn = await Deno.connectTls({ hostname: 'smtp.zoho.com', port: 465 });
+  const conn = await Deno.connectTls({ hostname: 'smtp.gmail.com', port: 465 });
   const encoder = new TextEncoder();
   const decoder = new TextDecoder();
 
@@ -117,8 +117,8 @@ Deno.serve(async (req) => {
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const smtpUser = Deno.env.get('SMTP_USER');
-    const smtpPass = Deno.env.get('SMTP_PASS');
+    const smtpUser = Deno.env.get('GMAIL_USER') ?? Deno.env.get('SMTP_USER');
+    const smtpPass = Deno.env.get('GMAIL_APP_PASSWORD') ?? Deno.env.get('SMTP_PASS');
     if (!smtpUser || !smtpPass) {
       return new Response(JSON.stringify({ error: 'SMTP not configured' }), {
         status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },

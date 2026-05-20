@@ -12,7 +12,7 @@ async function sendMail(opts: {
   subject: string;
   html: string;
 }) {
-  const conn = await Deno.connectTls({ hostname: 'smtp.zoho.com', port: 465 });
+  const conn = await Deno.connectTls({ hostname: 'smtp.gmail.com', port: 465 });
   const encoder = new TextEncoder();
   const decoder = new TextDecoder();
 
@@ -58,8 +58,8 @@ Deno.serve(async (req) => {
   try {
     const { email, firstName, lastName, licenseNumber, referralCode } = await req.json();
 
-    const smtpUser = Deno.env.get('SMTP_USER');
-    const smtpPass = Deno.env.get('SMTP_PASS');
+    const smtpUser = Deno.env.get('GMAIL_USER') ?? Deno.env.get('SMTP_USER');
+    const smtpPass = Deno.env.get('GMAIL_APP_PASSWORD') ?? Deno.env.get('SMTP_PASS');
     if (!smtpUser || !smtpPass) {
       return new Response(JSON.stringify({ error: 'SMTP not configured' }), {
         status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
