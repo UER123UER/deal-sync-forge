@@ -8,6 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Mail, Lock, Eye, EyeOff, CheckCircle2, Home, User } from 'lucide-react';
 import { AuthBrandPanel } from '@/components/auth/AuthBrandPanel';
 import { UERLogo } from '@/components/UERLogo';
+import { SeoHead } from '@/components/SeoHead';
 
 export default function Auth() {
   const [loading, setLoading] = useState(false);
@@ -50,6 +51,11 @@ export default function Auth() {
 
   return (
     <div className="min-h-screen flex flex-col xl:flex-row">
+      <SeoHead
+        title="Agent Login | United Estates Realty"
+        description="Sign in to your United Estates Realty agent account to manage listings, transactions, contacts, and brokerage workflows."
+        path="/auth"
+      />
       <AuthBrandPanel
         title={'Welcome back.\nPick up where you left off.'}
         description="Your listings, transactions, contacts, and office workflows are waiting."

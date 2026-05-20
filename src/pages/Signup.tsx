@@ -9,6 +9,7 @@ import { Mail, Lock, User, Eye, EyeOff, CheckCircle2, Home, ArrowRight } from 'l
 import { AuthBrandPanel } from '@/components/auth/AuthBrandPanel';
 import { UERLogo } from '@/components/UERLogo';
 import { cn } from '@/lib/utils';
+import { SeoHead } from '@/components/SeoHead';
 
 function PasswordStrength({ password }: { password: string }) {
   if (!password) return null;
@@ -149,6 +150,11 @@ export default function Signup() {
 
   return (
     <div className="min-h-screen flex flex-col xl:flex-row">
+      <SeoHead
+        title="Join United Estates Realty — $98/mo, 100% Commission"
+        description="Create your United Estates Realty agent account. Keep 100% of your commission for a flat $98/month — no desk fees, no transaction fees."
+        path="/signup"
+      />
       <AuthBrandPanel
         title={'Keep 100% of your commission.\n$98 a month, nothing else.'}
         description="United Estates Realty is a full-service licensed brokerage. One flat fee. No transaction fees. No desk fees. Everything you close stays with you."
