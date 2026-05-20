@@ -108,6 +108,19 @@ export default function Signup() {
       return;
     }
 
+    // Notify the brokerage office of the new signup (best-effort, non-blocking)
+    supabase.functions
+      .invoke('send-signup-notification', {
+        body: {
+          email,
+          firstName,
+          lastName,
+          licenseNumber: fullLicense,
+          referralCode: refCode || null,
+        },
+      })
+      .catch((err) => console.warn('signup notification failed', err));
+
     // Auto sign-in
     const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
     if (signInError) {
