@@ -204,16 +204,24 @@ export default function DealDetail() {
         const agentName = [profile?.first_name, profile?.last_name].filter(Boolean).join(' ') || user?.email || '';
         const dealAddress = [deal.address, deal.city, deal.state].filter(Boolean).join(', ');
         const items = (deal.checklist_items || []).map((item: any) => ({ id: item.id, name: item.name }));
-        await supabase.functions.invoke('notify-office', {
+        const { data, error } = await supabase.functions.invoke('notify-office', {
           headers: { Authorization: `Bearer ${session?.access_token}` },
           body: { dealId: deal.id, dealAddress, agentName, agentEmail: user?.email || '', checklistItems: items },
         });
+        if (error || (data && (data as any).error)) {
+          // Roll back visibility so the UI matches reality.
+          try { await updateDeal.mutateAsync({ id: deal.id, visible_to_office: false }); } catch { /* noop */ }
+          const detail = (data as any)?.error || error?.message || 'Failed to email documents to office';
+          toast.error(detail);
+          return;
+        }
         toast.success('Deal sent to office — brokerage has been notified');
       } else {
         toast.success('Hidden from office');
       }
-    } catch { toast.error('Failed to update visibility'); }
-    finally { setSendingToOffice(false); }
+    } catch (e) {
+      toast.error((e as Error)?.message || 'Failed to update visibility');
+    } finally { setSendingToOffice(false); }
   };
 
   const handleEmail = () => {
