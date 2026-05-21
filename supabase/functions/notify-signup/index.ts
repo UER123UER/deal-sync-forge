@@ -9,7 +9,7 @@ const corsHeaders = {
 
 const OFFICE_EMAIL = "brokerage@unitedestatesagent.com";
 
-async function sendEmail(to: string, subject: string, html: string): Promise<void> {
+async function sendEmail(to: string, subject: string, html: string, replyTo?: string): Promise<void> {
   const apiKey = Deno.env.get("RESEND_API_KEY");
   if (!apiKey) throw new Error("RESEND_API_KEY not configured");
 
@@ -21,6 +21,7 @@ async function sendEmail(to: string, subject: string, html: string): Promise<voi
       to,
       subject,
       html,
+      ...(replyTo ? { reply_to: replyTo } : {}),
     }),
   });
 
@@ -78,6 +79,39 @@ serve(async (req) => {
       </div>`;
 
     await sendEmail(OFFICE_EMAIL, `New Agent Sign-Up: ${firstName} ${lastName}`, html);
+
+    // Welcome email to the new agent
+    const welcomeHtml = `
+      <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;">
+        <div style="background:#1a1a2e;padding:28px;border-radius:8px 8px 0 0;text-align:center;">
+          <h1 style="color:#fff;margin:0;font-size:22px;">Welcome to United Estates Realty</h1>
+          <p style="color:#a5b4fc;margin:8px 0 0;font-size:13px;">100% Commission · $98/month</p>
+        </div>
+        <div style="background:#fff;padding:32px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px;">
+          <h2 style="color:#111827;margin-top:0;font-size:18px;">Hi ${firstName},</h2>
+          <p style="color:#374151;font-size:14px;line-height:1.6;">
+            Welcome aboard! Your United Estates Realty agent account is now active. You can sign in
+            anytime to manage listings, transactions, contacts, signing sessions, and brokerage workflows.
+          </p>
+          <p style="text-align:center;margin:28px 0;">
+            <a href="https://unitedestatesagent.com/auth"
+               style="background:#1a1a2e;color:#fff;text-decoration:none;padding:12px 24px;border-radius:6px;font-weight:600;font-size:14px;display:inline-block;">
+              Sign in to your account
+            </a>
+          </p>
+          <p style="color:#6b7280;font-size:13px;line-height:1.6;">
+            Next steps: complete your onboarding agreement, set up billing, and submit your first deal.
+            Questions? Reply to this email or reach out to <a href="mailto:brokerage@unitedestatesagent.com" style="color:#4f46e5;">brokerage@unitedestatesagent.com</a>.
+          </p>
+        </div>
+        <div style="text-align:center;padding:16px;color:#9ca3af;font-size:12px;">United Estates Realty</div>
+      </div>`;
+
+    try {
+      await sendEmail(email, "Welcome to United Estates Realty", welcomeHtml, OFFICE_EMAIL);
+    } catch (welcomeErr) {
+      console.error("welcome email failed", welcomeErr);
+    }
 
     return new Response(JSON.stringify({ success: true }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
