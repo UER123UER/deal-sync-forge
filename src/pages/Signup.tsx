@@ -276,6 +276,7 @@ export default function Signup() {
                   className="pl-9 pr-9"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  autoComplete="new-password"
                   required
                 />
                 <button
@@ -304,6 +305,15 @@ export default function Signup() {
                   )}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
+                  autoComplete="new-password"
+                  onPaste={(e) => {
+                    e.stopPropagation();
+                    const text = e.clipboardData.getData('text');
+                    if (text) {
+                      e.preventDefault();
+                      setConfirmPassword(text);
+                    }
+                  }}
                   required
                 />
                 <button
