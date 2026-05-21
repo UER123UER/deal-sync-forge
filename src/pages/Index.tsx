@@ -362,9 +362,7 @@ export default function Index() {
                   <Linkedin className="h-4 w-4" />
                 </a>
                 <a
-                  href="https://www.instagram.com/unitedestatesrealty?igsh=bjhzbG10MjR5dmoz&utm_source=qr"
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  href="#"
                   aria-label="Instagram"
                   className="flex h-10 w-10 items-center justify-center rounded-full border border-border text-muted-foreground transition-colors hover:border-primary hover:text-primary"
                 >
