@@ -72,14 +72,23 @@ export default function Index() {
       <main>
         {/* Hero */}
         <section className="relative overflow-hidden">
-          <div
-            className="min-h-[60vh] bg-cover bg-center bg-no-repeat sm:min-h-[78vh]"
-            style={{
-              backgroundImage:
-                "linear-gradient(180deg, rgba(8,15,29,0.52) 0%, rgba(8,15,29,0.68) 50%, rgba(8,15,29,0.82) 100%), linear-gradient(90deg, rgba(8,15,29,0.88) 0%, rgba(8,15,29,0.60) 45%, rgba(8,15,29,0.20) 100%), url('/home-hero.jpg')",
-            }}
-          >
-            <div className="mx-auto flex min-h-[60vh] max-w-6xl flex-col justify-end px-4 pb-12 pt-8 sm:min-h-[78vh] sm:px-6 sm:pb-16 sm:pt-20 lg:px-8 lg:pb-24">
+          <div className="relative min-h-[60vh] sm:min-h-[78vh]">
+            <img
+              src="/home-hero.jpg"
+              alt="United Estates Realty"
+              width={1600}
+              height={1067}
+              fetchPriority="high"
+              className="absolute inset-0 h-full w-full object-cover"
+            />
+            <div
+              className="absolute inset-0"
+              style={{
+                backgroundImage:
+                  "linear-gradient(180deg, rgba(8,15,29,0.52) 0%, rgba(8,15,29,0.68) 50%, rgba(8,15,29,0.82) 100%), linear-gradient(90deg, rgba(8,15,29,0.88) 0%, rgba(8,15,29,0.60) 45%, rgba(8,15,29,0.20) 100%)",
+              }}
+            />
+            <div className="relative mx-auto flex min-h-[60vh] max-w-6xl flex-col justify-end px-4 pb-12 pt-8 sm:min-h-[78vh] sm:px-6 sm:pb-16 sm:pt-20 lg:px-8 lg:pb-24">
               <div className="max-w-2xl">
                 <p className="text-sm font-semibold uppercase tracking-[0.2em] text-white/70">
                   United Estates Realty - Licensed Brokerage
