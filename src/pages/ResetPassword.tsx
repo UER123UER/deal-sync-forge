@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { Lock, Eye, EyeOff } from 'lucide-react';
+import { SeoHead } from '@/components/SeoHead';
 
 export default function ResetPassword() {
   const [password, setPassword] = useState('');
@@ -49,22 +50,35 @@ export default function ResetPassword() {
 
   if (!isRecovery) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-muted/30 p-4">
-        <Card className="w-full max-w-md text-center">
-          <CardHeader>
-            <CardTitle>Invalid Reset Link</CardTitle>
-            <CardDescription>This link is invalid or has expired.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button onClick={() => navigate('/auth')}>Go to Sign In</Button>
-          </CardContent>
-        </Card>
-      </div>
+      <>
+        <SeoHead
+          title="Reset Password | United Estates Realty"
+          description="Reset your United Estates Realty agent account password. Secure link validation."
+          path="/reset-password"
+        />
+        <div className="flex items-center justify-center min-h-screen bg-muted/30 p-4">
+          <Card className="w-full max-w-md text-center">
+            <CardHeader>
+              <CardTitle>Invalid Reset Link</CardTitle>
+              <CardDescription>This link is invalid or has expired.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button onClick={() => navigate('/auth')}>Go to Sign In</Button>
+            </CardContent>
+          </Card>
+        </div>
+      </>
     );
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-muted/30 p-4">
+    <>
+      <SeoHead
+        title="Set New Password | United Estates Realty"
+        description="Create a new password for your United Estates Realty agent account."
+        path="/reset-password"
+      />
+      <div className="flex items-center justify-center min-h-screen bg-muted/30 p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl">Set New Password</CardTitle>
@@ -99,5 +113,6 @@ export default function ResetPassword() {
         </CardContent>
       </Card>
     </div>
+    </>
   );
 }
