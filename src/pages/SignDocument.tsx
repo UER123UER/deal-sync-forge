@@ -931,7 +931,7 @@ export default function SignDocument() {
 
   // --- LOADING ---
   if (legacyLoading || sessionLoading) {
-    return <div className="min-h-screen bg-gray-100 flex items-center justify-center"><p className="text-muted-foreground">Loading document...</p></div>;
+    return <><SeoHead title="Sign Document | United Estates Realty" description="Review and electronically sign your real estate document securely with United Estates Realty." path={`/sign/${token || ''}`} /><div className="min-h-screen bg-gray-100 flex items-center justify-center"><p className="text-muted-foreground">Loading document...</p></div></>;
   }
 
   // --- SESSION TOKEN MATCH → render session signing view ---
