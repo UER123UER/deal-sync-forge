@@ -936,12 +936,12 @@ export default function SignDocument() {
 
   // --- SESSION TOKEN MATCH → render session signing view ---
   if (sessionData && !request) {
-    return <SessionSigningView token={token!} />;
+    return <><SeoHead title="Sign Document | United Estates Realty" description="Review and electronically sign your real estate document securely with United Estates Realty." path={`/sign/${token || ''}`} /><SessionSigningView token={token!} /></>;
   }
 
   // --- LEGACY NOT FOUND ---
   if (!request) {
-    return <div className="min-h-screen bg-gray-100 flex items-center justify-center"><div className="text-center"><h1 className="text-xl font-semibold mb-2">Document Not Found</h1><p className="text-muted-foreground">This signing link is invalid or has expired.</p></div></div>;
+    return <><SeoHead title="Sign Document | United Estates Realty" description="Review and electronically sign your real estate document securely with United Estates Realty." path={`/sign/${token || ''}`} /><div className="min-h-screen bg-gray-100 flex items-center justify-center"><div className="text-center"><h1 className="text-xl font-semibold mb-2">Document Not Found</h1><p className="text-muted-foreground">This signing link is invalid or has expired.</p></div></div></>;
   }
   const alreadySigned = currentRecipient?.status === 'signed';
 
