@@ -966,14 +966,17 @@ export default function SignDocument() {
 
   if (allSigned) {
     return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-        <div className="text-center max-w-md mx-auto p-8">
-          <div className="w-16 h-16 rounded-full bg-green-100 text-green-600 flex items-center justify-center mx-auto mb-4"><Check className="w-8 h-8" /></div>
-          <h1 className="text-2xl font-semibold mb-2">All Signatures Complete</h1>
-          <p className="text-muted-foreground mb-2"><strong>{request.document_name}</strong> has been fully signed.</p>
-          <p className="text-sm text-muted-foreground">You may close this window.</p>
+      <>
+        <SeoHead title="All Signatures Complete | United Estates Realty" description="All signatures have been collected for this real estate document through United Estates Realty." path={`/sign/${token || ''}`} />
+        <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+          <div className="text-center max-w-md mx-auto p-8">
+            <div className="w-16 h-16 rounded-full bg-green-100 text-green-600 flex items-center justify-center mx-auto mb-4"><Check className="w-8 h-8" /></div>
+            <h1 className="text-2xl font-semibold mb-2">All Signatures Complete</h1>
+            <p className="text-muted-foreground mb-2"><strong>{request.document_name}</strong> has been fully signed.</p>
+            <p className="text-sm text-muted-foreground">You may close this window.</p>
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
