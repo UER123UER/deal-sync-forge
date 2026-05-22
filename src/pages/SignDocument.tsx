@@ -9,6 +9,7 @@ import { Check, Pen, Type, ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
 import { Progress } from '@/components/ui/progress';
 import { ListingAgreementDocument, ListingAgreementFields, DEFAULT_FIELDS } from '@/components/deal/ListingAgreementDocument';
+import { SeoHead } from '@/components/SeoHead';
 import * as pdfjsLib from 'pdfjs-dist';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
