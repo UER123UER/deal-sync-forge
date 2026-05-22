@@ -9,6 +9,7 @@ import { Check, Pen, Type, ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
 import { Progress } from '@/components/ui/progress';
 import { ListingAgreementDocument, ListingAgreementFields, DEFAULT_FIELDS } from '@/components/deal/ListingAgreementDocument';
+import { SeoHead } from '@/components/SeoHead';
 import * as pdfjsLib from 'pdfjs-dist';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
@@ -930,46 +931,52 @@ export default function SignDocument() {
 
   // --- LOADING ---
   if (legacyLoading || sessionLoading) {
-    return <div className="min-h-screen bg-gray-100 flex items-center justify-center"><p className="text-muted-foreground">Loading document...</p></div>;
+    return <><SeoHead title="Sign Document | United Estates Realty" description="Review and electronically sign your real estate document securely with United Estates Realty." path={`/sign/${token || ''}`} /><div className="min-h-screen bg-gray-100 flex items-center justify-center"><p className="text-muted-foreground">Loading document...</p></div></>;
   }
 
   // --- SESSION TOKEN MATCH → render session signing view ---
   if (sessionData && !request) {
-    return <SessionSigningView token={token!} />;
+    return <><SeoHead title="Sign Document | United Estates Realty" description="Review and electronically sign your real estate document securely with United Estates Realty." path={`/sign/${token || ''}`} /><SessionSigningView token={token!} /></>;
   }
 
   // --- LEGACY NOT FOUND ---
   if (!request) {
-    return <div className="min-h-screen bg-gray-100 flex items-center justify-center"><div className="text-center"><h1 className="text-xl font-semibold mb-2">Document Not Found</h1><p className="text-muted-foreground">This signing link is invalid or has expired.</p></div></div>;
+    return <><SeoHead title="Sign Document | United Estates Realty" description="Review and electronically sign your real estate document securely with United Estates Realty." path={`/sign/${token || ''}`} /><div className="min-h-screen bg-gray-100 flex items-center justify-center"><div className="text-center"><h1 className="text-xl font-semibold mb-2">Document Not Found</h1><p className="text-muted-foreground">This signing link is invalid or has expired.</p></div></div></>;
   }
   const alreadySigned = currentRecipient?.status === 'signed';
 
   if (finished || alreadySigned) {
     return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-        <div className="text-center max-w-md mx-auto p-8">
-          <div className="w-16 h-16 rounded-full bg-green-100 text-green-600 flex items-center justify-center mx-auto mb-4"><Check className="w-8 h-8" /></div>
-          <h1 className="text-2xl font-semibold mb-2">Document Signed!</h1>
-          <p className="text-muted-foreground mb-2">
-            {alreadySigned && !finished ? 'You have already signed ' : 'You have successfully signed '}
-            <strong>{request.document_name}</strong>.
-          </p>
-          <p className="text-sm text-muted-foreground">You may close this window.</p>
+      <>
+        <SeoHead title="Document Signed | United Estates Realty" description="Your real estate document has been successfully signed through United Estates Realty." path={`/sign/${token || ''}`} />
+        <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+          <div className="text-center max-w-md mx-auto p-8">
+            <div className="w-16 h-16 rounded-full bg-green-100 text-green-600 flex items-center justify-center mx-auto mb-4"><Check className="w-8 h-8" /></div>
+            <h1 className="text-2xl font-semibold mb-2">Document Signed!</h1>
+            <p className="text-muted-foreground mb-2">
+              {alreadySigned && !finished ? 'You have already signed ' : 'You have successfully signed '}
+              <strong>{request.document_name}</strong>.
+            </p>
+            <p className="text-sm text-muted-foreground">You may close this window.</p>
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
   if (allSigned) {
     return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-        <div className="text-center max-w-md mx-auto p-8">
-          <div className="w-16 h-16 rounded-full bg-green-100 text-green-600 flex items-center justify-center mx-auto mb-4"><Check className="w-8 h-8" /></div>
-          <h1 className="text-2xl font-semibold mb-2">All Signatures Complete</h1>
-          <p className="text-muted-foreground mb-2"><strong>{request.document_name}</strong> has been fully signed.</p>
-          <p className="text-sm text-muted-foreground">You may close this window.</p>
+      <>
+        <SeoHead title="All Signatures Complete | United Estates Realty" description="All signatures have been collected for this real estate document through United Estates Realty." path={`/sign/${token || ''}`} />
+        <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+          <div className="text-center max-w-md mx-auto p-8">
+            <div className="w-16 h-16 rounded-full bg-green-100 text-green-600 flex items-center justify-center mx-auto mb-4"><Check className="w-8 h-8" /></div>
+            <h1 className="text-2xl font-semibold mb-2">All Signatures Complete</h1>
+            <p className="text-muted-foreground mb-2"><strong>{request.document_name}</strong> has been fully signed.</p>
+            <p className="text-sm text-muted-foreground">You may close this window.</p>
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
@@ -1078,91 +1085,94 @@ export default function SignDocument() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <div className="sticky top-0 z-50" style={{ backgroundColor: '#4C00C2' }}>
-        <div className="max-w-5xl mx-auto px-6 py-3 flex items-center justify-between text-white">
-          <div>
-            <h1 className="text-base font-semibold">{request.document_name}</h1>
-            <p className="text-xs opacity-80">From: {request.sender_name}</p>
-          </div>
-          <div className="text-right">
-            {currentRecipient && <p className="text-sm font-medium">Signing as: {currentRecipient.name}</p>}
-            <div className="flex items-center gap-2 mt-1">
-              <span className="text-xs opacity-80">{completedCount} of {fields.length} completed</span>
-              <Progress value={(completedCount / Math.max(fields.length, 1)) * 100} className="w-24 h-1.5 bg-white/30" />
+    <>
+      <SeoHead title="Sign Document | United Estates Realty" description="Review and electronically sign your real estate document securely with United Estates Realty." path={`/sign/${token || ''}`} />
+      <div className="min-h-screen bg-gray-100">
+        <div className="sticky top-0 z-50" style={{ backgroundColor: '#4C00C2' }}>
+          <div className="max-w-5xl mx-auto px-6 py-3 flex items-center justify-between text-white">
+            <div>
+              <h1 className="text-base font-semibold">{request.document_name}</h1>
+              <p className="text-xs opacity-80">From: {request.sender_name}</p>
+            </div>
+            <div className="text-right">
+              {currentRecipient && <p className="text-sm font-medium">Signing as: {currentRecipient.name}</p>}
+              <div className="flex items-center gap-2 mt-1">
+                <span className="text-xs opacity-80">{completedCount} of {fields.length} completed</span>
+                <Progress value={(completedCount / Math.max(fields.length, 1)) * 100} className="w-24 h-1.5 bg-white/30" />
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {request.message && (
-        <div className="max-w-5xl mx-auto px-6 py-2 bg-blue-50 border-b border-blue-100">
-          <p className="text-sm text-blue-800">{request.message}</p>
-        </div>
-      )}
-
-      <div className="max-w-4xl mx-auto py-8 px-4">
-        <div className="bg-white shadow-lg border rounded-sm px-16 py-14">
-          <ListingAgreementDocument
-            fields={docFields}
-            renderField={renderField}
-            signatureSection={signatureSection}
-          />
-        </div>
-
-        {allFieldsDone && (
-          <div className="flex justify-center mt-8">
-            <Button onClick={handleFinish} disabled={signMutation.isPending} className="px-12 py-6 text-lg font-semibold rounded-lg shadow-xl" style={{ backgroundColor: '#F5C518', color: '#1a1a2e' }}>
-              <Check className="w-5 h-5 mr-2" />
-              {signMutation.isPending ? 'Completing...' : 'Finish Signing'}
-            </Button>
+        {request.message && (
+          <div className="max-w-5xl mx-auto px-6 py-2 bg-blue-50 border-b border-blue-100">
+            <p className="text-sm text-blue-800">{request.message}</p>
           </div>
         )}
 
-        <p className="text-center text-xs text-muted-foreground mt-6 max-w-lg mx-auto">
-          By clicking "Finish Signing", you agree that your electronic signature is the legal equivalent of your manual signature on this document.
-        </p>
-      </div>
-
-      <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-        <DialogContent className="sm:max-w-lg">
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold">
-              {modalFieldIndex !== null && fields[modalFieldIndex]?.type === 'initials' ? 'Add Your Initials' : 'Adopt Your Signature'}
-            </h3>
-            <p className="text-sm text-muted-foreground">
-              Create your {modalFieldIndex !== null && fields[modalFieldIndex]?.type === 'initials' ? 'initials' : 'signature'} below.
-            </p>
-            <div className="flex gap-2 border-b pb-2">
-              <button onClick={() => setSignMode('type')} className={`px-4 py-1.5 text-sm rounded-t font-medium transition-colors ${signMode === 'type' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}>
-                <Type className="w-3.5 h-3.5 inline mr-1.5" /> Type
-              </button>
-              <button onClick={() => setSignMode('draw')} className={`px-4 py-1.5 text-sm rounded-t font-medium transition-colors ${signMode === 'draw' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}>
-                <Pen className="w-3.5 h-3.5 inline mr-1.5" /> Draw
-              </button>
-            </div>
-            {signMode === 'type' ? (
-              <div>
-                <input value={typedName} onChange={(e) => setTypedName(e.target.value)} placeholder={modalFieldIndex !== null && fields[modalFieldIndex]?.type === 'initials' ? 'Your initials' : 'Your full name'} className="w-full border rounded-md px-4 py-3 text-2xl outline-none focus:ring-2 focus:ring-primary" style={{ fontFamily: "'Dancing Script', cursive" }} autoFocus />
-                {typedName && (
-                  <div className="mt-3 p-4 bg-muted/30 border rounded-md text-center">
-                    <p className="text-xs text-muted-foreground mb-1">Preview</p>
-                    <p className="text-3xl" style={{ fontFamily: "'Dancing Script', cursive" }}>{typedName}</p>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div>
-                <canvas ref={canvasRef} width={460} height={140} className="border rounded-md cursor-crosshair w-full bg-white" style={{ touchAction: 'none' }} onMouseDown={startDraw} onMouseMove={draw} onMouseUp={stopDraw} onMouseLeave={stopDraw} onTouchStart={startDraw} onTouchMove={draw} onTouchEnd={stopDraw} />
-                <Button variant="ghost" size="sm" onClick={clearCanvas} className="mt-1 text-xs">Clear</Button>
-              </div>
-            )}
-            <Button onClick={handleAdoptSign} className="w-full" style={{ backgroundColor: '#F5C518', color: '#1a1a2e' }}>Adopt and Sign</Button>
+        <div className="max-w-4xl mx-auto py-8 px-4">
+          <div className="bg-white shadow-lg border rounded-sm px-16 py-14">
+            <ListingAgreementDocument
+              fields={docFields}
+              renderField={renderField}
+              signatureSection={signatureSection}
+            />
           </div>
-        </DialogContent>
-      </Dialog>
 
-      <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&display=swap" rel="stylesheet" />
-    </div>
+          {allFieldsDone && (
+            <div className="flex justify-center mt-8">
+              <Button onClick={handleFinish} disabled={signMutation.isPending} className="px-12 py-6 text-lg font-semibold rounded-lg shadow-xl" style={{ backgroundColor: '#F5C518', color: '#1a1a2e' }}>
+                <Check className="w-5 h-5 mr-2" />
+                {signMutation.isPending ? 'Completing...' : 'Finish Signing'}
+              </Button>
+            </div>
+          )}
+
+          <p className="text-center text-xs text-muted-foreground mt-6 max-w-lg mx-auto">
+            By clicking "Finish Signing", you agree that your electronic signature is the legal equivalent of your manual signature on this document.
+          </p>
+        </div>
+
+        <Dialog open={modalOpen} onOpenChange={setModalOpen}>
+          <DialogContent className="sm:max-w-lg">
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">
+                {modalFieldIndex !== null && fields[modalFieldIndex]?.type === 'initials' ? 'Add Your Initials' : 'Adopt Your Signature'}
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                Create your {modalFieldIndex !== null && fields[modalFieldIndex]?.type === 'initials' ? 'initials' : 'signature'} below.
+              </p>
+              <div className="flex gap-2 border-b pb-2">
+                <button onClick={() => setSignMode('type')} className={`px-4 py-1.5 text-sm rounded-t font-medium transition-colors ${signMode === 'type' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}>
+                  <Type className="w-3.5 h-3.5 inline mr-1.5" /> Type
+                </button>
+                <button onClick={() => setSignMode('draw')} className={`px-4 py-1.5 text-sm rounded-t font-medium transition-colors ${signMode === 'draw' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}>
+                  <Pen className="w-3.5 h-3.5 inline mr-1.5" /> Draw
+                </button>
+              </div>
+              {signMode === 'type' ? (
+                <div>
+                  <input value={typedName} onChange={(e) => setTypedName(e.target.value)} placeholder={modalFieldIndex !== null && fields[modalFieldIndex]?.type === 'initials' ? 'Your initials' : 'Your full name'} className="w-full border rounded-md px-4 py-3 text-2xl outline-none focus:ring-2 focus:ring-primary" style={{ fontFamily: "'Dancing Script', cursive" }} autoFocus />
+                  {typedName && (
+                    <div className="mt-3 p-4 bg-muted/30 border rounded-md text-center">
+                      <p className="text-xs text-muted-foreground mb-1">Preview</p>
+                      <p className="text-3xl" style={{ fontFamily: "'Dancing Script', cursive" }}>{typedName}</p>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div>
+                  <canvas ref={canvasRef} width={460} height={140} className="border rounded-md cursor-crosshair w-full bg-white" style={{ touchAction: 'none' }} onMouseDown={startDraw} onMouseMove={draw} onMouseUp={stopDraw} onMouseLeave={stopDraw} onTouchStart={startDraw} onTouchMove={draw} onTouchEnd={stopDraw} />
+                  <Button variant="ghost" size="sm" onClick={clearCanvas} className="mt-1 text-xs">Clear</Button>
+                </div>
+              )}
+              <Button onClick={handleAdoptSign} className="w-full" style={{ backgroundColor: '#F5C518', color: '#1a1a2e' }}>Adopt and Sign</Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&display=swap" rel="stylesheet" />
+      </div>
+    </>
   );
 }
