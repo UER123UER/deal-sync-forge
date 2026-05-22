@@ -88,7 +88,7 @@ export default function Index() {
                 Stop Giving Away Your Commissions. Keep 100% for $98/Month.
               </h1>
                 <p className="mt-5 max-w-xl text-base leading-7 text-white/85 sm:text-lg">
-                  United Estates Realty is Florida's #1 flat-fee brokerage for licensed real estate agents. Keep 100% of every commission you earn, no splits, no desk fees, no hidden charges. Serving agents from Miami to Jacksonville and everywhere in between.
+                  United Estates Realty is Florida's #1 flat-fee brokerage for licensed real estate agents. Keep 100% of every commission you earn, no splits, no desk fees, no hidden charges.
                 </p>
 
                 <div className="mt-8 flex flex-wrap gap-3">
