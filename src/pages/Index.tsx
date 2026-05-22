@@ -82,7 +82,7 @@ export default function Index() {
             <div className="mx-auto flex min-h-[78vh] max-w-6xl flex-col justify-end px-4 pb-16 pt-20 sm:px-6 lg:px-8 lg:pb-24">
               <div className="max-w-2xl">
                 <p className="text-sm font-semibold uppercase tracking-[0.2em] text-white/70">
-                  United Estates Realty - Licensed Brokerage
+                  Stop Giving Away Your Commissions. Keep 100% for $98/Month.
                 </p>
                 <h1 className="mt-4 text-4xl font-bold leading-tight text-white sm:text-5xl lg:text-[3.25rem]">
                   100% commission. $98/month. Zero transaction fees.
