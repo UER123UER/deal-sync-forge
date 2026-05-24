@@ -4,6 +4,12 @@ import { ArrowRight, Check, Facebook, Linkedin, Instagram } from "lucide-react";
 import { UERLogo } from "@/components/UERLogo";
 import { Button } from "@/components/ui/button";
 import { SeoHead } from "@/components/SeoHead";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 const whyUs = [
   {
