@@ -92,7 +92,7 @@ export default function WhyUs() {
                 Why Florida Real Estate Agents Choose United Estates Realty
               </h1>
               <p className="mt-5 max-w-2xl text-base leading-7 text-muted-foreground sm:text-lg">
-                Most brokerages charge you a monthly fee and then take a cut of every deal on top of it. We don't. One flat fee, real software, and you keep every dollar you earn.
+                Close a $10,000 commission, keep $10,000. No splits, no royalty cuts, no per-deal charges. Ever. We don't touch your money because we don't need to; our flat monthly fee covers everything.
               </p>
               <div className="mt-8">
                 <Button size="lg" asChild>
