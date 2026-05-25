@@ -29,7 +29,7 @@ const differentiators = [
   {
     icon: Award,
     heading: "Referral Earnings That Compound.",
-    body: "Refer one agent, earn $20 every month they stay active. Refer five, that's $100/month — more than covering your own membership. No cap. No expiration. No approval gates. Your network becomes a real revenue stream.",
+    body: "Refer one agent, earn $20 every month they stay active. Refer five, that's $100/month, more than covering your own membership. No cap. No expiration. No approval gates. Your network becomes a real revenue stream.",
   },
   {
     icon: Clock,
