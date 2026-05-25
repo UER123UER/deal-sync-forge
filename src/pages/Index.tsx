@@ -82,6 +82,7 @@ export default function Index() {
               </SheetTrigger>
               <SheetContent side="right" className="w-72">
                 <nav className="mt-8 flex flex-col gap-1 text-base">
+                  <Link to="/" className="rounded-md px-3 py-2 transition-colors hover:bg-muted">Home</Link>
                   <Link to="/why-us" className="rounded-md px-3 py-2 transition-colors hover:bg-muted">Why Us</Link>
                   <a href="/#pricing" className="rounded-md px-3 py-2 transition-colors hover:bg-muted">Pricing</a>
                   <a href="/#software" className="rounded-md px-3 py-2 transition-colors hover:bg-muted">Software</a>
@@ -431,6 +432,7 @@ export default function Index() {
             <div>
               <p className="text-sm font-semibold uppercase tracking-[0.18em] text-foreground">Explore</p>
               <ul className="mt-4 space-y-2 text-sm">
+                <li><a href="#" className="text-muted-foreground transition-colors hover:text-primary">Home</a></li>
                 <li><a href="#why-us" className="text-muted-foreground transition-colors hover:text-primary">Why Us</a></li>
                 <li><a href="#pricing" className="text-muted-foreground transition-colors hover:text-primary">Pricing</a></li>
                 <li><a href="#software" className="text-muted-foreground transition-colors hover:text-primary">Software</a></li>
