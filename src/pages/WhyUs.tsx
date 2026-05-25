@@ -19,7 +19,7 @@ const differentiators = [
   {
     icon: Users,
     heading: "Built by Agents, for Agents.",
-    body: "Our platform wasn't designed by a software vendor who has never shown a house. It was built around how real estate agents actually work — from first contact to closing. Transaction management, CRM, listings, marketing, and calendar tools in one seamless system.",
+    body: "Our platform wasn't designed by a software vendor who has never shown a house. It was built around how real estate agents actually work, from first contact to closing. Transaction management, CRM, listings, marketing, and calendar tools in one seamless system.",
   },
   {
     icon: Shield,
