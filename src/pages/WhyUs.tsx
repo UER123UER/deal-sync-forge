@@ -9,7 +9,7 @@ const differentiators = [
   {
     icon: Zap,
     heading: "100% Commission. Every Deal.",
-    body: "Close a $10,000 commission, keep $10,000. No splits, no royalty cuts, no per-deal charges. Ever. We don't touch your money because we don't need to — our flat monthly fee covers everything.",
+    body: "Close a $10,000 commission, keep $10,000. No splits, no royalty cuts, no per-deal charges. Ever. We don't touch your money because we don't need to; our flat monthly fee covers everything.",
   },
   {
     icon: BarChart3,
