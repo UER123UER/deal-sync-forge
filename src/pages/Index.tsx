@@ -60,6 +60,7 @@ export default function Index() {
           </Link>
 
           <nav className="hidden items-center gap-6 text-sm text-muted-foreground md:flex">
+            <Link to="/" className="transition-colors hover:text-primary">Home</Link>
             <Link to="/why-us" className="transition-colors hover:text-primary">Why Us</Link>
             <a href="#pricing" className="transition-colors hover:text-primary">Pricing</a>
             <a href="#software" className="transition-colors hover:text-primary">Software</a>
@@ -432,8 +433,8 @@ export default function Index() {
             <div>
               <p className="text-sm font-semibold uppercase tracking-[0.18em] text-foreground">Explore</p>
               <ul className="mt-4 space-y-2 text-sm">
-                <li><a href="#" className="text-muted-foreground transition-colors hover:text-primary">Home</a></li>
-                <li><a href="#why-us" className="text-muted-foreground transition-colors hover:text-primary">Why Us</a></li>
+                <li><Link to="/" className="text-muted-foreground transition-colors hover:text-primary">Home</Link></li>
+                <li><Link to="/why-us" className="text-muted-foreground transition-colors hover:text-primary">Why Us</Link></li>
                 <li><a href="#pricing" className="text-muted-foreground transition-colors hover:text-primary">Pricing</a></li>
                 <li><a href="#software" className="text-muted-foreground transition-colors hover:text-primary">Software</a></li>
                 <li><Link to="/auth" className="text-muted-foreground transition-colors hover:text-primary">Agent Login</Link></li>
