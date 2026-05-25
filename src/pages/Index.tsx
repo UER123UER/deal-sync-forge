@@ -103,7 +103,7 @@ export default function Index() {
                 Stop Giving Away Your Commissions. Keep 100% and zero transaction fees.
               </h1>
                 <p className="mt-5 max-w-xl text-base leading-7 text-white/85 sm:text-lg">
-                  Get the best real estate CRM and brokerage platform for just $98 a month. One flat fee — no per-seat pricing, no add-ons, no commission splits. Everything you need to close more deals in one place.
+                  Get the best real estate CRM and brokerage platform for just $98 a month. One flat fee, no per-seat pricing, no add-ons, no commission splits. Everything you need to close more deals in one place.
                 </p>
 
                 <div className="mt-8 flex flex-wrap gap-3">
