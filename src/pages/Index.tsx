@@ -100,7 +100,7 @@ export default function Index() {
                   United Estates Realty - Licensed Brokerage
                 </p>
               <h1 className="mt-4 text-4xl font-bold leading-tight text-white sm:text-5xl lg:text-[3.25rem]">
-                Stop Giving Away Your Commissions. Keep 100% for $98/Month.
+                Stop Giving Away Your Commissions. Keep 100% and zero transaction fees.
               </h1>
                 <p className="mt-5 max-w-xl text-base leading-7 text-white/85 sm:text-lg">
                   United Estates Realty is Florida's go-to brokerage for agents who are done losing money. Keep 100% of every commission with zero transaction fees, zero desk fees, and zero commission splits. Built exclusively for Florida real estate agents.
