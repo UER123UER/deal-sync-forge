@@ -7,6 +7,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import Index from "@/pages/Index";
+import WhyUs from "@/pages/WhyUs";
 import Auth from "@/pages/Auth";
 import OnboardingAgreement from "@/pages/OnboardingAgreement";
 import OnboardingBilling from "@/pages/OnboardingBilling";
