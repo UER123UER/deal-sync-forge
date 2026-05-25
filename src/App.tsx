@@ -60,6 +60,7 @@ const App = () => (
         <Routes>
           <Route path="/" element={<HostRoot />} />
           {/* Public routes */}
+          <Route path="/why-us" element={<WhyUs />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/reset-password" element={<ResetPassword />} />

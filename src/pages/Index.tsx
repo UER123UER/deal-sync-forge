@@ -59,7 +59,7 @@ export default function Index() {
           </Link>
 
           <nav className="hidden items-center gap-6 text-sm text-muted-foreground md:flex">
-            <a href="#why-us" className="transition-colors hover:text-primary">Why Us</a>
+            <Link to="/why-us" className="transition-colors hover:text-primary">Why Us</Link>
             <a href="#pricing" className="transition-colors hover:text-primary">Pricing</a>
             <a href="#software" className="transition-colors hover:text-primary">Software</a>
           </nav>
