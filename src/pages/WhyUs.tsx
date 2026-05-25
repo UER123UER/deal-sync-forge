@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, Check, Shield, Users, Zap, BarChart3, Award, Clock, Facebook, Linkedin, Instagram, Menu } from "lucide-react";
 
