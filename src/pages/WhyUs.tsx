@@ -1,9 +1,10 @@
 import { Link } from "react-router-dom";
-import { ArrowRight, Check, Shield, Users, Zap, BarChart3, Award, Clock, Facebook, Linkedin, Instagram } from "lucide-react";
+import { ArrowRight, Check, Shield, Users, Zap, BarChart3, Award, Clock, Facebook, Linkedin, Instagram, Menu } from "lucide-react";
 
 import { UERLogo } from "@/components/UERLogo";
 import { Button } from "@/components/ui/button";
 import { SeoHead } from "@/components/SeoHead";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 const differentiators = [
   {
@@ -72,13 +73,31 @@ export default function WhyUs() {
             <a href="/#software" className="transition-colors hover:text-primary">Software</a>
           </nav>
 
-          <div className="flex flex-col items-end gap-1 sm:flex-row sm:items-center sm:gap-2">
-            <Button variant="ghost" asChild className="px-2.5 sm:px-4">
-              <Link to="/auth">Agent Login</Link>
-            </Button>
-            <Button asChild>
-              <Link to={primaryHref}>{primaryLabel}</Link>
-            </Button>
+          <div className="flex items-center gap-2">
+            <div className="hidden sm:flex sm:items-center sm:gap-2">
+              <Button variant="ghost" asChild className="px-2.5 sm:px-4">
+                <Link to="/auth">Agent Login</Link>
+              </Button>
+              <Button asChild>
+                <Link to={primaryHref}>{primaryLabel}</Link>
+              </Button>
+            </div>
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="md:hidden" aria-label="Open menu">
+                  <Menu className="h-6 w-6" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-72">
+                <nav className="mt-8 flex flex-col gap-1 text-base">
+                  <Link to="/why-us" className="rounded-md px-3 py-2 font-medium text-primary transition-colors hover:bg-muted">Why Us</Link>
+                  <a href="/#pricing" className="rounded-md px-3 py-2 transition-colors hover:bg-muted">Pricing</a>
+                  <a href="/#software" className="rounded-md px-3 py-2 transition-colors hover:bg-muted">Software</a>
+                  <Link to="/auth" className="rounded-md px-3 py-2 transition-colors hover:bg-muted">Agent Login</Link>
+                  <Link to={primaryHref} className="mt-2 rounded-md bg-primary px-3 py-2 text-center font-medium text-primary-foreground transition-colors hover:bg-primary/90">{primaryLabel}</Link>
+                </nav>
+              </SheetContent>
+            </Sheet>
           </div>
         </div>
       </header>
