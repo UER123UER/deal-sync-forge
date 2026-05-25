@@ -54,8 +54,8 @@ export default function WhyUs() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <SeoHead
-        title="Why United Estates Realty — 100% Commission Florida Brokerage"
-        description="See why Florida agents choose United Estates Realty. Keep 100% of commissions, $98/month flat fee, zero transaction fees, and full CRM + brokerage support. No contracts."
+        title="Why Florida Real Estate Agents Choose United Estates Realty"
+        description="See why Florida real estate agents choose United Estates Realty. Keep 100% of commissions, $98/month flat fee, zero transaction fees, and full CRM + brokerage support. No contracts."
         path="/why-us"
       />
 
