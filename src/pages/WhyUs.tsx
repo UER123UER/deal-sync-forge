@@ -68,6 +68,7 @@ export default function WhyUs() {
           </Link>
 
           <nav className="hidden items-center gap-6 text-sm text-muted-foreground md:flex">
+            <Link to="/" className="transition-colors hover:text-primary">Home</Link>
             <Link to="/why-us" className="font-medium text-primary">Why Us</Link>
             <a href="/#pricing" className="transition-colors hover:text-primary">Pricing</a>
             <a href="/#software" className="transition-colors hover:text-primary">Software</a>
