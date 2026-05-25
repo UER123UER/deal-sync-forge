@@ -14,7 +14,7 @@ const differentiators = [
   {
     icon: BarChart3,
     heading: "$98/Month. Nothing Else.",
-    body: "One flat fee. No desk fees layered on top. No E&O add-ons. No hidden charges when you close a big deal. No transaction fees of any kind. Just $98 every month and that's the entire cost of running your business under our license.",
+    body: "One flat fee. No E&O add-ons. No hidden charges when you close a big deal. No transaction fees of any kind. Just $98 every month and that's the entire cost of running your business under our license.",
   },
   {
     icon: Users,
