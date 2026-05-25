@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ArrowRight, Check, Shield, Users, Zap, BarChart3, Award, Clock } from "lucide-react";
+import { ArrowRight, Check, Shield, Users, Zap, BarChart3, Award, Clock, Facebook, Linkedin, Instagram } from "lucide-react";
 
 import { UERLogo } from "@/components/UERLogo";
 import { Button } from "@/components/ui/button";
