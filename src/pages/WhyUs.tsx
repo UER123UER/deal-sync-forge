@@ -88,9 +88,8 @@ export default function WhyUs() {
         <section className="border-b bg-muted/30 py-16 sm:py-24">
           <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
             <div className="max-w-3xl">
-              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">Why Us</p>
-              <h1 className="mt-4 text-4xl font-bold leading-tight text-foreground sm:text-5xl lg:text-[3.25rem]">
-                A brokerage built for agents, not for overhead.
+              <h1 className="text-4xl font-bold leading-tight text-foreground sm:text-5xl lg:text-[3.25rem]">
+                Why Florida Real Estate Agents Choose United Estates Realty
               </h1>
               <p className="mt-5 max-w-2xl text-base leading-7 text-muted-foreground sm:text-lg">
                 Most brokerages charge you a monthly fee and then take a cut of every deal on top of it. We don't. One flat fee, real software, and you keep every dollar you earn.
