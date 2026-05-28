@@ -194,6 +194,44 @@ export default function WhyUs() {
           </div>
         </section>
 
+        {/* Founder Bio */}
+        <section className="border-y bg-background py-16 sm:py-20">
+          <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+            <div className="max-w-2xl">
+              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">Leadership</p>
+              <h2 className="mt-3 text-3xl font-bold text-foreground sm:text-4xl">
+                Meet the Founder
+              </h2>
+            </div>
+
+            <div className="mt-10 grid items-start gap-8 md:grid-cols-[280px_1fr]">
+              {/* Founder Photo */}
+              <div className="flex flex-col items-center md:items-start">
+                <div className="flex h-64 w-64 items-center justify-center border bg-muted/30 sm:h-72 sm:w-72">
+                  <User className="h-20 w-20 text-muted-foreground/40" />
+                </div>
+                <div className="mt-4 text-center md:text-left">
+                  <p className="text-lg font-semibold text-foreground">Founder Name</p>
+                  <p className="text-sm text-muted-foreground">Founder & Managing Broker</p>
+                </div>
+              </div>
+
+              {/* Founder Bio */}
+              <div className="space-y-4 text-base leading-7 text-muted-foreground">
+                <p>
+                  United Estates Realty was founded with a simple but powerful belief: real estate agents deserve to keep the commissions they earn. After years of watching talented agents lose half their income to unnecessary splits and hidden fees, the founder set out to build a brokerage that operates differently.
+                </p>
+                <p>
+                  With a background in real estate and a deep understanding of what agents actually need, the founder built United Estates Realty around transparency, technology, and trust. The result is a licensed Florida brokerage that offers 100% commission, a flat monthly fee, and a full suite of tools designed to help agents grow their business without cutting into their paycheck.
+                </p>
+                <p>
+                  Today, United Estates Realty is home to agents across Florida who are tired of the traditional model and ready for something better. The mission remains the same: put agents first, keep costs low, and provide the support and technology needed to close more deals.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* CTA */}
         <section className="bg-background py-16 sm:py-20">
           <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
