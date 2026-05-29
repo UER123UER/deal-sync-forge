@@ -200,8 +200,11 @@ export default function WhyUs() {
             <div className="max-w-2xl">
               <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">Leadership</p>
               <h2 className="mt-3 text-3xl font-bold text-foreground sm:text-4xl">
-                Meet the Founder
+                Built by an Agent. Built for Agents.
               </h2>
+              <p className="mt-3 text-lg text-muted-foreground">
+                Meet Tevel, the mind behind United Estates Realty
+              </p>
             </div>
 
             <div className="mt-10 grid items-start gap-8 md:grid-cols-[280px_1fr]">
@@ -211,7 +214,7 @@ export default function WhyUs() {
                   <User className="h-20 w-20 text-muted-foreground/40" />
                 </div>
                 <div className="mt-4 text-center md:text-left">
-                  <p className="text-lg font-semibold text-foreground">Founder Name</p>
+                  <p className="text-lg font-semibold text-foreground">Tevel</p>
                   <p className="text-sm text-muted-foreground">Founder & Managing Broker</p>
                 </div>
               </div>
@@ -219,13 +222,22 @@ export default function WhyUs() {
               {/* Founder Bio */}
               <div className="space-y-4 text-base leading-7 text-muted-foreground">
                 <p>
-                  United Estates Realty was founded with a simple but powerful belief: real estate agents deserve to keep the commissions they earn. After years of watching talented agents lose half their income to unnecessary splits and hidden fees, the founder set out to build a brokerage that operates differently.
+                  Before writing a single line of code, Tevel was a real estate agent.
                 </p>
                 <p>
-                  With a background in real estate and a deep understanding of what agents actually need, the founder built United Estates Realty around transparency, technology, and trust. The result is a licensed Florida brokerage that offers 100% commission, a flat monthly fee, and a full suite of tools designed to help agents grow their business without cutting into their paycheck.
+                  Every single day, he juggled dozens of client queries, buyers waiting for callbacks, sellers expecting updates, and leads slipping through the cracks because there simply wasn't a good enough system to keep up. He tried the generic CRM tools everyone recommended. They were built for sales teams, not for agents. They didn't understand how real estate actually works — the volume, the speed, the relationships.
                 </p>
                 <p>
-                  Today, United Estates Realty is home to agents across Florida who are tired of the traditional model and ready for something better. The mission remains the same: put agents first, keep costs low, and provide the support and technology needed to close more deals.
+                  So he did what most frustrated agents don't: he built the solution himself.
+                </p>
+                <p>
+                  United Estates Realty was born directly from that frustration. Not in a boardroom. Not from a business plan. But from the real, daily experience of an agent who was tired of losing good leads to poor follow-ups and disorganized pipelines.
+                </p>
+                <p>
+                  Today, Tevel's mission is simple: to give every real estate agent the exact tool he wished he had when he was in the field. A CRM that speaks the language of real estate, handles the chaos of multiple client queries, and helps agents do what they do best: close deals and build relationships.
+                </p>
+                <p className="italic text-foreground">
+                  "I didn't build this for a market opportunity. I built it because I lived the problem every day and I knew other agents were living it too." — Tevel
                 </p>
               </div>
             </div>
