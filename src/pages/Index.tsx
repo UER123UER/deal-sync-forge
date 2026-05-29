@@ -97,7 +97,7 @@ export default function Index() {
     <div className="min-h-screen bg-background text-foreground">
       <SeoHead
         title="United Estates Realty — Florida's 100% Commission Brokerage"
-        description="Join Florida's top flat-fee real estate brokerage. Licensed agents keep 100% of every commission for just $98/month. No splits, no transaction fees, no desk fees."
+        description="Join Florida's top flat-fee brokerage. Licensed agents keep 100% of every commission for just $98/month. No splits, no transaction fees, no desk fees."
         path="/"
         structuredData={faqSchema}
       />
