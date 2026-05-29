@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, Check, Shield, Users, Zap, BarChart3, Award, Clock, Facebook, Linkedin, Instagram, Menu, User } from "lucide-react";
+import tevelFounder from "@/assets/tevel-founder.webp";
 
 import { UERLogo } from "@/components/UERLogo";
 import { Button } from "@/components/ui/button";
@@ -210,8 +211,13 @@ export default function WhyUs() {
             <div className="mt-10 grid items-start gap-8 md:grid-cols-[280px_1fr]">
               {/* Founder Photo */}
               <div className="flex flex-col items-center md:items-start">
-                <div className="flex h-64 w-64 items-center justify-center border bg-muted/30 sm:h-72 sm:w-72">
-                  <User className="h-20 w-20 text-muted-foreground/40" />
+                <div className="h-64 w-64 overflow-hidden border bg-muted/30 sm:h-72 sm:w-72">
+                  <img
+                    src={tevelFounder}
+                    alt="Tevel, Founder & Managing Broker of United Estates Realty"
+                    className="h-full w-full object-cover"
+                    loading="lazy"
+                  />
                 </div>
                 <div className="mt-4 text-center md:text-left">
                   <p className="text-lg font-semibold text-foreground">Tevel</p>
