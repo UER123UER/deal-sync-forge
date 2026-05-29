@@ -56,7 +56,7 @@ export default function Index() {
       <header className="sticky top-0 z-40 border-b bg-background">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
           <Link to="/" className="flex items-center" aria-label="United Estates Realty">
-            <UERLogo width={188} className="w-[80px] sm:w-[132px] lg:w-[168px]" />
+            <UERLogo width={188} className="w-[65px] sm:w-[132px] lg:w-[168px]" />
           </Link>
 
           <nav className="hidden items-center gap-6 text-sm text-muted-foreground md:flex">
