@@ -56,7 +56,7 @@ export default function Index() {
       <header className="sticky top-0 z-40 border-b bg-background">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
           <Link to="/" className="flex items-center" aria-label="United Estates Realty">
-            <UERLogo width={188} className="w-[132px] sm:w-[168px] lg:w-[188px]" />
+            <UERLogo width={188} className="w-[104px] sm:w-[140px] lg:w-[168px]" />
           </Link>
 
           <nav className="hidden items-center gap-6 text-sm text-muted-foreground md:flex">
@@ -67,7 +67,7 @@ export default function Index() {
           </nav>
 
           <div className="flex items-center gap-2">
-            <div className="hidden sm:flex sm:items-center sm:gap-2">
+            <div className="hidden md:flex md:items-center md:gap-2">
               <Button variant="ghost" asChild className="px-2.5 sm:px-4">
                 <Link to="/auth">Agent Login</Link>
               </Button>
@@ -75,6 +75,9 @@ export default function Index() {
                 <Link to={primaryHref}>{primaryLabel}</Link>
               </Button>
             </div>
+            <Button asChild size="sm" className="md:hidden">
+              <Link to={primaryHref}>{primaryLabel}</Link>
+            </Button>
             <Sheet>
               <SheetTrigger asChild>
                 <Button variant="ghost" size="icon" className="md:hidden" aria-label="Open menu">
