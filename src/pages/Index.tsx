@@ -479,6 +479,16 @@ export default function Index() {
                   </svg>
                 </a>
               </div>
+
+              <div className="mt-8">
+                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-foreground">Email Us</p>
+                <a
+                  href="mailto:brokerage@unitedestatesagent.com"
+                  className="mt-3 inline-block text-sm text-muted-foreground transition-colors hover:text-primary"
+                >
+                  brokerage@unitedestatesagent.com
+                </a>
+              </div>
             </div>
           </div>
 
