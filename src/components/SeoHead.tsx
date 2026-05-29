@@ -4,11 +4,12 @@ interface SeoHeadProps {
   title: string;
   description: string;
   path: string;
+  structuredData?: object;
 }
 
 const SITE_URL = "https://unitedestatesagent.com";
 
-export function SeoHead({ title, description, path }: SeoHeadProps) {
+export function SeoHead({ title, description, path, structuredData }: SeoHeadProps) {
   const url = `${SITE_URL}${path}`;
   return (
     <Helmet>
@@ -20,6 +21,11 @@ export function SeoHead({ title, description, path }: SeoHeadProps) {
       <meta property="og:url" content={url} />
       <meta name="twitter:title" content={title} />
       <meta name="twitter:description" content={description} />
+      {structuredData && (
+        <script type="application/ld+json">
+          {JSON.stringify(structuredData)}
+        </script>
+      )}
     </Helmet>
   );
 }
