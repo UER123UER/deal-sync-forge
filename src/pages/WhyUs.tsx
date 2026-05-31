@@ -76,6 +76,7 @@ export default function WhyUs() {
           <nav className="hidden items-center gap-6 text-sm text-muted-foreground md:flex">
             <Link to="/" className="transition-colors hover:text-primary">Home</Link>
             <Link to="/why-us" className="font-medium text-primary">Why Us</Link>
+            <Link to="/case-studies" className="transition-colors hover:text-primary">Case Studies</Link>
             <a href="/#pricing" className="transition-colors hover:text-primary">Pricing</a>
             <a href="/#software" className="transition-colors hover:text-primary">Software</a>
           </nav>
@@ -102,6 +103,7 @@ export default function WhyUs() {
                 <nav className="mt-8 flex flex-col gap-1 text-base">
                   <Link to="/" className="rounded-md px-3 py-2 transition-colors hover:bg-muted">Home</Link>
                   <Link to="/why-us" className="rounded-md px-3 py-2 font-medium text-primary transition-colors hover:bg-muted">Why Us</Link>
+                  <Link to="/case-studies" className="rounded-md px-3 py-2 transition-colors hover:bg-muted">Case Studies</Link>
                   <a href="/#pricing" className="rounded-md px-3 py-2 transition-colors hover:bg-muted">Pricing</a>
                   <a href="/#software" className="rounded-md px-3 py-2 transition-colors hover:bg-muted">Software</a>
                   <Link to="/auth" className="rounded-md px-3 py-2 transition-colors hover:bg-muted">Agent Login</Link>
@@ -296,6 +298,7 @@ export default function WhyUs() {
               <ul className="mt-4 space-y-2 text-sm">
                 <li><Link to="/" className="text-muted-foreground transition-colors hover:text-primary">Home</Link></li>
                 <li><Link to="/why-us" className="text-muted-foreground transition-colors hover:text-primary">Why Us</Link></li>
+                <li><Link to="/case-studies" className="text-muted-foreground transition-colors hover:text-primary">Case Studies</Link></li>
                 <li><a href="/#pricing" className="text-muted-foreground transition-colors hover:text-primary">Pricing</a></li>
                 <li><a href="/#software" className="text-muted-foreground transition-colors hover:text-primary">Software</a></li>
                 <li><Link to="/auth" className="text-muted-foreground transition-colors hover:text-primary">Agent Login</Link></li>

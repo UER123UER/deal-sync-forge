@@ -11,6 +11,26 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://unitedestatesagent.com/case-studies</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://unitedestatesagent.com/case-studies/miami-response-time</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://unitedestatesagent.com/case-studies/orlando-commission-keep</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://unitedestatesagent.com/case-studies/tampa-deal-volume</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
     <loc>https://unitedestatesagent.com/auth</loc>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
