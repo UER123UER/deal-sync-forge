@@ -8,6 +8,8 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import Index from "@/pages/Index";
 import WhyUs from "@/pages/WhyUs";
+import CaseStudies from "@/pages/CaseStudies";
+import CaseStudyDetail from "@/pages/CaseStudyDetail";
 import Auth from "@/pages/Auth";
 import OnboardingAgreement from "@/pages/OnboardingAgreement";
 import OnboardingBilling from "@/pages/OnboardingBilling";
@@ -62,6 +64,8 @@ const App = () => (
           <Route path="/" element={<HostRoot />} />
           {/* Public routes */}
           <Route path="/why-us" element={<WhyUs />} />
+          <Route path="/case-studies" element={<CaseStudies />} />
+          <Route path="/case-studies/:slug" element={<CaseStudyDetail />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/reset-password" element={<ResetPassword />} />
