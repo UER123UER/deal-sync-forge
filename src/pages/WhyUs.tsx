@@ -1,8 +1,9 @@
 import { useEffect } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, Check, Shield, Users, Zap, BarChart3, Award, Clock, Facebook, Linkedin, Instagram, Menu, User } from "lucide-react";
+import { ArrowRight, Check, Shield, Users, Zap, BarChart3, Award, Clock, Facebook, Linkedin, Instagram, Menu, User, ArrowUpRight } from "lucide-react";
 import tevelFounder from "@/assets/tevel-founder.webp";
 
+import { caseStudies } from "@/data/caseStudies";
 import { UERLogo } from "@/components/UERLogo";
 import { Button } from "@/components/ui/button";
 import { SeoHead } from "@/components/SeoHead";
@@ -196,6 +197,53 @@ export default function WhyUs() {
                   ))}
                 </tbody>
               </table>
+            </div>
+          </div>
+        </section>
+
+        {/* Case Studies */}
+        <section className="bg-background py-16 sm:py-20">
+          <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+            <div className="max-w-2xl">
+              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">Success Stories</p>
+              <h2 className="mt-3 text-3xl font-bold text-foreground sm:text-4xl">
+                Real agents. Real results.
+              </h2>
+              <p className="mt-3 text-lg text-muted-foreground">
+                See how agents across Florida are growing their business with United Estates Realty.
+              </p>
+            </div>
+
+            <div className="mt-10 grid gap-6 md:grid-cols-3">
+              {caseStudies.map((study) => (
+                <div key={study.slug} className="group border bg-muted/20 p-6 transition-colors hover:border-primary/50">
+                  <p className="text-sm font-medium text-muted-foreground">
+                    {study.agentName}, {study.city}
+                  </p>
+                  <h3 className="mt-2 text-xl font-semibold text-foreground">
+                    {study.headlineResult}
+                  </h3>
+                  <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                    {study.summary}
+                  </p>
+                  <Link
+                    to={`/case-studies/${study.slug}`}
+                    className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-primary transition-colors hover:underline"
+                  >
+                    Read full story
+                    <ArrowUpRight className="h-4 w-4" />
+                  </Link>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-10">
+              <Button asChild>
+                <Link to="/case-studies">
+                  View all case studies
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
             </div>
           </div>
         </section>
