@@ -488,6 +488,7 @@ export default function Index() {
               <ul className="mt-4 space-y-2 text-sm">
                 <li><Link to="/" className="text-muted-foreground transition-colors hover:text-primary">Home</Link></li>
                 <li><Link to="/why-us" className="text-muted-foreground transition-colors hover:text-primary">Why Us</Link></li>
+                <li><Link to="/case-studies" className="text-muted-foreground transition-colors hover:text-primary">Case Studies</Link></li>
                 <li><a href="#pricing" className="text-muted-foreground transition-colors hover:text-primary">Pricing</a></li>
                 <li><a href="#software" className="text-muted-foreground transition-colors hover:text-primary">Software</a></li>
                 <li><Link to="/auth" className="text-muted-foreground transition-colors hover:text-primary">Agent Login</Link></li>
