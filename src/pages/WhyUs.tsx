@@ -1,8 +1,9 @@
 import { useEffect } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, Check, Shield, Users, Zap, BarChart3, Award, Clock, Facebook, Linkedin, Instagram, Menu, User } from "lucide-react";
+import { ArrowRight, Check, Shield, Users, Zap, BarChart3, Award, Clock, Facebook, Linkedin, Instagram, Menu, User, ArrowUpRight } from "lucide-react";
 import tevelFounder from "@/assets/tevel-founder.webp";
 
+import { caseStudies } from "@/data/caseStudies";
 import { UERLogo } from "@/components/UERLogo";
 import { Button } from "@/components/ui/button";
 import { SeoHead } from "@/components/SeoHead";
