@@ -254,10 +254,10 @@ export default function WhyUs() {
             <div className="max-w-2xl">
               <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">Leadership</p>
               <h2 className="mt-3 text-3xl font-bold text-foreground sm:text-4xl">
-                Built by an Agent. Built for Agents.
+                Why Tevel Built This
               </h2>
               <p className="mt-3 text-lg text-muted-foreground">
-                Meet Tevel, the mind behind United Estates Realty
+                The agent who got tired of working hard and earning nothing.
               </p>
             </div>
 
@@ -278,25 +278,43 @@ export default function WhyUs() {
                 </div>
               </div>
 
-              {/* Founder Bio */}
+              {/* Founder Story */}
               <div className="space-y-4 text-base leading-7 text-muted-foreground">
                 <p>
-                  Before writing a single line of code, Tevel was a real estate agent.
+                  Tevel was a real estate agent just like you.
                 </p>
                 <p>
-                  Every single day, he juggled dozens of client queries, buyers waiting for callbacks, sellers expecting updates, and leads slipping through the cracks because there simply wasn't a good enough system to keep up. He tried the generic CRM tools everyone recommended. They were built for sales teams, not for agents. They didn't understand how real estate actually works — the volume, the speed, the relationships.
+                  He worked hard. He chased leads, managed clients and closed deals. And every single month, without fail, the bills came in.
                 </p>
                 <p>
-                  So he did what most frustrated agents don't: he built the solution himself.
+                  First, the monthly subscription fees. Not cheap but fine, tools cost money. He paid.
                 </p>
                 <p>
-                  United Estates Realty was born directly from that frustration. Not in a boardroom. Not from a business plan. But from the real, daily experience of an agent who was tired of losing good leads to poor follow-ups and disorganized pipelines.
+                  Then came the transaction fees. Every deal he closed, a percentage disappeared before he even saw it. Not because he did anything wrong. Just because the platform decided it deserved a cut of his work.
                 </p>
                 <p>
-                  Today, Tevel's mission is simple: to give every real estate agent the exact tool he wished he had when he was in the field. A CRM that speaks the language of real estate, handles the chaos of multiple client queries, and helps agents do what they do best: close deals and build relationships.
+                  Then came the commission split. A portion of every hard-earned commission is gone. To a company that never made a single phone call, never sat in a single meeting, never chased a single client.
+                </p>
+                <p>
+                  And if you wanted a basic feature that should have been included from day one? That was another charge. Another tier. Another "upgrade."
+                </p>
+                <p>
+                  Tevel looked at his earnings one evening and did the math. The subscriptions. The transaction fees. The commission cuts. The add-ons. The numbers were shocking, not because any single charge was outrageous, but because they never stopped. Every direction he turned, someone had their hand in his pocket.
+                </p>
+                <p>
+                  He was not just paying to use a tool. He was paying a tax on his own success.
+                </p>
+                <p>
+                  That was the moment everything changed.
+                </p>
+                <p>
+                  Tevel did not build United Estates Realty because he saw a market opportunity. He built it because he was furious — and he knew every agent reading this feels the same way.
                 </p>
                 <p className="italic text-foreground">
-                  "I didn't build this for a market opportunity. I built it because I lived the problem every day and I knew other agents were living it too." — Tevel
+                  "I was tired of working hard and watching my earnings disappear into fees I never agreed to. Every time I closed a deal, someone else was already waiting to take their cut. I built this because agents deserve to keep what they earn." — Tevel
+                </p>
+                <p className="text-foreground">
+                  United Estates Realty was built by an agent who got tired of paying for everything and keeping nothing. That is why we built something different — and that is why it will always stay that way.
                 </p>
               </div>
             </div>
