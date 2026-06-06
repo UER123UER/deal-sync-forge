@@ -15,7 +15,7 @@ export default function CaseStudies() {
     <MarketingShell activeNav="case-studies">
       <SeoHead
         title="Case Studies — Real Agents, Real Results | United Estates Realty"
-        description="See how Florida real estate agents use United Estates Realty to manage more client queries and close more deals."
+        description="See how real estate agents use United Estates Realty to eliminate unnecessary fees and keep more of every commission they earn."
         path="/case-studies"
       />
 
