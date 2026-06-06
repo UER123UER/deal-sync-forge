@@ -4,69 +4,64 @@ export interface CaseStudy {
   city: string;
   headlineResult: string;
   summary: string;
-  challenge: string;
-  solution: string;
-  results: string[];
-  quote: string;
+  label: string;
+  snapshot: {
+    agent: string;
+    location: string;
+    experience: string;
+    situation: string;
+    result: string;
+  };
+  story: string[];
+  whatChanged: string[];
+  advice: string;
+  disclaimer: string;
 }
 
 export const caseStudies: CaseStudy[] = [
   {
-    slug: "miami-response-time",
-    agentName: "Agent",
-    city: "Miami",
-    headlineResult: "Cut response time by 40%",
+    slug: "marcus-reed-commission-fees",
+    agentName: "Marcus Reed",
+    city: "Houston, Texas",
+    headlineResult:
+      "Stopped Losing 30% of His Commission to Fees and Finally Kept What He Earned",
     summary:
-      "A Miami-based agent was losing leads to slow follow-ups. After switching to United Estates Realty, every new inquiry routed through one unified inbox.",
-    challenge:
-      "Juggling 60+ active buyer leads across email, SMS, and Zillow meant inquiries sat for hours before getting a reply. Hot leads were going cold daily.",
-    solution:
-      "Consolidating every lead source inside the United Estates Realty CRM created a single response queue with automatic prioritization and reminders.",
-    results: [
-      "Average response time dropped from 4.5 hours to 2.7 hours",
-      "Booked showings increased by 28% in the first 60 days",
-      "Zero leads lost to missed follow-up in Q1",
+      "A Houston solo agent eliminated unnecessary fee layers after switching to United Estates Realty, keeping significantly more of every deal he closed.",
+    label: "Real Agent Story | Solo Agent | Houston, Texas, USA",
+    snapshot: {
+      agent: "Marcus Reed",
+      location: "Houston, Texas",
+      experience: "6 years as a solo real estate agent",
+      situation:
+        "Paying monthly fees, transaction fees, commission splits, and add-on charges across multiple platforms",
+      result:
+        "Switched to United Estates Realty and eliminated unnecessary fee layers, keeping significantly more of every deal he closed",
+    },
+    story: [
+      "Marcus Reed had been a real estate agent in Houston for six years. By any measure, he was good at his job. His clients trusted him. His referrals were growing. His pipeline was full.",
+      "But every month when he sat down to review his earnings, the same sinking feeling came back.",
+      "The numbers never added up the way they should.",
+      "It started with the monthly subscription. One platform for listings. Another for client management. Another for communication. Each one billed separately. Each one justified with a free trial that quietly became a recurring charge.",
+      "Then came the transaction fees. Every time Marcus closed a deal he sourced, negotiated, and delivered entirely on his own, a percentage was automatically deducted by the platform. No explanation. No negotiation. Just gone.",
+      "Then the commission split. A cut taken by a company that had no involvement in the deal whatsoever. No calls made. No clients met. No work done. Just a hand waiting at the finish line.",
+      '"I remember closing a strong deal one Friday and feeling excited," Marcus recalls. "Then I did the math on what I was actually taking home after all the fees. It was nowhere near what I had earned. I felt like I had worked the entire week for someone else."',
+      "Marcus spent an entire weekend mapping out every fee he was paying across every platform. The total stopped him cold.",
+      "He was handing over a significant portion of his annual income not to a business partner, not to a team member, but to platforms and tools that simply charged because they could.",
+      "He started looking for an alternative. Not just a cheaper tool, but a fundamentally different approach. One built by someone who understood what it actually felt like to be on the other side of those fees.",
+      "That is when Marcus found United Estates Realty.",
     ],
-    quote:
-      "I stopped guessing who to call next. The platform tells me, and my numbers prove it works.",
-  },
-  {
-    slug: "orlando-commission-keep",
-    agentName: "Agent",
-    city: "Orlando",
-    headlineResult: "Kept an extra $47,000 in commissions last year",
-    summary:
-      "An Orlando agent moved off a 70/30 split brokerage to United Estates Realty's flat $98/month model and pocketed every dollar earned.",
-    challenge:
-      "Closing 14 deals a year, this agent was handing over nearly $50K in splits and transaction fees without getting tools or support in return.",
-    solution:
-      "Switching to a flat monthly fee eliminated splits entirely while keeping full brokerage compliance, CRM, and marketing tools included.",
-    results: [
-      "$47,000 in additional take-home commission",
-      "$0 in transaction or desk fees across 14 closings",
-      "Reinvested savings into paid lead generation",
+    whatChanged: [
+      "The difference was immediate, not just in cost, but in philosophy. United Estates Realty was not built by a tech company looking for multiple revenue streams from agents. It was built by an agent who had lived through the same frustration Marcus was feeling.",
+      "No transaction fees eating into every closed deal.",
+      "No commission splits taken by a platform that did none of the work.",
+      "No surprise charges for features that should have been standard from day one.",
+      "One straightforward system built around how agents actually work.",
+      '"For the first time in years, I felt like my earnings were actually mine," Marcus says. "I closed the same number of deals the next month and kept noticeably more than I ever had before. That is not a small thing; that is the difference between a good year and a great one."',
     ],
-    quote:
-      "I was paying my old brokerage like a partner and getting treated like a tenant. Not anymore.",
-  },
-  {
-    slug: "tampa-deal-volume",
-    agentName: "Agent",
-    city: "Tampa",
-    headlineResult: "Closed 3x more deals in 6 months",
-    summary:
-      "A Tampa agent used the deal pipeline and task automation to scale from 2 closings a month to 6 without adding any team members.",
-    challenge:
-      "Manual checklists and scattered documents created a ceiling on how many deals could realistically move forward at once.",
-    solution:
-      "Standardized checklists, automatic document routing, and a single deal dashboard let one agent manage triple the volume confidently.",
-    results: [
-      "Closings grew from 2/month to 6/month",
-      "Document turnaround cut from 3 days to same-day",
-      "Net income up 240% year-over-year",
-    ],
-    quote:
-      "The system does the busywork. I just show houses and close deals.",
+    advice:
+      '"Do the math. Seriously, sit down and add up every fee you are paying across every platform you use. Most agents I know have never done this because they are too busy working. When you finally see the full number, you will understand exactly why I made the switch."',
+    disclaimer:
+      "This case study is based on real experiences from within the real estate industry. The name and identifying details have been changed to protect the individual's privacy. The challenges, frustrations, and outcomes described reflect genuine experiences of real estate agents using United Estates Realty.",
   },
 ];
 

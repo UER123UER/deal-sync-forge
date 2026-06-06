@@ -216,7 +216,7 @@ export default function WhyUs() {
                 Real agents. Real results.
               </h2>
               <p className="mt-3 text-lg text-muted-foreground">
-                See how agents across Florida are growing their business with United Estates Realty.
+                See how agents across the country are growing their business with United Estates Realty.
               </p>
             </div>
 
