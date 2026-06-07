@@ -260,7 +260,7 @@ export default function WhyUs() {
             <div className="max-w-2xl">
               <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">Leadership</p>
               <h2 className="mt-3 text-3xl font-bold text-foreground sm:text-4xl">
-                Why Tevel Built This
+                Why Tevel Herbstman Built This
               </h2>
               <p className="mt-3 text-lg text-muted-foreground">
                 The agent who got tired of working hard and earning nothing.
@@ -273,13 +273,13 @@ export default function WhyUs() {
                 <div className="h-64 w-64 overflow-hidden border bg-muted/30 sm:h-72 sm:w-72">
                   <img
                     src={tevelFounder}
-                    alt="Tevel, Founder & Managing Broker of United Estates Realty"
+                    alt="Tevel Herbstman, Founder & Managing Broker of United Estates Realty"
                     className="h-full w-full object-cover"
                     loading="lazy"
                   />
                 </div>
                 <div className="mt-4 text-center md:text-left">
-                  <p className="text-lg font-semibold text-foreground">Tevel</p>
+                  <p className="text-lg font-semibold text-foreground">Tevel Herbstman</p>
                   <p className="text-sm text-muted-foreground">Founder & Managing Broker</p>
                 </div>
               </div>
@@ -287,7 +287,7 @@ export default function WhyUs() {
               {/* Founder Story */}
               <div className="space-y-4 text-base leading-7 text-muted-foreground">
                 <p>
-                  Tevel was a real estate agent just like you.
+                  Tevel Herbstman was a real estate agent just like you.
                 </p>
                 <p>
                   He worked hard. He chased leads, managed clients and closed deals. And every single month, without fail, the bills came in.
@@ -305,7 +305,7 @@ export default function WhyUs() {
                   And if you wanted a basic feature that should have been included from day one? That was another charge. Another tier. Another "upgrade."
                 </p>
                 <p>
-                  Tevel looked at his earnings one evening and did the math. The subscriptions. The transaction fees. The commission cuts. The add-ons. The numbers were shocking, not because any single charge was outrageous, but because they never stopped. Every direction he turned, someone had their hand in his pocket.
+                  Tevel Herbstman looked at his earnings one evening and did the math. The subscriptions. The transaction fees. The commission cuts. The add-ons. The numbers were shocking, not because any single charge was outrageous, but because they never stopped. Every direction he turned, someone had their hand in his pocket.
                 </p>
                 <p>
                   He was not just paying to use a tool. He was paying a tax on his own success.
@@ -314,10 +314,10 @@ export default function WhyUs() {
                   That was the moment everything changed.
                 </p>
                 <p>
-                  Tevel did not build United Estates Realty because he saw a market opportunity. He built it because he was furious — and he knew every agent reading this feels the same way.
+                  Tevel Herbstman did not build United Estates Realty because he saw a market opportunity. He built it because he was furious — and he knew every agent reading this feels the same way.
                 </p>
                 <p className="italic text-foreground">
-                  "I was tired of working hard and watching my earnings disappear into fees I never agreed to. Every time I closed a deal, someone else was already waiting to take their cut. I built this because agents deserve to keep what they earn." — Tevel
+                  "I was tired of working hard and watching my earnings disappear into fees I never agreed to. Every time I closed a deal, someone else was already waiting to take their cut. I built this because agents deserve to keep what they earn." — Tevel Herbstman
                 </p>
                 <p className="text-foreground">
                   United Estates Realty was built by an agent who got tired of paying for everything and keeping nothing. That is why we built something different — and that is why it will always stay that way.
