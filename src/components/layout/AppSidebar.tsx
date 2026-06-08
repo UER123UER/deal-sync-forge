@@ -120,7 +120,7 @@ export function AppSidebar() {
 
       <aside className="relative hidden min-h-screen w-24 shrink-0 flex-col items-center gap-2 border-r border-[hsl(var(--sidebar-border))] bg-[hsl(var(--sidebar-background))] px-2 py-4 lg:flex">
         <div className="mb-4 flex w-full items-center justify-center">
-          <UERLogo width={56} />
+          <UERLogo width={84} />
         </div>
 
         <div className="flex w-full flex-1 flex-col items-center gap-2">
