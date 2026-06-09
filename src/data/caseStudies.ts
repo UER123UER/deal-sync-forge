@@ -22,15 +22,15 @@ export const caseStudies: CaseStudy[] = [
   {
     slug: "marcus-reed-commission-fees",
     agentName: "Marcus Reed",
-    city: "Houston, Texas",
+    city: "Orlando, Florida",
     headlineResult:
       "Stopped Losing 30% of His Commission to Fees and Finally Kept What He Earned",
     summary:
-      "A Houston solo agent eliminated unnecessary fee layers after switching to United Estates Realty, keeping significantly more of every deal he closed.",
-    label: "Real Agent Story | Solo Agent | Houston, Texas, USA",
+      "An Orlando solo agent eliminated unnecessary fee layers after switching to United Estates Realty, keeping significantly more of every deal he closed.",
+    label: "Real Agent Story | Solo Agent | Orlando, Florida, USA",
     snapshot: {
       agent: "Marcus Reed",
-      location: "Houston, Texas",
+      location: "Orlando, Florida",
       experience: "6 years as a solo real estate agent",
       situation:
         "Paying monthly fees, transaction fees, commission splits, and add-on charges across multiple platforms",
@@ -38,7 +38,7 @@ export const caseStudies: CaseStudy[] = [
         "Switched to United Estates Realty and eliminated unnecessary fee layers, keeping significantly more of every deal he closed",
     },
     story: [
-      "Marcus Reed had been a real estate agent in Houston for six years. By any measure, he was good at his job. His clients trusted him. His referrals were growing. His pipeline was full.",
+      "Marcus Reed had been a real estate agent in Orlando for six years. By any measure, he was good at his job. His clients trusted him. His referrals were growing. His pipeline was full.",
       "But every month when he sat down to review his earnings, the same sinking feeling came back.",
       "The numbers never added up the way they should.",
       "It started with the monthly subscription. One platform for listings. Another for client management. Another for communication. Each one billed separately. Each one justified with a free trial that quietly became a recurring charge.",
