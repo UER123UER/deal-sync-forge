@@ -260,7 +260,7 @@ export default function WhyUs() {
             <div className="max-w-2xl">
               <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">Leadership</p>
               <h2 className="mt-3 text-3xl font-bold text-foreground sm:text-4xl">
-                Why Tevel Herbstman Built This
+                Why Tevel Built This
               </h2>
             </div>
 
