@@ -262,9 +262,6 @@ export default function WhyUs() {
               <h2 className="mt-3 text-3xl font-bold text-foreground sm:text-4xl">
                 Why Tevel Herbstman Built This
               </h2>
-              <p className="mt-3 text-lg text-muted-foreground">
-                The agent who got tired of working hard and earning nothing.
-              </p>
             </div>
 
             <div className="mt-10 grid items-start gap-8 md:grid-cols-[280px_1fr]">
@@ -317,7 +314,7 @@ export default function WhyUs() {
                   Tevel Herbstman did not build United Estates Realty because he saw a market opportunity. He built it because he was furious — and he knew every agent reading this feels the same way.
                 </p>
                 <p className="italic text-foreground">
-                  "I was tired of working hard and watching my earnings disappear into fees I never agreed to. Every time I closed a deal, someone else was already waiting to take their cut. I built this because agents deserve to keep what they earn." — Tevel Herbstman
+                  "I was tired of working hard and watching my earnings disappear into fees I never agreed to. Every time I closed a deal, someone else was already waiting to take their cut. I built this because agents deserve to keep what they earn." — Tevel
                 </p>
                 <p className="text-foreground">
                   United Estates Realty was built by an agent who got tired of paying for everything and keeping nothing. That is why we built something different — and that is why it will always stay that way.
