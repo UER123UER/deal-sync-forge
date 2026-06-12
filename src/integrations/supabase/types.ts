@@ -116,6 +116,7 @@ export type Database = {
           id: string
           name: string
           sort_order: number | null
+          user_id: string
         }
         Insert: {
           completed?: boolean | null
@@ -125,6 +126,7 @@ export type Database = {
           id?: string
           name: string
           sort_order?: number | null
+          user_id?: string
         }
         Update: {
           completed?: boolean | null
@@ -134,6 +136,7 @@ export type Database = {
           id?: string
           name?: string
           sort_order?: number | null
+          user_id?: string
         }
         Relationships: [
           {
@@ -163,6 +166,7 @@ export type Database = {
           phone: string | null
           role: string | null
           tags: string[] | null
+          user_id: string
         }
         Insert: {
           commission?: string | null
@@ -181,6 +185,7 @@ export type Database = {
           phone?: string | null
           role?: string | null
           tags?: string[] | null
+          user_id?: string
         }
         Update: {
           commission?: string | null
@@ -199,6 +204,7 @@ export type Database = {
           phone?: string | null
           role?: string | null
           tags?: string[] | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -208,18 +214,21 @@ export type Database = {
           deal_id: string
           id: string
           role: string | null
+          user_id: string
         }
         Insert: {
           contact_id: string
           deal_id: string
           id?: string
           role?: string | null
+          user_id?: string
         }
         Update: {
           contact_id?: string
           deal_id?: string
           id?: string
           role?: string | null
+          user_id?: string
         }
         Relationships: [
           {
@@ -244,18 +253,21 @@ export type Database = {
           created_at: string | null
           deal_id: string
           id: string
+          user_id: string
         }
         Insert: {
           content: string
           created_at?: string | null
           deal_id: string
           id?: string
+          user_id?: string
         }
         Update: {
           content?: string
           created_at?: string | null
           deal_id?: string
           id?: string
+          user_id?: string
         }
         Relationships: [
           {
@@ -282,6 +294,7 @@ export type Database = {
           representation_side: string
           state: string
           status: string
+          user_id: string
           visible_to_office: boolean
           zip: string
         }
@@ -299,6 +312,7 @@ export type Database = {
           representation_side?: string
           state: string
           status?: string
+          user_id?: string
           visible_to_office?: boolean
           zip: string
         }
@@ -316,6 +330,7 @@ export type Database = {
           representation_side?: string
           state?: string
           status?: string
+          user_id?: string
           visible_to_office?: boolean
           zip?: string
         }
@@ -366,6 +381,7 @@ export type Database = {
           id: string
           notes: string | null
           status: string
+          user_id: string
         }
         Insert: {
           amount: string
@@ -375,6 +391,7 @@ export type Database = {
           id?: string
           notes?: string | null
           status?: string
+          user_id?: string
         }
         Update: {
           amount?: string
@@ -384,6 +401,7 @@ export type Database = {
           id?: string
           notes?: string | null
           status?: string
+          user_id?: string
         }
         Relationships: [
           {
@@ -476,6 +494,7 @@ export type Database = {
           notes: string | null
           scheduled_date: string
           start_time: string
+          user_id: string
         }
         Insert: {
           created_at?: string | null
@@ -485,6 +504,7 @@ export type Database = {
           notes?: string | null
           scheduled_date: string
           start_time?: string
+          user_id?: string
         }
         Update: {
           created_at?: string | null
@@ -494,6 +514,7 @@ export type Database = {
           notes?: string | null
           scheduled_date?: string
           start_time?: string
+          user_id?: string
         }
         Relationships: [
           {
@@ -562,6 +583,7 @@ export type Database = {
           session_id: string
           sort_order: number | null
           storage_path: string
+          user_id: string
         }
         Insert: {
           created_at?: string | null
@@ -571,6 +593,7 @@ export type Database = {
           session_id: string
           sort_order?: number | null
           storage_path: string
+          user_id?: string
         }
         Update: {
           created_at?: string | null
@@ -580,6 +603,7 @@ export type Database = {
           session_id?: string
           sort_order?: number | null
           storage_path?: string
+          user_id?: string
         }
         Relationships: [
           {
@@ -601,6 +625,7 @@ export type Database = {
           recipient_id: string | null
           session_id: string
           type: string
+          user_id: string
           value: string | null
           width: number
           x: number
@@ -615,6 +640,7 @@ export type Database = {
           recipient_id?: string | null
           session_id: string
           type?: string
+          user_id?: string
           value?: string | null
           width?: number
           x?: number
@@ -629,6 +655,7 @@ export type Database = {
           recipient_id?: string | null
           session_id?: string
           type?: string
+          user_id?: string
           value?: string | null
           width?: number
           x?: number
@@ -673,6 +700,7 @@ export type Database = {
           status: string
           token: string
           type: string
+          user_id: string
         }
         Insert: {
           contact_id?: string | null
@@ -688,6 +716,7 @@ export type Database = {
           status?: string
           token?: string
           type?: string
+          user_id?: string
         }
         Update: {
           contact_id?: string | null
@@ -703,6 +732,7 @@ export type Database = {
           status?: string
           token?: string
           type?: string
+          user_id?: string
         }
         Relationships: [
           {
@@ -733,6 +763,7 @@ export type Database = {
           signature_request_id: string
           signed_at: string | null
           status: string
+          user_id: string
         }
         Insert: {
           contact_id?: string | null
@@ -745,6 +776,7 @@ export type Database = {
           signature_request_id: string
           signed_at?: string | null
           status?: string
+          user_id?: string
         }
         Update: {
           contact_id?: string | null
@@ -757,6 +789,7 @@ export type Database = {
           signature_request_id?: string
           signed_at?: string | null
           status?: string
+          user_id?: string
         }
         Relationships: [
           {
@@ -788,6 +821,7 @@ export type Database = {
           status: string
           subject: string
           token: string
+          user_id: string
         }
         Insert: {
           checklist_item_id?: string | null
@@ -801,6 +835,7 @@ export type Database = {
           status?: string
           subject?: string
           token?: string
+          user_id?: string
         }
         Update: {
           checklist_item_id?: string | null
@@ -814,6 +849,7 @@ export type Database = {
           status?: string
           subject?: string
           token?: string
+          user_id?: string
         }
         Relationships: [
           {
@@ -846,6 +882,7 @@ export type Database = {
           signing_order_enabled: boolean | null
           status: string
           updated_at: string | null
+          user_id: string
         }
         Insert: {
           created_at?: string | null
@@ -860,6 +897,7 @@ export type Database = {
           signing_order_enabled?: boolean | null
           status?: string
           updated_at?: string | null
+          user_id?: string
         }
         Update: {
           created_at?: string | null
@@ -874,6 +912,7 @@ export type Database = {
           signing_order_enabled?: boolean | null
           status?: string
           updated_at?: string | null
+          user_id?: string
         }
         Relationships: [
           {
@@ -896,6 +935,7 @@ export type Database = {
           id: string
           title: string
           type: string
+          user_id: string
         }
         Insert: {
           assignee?: string | null
@@ -907,6 +947,7 @@ export type Database = {
           id?: string
           title: string
           type?: string
+          user_id?: string
         }
         Update: {
           assignee?: string | null
@@ -918,6 +959,7 @@ export type Database = {
           id?: string
           title?: string
           type?: string
+          user_id?: string
         }
         Relationships: [
           {
