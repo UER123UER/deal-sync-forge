@@ -109,20 +109,12 @@ export default function Signup() {
       return;
     }
 
-    // Auto sign-in
     const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
     if (signInError) {
       setLoading(false);
       toast({ title: 'Account created!', description: 'Please sign in with your new credentials.' });
       navigate('/auth');
       return;
-    }
-
-    // Save the referral code that brought this user here
-    if (refCode && signInData.user) {
-      await (supabase.from('profiles') as any)
-        .update({ referred_by_code: refCode })
-        .eq('id', signInData.user.id);
     }
 
     if (signInData.user) {

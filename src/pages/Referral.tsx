@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { Copy, Check, DollarSign, Users, Gift, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,11 +23,11 @@ export default function Referral() {
   const [activeReferrals, setActiveReferrals] = useState(0);
   const [totalEarnings, setTotalEarnings] = useState(0);
   const [loadingCount, setLoadingCount] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   const earningsPerMonth = 20;
 
-  // Load referred agents and compute monthly accruing earnings
-  useEffect(() => {
+  const loadStats = useCallback(async () => {
     if (!profile?.referral_code) {
       setTotalReferrals(0);
       setActiveReferrals(0);
@@ -35,36 +35,69 @@ export default function Referral() {
       setLoadingCount(false);
       return;
     }
-    (async () => {
-      const { data } = await (supabase as any)
-        .from('profiles')
-        .select('id, subscription_status, subscription_activated_at')
-        .eq('referred_by_code', profile.referral_code);
+    const { data } = await (supabase as any)
+      .from('profiles')
+      .select('id, subscription_status, subscription_activated_at')
+      .eq('referred_by_code', profile.referral_code);
 
-      const rows = (data ?? []) as Array<{
-        subscription_status: string;
-        subscription_activated_at: string | null;
-      }>;
+    const rows = (data ?? []) as Array<{
+      subscription_status: string;
+      subscription_activated_at: string | null;
+    }>;
 
-      let earnings = 0;
-      let active = 0;
-      const now = Date.now();
-      for (const r of rows) {
-        if (r.subscription_status === 'active' && r.subscription_activated_at) {
-          active += 1;
-          const start = new Date(r.subscription_activated_at).getTime();
-          // Count each completed 30-day month the referred agent has been paying
-          const months = Math.max(1, Math.floor((now - start) / (1000 * 60 * 60 * 24 * 30)) + 1);
-          earnings += months * earningsPerMonth;
-        }
+    let earnings = 0;
+    let active = 0;
+    const now = Date.now();
+    for (const r of rows) {
+      if (r.subscription_status === 'active' && r.subscription_activated_at) {
+        active += 1;
+        const start = new Date(r.subscription_activated_at).getTime();
+        const months = Math.max(1, Math.floor((now - start) / (1000 * 60 * 60 * 24 * 30)) + 1);
+        earnings += months * earningsPerMonth;
       }
+    }
 
-      setTotalReferrals(rows.length);
-      setActiveReferrals(active);
-      setTotalEarnings(earnings);
-      setLoadingCount(false);
-    })();
+    setTotalReferrals(rows.length);
+    setActiveReferrals(active);
+    setTotalEarnings(earnings);
+    setLoadingCount(false);
   }, [profile?.referral_code]);
+
+  useEffect(() => {
+    loadStats();
+  }, [loadStats]);
+
+  // Refetch when the tab regains focus
+  useEffect(() => {
+    const onFocus = () => { loadStats(); };
+    window.addEventListener('focus', onFocus);
+    document.addEventListener('visibilitychange', onFocus);
+    return () => {
+      window.removeEventListener('focus', onFocus);
+      document.removeEventListener('visibilitychange', onFocus);
+    };
+  }, [loadStats]);
+
+  // Realtime: any profile change with my code as referred_by_code refreshes stats
+  useEffect(() => {
+    if (!profile?.referral_code) return;
+    const channel = supabase
+      .channel(`referrals-${profile.referral_code}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'profiles', filter: `referred_by_code=eq.${profile.referral_code}` },
+        () => { loadStats(); }
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [profile?.referral_code, loadStats]);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await loadStats();
+    setRefreshing(false);
+    toast.success('Referral stats refreshed');
+  };
 
   // Use the permanent code from the user's profile
   const referralCode = profile?.referral_code ?? '-';
@@ -150,6 +183,13 @@ export default function Referral() {
               description="Recurring monthly reward for each active paying subscription."
               tone="success"
             />
+          </div>
+
+          <div className="flex justify-end">
+            <Button variant="outline" size="sm" className="gap-1.5" onClick={handleRefresh} disabled={refreshing}>
+              <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+              {refreshing ? 'Refreshing…' : 'Refresh'}
+            </Button>
           </div>
 
           <PageSection
