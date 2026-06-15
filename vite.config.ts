@@ -27,7 +27,8 @@ export default defineConfig(({ mode }) => ({
     crittersOptions: false,
     beastiesOptions: false,
     includedRoutes(paths: string[]) {
-      console.log("[ssg] discovered paths:", paths);
+      // vite-react-ssg yields child paths without a leading "/" — normalize first.
+      const normalize = (p: string) => (p.startsWith("/") ? p : `/${p}`);
       const publicRoutes = new Set([
         "/",
         "/why-us",
@@ -35,9 +36,9 @@ export default defineConfig(({ mode }) => ({
         "/auth",
         "/signup",
       ]);
-      return paths.filter(
-        (p) => publicRoutes.has(p) || p.startsWith("/case-studies/"),
-      );
+      return paths
+        .map(normalize)
+        .filter((p) => publicRoutes.has(p) || p.startsWith("/case-studies/"));
     },
   },
 }));
