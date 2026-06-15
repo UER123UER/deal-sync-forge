@@ -18,4 +18,25 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  // vite-react-ssg options. Pre-render only public marketing routes; the
+  // authenticated app stays client-rendered (data depends on a logged-in user).
+  ssgOptions: {
+    script: "async",
+    formatting: "none",
+    mock: true,
+    crittersOptions: false,
+    beastiesOptions: false,
+    includedRoutes(paths: string[]) {
+      const publicRoutes = new Set([
+        "/",
+        "/why-us",
+        "/case-studies",
+        "/auth",
+        "/signup",
+      ]);
+      return paths.filter(
+        (p) => publicRoutes.has(p) || p.startsWith("/case-studies/"),
+      );
+    },
+  },
 }));
