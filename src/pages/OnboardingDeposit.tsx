@@ -40,6 +40,8 @@ export default function OnboardingDeposit() {
   const [routingNumber, setRoutingNumber] = useState('');
   const [accountNumber, setAccountNumber] = useState('');
   const [confirmAccountNumber, setConfirmAccountNumber] = useState('');
+  const [showAccountNumber, setShowAccountNumber] = useState(false);
+  const [showConfirmAccountNumber, setShowConfirmAccountNumber] = useState(false);
   const [accountType, setAccountType] = useState('checking');
   const [saving, setSaving] = useState(false);
 
