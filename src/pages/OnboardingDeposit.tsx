@@ -247,20 +247,31 @@ export default function OnboardingDeposit() {
 
                 <div className="space-y-1.5">
                   <Label htmlFor="deposit-account">Account Number</Label>
-                  <Input
-                    id="deposit-account"
-                    placeholder="Enter your account number"
-                    type="password"
-                    value={accountNumber}
-                    onChange={(event) => setAccountNumber(event.target.value.replace(/\D/g, '').slice(0, 17))}
-                    className={cn(
-                      accountNumber &&
-                        (accountResult.valid
-                          ? 'border-emerald-500 focus-visible:ring-emerald-500/30'
-                          : 'border-destructive focus-visible:ring-destructive/30')
-                    )}
-                    required={!useBillingAccount}
-                  />
+                  <div className="relative">
+                    <Input
+                      id="deposit-account"
+                      placeholder="Enter your account number"
+                      type={showAccountNumber ? 'text' : 'password'}
+                      value={accountNumber}
+                      onChange={(event) => setAccountNumber(event.target.value.replace(/\D/g, '').slice(0, 17))}
+                      className={cn(
+                        'pr-10',
+                        accountNumber &&
+                          (accountResult.valid
+                            ? 'border-emerald-500 focus-visible:ring-emerald-500/30'
+                            : 'border-destructive focus-visible:ring-destructive/30')
+                      )}
+                      required={!useBillingAccount}
+                    />
+                    <button
+                      type="button"
+                      tabIndex={-1}
+                      onClick={() => setShowAccountNumber((prev) => !prev)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground focus-visible:outline-none"
+                    >
+                      {showAccountNumber ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
                   <FieldHint value={accountNumber} result={accountResult} />
                 </div>
 
