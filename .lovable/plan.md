@@ -1,33 +1,72 @@
-## The problem
+## Goal
+Make CRM, deals, tasks, notes, offers, open houses, checklists, signatures, and signing sessions private to the signed-in account that owns them.
 
-Right now every CRM table (`contacts`, `deals`, `tasks`, `deal_notes`, `deal_contacts`, `offers`, `open_houses`, `checklist_items`, `signature_requests`, `signature_recipients`, `signing_sessions`, `session_documents`, `session_fields`, `session_recipients`, `admin_documents`) has no `user_id` column, and its RLS policies are `USING (true)` for any authenticated user. That means every signed-in agent sees and edits every other agent's data — which is exactly what happened with Tevel and Max sharing one CRM.
+## What I found
+- The database now has `user_id` on the main CRM/deal tables, and RLS policies are intended to limit rows to `auth.uid() = user_id`.
+- Existing legacy rows were backfilled to one user ID, so other accounts should start empty unless their own rows are created under their own login.
+- The current setup should be strengthened because child tables can still rely only on their own `user_id`, instead of also proving their parent deal/session/request belongs to the same account.
 
-## The fix
+## Plan
 
-Make every record owned by the agent who created it, and scope reads/writes to that owner.
+### 1. Harden the database isolation rules
+Update RLS policies for every account-owned table:
+- `contacts`
+- `deals`
+- `tasks`
+- `deal_notes`
+- `deal_contacts`
+- `offers`
+- `open_houses`
+- `checklist_items`
+- `signature_requests`
+- `signature_recipients`
+- `signing_sessions`
+- `session_documents`
+- `session_fields`
+- `session_recipients`
 
-### 1. Database migration
+Rules:
+- Users can only view, create, edit, or delete rows where `user_id = auth.uid()`.
+- Child records must also match the owner of their parent record:
+  - Deal children must belong to a deal owned by the same user.
+  - Signature recipients must belong to a signature request owned by the same user.
+  - Session documents/fields/recipients must belong to a signing session owned by the same user.
+- Users cannot change a row’s `user_id` to another account.
 
-For each table above:
-- Add `user_id uuid` column (nullable temporarily).
-- Backfill: assign existing rows to Tevel's user id (`8680e004-9655-4a3e-af3f-5b33d…`) so his data is preserved. Child rows (`deal_notes`, `deal_contacts`, `offers`, `open_houses`, `checklist_items`, `tasks`, `signature_requests`, `signing_sessions`, etc.) inherit from their parent `deal_id` where applicable; `session_*` inherit from `signing_sessions.created_by`; `signature_recipients` from `signature_requests`; `session_fields`/`session_documents` from `signing_sessions`.
-- Set `NOT NULL` and `DEFAULT auth.uid()`.
-- Replace the four `USING (true)` policies on each table with `USING (auth.uid() = user_id)` (and `WITH CHECK` for insert/update). Child tables can either get their own `user_id` (simpler, what I recommend) or use an `EXISTS` check against the parent deal/session — I'll use the explicit `user_id` column on every table for consistency and performance.
-- `admin_documents` is templates managed by admins — keep it readable by all authenticated users, restrict writes to `has_role(auth.uid(),'admin')` instead of per-user. Confirm this is what you want.
+### 2. Add owner-sync triggers for safer inserts
+Add database triggers so child rows automatically inherit the correct `user_id` from their parent deal/session/request when created.
 
-### 2. Frontend
+This prevents bad data like:
+- a checklist item with one user’s `user_id` attached to another user’s deal
+- a signing recipient attached to the wrong owner
+- manually spoofed `user_id` values from the browser
 
-- Insert mutations (`useCreateContact`, `useDeals`, `useTasks`, deal creation in `NewDeal.tsx`, signing-session creation, etc.) need to set `user_id: user.id` (or rely on the column default `auth.uid()`). I'll standardize on the DB default so we don't have to touch every call site, and only add explicit `user_id` where the insert runs through an edge function with the service role.
-- Edge functions that write on behalf of the user (`submit-signing-session`, `record-onboarding-signatures`, etc.) — verify they pass the correct `user_id`.
+### 3. Keep shared admin templates global
+Leave `admin_documents` shared intentionally:
+- all authenticated agents can read PDF templates
+- only admins can create, edit, or delete them
 
-### 3. Data preservation for Tevel
+This avoids breaking the Admin PDF/forms workflow.
 
-Before enabling the new policies, backfill all existing rows to Tevel's user id so nothing of his is lost. Max's account will then start empty as expected.
+### 4. Review frontend create paths
+Update create/insert code where needed so new records are created under the current authenticated user and parent relationships are respected:
+- deals and their default checklist items
+- contacts and deal contacts
+- tasks
+- notes/offers/open houses
+- signing sessions, recipients, documents, and fields
+- signature requests and recipients
 
-## Open questions
+### 5. Verify separation
+After implementation, run checks to confirm:
+- every account-owned table has RLS enabled
+- every account-owned table has owner-only policies
+- `user_id` is required and defaults to the signed-in user
+- no CRM/deal/signing rows are globally readable
+- child rows cannot be attached across accounts
 
-1. Confirm Tevel's user id is `8680e004-9655-4a3e-af3f-5b33d…` (full id needed — I'll read it from `profiles`).
-2. `admin_documents` (PDF templates in the Admin PDF editor) — should these stay shared/global (admin-managed, all agents use them) or be per-user? My recommendation: keep global, admin-only writes.
-3. Any tables you explicitly want shared across the office (e.g. office-wide listings via `deals.visible_to_office`)? I'd leave that flag alone for now and only scope by `user_id`; the office-visibility feature can be layered back on as a follow-up policy.
-
-Once you confirm, I'll write one migration that adds the columns, backfills Tevel's data, sets defaults, and rewrites the policies.
+## Important note about existing shared data
+If data was created before isolation existed, the system cannot automatically know which rows belong to which agent unless there is a reliable identifier. The safe default is:
+- preserve existing legacy rows under Tevel’s account
+- every other account sees only its own newly created data
+- if specific records need to move to another account, we can migrate those rows once you identify which records belong to which account
