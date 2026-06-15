@@ -27,6 +27,7 @@ export default defineConfig(({ mode }) => ({
     crittersOptions: false,
     beastiesOptions: false,
     includedRoutes(paths: string[]) {
+      console.log("[ssg] discovered paths:", paths);
       const publicRoutes = new Set([
         "/",
         "/why-us",
