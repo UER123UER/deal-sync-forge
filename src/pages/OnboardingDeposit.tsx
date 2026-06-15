@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Building2, CheckCircle2, Landmark, ShieldCheck, XCircle } from 'lucide-react';
+import { Building2, CheckCircle2, Eye, EyeOff, Landmark, ShieldCheck, XCircle } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 
 import { Button } from '@/components/ui/button';
@@ -40,6 +40,8 @@ export default function OnboardingDeposit() {
   const [routingNumber, setRoutingNumber] = useState('');
   const [accountNumber, setAccountNumber] = useState('');
   const [confirmAccountNumber, setConfirmAccountNumber] = useState('');
+  const [showAccountNumber, setShowAccountNumber] = useState(false);
+  const [showConfirmAccountNumber, setShowConfirmAccountNumber] = useState(false);
   const [accountType, setAccountType] = useState('checking');
   const [saving, setSaving] = useState(false);
 
@@ -245,39 +247,61 @@ export default function OnboardingDeposit() {
 
                 <div className="space-y-1.5">
                   <Label htmlFor="deposit-account">Account Number</Label>
-                  <Input
-                    id="deposit-account"
-                    placeholder="Enter your account number"
-                    type="password"
-                    value={accountNumber}
-                    onChange={(event) => setAccountNumber(event.target.value.replace(/\D/g, '').slice(0, 17))}
-                    className={cn(
-                      accountNumber &&
-                        (accountResult.valid
-                          ? 'border-emerald-500 focus-visible:ring-emerald-500/30'
-                          : 'border-destructive focus-visible:ring-destructive/30')
-                    )}
-                    required={!useBillingAccount}
-                  />
+                  <div className="relative">
+                    <Input
+                      id="deposit-account"
+                      placeholder="Enter your account number"
+                      type={showAccountNumber ? 'text' : 'password'}
+                      value={accountNumber}
+                      onChange={(event) => setAccountNumber(event.target.value.replace(/\D/g, '').slice(0, 17))}
+                      className={cn(
+                        'pr-10',
+                        accountNumber &&
+                          (accountResult.valid
+                            ? 'border-emerald-500 focus-visible:ring-emerald-500/30'
+                            : 'border-destructive focus-visible:ring-destructive/30')
+                      )}
+                      required={!useBillingAccount}
+                    />
+                    <button
+                      type="button"
+                      tabIndex={-1}
+                      onClick={() => setShowAccountNumber((prev) => !prev)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground focus-visible:outline-none"
+                    >
+                      {showAccountNumber ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
                   <FieldHint value={accountNumber} result={accountResult} />
                 </div>
 
                 <div className="space-y-1.5">
                   <Label htmlFor="deposit-confirm-account">Confirm Account Number</Label>
-                  <Input
-                    id="deposit-confirm-account"
-                    placeholder="Re-enter account number"
-                    type="password"
-                    value={confirmAccountNumber}
-                    onChange={(event) => setConfirmAccountNumber(event.target.value.replace(/\D/g, '').slice(0, 17))}
-                    className={cn(
-                      confirmAccountNumber &&
-                        (confirmResult.valid
-                          ? 'border-emerald-500 focus-visible:ring-emerald-500/30'
-                          : 'border-destructive focus-visible:ring-destructive/30')
-                    )}
-                    required={!useBillingAccount}
-                  />
+                  <div className="relative">
+                    <Input
+                      id="deposit-confirm-account"
+                      placeholder="Re-enter account number"
+                      type={showConfirmAccountNumber ? 'text' : 'password'}
+                      value={confirmAccountNumber}
+                      onChange={(event) => setConfirmAccountNumber(event.target.value.replace(/\D/g, '').slice(0, 17))}
+                      className={cn(
+                        'pr-10',
+                        confirmAccountNumber &&
+                          (confirmResult.valid
+                            ? 'border-emerald-500 focus-visible:ring-emerald-500/30'
+                            : 'border-destructive focus-visible:ring-destructive/30')
+                      )}
+                      required={!useBillingAccount}
+                    />
+                    <button
+                      type="button"
+                      tabIndex={-1}
+                      onClick={() => setShowConfirmAccountNumber((prev) => !prev)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground focus-visible:outline-none"
+                    >
+                      {showConfirmAccountNumber ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
                   <FieldHint value={confirmAccountNumber} result={confirmResult} />
                 </div>
 
