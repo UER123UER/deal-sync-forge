@@ -306,14 +306,6 @@ export default function Signup() {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   autoComplete="new-password"
-                  onPaste={(e) => {
-                    e.stopPropagation();
-                    const text = e.clipboardData.getData('text');
-                    if (text) {
-                      e.preventDefault();
-                      setConfirmPassword(text);
-                    }
-                  }}
                   required
                 />
                 <button
