@@ -1,4 +1,4 @@
-import { Helmet } from "react-helmet-async";
+import { Head } from "vite-react-ssg";
 
 interface SeoHeadProps {
   title: string;
@@ -14,7 +14,7 @@ const DEFAULT_IMAGE = "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/ea122
 export function SeoHead({ title, description, path, image = DEFAULT_IMAGE, structuredData }: SeoHeadProps) {
   const url = `${SITE_URL}${path}`;
   return (
-    <Helmet>
+    <Head>
       <title>{title}</title>
       <meta name="description" content={description} />
       <link rel="canonical" href={url} />
@@ -30,6 +30,6 @@ export function SeoHead({ title, description, path, image = DEFAULT_IMAGE, struc
           {JSON.stringify(structuredData)}
         </script>
       )}
-    </Helmet>
+    </Head>
   );
 }
