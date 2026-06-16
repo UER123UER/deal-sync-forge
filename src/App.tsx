@@ -12,6 +12,7 @@ import Index from "@/pages/Index";
 import WhyUs from "@/pages/WhyUs";
 import CaseStudies from "@/pages/CaseStudies";
 import CaseStudyDetail from "@/pages/CaseStudyDetail";
+import CommissionCalculator from "@/pages/CommissionCalculator";
 import Auth from "@/pages/Auth";
 import Signup from "@/pages/Signup";
 import NotFound from "@/pages/NotFound";
@@ -58,6 +59,11 @@ export const routes: RouteRecord[] = [
       },
       { path: "auth", element: <Auth />, entry: "src/pages/Auth.tsx" },
       { path: "signup", element: <Signup />, entry: "src/pages/Signup.tsx" },
+      {
+        path: "commission-calculator",
+        element: <CommissionCalculator />,
+        entry: "src/pages/CommissionCalculator.tsx",
+      },
 
       // ---------- Public but client-only (dynamic tokens / session) ----------
       {
