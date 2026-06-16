@@ -20,12 +20,34 @@ export default function CaseStudyDetail() {
     return <NotFound />;
   }
 
+  const articleSchema = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: study.headlineResult,
+    description: study.summary,
+    image:
+      "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/ea1221eb-a238-4087-9d8a-e039199b22b7/id-preview-b44d7743--c987c87c-e16f-4694-9045-0ccdf362905d.lovable.app-1773887688710.png",
+    author: {
+      "@type": "Organization",
+      name: "United Estates Realty",
+    },
+    publisher: {
+      "@type": "Organization",
+      name: "United Estates Realty",
+      logo: {
+        "@type": "ImageObject",
+        url: "https://unitedestatesagent.com/logo.png",
+      },
+    },
+  };
+
   return (
     <MarketingShell activeNav="case-studies">
       <SeoHead
         title={`${study.headlineResult} — ${study.agentName}, ${study.city} | United Estates Realty`}
         description={study.summary.slice(0, 160)}
         path={`/case-studies/${study.slug}`}
+        structuredData={articleSchema}
       />
 
       <section className="border-b bg-muted/30 py-16 sm:py-20">
