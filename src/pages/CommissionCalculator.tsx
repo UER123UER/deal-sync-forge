@@ -91,7 +91,7 @@ export default function CommissionCalculator() {
             <Link to="/why-us" className="transition-colors hover:text-primary">Why Us</Link>
             <Link to="/case-studies" className="transition-colors hover:text-primary">Case Studies</Link>
             <Link to="/commission-calculator" className="font-medium text-primary">Calculator</Link>
-            <a href="/#pricing" className="transition-colors hover:text-primary">Pricing</a>
+            <a href="/pricing" className="transition-colors hover:text-primary">Pricing</a>
           </nav>
 
           <div className="flex items-center gap-2">
@@ -118,7 +118,7 @@ export default function CommissionCalculator() {
                   <Link to="/why-us" className="rounded-md px-3 py-2 transition-colors hover:bg-muted">Why Us</Link>
                   <Link to="/case-studies" className="rounded-md px-3 py-2 transition-colors hover:bg-muted">Case Studies</Link>
                   <Link to="/commission-calculator" className="rounded-md px-3 py-2 font-medium text-primary transition-colors hover:bg-muted">Calculator</Link>
-                  <a href="/#pricing" className="rounded-md px-3 py-2 transition-colors hover:bg-muted">Pricing</a>
+                  <a href="/pricing" className="rounded-md px-3 py-2 transition-colors hover:bg-muted">Pricing</a>
                   <Link to="/auth" className="rounded-md px-3 py-2 transition-colors hover:bg-muted">Agent Login</Link>
                   <Link to={primaryHref} className="mt-2 rounded-md bg-primary px-3 py-2 text-center font-medium text-primary-foreground transition-colors hover:bg-primary/90">{primaryLabel}</Link>
                 </nav>
@@ -348,7 +348,7 @@ export default function CommissionCalculator() {
                 <li><Link to="/why-us" className="text-muted-foreground transition-colors hover:text-primary">Why Us</Link></li>
                 <li><Link to="/case-studies" className="text-muted-foreground transition-colors hover:text-primary">Case Studies</Link></li>
                 <li><Link to="/commission-calculator" className="text-muted-foreground transition-colors hover:text-primary">Commission Calculator</Link></li>
-                <li><a href="/#pricing" className="text-muted-foreground transition-colors hover:text-primary">Pricing</a></li>
+                <li><a href="/pricing" className="text-muted-foreground transition-colors hover:text-primary">Pricing</a></li>
                 <li><Link to="/auth" className="text-muted-foreground transition-colors hover:text-primary">Agent Login</Link></li>
                 <li><Link to="/signup" className="text-muted-foreground transition-colors hover:text-primary">Sign Up</Link></li>
               </ul>

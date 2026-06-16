@@ -111,8 +111,8 @@ export default function Index() {
             <Link to="/" className="transition-colors hover:text-primary">Home</Link>
             <Link to="/why-us" className="transition-colors hover:text-primary">Why Us</Link>
             <Link to="/case-studies" className="transition-colors hover:text-primary">Case Studies</Link>
-            <a href="#pricing" className="transition-colors hover:text-primary">Pricing</a>
-            <a href="#software" className="transition-colors hover:text-primary">Software</a>
+            <a href="/pricing" className="transition-colors hover:text-primary">Pricing</a>
+            <a href="/software" className="transition-colors hover:text-primary">Software</a>
           </nav>
 
           <div className="flex items-center gap-2">
@@ -138,8 +138,8 @@ export default function Index() {
                   <Link to="/" className="rounded-md px-3 py-2 transition-colors hover:bg-muted">Home</Link>
                   <Link to="/why-us" className="rounded-md px-3 py-2 transition-colors hover:bg-muted">Why Us</Link>
                   <Link to="/case-studies" className="rounded-md px-3 py-2 transition-colors hover:bg-muted">Case Studies</Link>
-                  <a href="/#pricing" className="rounded-md px-3 py-2 transition-colors hover:bg-muted">Pricing</a>
-                  <a href="/#software" className="rounded-md px-3 py-2 transition-colors hover:bg-muted">Software</a>
+                  <a href="/pricing" className="rounded-md px-3 py-2 transition-colors hover:bg-muted">Pricing</a>
+                  <a href="/software" className="rounded-md px-3 py-2 transition-colors hover:bg-muted">Software</a>
                   <Link to="/auth" className="rounded-md px-3 py-2 transition-colors hover:bg-muted">Agent Login</Link>
                   <Link to={primaryHref} className="mt-2 rounded-md bg-primary px-3 py-2 text-center font-medium text-primary-foreground transition-colors hover:bg-primary/90">{primaryLabel}</Link>
                 </nav>
@@ -193,7 +193,7 @@ export default function Index() {
                     asChild
                     className="border-white/40 bg-white/10 text-white hover:bg-white/18 hover:text-white"
                   >
-                    <a href="#pricing">See Pricing</a>
+                    <a href="/pricing">See Pricing</a>
                   </Button>
                 </div>
               </div>
@@ -489,8 +489,8 @@ export default function Index() {
                 <li><Link to="/" className="text-muted-foreground transition-colors hover:text-primary">Home</Link></li>
                 <li><Link to="/why-us" className="text-muted-foreground transition-colors hover:text-primary">Why Us</Link></li>
                 <li><Link to="/case-studies" className="text-muted-foreground transition-colors hover:text-primary">Case Studies</Link></li>
-                <li><a href="#pricing" className="text-muted-foreground transition-colors hover:text-primary">Pricing</a></li>
-                <li><a href="#software" className="text-muted-foreground transition-colors hover:text-primary">Software</a></li>
+                <li><a href="/pricing" className="text-muted-foreground transition-colors hover:text-primary">Pricing</a></li>
+                <li><a href="/software" className="text-muted-foreground transition-colors hover:text-primary">Software</a></li>
                 <li><Link to="/auth" className="text-muted-foreground transition-colors hover:text-primary">Agent Login</Link></li>
                 <li><Link to="/signup" className="text-muted-foreground transition-colors hover:text-primary">Sign Up</Link></li>
               </ul>
