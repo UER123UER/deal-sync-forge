@@ -79,7 +79,7 @@ export default function Auth() {
           {showForgotPassword ? (
             <>
               <div className="space-y-1">
-                <h2 className="text-2xl font-bold text-foreground">Reset your password</h2>
+                <h1 className="text-2xl font-bold text-foreground">Reset your password</h1>
                 <p className="text-sm text-muted-foreground">
                   Enter your email and we'll send a reset link.
                 </p>
@@ -117,7 +117,7 @@ export default function Auth() {
           ) : (
             <>
               <div className="space-y-2">
-                <h2 className="text-2xl font-bold text-foreground">Sign in to your account</h2>
+                <h1 className="text-2xl font-bold text-foreground">Sign in to your account</h1>
                 <p className="text-sm text-muted-foreground">Access your United Estates Realty account.</p>
                 <div>
                   <Link
