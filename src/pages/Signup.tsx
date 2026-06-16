@@ -167,7 +167,7 @@ export default function Signup() {
             <UERLogo width={160} />
           </div>
           <div className="space-y-1">
-            <h2 className="text-2xl font-bold text-foreground">Create your account</h2>
+            <h1 className="text-2xl font-bold text-foreground">Create your account</h1>
             <p className="text-sm text-muted-foreground">
               Already have an account?{' '}
               <Link to="/auth" className="text-primary font-medium hover:underline">Sign in</Link>
