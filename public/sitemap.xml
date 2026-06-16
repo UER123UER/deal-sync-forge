@@ -16,6 +16,11 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://unitedestatesagent.com/commission-calculator</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://unitedestatesagent.com/case-studies/marcus-reed-commission-fees</loc>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
