@@ -35,31 +35,16 @@ export default function Referral() {
       setLoadingCount(false);
       return;
     }
-    const { data } = await (supabase as any)
-      .from('profiles')
-      .select('id, subscription_status, subscription_activated_at')
-      .eq('referred_by_code', profile.referral_code);
-
-    const rows = (data ?? []) as Array<{
-      subscription_status: string;
-      subscription_activated_at: string | null;
-    }>;
-
-    let earnings = 0;
-    let active = 0;
-    const now = Date.now();
-    for (const r of rows) {
-      if (r.subscription_status === 'active' && r.subscription_activated_at) {
-        active += 1;
-        const start = new Date(r.subscription_activated_at).getTime();
-        const months = Math.max(1, Math.floor((now - start) / (1000 * 60 * 60 * 24 * 30)) + 1);
-        earnings += months * earningsPerMonth;
-      }
+    const { data, error } = await (supabase as any).rpc('get_my_referral_stats');
+    if (error) {
+      console.error('get_my_referral_stats error', error);
+      setLoadingCount(false);
+      return;
     }
-
-    setTotalReferrals(rows.length);
-    setActiveReferrals(active);
-    setTotalEarnings(earnings);
+    const row = Array.isArray(data) ? data[0] : data;
+    setTotalReferrals(row?.total_referrals ?? 0);
+    setActiveReferrals(row?.active_referrals ?? 0);
+    setTotalEarnings(row?.total_earnings ?? 0);
     setLoadingCount(false);
   }, [profile?.referral_code]);
 
