@@ -153,14 +153,23 @@ export default function Index() {
         {/* Hero */}
         <section className="relative overflow-hidden">
           <div className="relative min-h-[60vh] sm:min-h-[78vh]">
-            <img
-              src="/home-hero.jpg"
-              alt="United Estates Realty"
-              width={1600}
-              height={1067}
-              fetchPriority="high"
-              className="absolute inset-0 h-full w-full object-cover"
-            />
+            <picture>
+              <source
+                media="(max-width: 767px)"
+                srcSet="/home-hero-mobile.webp"
+                type="image/webp"
+              />
+              <source srcSet="/home-hero.webp" type="image/webp" />
+              <img
+                src="/home-hero-opt.jpg"
+                alt="United Estates Realty"
+                width={1600}
+                height={1067}
+                fetchPriority="high"
+                decoding="async"
+                className="absolute inset-0 h-full w-full object-cover"
+              />
+            </picture>
             <div
               className="absolute inset-0"
               style={{

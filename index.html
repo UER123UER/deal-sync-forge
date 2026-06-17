@@ -9,11 +9,34 @@
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
     <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-    <link rel="preload" as="image" href="/home-hero.jpg" fetchpriority="high" />
+    <link
+      rel="preload"
+      as="image"
+      href="/home-hero-mobile.webp"
+      type="image/webp"
+      media="(max-width: 767px)"
+      fetchpriority="high"
+    />
+    <link
+      rel="preload"
+      as="image"
+      href="/home-hero.webp"
+      type="image/webp"
+      media="(min-width: 768px)"
+      fetchpriority="high"
+    />
     <!-- DM Sans: clean, modern, professional - chosen for its legibility at small sizes in data-dense UIs and its authority at display sizes, unlike the generic Inter default -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet" />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap"
+      media="print"
+      onload="this.media='all'"
+    />
+    <noscript>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" />
+    </noscript>
 
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="United Estates Realty" />
