@@ -88,6 +88,7 @@ export function MarketingShell({ children, activeNav }: MarketingShellProps) {
                 <li><Link to="/case-studies" className="text-muted-foreground transition-colors hover:text-primary">Case Studies</Link></li>
                 <li><Link to="/pricing" className="text-muted-foreground transition-colors hover:text-primary">Pricing</Link></li>
                 <li><Link to="/software" className="text-muted-foreground transition-colors hover:text-primary">Software</Link></li>
+                <li><Link to="/blog" className="text-muted-foreground transition-colors hover:text-primary">Blog</Link></li>
                 <li><Link to="/auth" className="text-muted-foreground transition-colors hover:text-primary">Agent Login</Link></li>
                 <li><Link to="/signup" className="text-muted-foreground transition-colors hover:text-primary">Sign Up</Link></li>
               </ul>
