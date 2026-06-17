@@ -12,19 +12,19 @@ export default function Blog() {
         path="/blog"
       />
 
-      <section className="border-b bg-muted/30 py-16 sm:py-24">
+      <section className="border-b bg-muted/30 py-10 sm:py-14">
         <div className="mx-auto max-w-4xl px-4 text-center sm:px-6 lg:px-8">
           <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">Blog</p>
           <h1 className="mt-3 text-3xl font-bold leading-tight text-foreground sm:text-4xl lg:text-5xl">
-            Real Estate Agent Resources: Tips on Commissions, Leads, and Growing Your Business
+            Real Estate Agent Resources
           </h1>
-          <h2 className="mt-5 text-lg leading-7 text-muted-foreground sm:text-xl">
+          <h2 className="mt-4 text-lg leading-7 text-muted-foreground sm:text-xl">
             Straight talk on commission splits, client management, and what actually works for agents, written by agents, not marketers.
           </h2>
         </div>
       </section>
 
-      <section className="py-20">
+      <section className="py-12">
         <div className="mx-auto max-w-4xl px-4 text-center sm:px-6 lg:px-8">
           <p className="text-base text-muted-foreground">
             New articles are on the way. Check back soon for fresh insights from working Florida agents.
