@@ -1,73 +1,16 @@
 import { ReactNode } from "react";
 import { Link } from "react-router-dom";
-import { Facebook, Instagram, Linkedin, Menu } from "lucide-react";
+import { Facebook, Instagram, Linkedin } from "lucide-react";
 
 import { UERLogo } from "@/components/UERLogo";
-import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
-interface MarketingShellProps {
+interface BlogShellProps {
   children: ReactNode;
-  activeNav?: "home" | "why-us" | "case-studies" | "pricing" | "software";
 }
 
-export function MarketingShell({ children, activeNav }: MarketingShellProps) {
-  const primaryHref = "/signup";
-  const primaryLabel = "Sign Up";
-
-  const navItem = (key: string, base = "transition-colors hover:text-primary") =>
-    activeNav === key ? "font-medium text-primary" : base;
-
+export function BlogShell({ children }: BlogShellProps) {
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <header className="sticky top-0 z-40 border-b bg-background">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
-          <Link to="/" className="flex items-center" aria-label="United Estates Realty">
-            <UERLogo width={188} className="w-[65px] sm:w-[132px] lg:w-[168px]" />
-          </Link>
-
-          <nav className="hidden items-center gap-6 text-sm text-muted-foreground md:flex">
-            <Link to="/" className={navItem("home")}>Home</Link>
-            <Link to="/why-us" className={navItem("why-us")}>Why Us</Link>
-            <Link to="/case-studies" className={navItem("case-studies")}>Case Studies</Link>
-            <Link to="/pricing" className={navItem("pricing")}>Pricing</Link>
-            <Link to="/software" className={navItem("software")}>Software</Link>
-          </nav>
-
-          <div className="flex items-center gap-2">
-            <div className="hidden md:flex md:items-center md:gap-2">
-              <Button variant="ghost" asChild className="px-2.5 sm:px-4">
-                <Link to="/auth">Agent Login</Link>
-              </Button>
-              <Button asChild>
-                <Link to={primaryHref}>{primaryLabel}</Link>
-              </Button>
-            </div>
-            <Button asChild size="sm" className="md:hidden">
-              <Link to={primaryHref}>{primaryLabel}</Link>
-            </Button>
-            <Sheet>
-              <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="md:hidden" aria-label="Open menu">
-                  <Menu className="h-6 w-6" />
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="right" className="w-72">
-                <nav className="mt-8 flex flex-col gap-1 text-base">
-                  <Link to="/" className="rounded-md px-3 py-2 transition-colors hover:bg-muted">Home</Link>
-                  <Link to="/why-us" className="rounded-md px-3 py-2 transition-colors hover:bg-muted">Why Us</Link>
-                  <Link to="/case-studies" className="rounded-md px-3 py-2 transition-colors hover:bg-muted">Case Studies</Link>
-                  <Link to="/pricing" className="rounded-md px-3 py-2 transition-colors hover:bg-muted">Pricing</Link>
-                  <Link to="/software" className="rounded-md px-3 py-2 transition-colors hover:bg-muted">Software</Link>
-                  <Link to="/auth" className="rounded-md px-3 py-2 transition-colors hover:bg-muted">Agent Login</Link>
-                  <Link to={primaryHref} className="mt-2 rounded-md bg-primary px-3 py-2 text-center font-medium text-primary-foreground transition-colors hover:bg-primary/90">{primaryLabel}</Link>
-                </nav>
-              </SheetContent>
-            </Sheet>
-          </div>
-        </div>
-      </header>
-
       <main>{children}</main>
 
       <footer className="border-t bg-background py-12">

@@ -15,6 +15,8 @@ import CaseStudyDetail from "@/pages/CaseStudyDetail";
 import CommissionCalculator from "@/pages/CommissionCalculator";
 import Pricing from "@/pages/Pricing";
 import Software from "@/pages/Software";
+import Blog from "@/pages/Blog";
+import BlogArticle from "@/pages/BlogArticle";
 import Auth from "@/pages/Auth";
 import Signup from "@/pages/Signup";
 import NotFound from "@/pages/NotFound";
@@ -68,6 +70,8 @@ export const routes: RouteRecord[] = [
       },
       { path: "pricing", element: <Pricing />, entry: "src/pages/Pricing.tsx" },
       { path: "software", element: <Software />, entry: "src/pages/Software.tsx" },
+      { path: "blog", element: <Blog />, entry: "src/pages/Blog.tsx" },
+      { path: "blog/:slug", element: <BlogArticle />, entry: "src/pages/BlogArticle.tsx" },
 
       // ---------- Public but client-only (dynamic tokens / session) ----------
       {
