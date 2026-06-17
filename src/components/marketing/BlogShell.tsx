@@ -68,7 +68,7 @@ export function BlogShell({ children }: BlogShellProps) {
 
       <footer className="border-t bg-background py-12">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-          <div className="grid gap-10 md:grid-cols-3 md:items-start">
+          <div className="grid gap-10 md:grid-cols-4 md:items-start">
             <div className="space-y-4">
               <UERLogo width={160} />
               <p className="max-w-xs text-sm leading-6 text-muted-foreground">
@@ -83,8 +83,14 @@ export function BlogShell({ children }: BlogShellProps) {
                 <li><Link to="/why-us" className="text-muted-foreground transition-colors hover:text-primary">Why Us</Link></li>
                 <li><Link to="/case-studies" className="text-muted-foreground transition-colors hover:text-primary">Case Studies</Link></li>
                 <li><Link to="/pricing" className="text-muted-foreground transition-colors hover:text-primary">Pricing</Link></li>
-                <li><Link to="/software" className="text-muted-foreground transition-colors hover:text-primary">Software</Link></li>
                 <li><Link to="/blog" className="text-muted-foreground transition-colors hover:text-primary">Blog</Link></li>
+              </ul>
+            </div>
+
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-foreground">Agents</p>
+              <ul className="mt-4 space-y-2 text-sm">
+                <li><Link to="/software" className="text-muted-foreground transition-colors hover:text-primary">Software</Link></li>
                 <li><Link to="/auth" className="text-muted-foreground transition-colors hover:text-primary">Agent Login</Link></li>
                 <li><Link to="/signup" className="text-muted-foreground transition-colors hover:text-primary">Sign Up</Link></li>
               </ul>
