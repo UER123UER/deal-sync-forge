@@ -1,4 +1,5 @@
-import { Outlet } from "react-router-dom";
+import { useEffect } from "react";
+import { Outlet, useLocation } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import { AppErrorBoundary } from "@/components/AppErrorBoundary";
@@ -15,6 +16,14 @@ const queryClient = new QueryClient({
   },
 });
 
+function ScrollToTop() {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }, [pathname]);
+  return null;
+}
+
 export default function RootLayout() {
   return (
     <AppErrorBoundary>
@@ -22,6 +31,7 @@ export default function RootLayout() {
         <TooltipProvider>
           <Toaster />
           <Sonner />
+          <ScrollToTop />
           <Outlet />
         </TooltipProvider>
       </QueryClientProvider>
