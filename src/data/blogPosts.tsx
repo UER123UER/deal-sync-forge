@@ -2,6 +2,7 @@ import { ReactNode } from "react";
 import { Link } from "react-router-dom";
 
 import { Faq, type FaqItem } from "@/components/Faq";
+import blogImage from "@/assets/commission-vs-traditional-split-2026.webp.asset.json";
 
 export interface BlogPost {
   slug: string;
@@ -11,6 +12,7 @@ export interface BlogPost {
   date: string; // ISO
   readMinutes: number;
   author: string;
+  image?: string;
   content: ReactNode;
   faq?: FaqItem[];
 }
@@ -75,6 +77,15 @@ const CommissionArticle = () => (
       In 2026, more agents are questioning whether their brokerage model is working for them or against them. This guide
       gives you the real math on both options so you can decide with clear numbers instead of a recruiter's pitch.
     </P>
+
+    <figure className="mt-8">
+      <img
+        src={blogImage.url}
+        alt="Real estate agent comparing commission structures and brokerage splits to evaluate take-home income in a 100 percent commission brokerage versus a traditional split model"
+        className="w-full rounded-lg"
+        loading="eager"
+      />
+    </figure>
 
     <H2>How the Traditional Split Model Works</H2>
     <P>
@@ -240,6 +251,7 @@ export const blogPosts: BlogPost[] = [
     date: "2026-06-19",
     readMinutes: 8,
     author: "United Estates Realty",
+    image: blogImage.url,
     content: <CommissionArticle />,
     faq: COMMISSION_FAQ,
   },
