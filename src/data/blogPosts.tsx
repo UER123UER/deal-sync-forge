@@ -251,6 +251,7 @@ export const blogPosts: BlogPost[] = [
     date: "2026-06-19",
     readMinutes: 8,
     author: "United Estates Realty",
+    image: blogImage.url,
     content: <CommissionArticle />,
     faq: COMMISSION_FAQ,
   },
