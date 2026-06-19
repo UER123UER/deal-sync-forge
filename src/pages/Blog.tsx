@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 
 import { SeoHead } from "@/components/SeoHead";
 import { BlogShell } from "@/components/marketing/BlogShell";
+import { blogPosts } from "@/data/blogPosts";
 
 export default function Blog() {
   return (
@@ -25,13 +26,34 @@ export default function Blog() {
       </section>
 
       <section className="py-12">
-        <div className="mx-auto max-w-4xl px-4 text-center sm:px-6 lg:px-8">
-          <p className="text-base text-muted-foreground">
-            New articles are on the way. Check back soon for fresh insights from working Florida agents.
-          </p>
-          <Link to="/" className="mt-6 inline-block text-sm font-medium text-primary hover:underline">
-            ← Back to home
-          </Link>
+        <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
+          <ul className="space-y-8">
+            {blogPosts.map((post) => (
+              <li key={post.slug} className="border-b pb-8 last:border-b-0">
+                <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                  {new Date(post.date).toLocaleDateString("en-US", {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                  })}
+                  {" · "}
+                  {post.readMinutes} min read
+                </p>
+                <h3 className="mt-2 text-2xl font-bold text-foreground sm:text-3xl">
+                  <Link to={`/blog/${post.slug}`} className="hover:text-primary">
+                    {post.title}
+                  </Link>
+                </h3>
+                <p className="mt-3 text-base leading-7 text-muted-foreground">{post.excerpt}</p>
+                <Link
+                  to={`/blog/${post.slug}`}
+                  className="mt-4 inline-block text-sm font-semibold text-primary hover:underline"
+                >
+                  Read article →
+                </Link>
+              </li>
+            ))}
+          </ul>
         </div>
       </section>
     </BlogShell>
