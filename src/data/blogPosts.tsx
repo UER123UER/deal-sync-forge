@@ -2,6 +2,7 @@ import { ReactNode } from "react";
 import { Link } from "react-router-dom";
 
 import { Faq, type FaqItem } from "@/components/Faq";
+import blogImage from "@/assets/commission-vs-traditional-split-2026.webp.asset.json";
 
 export interface BlogPost {
   slug: string;
@@ -11,6 +12,7 @@ export interface BlogPost {
   date: string; // ISO
   readMinutes: number;
   author: string;
+  image?: string;
   content: ReactNode;
   faq?: FaqItem[];
 }
