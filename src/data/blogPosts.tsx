@@ -78,6 +78,15 @@ const CommissionArticle = () => (
       gives you the real math on both options so you can decide with clear numbers instead of a recruiter's pitch.
     </P>
 
+    <figure className="mt-8">
+      <img
+        src={blogImage.url}
+        alt="Real estate agent comparing commission structures and brokerage splits to evaluate take-home income in a 100 percent commission brokerage versus a traditional split model"
+        className="w-full rounded-lg"
+        loading="eager"
+      />
+    </figure>
+
     <H2>How the Traditional Split Model Works</H2>
     <P>
       In a traditional brokerage, the agent and brokerage divide every commission earned. Common split structures range
