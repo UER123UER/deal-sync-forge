@@ -231,11 +231,10 @@ const CommissionArticle = () => (
 
 export const blogPosts: BlogPost[] = [
   {
-    slug: "100-commission-brokerage-vs-traditional-split-2026",
-    title:
-      "100% Commission Brokerage vs. Traditional Split: What Agents Actually Take Home in 2026",
+    slug: "100-commission-vs-traditional-split-2026",
+    title: "100% Commission vs Traditional Split: 2026 Guide",
     description:
-      "Real 2026 numbers on 100% commission vs traditional split brokerages — what agents actually take home after fees, splits, and desk costs.",
+      "See what agents actually take home in 2026 after splits and fees. We compare 100% commission vs traditional brokerage models with real numbers and clear math.",
     excerpt:
       "After splits, desk fees, and transaction charges, agents typically keep just 35–55% of gross commission. Here's the real math on both models in 2026.",
     date: "2026-06-19",
