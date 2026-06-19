@@ -30,6 +30,16 @@ export default function Blog() {
           <ul className="space-y-8">
             {blogPosts.map((post) => (
               <li key={post.slug} className="border-b pb-8 last:border-b-0">
+                {post.image && (
+                  <Link to={`/blog/${post.slug}`} className="block">
+                    <img
+                      src={post.image}
+                      alt={post.title}
+                      className="mb-5 w-full rounded-lg object-cover"
+                      loading="lazy"
+                    />
+                  </Link>
+                )}
                 <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                   {new Date(post.date).toLocaleDateString("en-US", {
                     year: "numeric",
