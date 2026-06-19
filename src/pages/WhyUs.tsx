@@ -350,61 +350,11 @@ export default function WhyUs() {
         {/* FAQ */}
         <section className="border-y bg-muted/40 py-16 sm:py-20">
           <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-            <div className="max-w-2xl">
-              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">FAQ</p>
-              <h2 className="mt-3 text-3xl font-bold text-foreground sm:text-4xl">
-                Questions agents ask before they join.
-              </h2>
-            </div>
-
-            <div className="mt-10 max-w-3xl">
-              <Accordion type="single" collapsible className="w-full">
-                <AccordionItem value="item-1">
-                  <AccordionTrigger className="text-left text-base font-semibold text-foreground">
-                    What is a 100% commission brokerage, and how does it work?
-                  </AccordionTrigger>
-                  <AccordionContent className="text-sm leading-6 text-muted-foreground">
-                    A 100% commission brokerage lets licensed real estate agents keep every dollar they earn from every deal, no commission splits, no desk fees, no deductions. At United Estates Realty, you pay one simple monthly fee and walk away from every closing with your full commission. It is the most profitable way for real estate agents to do business.
-                  </AccordionContent>
-                </AccordionItem>
-
-                <AccordionItem value="item-2">
-                  <AccordionTrigger className="text-left text-base font-semibold text-foreground">
-                    How does United Estates Realty make money if agents keep 100%?
-                  </AccordionTrigger>
-                  <AccordionContent className="text-sm leading-6 text-muted-foreground">
-                    Simply, we charge a low flat monthly membership fee instead of taking a cut of your commissions. No splits, no transaction fees, no hidden charges. You keep 100% of every commission you earn, every single time.
-                  </AccordionContent>
-                </AccordionItem>
-
-                <AccordionItem value="item-3">
-                  <AccordionTrigger className="text-left text-base font-semibold text-foreground">
-                    Is United Estates Realty available in my state?
-                  </AccordionTrigger>
-                  <AccordionContent className="text-sm leading-6 text-muted-foreground">
-                    United Estates Realty is currently serving licensed real estate agents across Florida, from Miami, Orlando, Tampa, Jacksonville, and Fort Lauderdale. Nationwide expansion to Texas, Georgia, New York, and California is coming soon. Join today and start keeping 100% of your commissions.
-                  </AccordionContent>
-                </AccordionItem>
-
-                <AccordionItem value="item-4">
-                  <AccordionTrigger className="text-left text-base font-semibold text-foreground">
-                    Can a new real estate agent join United Estates Realty?
-                  </AccordionTrigger>
-                  <AccordionContent className="text-sm leading-6 text-muted-foreground">
-                    Yes, United Estates Realty welcomes both newly licensed agents looking to hang their license and experienced agents tired of losing thousands in commission splits. No experience minimum, no production requirements. Just a better, more profitable brokerage for every Florida real estate agent.
-                  </AccordionContent>
-                </AccordionItem>
-
-                <AccordionItem value="item-5">
-                  <AccordionTrigger className="text-left text-base font-semibold text-foreground">
-                    Does United Estates Realty charge any transaction fees?
-                  </AccordionTrigger>
-                  <AccordionContent className="text-sm leading-6 text-muted-foreground">
-                    Zero transaction fees guaranteed. No per-deal charges, no closing fees, no E&O fees per transaction. You close the deal, you keep the full commission. Combined with our 100% commission structure, Florida agents save thousands every year compared to a traditional brokerage.
-                  </AccordionContent>
-                </AccordionItem>
-              </Accordion>
-            </div>
+            <Faq
+              eyebrow="FAQ"
+              heading="Questions agents ask before they join."
+              items={WHY_US_FAQ_ITEMS}
+            />
           </div>
         </section>
 
