@@ -38,6 +38,7 @@ export default function BlogArticle() {
     headline: post.title,
     description: post.description,
     datePublished: post.date,
+    image: post.image,
     author: { "@type": "Organization", name: post.author },
     publisher: {
       "@type": "Organization",
@@ -53,6 +54,7 @@ export default function BlogArticle() {
         title={`${post.title} | United Estates Realty Blog`}
         description={post.description}
         path={`/blog/${post.slug}`}
+        image={post.image}
         structuredData={articleSchema}
       />
 
