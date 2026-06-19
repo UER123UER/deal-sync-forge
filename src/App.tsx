@@ -5,6 +5,7 @@ import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { AppLayout } from "@/components/layout/AppLayout";
 import RootLayout from "@/RootLayout";
 import { caseStudies } from "@/data/caseStudies";
+import { blogPosts } from "@/data/blogPosts";
 
 // Public marketing pages — eager so they render with full HTML at SSG time
 // without async boundaries.
@@ -42,6 +43,8 @@ const protectedLazy =
 const caseStudyStaticPaths = () =>
   caseStudies.map((c) => `/case-studies/${c.slug}`);
 
+const blogStaticPaths = () => blogPosts.map((p) => `/blog/${p.slug}`);
+
 export const routes: RouteRecord[] = [
   {
     path: "/",
@@ -71,7 +74,12 @@ export const routes: RouteRecord[] = [
       { path: "pricing", element: <Pricing />, entry: "src/pages/Pricing.tsx" },
       { path: "software", element: <Software />, entry: "src/pages/Software.tsx" },
       { path: "blog", element: <Blog />, entry: "src/pages/Blog.tsx" },
-      { path: "blog/:slug", element: <BlogArticle />, entry: "src/pages/BlogArticle.tsx" },
+      {
+        path: "blog/:slug",
+        element: <BlogArticle />,
+        entry: "src/pages/BlogArticle.tsx",
+        getStaticPaths: blogStaticPaths,
+      },
 
       // ---------- Public but client-only (dynamic tokens / session) ----------
       {
