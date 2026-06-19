@@ -2,18 +2,41 @@ import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, Check, Shield, Users, Zap, BarChart3, Award, Clock, Facebook, Linkedin, Instagram, Menu, User, ArrowUpRight } from "lucide-react";
 import tevelFounder from "@/assets/tevel-founder.webp";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
+import { Faq, type FaqItem } from "@/components/Faq";
 
 import { caseStudies } from "@/data/caseStudies";
 import { UERLogo } from "@/components/UERLogo";
 import { Button } from "@/components/ui/button";
 import { SeoHead } from "@/components/SeoHead";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+
+const WHY_US_FAQ_ITEMS: FaqItem[] = [
+  {
+    question: "What is a 100% commission brokerage, and how does it work?",
+    answer:
+      "A 100% commission brokerage lets licensed real estate agents keep every dollar they earn from every deal, no commission splits, no desk fees, no deductions. At United Estates Realty, you pay one simple monthly fee and walk away from every closing with your full commission. It is the most profitable way for real estate agents to do business.",
+  },
+  {
+    question: "How does United Estates Realty make money if agents keep 100%?",
+    answer:
+      "Simply, we charge a low flat monthly membership fee instead of taking a cut of your commissions. No splits, no transaction fees, no hidden charges. You keep 100% of every commission you earn, every single time.",
+  },
+  {
+    question: "Is United Estates Realty available in my state?",
+    answer:
+      "United Estates Realty is currently serving licensed real estate agents across Florida, from Miami, Orlando, Tampa, Jacksonville, and Fort Lauderdale. Nationwide expansion to Texas, Georgia, New York, and California is coming soon. Join today and start keeping 100% of your commissions.",
+  },
+  {
+    question: "Can a new real estate agent join United Estates Realty?",
+    answer:
+      "Yes, United Estates Realty welcomes both newly licensed agents looking to hang their license and experienced agents tired of losing thousands in commission splits. No experience minimum, no production requirements. Just a better, more profitable brokerage for every Florida real estate agent.",
+  },
+  {
+    question: "Does United Estates Realty charge any transaction fees?",
+    answer:
+      "Zero transaction fees guaranteed. No per-deal charges, no closing fees, no E&O fees per transaction. You close the deal, you keep the full commission. Combined with our 100% commission structure, Florida agents save thousands every year compared to a traditional brokerage.",
+  },
+];
 
 const differentiators = [
   {
