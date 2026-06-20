@@ -414,6 +414,7 @@ export const blogPosts: BlogPost[] = [
     readMinutes: 8,
     author: "United Estates Realty",
     image: blogImage2.url,
+    imageAlt: "Real estate CRM software dashboard for agents showing lead management, sales pipeline tracking, property listings, client follow-ups, and mobile real estate brokerage tools",
     content: <CrmArticle />,
     faq: CRM_FAQ,
   },
