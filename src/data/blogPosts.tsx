@@ -14,6 +14,7 @@ export interface BlogPost {
   readMinutes: number;
   author: string;
   image?: string;
+  imageAlt?: string;
   content: ReactNode;
   faq?: FaqItem[];
 }
