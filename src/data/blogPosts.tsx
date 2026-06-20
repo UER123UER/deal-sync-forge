@@ -287,7 +287,7 @@ const CrmArticle = () => (
     <figure className="mt-8">
       <img
         src={blogImage2.url}
-        alt="Real estate agent using a CRM dashboard on laptop and smartphone to manage leads and sales pipeline"
+        alt="Real estate CRM software dashboard for agents showing lead management, sales pipeline tracking, property listings, client follow-ups, and mobile real estate brokerage tools"
         className="w-full rounded-lg"
         loading="eager"
       />
