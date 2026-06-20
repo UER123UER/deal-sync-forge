@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 
 import { Faq, type FaqItem } from "@/components/Faq";
 import blogImage1 from "@/assets/commission-vs-traditional-split-2026.webp.asset.json";
-import blogImage2 from "@/assets/best-crm-real-estate-agents-2026.jpg.asset.json";
+import blogImage2 from "@/assets/real-estate-crm-software-dashboard-lead-management-agents.jpg.asset.json";
 
 export interface BlogPost {
   slug: string;
@@ -14,6 +14,7 @@ export interface BlogPost {
   readMinutes: number;
   author: string;
   image?: string;
+  imageAlt?: string;
   content: ReactNode;
   faq?: FaqItem[];
 }
@@ -287,7 +288,7 @@ const CrmArticle = () => (
     <figure className="mt-8">
       <img
         src={blogImage2.url}
-        alt="Real estate agent using a CRM dashboard on laptop and smartphone to manage leads and sales pipeline"
+        alt="Real estate CRM software dashboard for agents showing lead management, sales pipeline tracking, property listings, client follow-ups, and mobile real estate brokerage tools"
         className="w-full rounded-lg"
         loading="eager"
       />
@@ -413,6 +414,7 @@ export const blogPosts: BlogPost[] = [
     readMinutes: 8,
     author: "United Estates Realty",
     image: blogImage2.url,
+    imageAlt: "Real estate CRM software dashboard for agents showing lead management, sales pipeline tracking, property listings, client follow-ups, and mobile real estate brokerage tools",
     content: <CrmArticle />,
     faq: CRM_FAQ,
   },

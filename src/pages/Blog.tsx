@@ -34,7 +34,7 @@ export default function Blog() {
                   <Link to={`/blog/${post.slug}`} className="block">
                     <img
                       src={post.image}
-                      alt={post.title}
+                      alt={post.imageAlt || post.title}
                       className="mb-5 w-full rounded-lg object-cover"
                       loading="lazy"
                     />
