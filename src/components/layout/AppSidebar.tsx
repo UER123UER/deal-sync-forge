@@ -1,6 +1,7 @@
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Home, Plus, Users, DollarSign, Mail, CheckSquare, Calendar, Gift, Phone, Link2, Menu, MoreHorizontal } from 'lucide-react';
 import { UERLogo } from '@/components/UERLogo';
+import uerLogoWhite from '@/assets/uer-logo-white.png.asset.json';
 import { cn } from '@/lib/utils';
 import { useState, useRef, useEffect } from 'react';
 import { useContacts } from '@/hooks/useContacts';
@@ -120,7 +121,11 @@ export function AppSidebar() {
 
       <aside className="relative hidden min-h-screen w-24 shrink-0 flex-col items-center gap-2 border-r border-[hsl(var(--sidebar-border))] bg-[hsl(var(--sidebar-background))] px-2 py-4 lg:flex">
         <div className="mb-4 flex w-full items-center justify-center">
-          <UERLogo width={84} />
+          <img
+            src={uerLogoWhite.url}
+            alt="United Estates Realty"
+            style={{ width: 84, height: 'auto', objectFit: 'contain', display: 'block' }}
+          />
         </div>
 
         <div className="flex w-full flex-1 flex-col items-center gap-2">
