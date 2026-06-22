@@ -95,6 +95,169 @@ const CRM_FAQ: FaqItem[] = [
   },
 ];
 
+const BROKERAGE_FAQ: FaqItem[] = [
+  {
+    question: "What is the best real estate brokerage for new agents?",
+    answer:
+      "Keller Williams is the strongest pick for most new agents because the entire company is built around education and mentorship. Its KW University coursework, productivity coaching, and mentor pairing are designed for people closing their first deals. For agents who want maximum flexibility from day one, flat-fee brokerages like United Estates Realty offer full commission with an included CRM at a predictable monthly cost.",
+  },
+  {
+    question: "Which brokerage has the best commission split?",
+    answer:
+      "The best commission split is not the highest percentage; it is the structure that produces the highest net income after all fees for your specific production volume. An agent closing five deals per year and a top producer closing fifty deals need completely different models. Run the math on your actual numbers.",
+  },
+  {
+    question: "What is the best brokerage for part-time agents?",
+    answer:
+      "Virtual and low-fee brokerages fit part-time agents best because you are not paying for a desk you rarely use. Confirm that monthly fees will not consume commissions from occasional closings before signing.",
+  },
+  {
+    question: "What changed in 2026?",
+    answer:
+      "NAR settlement rules now require written buyer agreements before home tours. Major industry consolidation is underway, including the pending RE/MAX acquisition. Brand recognition matters less than local support and cost structure.",
+  },
+  {
+    question: "Do all brokerages charge desk fees?",
+    answer:
+      "No. In a flat-fee or 100% commission model, you typically pay a monthly membership fee and a flat transaction fee per closing rather than a desk fee. Cloud-based brokerages eliminate physical office costs and pass those savings to agents through lower monthly charges. United Estates Realty charges a flat $98 monthly fee with zero transaction fees and no desk fee structure.",
+  },
+];
+
+const BrokerageArticle = () => (
+  <>
+    <P>Most agents choose their first brokerage within weeks of getting licensed. Many never revisit that decision for years.</P>
+    <P>
+      That single choice determines how much of every commission they keep, what tools they work with every day, how much support they get when a deal goes sideways, and whether their business survives a slow market.
+    </P>
+    <P>Getting it wrong is expensive. Getting it right from the start is one of the most important business decisions a real estate agent will ever make.</P>
+    <P>This is the checklist we wish every agent had before walking into their first brokerage interview.</P>
+
+    <figure className="mt-8">
+      <img
+        src={blogImage3.url}
+        alt="Real estate agent reviewing a brokerage checklist with commission paperwork, laptop, and interview notes to choose the best brokerage in 2026"
+        className="w-full rounded-lg"
+        loading="eager"
+      />
+    </figure>
+
+    <H2>What Changed in 2026</H2>
+    <P>
+      Two significant shifts make brokerage selection more important than ever this year.
+    </P>
+    <P>
+      Since August 2024, NAR's settlement rules require written buyer agreements before touring homes. Every brokerage you interview should be able to explain clearly how they train agents on buyer presentations. The offices with a sharp answer are the ones taking training seriously.
+    </P>
+    <P>
+      The Real Brokerage agreed to acquire RE/MAX Holdings in April 2026, with the deal expected to close in the second half of 2026. The practical takeaway is that brand names matter less than ever. Splits, fees, and mentorship are still set locally. Ask for everything in writing.
+    </P>
+    <P>
+      The brokerage landscape in 2026 is consolidating fast. Agents who choose based on brand recognition alone may find themselves in a very different organization within twelve months.
+    </P>
+
+    <H2>Step 1: Understand the Four Brokerage Models</H2>
+    <P>Before evaluating any specific brokerage, understand which model they operate under.</P>
+    <P>
+      Traditional franchise brokerages typically offer splits ranging from 60/40 to 70/30. Cloud and virtual brokerages operate without physical offices and generally offer higher splits to agents, such as 80/20 or 85/15. Flat fee or 100% commission brokerages let agents keep the full commission in exchange for a flat monthly fee and sometimes a per-transaction charge.
+    </P>
+    <P>
+      Each model suits a different type of agent. New agents who need daily mentorship and hands-on training benefit from traditional models. Experienced agents who generate their own leads and want maximum take-home pay benefit from flat-fee or virtual models.
+    </P>
+    <P>Knowing which category you fall into before any interview saves time and prevents a mismatch that costs you money for years.</P>
+
+    <H2>Step 2: Calculate Total Cost, Not Just the Split</H2>
+    <P>
+      The split number on a recruiting flyer is rarely the number that matters most. What matters is your effective take-home after all fees, caps, desk charges, franchise royalties, and transaction costs are factored in. A brokerage advertising a 90/10 split that also charges a monthly technology fee, a per-transaction fee, and an annual compliance fee might leave you with less than a brokerage offering 70/30 with no additional costs.
+    </P>
+    <P>Ask every brokerage for a full written breakdown of:</P>
+    <UL>
+      <li>Monthly desk or technology fees</li>
+      <li>Transaction fees per closing</li>
+      <li>Franchise royalty charges</li>
+      <li>E&amp;O insurance costs</li>
+      <li>Any marketing or compliance fees</li>
+    </UL>
+    <P>
+      Model your total take-home pay using your average sale price, expected commission percentage, and number of deals per year. Run this calculation for every brokerage you interview before making any decision.
+    </P>
+    <P>
+      United Estates Realty operates on a flat{" "}
+      <Internal to="/pricing">$98 monthly fee</Internal> with zero transaction fees and a full CRM included, meaning agents calculate their costs in seconds rather than deciphering a layered fee schedule.
+    </P>
+
+    <H2>Step 3: Evaluate Support and Training Honestly</H2>
+    <P>
+      Many brokerages focus heavily on onboarding and initial training, but offer little structure once agents are producing. Ask how support evolves as your business grows and whether the brokerage is built only for beginners or for long-term careers.
+    </P>
+    <P>The most important questions to ask:</P>
+    <UL>
+      <li>Who specifically reviews my first offer before it goes out?</li>
+      <li>How do you handle support requests after business hours?</li>
+      <li>What does your onboarding timeline actually look like day by day?</li>
+    </UL>
+    <P>
+      Good brokerages explain their support process as if they have done it a thousand times. Weak ones start selling you confidence instead of infrastructure.
+    </P>
+    <P>
+      New agents should prioritize mentorship and training over commission percentage in their first twelve to eighteen months. A 70/30 split with genuine daily support and structured training produces more income in year one than a 90/10 split with no guidance and no systems.
+    </P>
+
+    <H2>Step 4: Assess the Technology Stack</H2>
+    <P>
+      Transaction software, e-signature portals, and CRM dashboards are no longer optional in 2026. Brokerages that offer comprehensive tools inside a single platform help agents streamline operations and free up time for client work rather than troubleshooting disconnected software.
+    </P>
+    <P>Ask specifically:</P>
+    <UL>
+      <li>Is a CRM included or do you pay separately?</li>
+      <li>What transaction management system do we use?</li>
+      <li>Is the technology mobile-friendly for agents working in the field?</li>
+    </UL>
+    <P>
+      Find out which tools are included and which ones you will still need to pay for yourself. This clarifies your true cost of doing business and avoids tech-stack overwhelm where agents pay for multiple overlapping subscriptions.
+    </P>
+    <P>
+      Technology fees at traditional brokerages often run $100 to $300 per month on top of split and desk costs. A brokerage that includes CRM, transaction management, and agent tools in a single flat fee eliminates that variable entirely.
+    </P>
+
+    <H2>Step 5: Interview at Least Three Brokerages</H2>
+    <P>
+      It is recommended to start interviewing brokerages immediately during the licensing process. Interviewing a brokerage before you even finish your coursework gives you time to make a considered decision rather than signing with whoever calls first after you pass the exam.
+    </P>
+    <P>
+      Interview a minimum of three brokerages across different model types. Include at least one traditional franchise, one virtual or cloud-based brokerage, and one flat-fee model. Comparing all three gives you real data rather than one recruitment pitch with nothing to measure it against.
+    </P>
+
+    <H2>The Complete Checklist Before You Sign</H2>
+    <P>Use this list in every brokerage interview:</P>
+    <UL>
+      <li>
+        <strong>Compensation:</strong> Full written breakdown of all splits and fees. Annual cap amount if applicable. What happens to my split after the cap resets each January.
+      </li>
+      <li>
+        <strong>Support:</strong> Named person who reviews contracts. After-hours support process. Onboarding timeline in writing.
+      </li>
+      <li>
+        <strong>Technology:</strong> CRM included or separate cost. Transaction management system name and demo. Mobile access confirmed.
+      </li>
+      <li>
+        <strong>Culture:</strong> How agent disputes are handled. Whether the broker also personally sells and how that affects availability. Agent retention rate at this specific office.
+      </li>
+      <li>
+        <strong>Exit terms:</strong> How a license transfer works if the arrangement is not the right fit. What happens to active listings during a transition?
+      </li>
+    </UL>
+
+    <section className="mt-16">
+      <Faq eyebrow="FAQ" heading="Frequently Asked Questions" items={BROKERAGE_FAQ} />
+    </section>
+
+    <P>
+      At <Internal to="/">United Estates Realty</Internal>, we built a straightforward model for agents who want full commission without the confusion of layered fees. If you are evaluating your options, the full breakdown is at{" "}
+      <Internal to="/">unitedestatesagent</Internal>.
+    </P>
+  </>
+);
+
 const CommissionArticle = () => (
   <>
     <P>Most real estate agents know their commission percentage. Very few know their actual take-home number.</P>
