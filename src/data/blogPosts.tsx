@@ -582,6 +582,22 @@ export const blogPosts: BlogPost[] = [
     content: <CrmArticle />,
     faq: CRM_FAQ,
   },
+  {
+    slug: "how-to-choose-real-estate-brokerage-2026",
+    title: "How to Choose a Real Estate Brokerage in 2026: The Complete Checklist for Agents",
+    description:
+      "Use this checklist to compare real estate brokerages in 2026. Learn what fees to ask about, how to evaluate support, and what actually matters before signing.",
+    excerpt:
+      "Picking the right brokerage determines your income, tools, and support for years. Here is the complete checklist every agent should use in 2026.",
+    date: "2026-06-22",
+    readMinutes: 9,
+    author: "United Estates Realty",
+    image: blogImage3.url,
+    imageAlt:
+      "Real estate agent reviewing a brokerage checklist with commission paperwork, laptop, and interview notes to choose the best brokerage in 2026",
+    content: <BrokerageArticle />,
+    faq: BROKERAGE_FAQ,
+  },
 ];
 
 export function getBlogPost(slug: string): BlogPost | undefined {
