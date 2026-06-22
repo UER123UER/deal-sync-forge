@@ -135,7 +135,7 @@ const BrokerageArticle = () => (
     <figure className="mt-8">
       <img
         src={blogImage3.url}
-        alt="Real estate agent reviewing a brokerage checklist with commission paperwork, laptop, and interview notes to choose the best brokerage in 2026"
+        alt="Real estate agent reviewing brokerage options, commission structures, support resources, and training programs before choosing a real estate brokerage in 2026"
         className="w-full rounded-lg"
         loading="eager"
       />
@@ -594,7 +594,7 @@ export const blogPosts: BlogPost[] = [
     author: "United Estates Realty",
     image: blogImage3.url,
     imageAlt:
-      "Real estate agent reviewing a brokerage checklist with commission paperwork, laptop, and interview notes to choose the best brokerage in 2026",
+      "Real estate agent reviewing brokerage options, commission structures, support resources, and training programs before choosing a real estate brokerage in 2026",
     content: <BrokerageArticle />,
     faq: BROKERAGE_FAQ,
   },
