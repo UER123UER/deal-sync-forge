@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { Faq, type FaqItem } from "@/components/Faq";
 import blogImage1 from "@/assets/commission-vs-traditional-split-2026.webp.asset.json";
 import blogImage2 from "@/assets/real-estate-crm-software-dashboard-lead-management-agents.jpg.asset.json";
+import blogImage3 from "@/assets/how-to-choose-real-estate-brokerage-2026-checklist-agents.jpg.asset.json";
 
 export interface BlogPost {
   slug: string;
