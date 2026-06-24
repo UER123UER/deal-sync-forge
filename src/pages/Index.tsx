@@ -303,29 +303,6 @@ export default function Index() {
           </div>
         )}
 
-        {/* Why join */}
-        <section className="bg-background py-16 sm:py-20">
-          <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-            <div className="max-w-2xl">
-              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">Why Agents Join</p>
-              <h2 className="mt-3 text-3xl font-bold text-foreground sm:text-4xl">
-                A brokerage built around the agent, not around the office overhead.
-              </h2>
-              <p className="mt-4 text-base leading-7 text-muted-foreground">
-                Most brokerages charge you a monthly fee and then take a cut of every deal on top of it. We don't. One flat fee, real software, and you keep your commissions.
-              </p>
-            </div>
-
-            <div className="mt-12 grid gap-8 md:grid-cols-2">
-              {whyUs.map(({ heading, body }) => (
-                <div key={heading} className="border-l-2 border-primary pl-6">
-                  <h3 className="text-lg font-semibold text-foreground">{heading}</h3>
-                  <p className="mt-2 text-sm leading-6 text-muted-foreground">{body}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
 
         {/* Pricing - one card, honest numbers */}
         <section id="pricing" className="border-y bg-muted/30 py-16 sm:py-20">
