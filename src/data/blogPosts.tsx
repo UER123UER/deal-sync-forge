@@ -5,7 +5,8 @@ import { Faq, type FaqItem } from "@/components/Faq";
 import blogImage1 from "@/assets/commission-vs-traditional-split-2026.webp.asset.json";
 import blogImage2 from "@/assets/real-estate-crm-software-dashboard-lead-management-agents.jpg.asset.json";
 import blogImage3 from "@/assets/how-to-choose-real-estate-brokerage-2026-checklist-agents.jpg.asset.json";
-import blogImage4 from "@/assets/how-much-real-estate-agents-make-per-sale-2026.jpg.asset.json";
+import blogImage4Url from "@/assets/how-much-real-estate-agents-make-per-sale-2026.jpg";
+const blogImage4 = { url: blogImage4Url };
 
 export interface BlogPost {
   slug: string;
