@@ -302,7 +302,8 @@ export default function Index() {
             </div>
           </div>
         )}
-        <section id="why-us" className="bg-background py-16 sm:py-20">
+
+        {/* Why join */}
           <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
             <div className="max-w-2xl">
               <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">Why Agents Join</p>
