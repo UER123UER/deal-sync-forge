@@ -8,6 +8,7 @@ import { SeoHead } from "@/components/SeoHead";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Faq, type FaqItem } from "@/components/Faq";
 import { blogPosts } from "@/data/blogPosts";
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 
 const HOME_FAQ_ITEMS: FaqItem[] = [
   {
@@ -441,46 +442,59 @@ export default function Index() {
               </Link>
             </div>
 
-            <div className="mt-10 grid gap-8 md:grid-cols-3">
-              {[...blogPosts]
-                .sort((a, b) => +new Date(b.date) - +new Date(a.date))
-                .slice(0, 3)
-                .map((post) => (
-                  <article key={post.slug} className="flex flex-col">
-                    {post.image && (
-                      <Link to={`/blog/${post.slug}`} className="block overflow-hidden rounded-lg">
-                        <img
-                          src={post.image}
-                          alt={post.imageAlt || post.title}
-                          className="aspect-[16/9] w-full object-cover transition-transform duration-300 hover:scale-[1.02]"
-                          loading="lazy"
-                        />
-                      </Link>
-                    )}
-                    <p className="mt-4 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                      {new Date(post.date).toLocaleDateString("en-US", {
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                      })}
-                      {" · "}
-                      {post.readMinutes} min read
-                    </p>
-                    <h3 className="mt-2 text-lg font-bold leading-snug text-foreground">
-                      <Link to={`/blog/${post.slug}`} className="hover:text-primary">
-                        {post.title}
-                      </Link>
-                    </h3>
-                    <p className="mt-2 line-clamp-3 text-sm leading-6 text-muted-foreground">{post.excerpt}</p>
-                    <Link
-                      to={`/blog/${post.slug}`}
-                      className="mt-3 inline-block text-sm font-semibold text-primary hover:underline"
-                    >
-                      Read article →
-                    </Link>
-                  </article>
-                ))}
-            </div>
+            <Carousel
+              opts={{
+                align: "start",
+                loop: blogPosts.length > 3,
+              }}
+              className="mt-10 w-full"
+            >
+              <CarouselContent className="-ml-4">
+                {[...blogPosts]
+                  .sort((a, b) => +new Date(b.date) - +new Date(a.date))
+                  .map((post) => (
+                    <CarouselItem key={post.slug} className="pl-4 basis-full md:basis-1/2 lg:basis-1/3">
+                      <article className="flex h-full flex-col bg-background p-4 rounded-lg border">
+                        {post.image && (
+                          <Link to={`/blog/${post.slug}`} className="block overflow-hidden rounded-lg">
+                            <img
+                              src={post.image}
+                              alt={post.imageAlt || post.title}
+                              className="aspect-[16/9] w-full object-cover transition-transform duration-300 hover:scale-[1.02]"
+                              loading="lazy"
+                            />
+                          </Link>
+                        )}
+                        <p className="mt-4 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                          {new Date(post.date).toLocaleDateString("en-US", {
+                            year: "numeric",
+                            month: "long",
+                            day: "numeric",
+                          })}
+                          {" · "}
+                          {post.readMinutes} min read
+                        </p>
+                        <h3 className="mt-2 text-lg font-bold leading-snug text-foreground">
+                          <Link to={`/blog/${post.slug}`} className="hover:text-primary">
+                            {post.title}
+                          </Link>
+                        </h3>
+                        <p className="mt-2 line-clamp-3 text-sm leading-6 text-muted-foreground">{post.excerpt}</p>
+                        <Link
+                          to={`/blog/${post.slug}`}
+                          className="mt-3 inline-block text-sm font-semibold text-primary hover:underline"
+                        >
+                          Read article →
+                        </Link>
+                      </article>
+                    </CarouselItem>
+                  ))}
+              </CarouselContent>
+              <div className="mt-6 flex items-center justify-end gap-2">
+                <CarouselPrevious className="static translate-y-0" />
+                <CarouselNext className="static translate-y-0" />
+              </div>
+            </Carousel>
           </div>
         </section>
 
