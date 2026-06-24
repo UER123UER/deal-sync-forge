@@ -778,11 +778,12 @@ export const blogPosts: BlogPost[] = [
   },
   {
     slug: "how-much-do-real-estate-agents-make-per-sale-2026",
-    title: "How Much Do Real Estate Agents Make Per Sale in 2026? (The Real Numbers After Splits and Fees)",
+    title: "How Much Do Real Estate Agents Make Per Sale",
     description:
-      "See what real estate agents actually take home per sale in 2026 after brokerage splits, transaction fees, and self-employment tax. Real numbers, no recruiting spin.",
+      "Find out what agents actually keep per sale in 2026 after splits, taxes, and fees. We break down real net income numbers so you can make smarter career decisions.",
     excerpt:
-      "Commission rate and take-home pay are two different numbers. Here is what agents actually keep per sale in 2026 after splits, fees, and taxes.",
+      "Find out what agents actually keep per sale in 2026 after splits, taxes, and fees. We break down real net income numbers so you can make smarter career decisions.",
+
     date: "2026-06-24",
     readMinutes: 9,
     author: "United Estates Realty",
