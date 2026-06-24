@@ -448,7 +448,7 @@ export default function Index() {
         {/* Blog */}
         <section className="border-t bg-muted/30 py-16 sm:py-20">
           <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
               <div className="max-w-xl">
                 <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">From the blog</p>
                 <h2 className="mt-2 text-2xl font-bold text-foreground sm:text-3xl">
@@ -458,9 +458,38 @@ export default function Index() {
                   Straight talk on commission splits, client management, and what actually works, written by agents, not marketers.
                 </p>
               </div>
-              <Link to="/blog" className="text-sm font-semibold text-primary hover:underline">
-                View all articles →
-              </Link>
+              <div className="flex flex-col items-start gap-3 sm:items-end">
+                <Link to="/blog" className="text-sm font-semibold text-primary hover:underline">
+                  View all articles →
+                </Link>
+                <div className="flex items-center gap-3">
+                  <span className="text-sm text-muted-foreground">
+                    <span className="font-semibold text-foreground">{String(blogIndex + 1).padStart(2, "0")}</span>
+                    {" / "}
+                    {String(blogPosts.length).padStart(2, "0")}
+                  </span>
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => blogApi?.scrollPrev()}
+                      disabled={!blogCanPrev}
+                      className="group flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
+                      aria-label="Previous article"
+                    >
+                      <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => blogApi?.scrollNext()}
+                      disabled={!blogCanNext}
+                      className="group flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
+                      aria-label="Next article"
+                    >
+                      <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <Carousel
