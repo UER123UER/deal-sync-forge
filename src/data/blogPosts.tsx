@@ -5,6 +5,8 @@ import { Faq, type FaqItem } from "@/components/Faq";
 import blogImage1 from "@/assets/commission-vs-traditional-split-2026.webp.asset.json";
 import blogImage2 from "@/assets/real-estate-crm-software-dashboard-lead-management-agents.jpg.asset.json";
 import blogImage3 from "@/assets/how-to-choose-real-estate-brokerage-2026-checklist-agents.jpg.asset.json";
+import blogImage4Url from "@/assets/how-much-real-estate-agents-make-per-sale-2026.jpg";
+const blogImage4 = { url: blogImage4Url };
 
 export interface BlogPost {
   slug: string;
@@ -120,6 +122,39 @@ const BROKERAGE_FAQ: FaqItem[] = [
     question: "Do all brokerages charge desk fees?",
     answer:
       "No. In a flat-fee or 100% commission model, you typically pay a monthly membership fee and a flat transaction fee per closing rather than a desk fee. Cloud-based brokerages eliminate physical office costs and pass those savings to agents through lower monthly charges. United Estates Realty charges a flat $98 monthly fee with zero transaction fees and no desk fee structure.",
+  },
+];
+
+const EARNINGS_FAQ: FaqItem[] = [
+  {
+    question: "How much do real estate agents make a year?",
+    answer:
+      "The median gross income for Realtors was $58,100 in 2024, with net income after taxes and expenses landing at $36,600. Full-time high-volume agents typically earn significantly more.",
+  },
+  {
+    question: "Do real estate agents make good money?",
+    answer:
+      "Full-time agents who build consistent transaction volume do make good money. 62% of full-time agents earn between $75,000 and $200,000 annually. Part-time agents and those in their first two years typically earn far below the median.",
+  },
+  {
+    question: "How much do first-year agents make?",
+    answer:
+      "The median first- and second-year agents earned $8,100 in gross commissions in 2024, with 62% earning under $10,000. Most new agents lose money in year one once startup costs are factored in.",
+  },
+  {
+    question: "What is the typical commission?",
+    answer:
+      "The national average total commission is 5.70% as of May 2026 split roughly equally between the listing agent and buyer's agent at approximately 2.85% per side.",
+  },
+  {
+    question: "How much does an agent make per sale?",
+    answer:
+      "On a $400,000 home at average commission rates, an agent earns roughly $11,400 in gross commission. After a 70/30 brokerage split, transaction fees, self-employment tax and income tax, the actual take-home is approximately $5,000.",
+  },
+  {
+    question: "Do agents earn commission on rentals?",
+    answer:
+      "Yes. Rental commission is typically one month's rent paid by the landlord. It is smaller than a sales commission but provides income between closings and often converts into future sales clients.",
   },
 ];
 
@@ -255,6 +290,149 @@ const BrokerageArticle = () => (
       At <Internal to="/">United Estates Realty</Internal>, we built a straightforward model for agents who want full commission without the confusion of layered fees. If you are evaluating your options, the full breakdown is at{" "}
       <Internal to="/">unitedestatesagent</Internal>.
     </P>
+  </>
+);
+
+const TH = ({ children }: { children: ReactNode }) => (
+  <th className="border border-border bg-muted/40 px-4 py-2 text-left text-sm font-semibold text-foreground">{children}</th>
+);
+const TD = ({ children }: { children: ReactNode }) => (
+  <td className="border border-border px-4 py-2 text-sm text-muted-foreground">{children}</td>
+);
+const DataTable = ({ children }: { children: ReactNode }) => (
+  <div className="mt-6 overflow-x-auto">
+    <table className="w-full border-collapse border border-border">{children}</table>
+  </div>
+);
+
+const EarningsArticle = () => (
+  <>
+    <P>Most agents can tell you their commission rate immediately. Very few can tell you what they actually kept after the last deal closed.</P>
+    <P>Those are two completely different numbers and the gap between them is where careers either thrive or quietly fall apart.</P>
+    <P>This guide breaks down both numbers clearly so agents and anyone considering a real estate career can make decisions based on reality rather than recruiting pitches.</P>
+
+    <figure className="mt-8">
+      <img
+        src={blogImage4.url}
+        alt="Real estate agent calculating commission earnings per sale after brokerage splits, transaction fees, self-employment tax, and income tax in 2026"
+        className="w-full rounded-lg"
+        loading="eager"
+        width={1600}
+        height={896}
+      />
+    </figure>
+
+    <H2>How Real Estate Commission Works in 2026</H2>
+    <P>
+      Commission is a percentage of the final sale price paid at closing. The national average total commission rate is 5.70% as of May 2026, split between 2.88% to the listing agent and 2.82% to the buyer's agent.
+    </P>
+    <P>That means on a $400,000 home sale, each agent earns roughly $11,520 in gross commission before anything else is subtracted.</P>
+    <P>
+      Since the 2024 NAR settlement, buyer agents now negotiate compensation in a written agreement before touring homes and commission offers no longer appear in the MLS. All commission rates are negotiable and no law sets a fixed rate.
+    </P>
+    <P>Here is what that looks like across common sale prices at current average rates:</P>
+    <DataTable>
+      <thead>
+        <tr>
+          <TH>Sale Price</TH>
+          <TH>Gross Per Agent (2.85%)</TH>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><TD>$250,000</TD><TD>$7,125</TD></tr>
+        <tr><TD>$350,000</TD><TD>$9,975</TD></tr>
+        <tr><TD>$400,000</TD><TD>$11,400</TD></tr>
+        <tr><TD>$500,000</TD><TD>$14,250</TD></tr>
+        <tr><TD>$700,000</TD><TD>$19,950</TD></tr>
+      </tbody>
+    </DataTable>
+    <P>These are gross figures. What the agent actually keeps is a different story entirely.</P>
+
+    <H2>What Agents Actually Take Home Per Sale</H2>
+    <P>Every commission check passes through multiple deductions before reaching an agent's bank account.</P>
+    <P>
+      The brokerage split comes first. Traditional brokerages take 20% to 50% of every commission. On a $1 million sale at a 3% commission, generating $30,000 in gross commission, an agent on a 70/30 split keeps $21,000 while the brokerage keeps $9,000 before any additional fees are applied.
+    </P>
+    <P>
+      Transaction fees come next. Most traditional brokerages charge $200 to $800 per closing on top of the split. On ten deals per year, that adds up to $2,000 to $8,000 in additional costs that most agents forget to subtract from their mental income estimate.
+    </P>
+    <P>
+      Self-employment tax hits hardest. Unlike a standard employment role, agents pay both the employer and employee portion of Social Security and Medicare, which equals 15.3% of net earnings before income tax is even calculated.
+    </P>
+    <P>Here is what a $400,000 sale looks like at every stage of the deduction process:</P>
+    <DataTable>
+      <thead>
+        <tr>
+          <TH>Stage</TH>
+          <TH>Amount</TH>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><TD>Gross commission (2.85%)</TD><TD>$11,400</TD></tr>
+        <tr><TD>After 70/30 brokerage split</TD><TD>$7,980</TD></tr>
+        <tr><TD>After $400 transaction fee</TD><TD>$7,580</TD></tr>
+        <tr><TD>After 15.3% self-employment tax</TD><TD>$6,421</TD></tr>
+        <tr><TD>After federal income tax (22%)</TD><TD>$5,008</TD></tr>
+      </tbody>
+    </DataTable>
+    <P>A $400,000 sale that looks like $11,400 on paper nets approximately $5,000 in take-home pay. That is the number nobody puts in the recruiting brochure.</P>
+
+    <H2>How Much Do Real Estate Agents Make a Year?</H2>
+    <P>
+      The median real estate agent earned $58,100 in gross commission income in 2024, but that figure drops to $36,600 net after taxes and business expenses, according to NAR's 2025 Member Profile.
+    </P>
+    <P>
+      ZipRecruiter's May 2026 data shows average annual pay at $85,793, with the majority of agents earning between $60,000 and $100,000 per year. The gap between these figures exists because ZipRecruiter captures active full-time producers while NAR's median includes part-time and low-volume agents.
+    </P>
+    <P>The honest answer is that annual income depends almost entirely on transaction count and cost structure.</P>
+
+    <H2>Do Real Estate Agents Make Good Money?</H2>
+    <P>Yes, but only under the right conditions.</P>
+    <P>
+      62% of full-time real estate agents earn between $75,000 and $200,000, according to a 2025 McKissock Learning survey. Part-time agents working fewer than 20 hours per week typically earn less than $25,000.
+    </P>
+    <P>
+      The top 10% of agents earn over $125,000 per Bureau of Labor Statistics data and high-volume or luxury agents earn several hundred thousand per year. The same scoreboard that has no ceiling also has no floor.
+    </P>
+    <P>
+      The agents consistently earning well share two characteristics. They close enough transactions to cover fixed costs with room to spare and they control those fixed costs tightly enough that each additional deal actually adds to their income rather than just covering overhead.
+    </P>
+
+    <H2>How Much Do First-Year Agents Make?</H2>
+    <P>
+      Agents with two years or less of experience earned a median gross income of just $8,100 in 2024 and roughly 62% of new agents made under $10,000 in their first year.
+    </P>
+    <P>
+      Before the first commission lands new agents face licensing fees of $500 to $1,500, MLS and board dues of $1,000 to $1,800 per year, brokerage desk fees, E&amp;O insurance and marketing costs. Most new agents lose money in year one once all startup costs are factored in.
+    </P>
+    <P>In competitive high-priced markets motivated new agents can clear $60,000 in year one. The variable is not talent but transaction count.</P>
+
+    <H2>Do Agents Earn Commission on Rentals?</H2>
+    <P>
+      Yes. Agents who help clients lease properties typically earn one month's rent or a percentage of the annual lease value paid by the landlord. Rental clients often become buyers later and rental commissions help smooth out slow sales months.
+    </P>
+
+    <H2>How Brokerage Structure Changes Everything</H2>
+    <P>Here is the calculation most agents never run.</P>
+    <P>
+      An agent closing 12 transactions at $10,000 gross commission per deal generates $120,000 in gross income. Under a traditional 70/30 split with standard fees that agent takes home roughly $72,000 before taxes.
+    </P>
+    <P>
+      The same agent at a flat-fee brokerage paying $98 per month and zero transaction fees takes home $118,824 before taxes on identical production.
+    </P>
+    <P>
+      The difference is $46,824 per year. Not from working harder. Not from closing more deals. From changing the structure that sits between the commission and the bank account.
+    </P>
+    <P>
+      Most agents underestimate their true expenses by 40 to 60% which is the single biggest reason agents quit. Running the full math on brokerage costs is not optional for agents who want to build a sustainable business. It is the foundation every other income decision is built on.
+    </P>
+    <P>
+      At <Internal to="/">United Estates Realty</Internal> the math is straightforward. A flat $98 monthly fee with zero transaction fees and a full CRM included means agents calculate their annual brokerage cost in seconds rather than deciphering a layered fee schedule. See the full breakdown at <Internal to="/">unitedestatesagent</Internal>.
+    </P>
+
+    <section className="mt-16">
+      <Faq eyebrow="FAQ" heading="Frequently Asked Questions" items={EARNINGS_FAQ} />
+    </section>
   </>
 );
 
@@ -597,6 +775,22 @@ export const blogPosts: BlogPost[] = [
       "Real estate agent reviewing brokerage options, commission structures, support resources, and training programs before choosing a real estate brokerage in 2026",
     content: <BrokerageArticle />,
     faq: BROKERAGE_FAQ,
+  },
+  {
+    slug: "how-much-do-real-estate-agents-make-per-sale-2026",
+    title: "How Much Do Real Estate Agents Make Per Sale in 2026? (The Real Numbers After Splits and Fees)",
+    description:
+      "See what real estate agents actually take home per sale in 2026 after brokerage splits, transaction fees, and self-employment tax. Real numbers, no recruiting spin.",
+    excerpt:
+      "Commission rate and take-home pay are two different numbers. Here is what agents actually keep per sale in 2026 after splits, fees, and taxes.",
+    date: "2026-06-24",
+    readMinutes: 9,
+    author: "United Estates Realty",
+    image: blogImage4.url,
+    imageAlt:
+      "Real estate agent calculating commission earnings per sale after brokerage splits, transaction fees, self-employment tax, and income tax in 2026",
+    content: <EarningsArticle />,
+    faq: EARNINGS_FAQ,
   },
 ];
 
