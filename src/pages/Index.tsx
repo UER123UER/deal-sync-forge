@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, Check, Facebook, Linkedin, Instagram, Menu, X } from "lucide-react";
+import { ArrowRight, Check, ChevronLeft, ChevronRight, Facebook, Linkedin, Instagram, Menu, X } from "lucide-react";
 
 import { UERLogo } from "@/components/UERLogo";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,7 @@ import { SeoHead } from "@/components/SeoHead";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Faq, type FaqItem } from "@/components/Faq";
 import { blogPosts } from "@/data/blogPosts";
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
+import { Carousel, CarouselContent, CarouselItem, type CarouselApi } from "@/components/ui/carousel";
 
 const HOME_FAQ_ITEMS: FaqItem[] = [
   {
@@ -72,6 +72,26 @@ export default function Index() {
   const primaryHref = "/signup";
   const primaryLabel = "Sign Up";
   const [showProductHunt, setShowProductHunt] = useState(true);
+  const [blogApi, setBlogApi] = useState<CarouselApi | null>(null);
+  const [blogCanPrev, setBlogCanPrev] = useState(false);
+  const [blogCanNext, setBlogCanNext] = useState(true);
+  const [blogIndex, setBlogIndex] = useState(0);
+
+  useEffect(() => {
+    if (!blogApi) return;
+    const update = () => {
+      setBlogCanPrev(blogApi.canScrollPrev());
+      setBlogCanNext(blogApi.canScrollNext());
+      setBlogIndex(blogApi.selectedScrollSnap());
+    };
+    update();
+    blogApi.on("select", update);
+    blogApi.on("reInit", update);
+    return () => {
+      blogApi.off("select", update);
+      blogApi.off("reInit", update);
+    };
+  }, [blogApi]);
 
   useEffect(() => {
     const dismissed = localStorage.getItem("productHuntDismissed");
@@ -447,6 +467,7 @@ export default function Index() {
                 align: "start",
                 loop: blogPosts.length > 3,
               }}
+              setApi={setBlogApi}
               className="mt-10 w-full"
             >
               <CarouselContent className="-ml-4">
@@ -460,7 +481,7 @@ export default function Index() {
                             <img
                               src={post.image}
                               alt={post.imageAlt || post.title}
-                              className="aspect-[16/9] w-full object-cover transition-transform duration-300 hover:scale-[1.02]"
+                              className="aspect-[16/9] w-full object-cover transition-transform duration-500 hover:scale-[1.04]"
                               loading="lazy"
                             />
                           </Link>
@@ -490,11 +511,42 @@ export default function Index() {
                     </CarouselItem>
                   ))}
               </CarouselContent>
-              <div className="mt-6 flex items-center justify-end gap-2">
-                <CarouselPrevious className="static translate-y-0" />
-                <CarouselNext className="static translate-y-0" />
-              </div>
             </Carousel>
+
+            <div className="mt-8 flex flex-col items-center gap-5 sm:flex-row sm:justify-between">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <span className="font-semibold text-foreground">{String(blogIndex + 1).padStart(2, "0")}</span>
+                <span className="text-muted-foreground/40">/</span>
+                <span>{String(blogPosts.length).padStart(2, "0")}</span>
+                <div className="ml-3 hidden h-1 w-24 overflow-hidden rounded-full bg-muted sm:block">
+                  <div
+                    className="h-full rounded-full bg-primary transition-all duration-500"
+                    style={{ width: `${((blogIndex + 1) / blogPosts.length) * 100}%` }}
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => blogApi?.scrollPrev()}
+                  disabled={!blogCanPrev}
+                  className="group relative flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border border-border bg-background text-foreground shadow-sm transition-all duration-300 hover:scale-110 hover:border-primary hover:text-primary hover:shadow-md active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:scale-100"
+                  aria-label="Previous article"
+                >
+                  <ChevronLeft className="h-5 w-5 transition-transform duration-300 group-hover:-translate-x-1" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => blogApi?.scrollNext()}
+                  disabled={!blogCanNext}
+                  className="group relative flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border border-border bg-background text-foreground shadow-sm transition-all duration-300 hover:scale-110 hover:border-primary hover:text-primary hover:shadow-md active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:scale-100"
+                  aria-label="Next article"
+                >
+                  <ChevronRight className="h-5 w-5 transition-transform duration-300 group-hover:translate-x-1" />
+                </button>
+              </div>
+            </div>
           </div>
         </section>
 
