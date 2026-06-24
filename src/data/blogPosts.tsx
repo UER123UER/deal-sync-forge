@@ -125,6 +125,39 @@ const BROKERAGE_FAQ: FaqItem[] = [
   },
 ];
 
+const EARNINGS_FAQ: FaqItem[] = [
+  {
+    question: "How much do real estate agents make a year?",
+    answer:
+      "The median gross income for Realtors was $58,100 in 2024, with net income after taxes and expenses landing at $36,600. Full-time high-volume agents typically earn significantly more.",
+  },
+  {
+    question: "Do real estate agents make good money?",
+    answer:
+      "Full-time agents who build consistent transaction volume do make good money. 62% of full-time agents earn between $75,000 and $200,000 annually. Part-time agents and those in their first two years typically earn far below the median.",
+  },
+  {
+    question: "How much do first-year agents make?",
+    answer:
+      "The median first- and second-year agents earned $8,100 in gross commissions in 2024, with 62% earning under $10,000. Most new agents lose money in year one once startup costs are factored in.",
+  },
+  {
+    question: "What is the typical commission?",
+    answer:
+      "The national average total commission is 5.70% as of May 2026 split roughly equally between the listing agent and buyer's agent at approximately 2.85% per side.",
+  },
+  {
+    question: "How much does an agent make per sale?",
+    answer:
+      "On a $400,000 home at average commission rates, an agent earns roughly $11,400 in gross commission. After a 70/30 brokerage split, transaction fees, self-employment tax and income tax, the actual take-home is approximately $5,000.",
+  },
+  {
+    question: "Do agents earn commission on rentals?",
+    answer:
+      "Yes. Rental commission is typically one month's rent paid by the landlord. It is smaller than a sales commission but provides income between closings and often converts into future sales clients.",
+  },
+];
+
 const BrokerageArticle = () => (
   <>
     <P>Most agents choose their first brokerage within weeks of getting licensed. Many never revisit that decision for years.</P>
