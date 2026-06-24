@@ -72,6 +72,26 @@ export default function Index() {
   const primaryHref = "/signup";
   const primaryLabel = "Sign Up";
   const [showProductHunt, setShowProductHunt] = useState(true);
+  const [blogApi, setBlogApi] = useState<CarouselApi | null>(null);
+  const [blogCanPrev, setBlogCanPrev] = useState(false);
+  const [blogCanNext, setBlogCanNext] = useState(true);
+  const [blogIndex, setBlogIndex] = useState(0);
+
+  useEffect(() => {
+    if (!blogApi) return;
+    const update = () => {
+      setBlogCanPrev(blogApi.canScrollPrev());
+      setBlogCanNext(blogApi.canScrollNext());
+      setBlogIndex(blogApi.selectedScrollSnap());
+    };
+    update();
+    blogApi.on("select", update);
+    blogApi.on("reInit", update);
+    return () => {
+      blogApi.off("select", update);
+      blogApi.off("reInit", update);
+    };
+  }, [blogApi]);
 
   useEffect(() => {
     const dismissed = localStorage.getItem("productHuntDismissed");
