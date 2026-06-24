@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, Check, ChevronLeft, ChevronRight, Facebook, Linkedin, Instagram, Menu, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Facebook, Linkedin, Instagram, Menu, X } from "lucide-react";
+
 
 import { UERLogo } from "@/components/UERLogo";
 import { Button } from "@/components/ui/button";
