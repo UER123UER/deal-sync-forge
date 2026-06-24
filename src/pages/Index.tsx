@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { SeoHead } from "@/components/SeoHead";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Faq, type FaqItem } from "@/components/Faq";
+import { blogPosts } from "@/data/blogPosts";
 
 const HOME_FAQ_ITEMS: FaqItem[] = [
   {
@@ -418,6 +419,67 @@ export default function Index() {
                   </div>
                 ))}
               </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Blog */}
+        <section className="border-t bg-muted/30 py-16 sm:py-20">
+          <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+              <div className="max-w-xl">
+                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">From the blog</p>
+                <h2 className="mt-2 text-2xl font-bold text-foreground sm:text-3xl">
+                  Resources for working agents.
+                </h2>
+                <p className="mt-3 text-base leading-7 text-muted-foreground">
+                  Straight talk on commission splits, client management, and what actually works, written by agents, not marketers.
+                </p>
+              </div>
+              <Link to="/blog" className="text-sm font-semibold text-primary hover:underline">
+                View all articles →
+              </Link>
+            </div>
+
+            <div className="mt-10 grid gap-8 md:grid-cols-3">
+              {[...blogPosts]
+                .sort((a, b) => +new Date(b.date) - +new Date(a.date))
+                .slice(0, 3)
+                .map((post) => (
+                  <article key={post.slug} className="flex flex-col">
+                    {post.image && (
+                      <Link to={`/blog/${post.slug}`} className="block overflow-hidden rounded-lg">
+                        <img
+                          src={post.image}
+                          alt={post.imageAlt || post.title}
+                          className="aspect-[16/9] w-full object-cover transition-transform duration-300 hover:scale-[1.02]"
+                          loading="lazy"
+                        />
+                      </Link>
+                    )}
+                    <p className="mt-4 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                      {new Date(post.date).toLocaleDateString("en-US", {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      })}
+                      {" · "}
+                      {post.readMinutes} min read
+                    </p>
+                    <h3 className="mt-2 text-lg font-bold leading-snug text-foreground">
+                      <Link to={`/blog/${post.slug}`} className="hover:text-primary">
+                        {post.title}
+                      </Link>
+                    </h3>
+                    <p className="mt-2 line-clamp-3 text-sm leading-6 text-muted-foreground">{post.excerpt}</p>
+                    <Link
+                      to={`/blog/${post.slug}`}
+                      className="mt-3 inline-block text-sm font-semibold text-primary hover:underline"
+                    >
+                      Read article →
+                    </Link>
+                  </article>
+                ))}
             </div>
           </div>
         </section>
