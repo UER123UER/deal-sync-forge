@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, Check, ChevronLeft, ChevronRight, Facebook, Linkedin, Instagram, Menu, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Facebook, Linkedin, Instagram, Menu, X } from "lucide-react";
+
 
 import { UERLogo } from "@/components/UERLogo";
 import { Button } from "@/components/ui/button";
@@ -447,7 +448,7 @@ export default function Index() {
         {/* Blog */}
         <section className="border-t bg-muted/30 py-16 sm:py-20">
           <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
               <div className="max-w-xl">
                 <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">From the blog</p>
                 <h2 className="mt-2 text-2xl font-bold text-foreground sm:text-3xl">
@@ -457,9 +458,38 @@ export default function Index() {
                   Straight talk on commission splits, client management, and what actually works, written by agents, not marketers.
                 </p>
               </div>
-              <Link to="/blog" className="text-sm font-semibold text-primary hover:underline">
-                View all articles →
-              </Link>
+              <div className="flex flex-col items-start gap-3 sm:items-end">
+                <Link to="/blog" className="text-sm font-semibold text-primary hover:underline">
+                  View all articles →
+                </Link>
+                <div className="flex items-center gap-3">
+                  <span className="text-sm text-muted-foreground">
+                    <span className="font-semibold text-foreground">{String(blogIndex + 1).padStart(2, "0")}</span>
+                    {" / "}
+                    {String(blogPosts.length).padStart(2, "0")}
+                  </span>
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => blogApi?.scrollPrev()}
+                      disabled={!blogCanPrev}
+                      className="group flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
+                      aria-label="Previous article"
+                    >
+                      <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => blogApi?.scrollNext()}
+                      disabled={!blogCanNext}
+                      className="group flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
+                      aria-label="Next article"
+                    >
+                      <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <Carousel
@@ -513,40 +543,6 @@ export default function Index() {
               </CarouselContent>
             </Carousel>
 
-            <div className="mt-8 flex flex-col items-center gap-5 sm:flex-row sm:justify-between">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <span className="font-semibold text-foreground">{String(blogIndex + 1).padStart(2, "0")}</span>
-                <span className="text-muted-foreground/40">/</span>
-                <span>{String(blogPosts.length).padStart(2, "0")}</span>
-                <div className="ml-3 hidden h-1 w-24 overflow-hidden rounded-full bg-muted sm:block">
-                  <div
-                    className="h-full rounded-full bg-primary transition-all duration-500"
-                    style={{ width: `${((blogIndex + 1) / blogPosts.length) * 100}%` }}
-                  />
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <button
-                  type="button"
-                  onClick={() => blogApi?.scrollPrev()}
-                  disabled={!blogCanPrev}
-                  className="group relative flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border border-border bg-background text-foreground shadow-sm transition-all duration-300 hover:scale-110 hover:border-primary hover:text-primary hover:shadow-md active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:scale-100"
-                  aria-label="Previous article"
-                >
-                  <ChevronLeft className="h-5 w-5 transition-transform duration-300 group-hover:-translate-x-1" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => blogApi?.scrollNext()}
-                  disabled={!blogCanNext}
-                  className="group relative flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border border-border bg-background text-foreground shadow-sm transition-all duration-300 hover:scale-110 hover:border-primary hover:text-primary hover:shadow-md active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:scale-100"
-                  aria-label="Next article"
-                >
-                  <ChevronRight className="h-5 w-5 transition-transform duration-300 group-hover:translate-x-1" />
-                </button>
-              </div>
-            </div>
           </div>
         </section>
 
