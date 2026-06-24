@@ -512,6 +512,25 @@ export default function Index() {
                     </CarouselItem>
                   ))}
               </CarouselContent>
+
+              <button
+                type="button"
+                onClick={() => blogApi?.scrollPrev()}
+                disabled={!blogCanPrev}
+                className="absolute left-3 top-1/2 z-10 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-background/90 text-foreground shadow-lg backdrop-blur-sm transition-all hover:scale-110 hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-40 md:flex"
+                aria-label="Previous article"
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => blogApi?.scrollNext()}
+                disabled={!blogCanNext}
+                className="absolute right-3 top-1/2 z-10 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-background/90 text-foreground shadow-lg backdrop-blur-sm transition-all hover:scale-110 hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-40 md:flex"
+                aria-label="Next article"
+              >
+                <ArrowRight className="h-4 w-4" />
+              </button>
             </Carousel>
 
           </div>
