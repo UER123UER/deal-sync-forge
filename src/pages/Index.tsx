@@ -1,5 +1,6 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, Check, Facebook, Linkedin, Instagram, Menu } from "lucide-react";
+import { ArrowRight, Check, Facebook, Linkedin, Instagram, Menu, X } from "lucide-react";
 
 import { UERLogo } from "@/components/UERLogo";
 import { Button } from "@/components/ui/button";
@@ -68,8 +69,17 @@ const softwareFeatures = [
 export default function Index() {
   const primaryHref = "/signup";
   const primaryLabel = "Sign Up";
+  const [showProductHunt, setShowProductHunt] = useState(true);
 
-  return (
+  useEffect(() => {
+    const dismissed = localStorage.getItem("productHuntDismissed");
+    if (dismissed === "1") setShowProductHunt(false);
+  }, []);
+
+  const dismissProductHunt = () => {
+    setShowProductHunt(false);
+    localStorage.setItem("productHuntDismissed", "1");
+  };
     <div className="min-h-screen bg-background text-foreground">
       <SeoHead
         title="United Estates Realty — Florida's 100% Commission Brokerage"
