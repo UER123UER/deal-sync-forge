@@ -458,31 +458,9 @@ export default function Index() {
                   Straight talk on commission splits, client management, and what actually works, written by agents, not marketers.
                 </p>
               </div>
-              <div className="flex flex-col items-start gap-3 sm:items-end">
-                <Link to="/blog" className="text-sm font-semibold text-primary hover:underline">
-                  View all articles →
-                </Link>
-                <div className="flex items-center gap-1">
-                  <button
-                    type="button"
-                    onClick={() => blogApi?.scrollPrev()}
-                    disabled={!blogCanPrev}
-                    className="group flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
-                    aria-label="Previous article"
-                  >
-                    <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => blogApi?.scrollNext()}
-                    disabled={!blogCanNext}
-                    className="group flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
-                    aria-label="Next article"
-                  >
-                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-                  </button>
-                </div>
-              </div>
+              <Link to="/blog" className="text-sm font-semibold text-primary hover:underline">
+                View all articles →
+              </Link>
             </div>
 
             <Carousel
@@ -534,6 +512,25 @@ export default function Index() {
                     </CarouselItem>
                   ))}
               </CarouselContent>
+
+              <button
+                type="button"
+                onClick={() => blogApi?.scrollPrev()}
+                disabled={!blogCanPrev}
+                className="absolute left-3 top-1/2 z-10 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-background/90 text-foreground shadow-lg backdrop-blur-sm transition-all hover:scale-110 hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-40 md:flex"
+                aria-label="Previous article"
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => blogApi?.scrollNext()}
+                disabled={!blogCanNext}
+                className="absolute right-3 top-1/2 z-10 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-background/90 text-foreground shadow-lg backdrop-blur-sm transition-all hover:scale-110 hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-40 md:flex"
+                aria-label="Next article"
+              >
+                <ArrowRight className="h-4 w-4" />
+              </button>
             </Carousel>
 
           </div>
