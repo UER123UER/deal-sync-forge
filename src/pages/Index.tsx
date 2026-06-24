@@ -462,32 +462,25 @@ export default function Index() {
                 <Link to="/blog" className="text-sm font-semibold text-primary hover:underline">
                   View all articles →
                 </Link>
-                <div className="flex items-center gap-3">
-                  <span className="text-sm text-muted-foreground">
-                    <span className="font-semibold text-foreground">{String(blogIndex + 1).padStart(2, "0")}</span>
-                    {" / "}
-                    {String(blogPosts.length).padStart(2, "0")}
-                  </span>
-                  <div className="flex items-center gap-1">
-                    <button
-                      type="button"
-                      onClick={() => blogApi?.scrollPrev()}
-                      disabled={!blogCanPrev}
-                      className="group flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
-                      aria-label="Previous article"
-                    >
-                      <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => blogApi?.scrollNext()}
-                      disabled={!blogCanNext}
-                      className="group flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
-                      aria-label="Next article"
-                    >
-                      <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-                    </button>
-                  </div>
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => blogApi?.scrollPrev()}
+                    disabled={!blogCanPrev}
+                    className="group flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
+                    aria-label="Previous article"
+                  >
+                    <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => blogApi?.scrollNext()}
+                    disabled={!blogCanNext}
+                    className="group flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
+                    aria-label="Next article"
+                  >
+                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                  </button>
                 </div>
               </div>
             </div>
