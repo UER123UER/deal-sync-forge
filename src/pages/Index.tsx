@@ -80,6 +80,8 @@ export default function Index() {
     setShowProductHunt(false);
     localStorage.setItem("productHuntDismissed", "1");
   };
+
+  return (
     <div className="min-h-screen bg-background text-foreground">
       <SeoHead
         title="United Estates Realty — Florida's 100% Commission Brokerage"
