@@ -8,6 +8,7 @@ import { SeoHead } from "@/components/SeoHead";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Faq, type FaqItem } from "@/components/Faq";
 import { blogPosts } from "@/data/blogPosts";
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 
 const HOME_FAQ_ITEMS: FaqItem[] = [
   {
