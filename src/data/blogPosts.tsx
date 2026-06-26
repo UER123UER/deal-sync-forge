@@ -984,7 +984,24 @@ export const blogPosts: BlogPost[] = [
     content: <EarningsArticle />,
     faq: EARNINGS_FAQ,
   },
+  {
+    slug: "real-estate-agent-fees-explained-2026",
+    title: "Real Estate Agent Fees Explained: What Agents Pay and What Sellers Owe in 2026",
+    description:
+      "Learn what sellers and agents actually pay in real estate fees in 2026. We break down commission rates, brokerage costs, and net take-home pay with real numbers.",
+    excerpt:
+      "Most people know agents earn a commission. Few understand exactly who pays it, how it gets divided, and what agents actually keep after every deduction is taken.",
+    date: "2026-06-26",
+    readMinutes: 10,
+    author: "United Estates Realty",
+    image: blogImage5.url,
+    imageAlt:
+      "Real estate commission breakdown on a desk with calculator, model house, and commission statement showing agent fees and seller costs in 2026",
+    content: <FeesArticle />,
+    faq: FEES_FAQ,
+  },
 ];
+
 
 export function getBlogPost(slug: string): BlogPost | undefined {
   return blogPosts.find((p) => p.slug === slug);
