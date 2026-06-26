@@ -467,6 +467,166 @@ const EarningsArticle = () => (
   </>
 );
 
+const FeesArticle = () => (
+  <>
+    <P>Most people know real estate agents earn a commission. Very few understand exactly who pays it, how it gets divided, and what agents actually keep after every deduction is taken.</P>
+    <P>
+      This guide breaks down both sides of the fee equation, what sellers pay at closing and what agents pay to stay in business, so everyone involved in a transaction knows exactly where the money goes.
+    </P>
+
+    <figure className="mt-8">
+      <img
+        src={blogImage5.url}
+        alt="Real estate commission breakdown on a desk with calculator, model house, and commission statement showing agent fees and seller costs in 2026"
+        className="w-full rounded-lg"
+        loading="eager"
+        width={1600}
+        height={896}
+      />
+    </figure>
+
+    <H2>How Real Estate Agent Commissions Work in 2026</H2>
+    <P>
+      Real estate commission is a percentage of the final sale price paid at closing. The national average total commission is 5.70% based on a February 2026 survey of 533 active agents across the United States, split between 2.88% to the listing agent and 2.82% to the buyer's agent.
+    </P>
+    <P>
+      The commission gets paid at closing and is deducted from the seller's proceeds before money changes hands. On a $400,000 home with a 6% total commission, that is $24,000 coming out of the sale price.
+    </P>
+    <P>Here is what that looks like across common sale prices:</P>
+    <DataTable>
+      <thead>
+        <tr>
+          <TH>Sale Price</TH>
+          <TH>Total Commission (5.7%)</TH>
+          <TH>Per Agent (2.85%)</TH>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><TD>$250,000</TD><TD>$14,250</TD><TD>$7,125</TD></tr>
+        <tr><TD>$350,000</TD><TD>$19,950</TD><TD>$9,975</TD></tr>
+        <tr><TD>$500,000</TD><TD>$28,500</TD><TD>$14,250</TD></tr>
+        <tr><TD>$700,000</TD><TD>$39,900</TD><TD>$19,950</TD></tr>
+      </tbody>
+    </DataTable>
+    <P>These figures represent gross commission before any splits or deductions. What the agent actually takes home is significantly different.</P>
+
+    <H2>Who Pays Real Estate Agent Fees: Buyers or Sellers?</H2>
+    <P>
+      Sellers have historically paid both agents, but the 2024 NAR settlement changed who is responsible. Since August 2024, buyer agent compensation is no longer advertised through the MLS and must be agreed to in writing between buyer and agent before touring homes.
+    </P>
+    <P>
+      Three options now exist for handling commission. The traditional model has the seller pay both agents' fees, and the listing agent splits the total with the buyer's agent. The new option allows buyers to pay their own agent directly. A third hybrid approach has the seller offer a partial concession toward buyer representation costs.
+    </P>
+    <P>
+      In practice, most sellers still cover both sides in 2026 because offering buyer agent compensation increases the pool of qualified buyers and reduces time on market. The settlement changed the process but not the economic reality in most transactions.
+    </P>
+
+    <H2>What Agents Actually Pay: The Full Cost of Running a Real Estate Business</H2>
+    <P>This is the part most agents never see explained clearly before they start. The commission check is the beginning of the calculation, not the end.</P>
+
+    <H3>Brokerage Split</H3>
+    <P>
+      Standard brokerage models in 2026 fall into three categories. Traditional franchise brokerages typically offer 60/40 to 70/30 splits where the agent keeps 70%. Cloud and virtual brokerages offer higher splits of 80/20 or 85/15. Flat fee and 100% commission brokerages let agents keep the full commission in exchange for a flat monthly fee.
+    </P>
+    <P>
+      Franchise royalties at traditional brokerages typically run 4 to 6% of each transaction on top of the commission split and are deducted before the agent sees any money. These fees often appear in fine print rather than being highlighted during recruitment.
+    </P>
+
+    <H3>Desk Fees and Monthly Costs</H3>
+    <P>
+      Fixed costs agents pay to their brokerage, regardless of whether they close a transaction, include monthly desk fees ranging from $50 to $200 per month. These affect overhead and the monthly budget, not per-deal take-home pay.
+    </P>
+    <P>
+      Technology fees add another $50 to $150 monthly for transaction management systems, totaling $600 to $1,800 annually. A separate CRM subscription typically runs $100 to $500 monthly, adding another $1,200 to $6,000 per year. A representative monthly overhead of $400 desk fee plus $85 tech package plus $95 CRM subscription totals $580 monthly or $6,960 annually.
+    </P>
+
+    <H3>Transaction Fees Per Closing</H3>
+    <P>
+      Transaction fees range from $200 to $800 per closing, charged in addition to the commission split. These directly reduce net commission on every deal and are one of the most commonly forgotten expenses when agents calculate their projected income.
+    </P>
+
+    <H3>MLS and Association Dues</H3>
+    <P>
+      MLS access fees average $300 to $900 per year depending on region. NAR national dues plus state and local board memberships add several hundred dollars annually on top of MLS costs.
+    </P>
+
+    <H3>E&O Insurance</H3>
+    <P>
+      Errors and Omissions insurance protects agents against client negligence claims. Expect to pay approximately $30 to $60 per month, depending on carrier and coverage options, with the insurance covering both settlement and court costs.
+    </P>
+
+    <H3>Self-Employment Tax</H3>
+    <P>
+      Real estate agents are independent contractors and pay both the employer and employee portions of Social Security and Medicare. This equals approximately 15.3% on top of standard federal and state income tax brackets. A practical rule of thumb is to set aside 25 to 30% of every commission check for taxes.
+    </P>
+
+    <H2>The Real Math: What an Agent Keeps Per Sale</H2>
+    <P>Here is what a $500,000 sale actually looks like after every deduction at a traditional brokerage:</P>
+    <DataTable>
+      <thead>
+        <tr>
+          <TH>Stage</TH>
+          <TH>Amount</TH>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><TD>Gross commission (2.85%)</TD><TD>$14,250</TD></tr>
+        <tr><TD>After 70/30 brokerage split</TD><TD>$9,975</TD></tr>
+        <tr><TD>After franchise royalty (5%)</TD><TD>$9,263</TD></tr>
+        <tr><TD>After $400 transaction fee</TD><TD>$8,863</TD></tr>
+        <tr><TD>After self-employment tax (15.3%)</TD><TD>$7,508</TD></tr>
+        <tr><TD>After federal income tax (22%)</TD><TD>$5,857</TD></tr>
+      </tbody>
+    </DataTable>
+    <P>
+      A $500,000 sale generating $14,250 in gross commission nets approximately $5,857. That is the number most recruiting conversations never mention.
+    </P>
+
+    <H2>How a Flat-Fee Model Changes the Calculation</H2>
+    <P>The same $500,000 sale at a flat-fee brokerage with $98 monthly and zero transaction fees looks very different:</P>
+    <DataTable>
+      <thead>
+        <tr>
+          <TH>Stage</TH>
+          <TH>Amount</TH>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><TD>Gross commission (2.85%)</TD><TD>$14,250</TD></tr>
+        <tr><TD>After flat monthly fee ($98/month)</TD><TD>$14,152</TD></tr>
+        <tr><TD>After zero transaction fees</TD><TD>$14,152</TD></tr>
+        <tr><TD>After self-employment tax (15.3%)</TD><TD>$11,977</TD></tr>
+        <tr><TD>After federal income tax (22%)</TD><TD>$9,342</TD></tr>
+      </tbody>
+    </DataTable>
+    <P>
+      The difference in one transaction is $3,485. On twelve transactions per year, that difference exceeds $40,000 in additional take-home pay from identical production.
+    </P>
+    <P>
+      The cumulative overhead cost of a traditional brokerage across a 15-year career at standard desk fees and technology rates reaches approximately $104,400, none of which produces equity or ownership for the agent.
+    </P>
+    <P>
+      At <Internal to="/">United Estates Realty</Internal>, agents pay a flat $98 monthly fee with zero transaction fees and a full <Internal to="/software">CRM included</Internal>. There are no franchise royalties, no desk fees, and no technology charges layered on top. The full breakdown of what agents keep is available at <Internal to="/">unitedestatesagent</Internal>.
+    </P>
+
+    <H2>Are Real Estate Agent Fees Negotiable?</H2>
+    <P>
+      Yes. Commission rates are genuinely negotiable for homes above $500,000 in value. Below that threshold, seller leverage is thinner. Factors that affect negotiation include market conditions, property demand, and the service level the agent provides.
+    </P>
+    <P>
+      Sellers can also reduce costs through discount brokerages, flat-fee MLS listings, or for-sale-by-owner arrangements. Each option involves trade-offs in service level, marketing reach, and transaction support.
+    </P>
+
+    <section className="mt-16">
+      <Faq eyebrow="FAQ" heading="Frequently Asked Questions" items={FEES_FAQ} />
+    </section>
+
+    <P>
+      At <Internal to="/">United Estates Realty</Internal>, we keep the fee conversation simple. A flat $98 monthly fee with zero transaction fees and a full CRM included means agents and sellers both know where the money goes. See the full breakdown at <Internal to="/">unitedestatesagent</Internal>.
+    </P>
+  </>
+);
+
 const CommissionArticle = () => (
   <>
     <P>Most real estate agents know their commission percentage. Very few know their actual take-home number.</P>
