@@ -160,6 +160,35 @@ const EARNINGS_FAQ: FaqItem[] = [
   },
 ];
 
+const FEES_FAQ: FaqItem[] = [
+  {
+    question: "How much are real estate commissions?",
+    answer:
+      "The national average total commission is 5.70% as of February 2026 split between 2.88% to the listing agent and 2.82% to the buyer's agent. Rates are negotiable and vary by market, property price, and service level.",
+  },
+  {
+    question: "How's the Real Estate Commission Split?",
+    answer:
+      "The commission split works in two stages. First, the total commission paid by the seller is divided between the listing brokerage and the buyer's brokerage. The national average sits at 2.88% to the listing side and 2.82% to the buyer's side based on a February 2026 survey of 533 active agents. Second, each brokerage splits its portion with its individual agent according to the internal agreement. Traditional franchise brokerages typically offer 60/40 to 70/30 splits. Cloud and virtual brokerages offer 80/20 or 85/15. Flat fee brokerages let agents keep the full commission in exchange for a fixed monthly fee.",
+  },
+  {
+    question: "Is Paying a Real Estate Commission Worth It?",
+    answer:
+      "For most sellers, yes. In 2023, 89% of home listings utilized a realtor and 89% of buyers worked with one because professional representation consistently produces better outcomes in pricing, negotiation and transaction management. Agents with strong systems, fast follow-up and local market knowledge typically generate higher sale prices and fewer failed transactions than unrepresented sellers achieve on their own. The commission becomes a question of net proceeds not gross cost.",
+  },
+  {
+    question: "What Percentage Do Real Estate Agents Charge?",
+    answer:
+      "Each agent typically charges 2.5% to 3% of the home purchase price. The national average is 2.88% for listing agents and 2.82% for buyer's agents, making the combined total approximately 5.70% nationwide as of 2026. Rates vary by market, property price and service level and are fully negotiable between the agent and their client.",
+  },
+  {
+    question: "How Much Commission Do Real Estate Agents Usually Earn?",
+    answer:
+      "The median real estate agent earned $58,100 in gross commission income in 2024, but that figure drops to $36,600 net after taxes and business expenses. Agents with 16 or more years of experience earned a median of $78,900, while agents with two years or less earned just $8,100. Individual earnings depend entirely on transaction volume, market, and how well agents control their brokerage cost structure.",
+  },
+];
+
+
 const BrokerageArticle = () => (
   <>
     <P>Most agents choose their first brokerage within weeks of getting licensed. Many never revisit that decision for years.</P>
