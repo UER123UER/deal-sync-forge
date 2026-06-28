@@ -7,6 +7,7 @@ import blogImage2 from "@/assets/real-estate-crm-software-dashboard-lead-managem
 import blogImage3 from "@/assets/how-to-choose-real-estate-brokerage-2026-checklist-agents.jpg.asset.json";
 import blogImage4Url from "@/assets/how-much-real-estate-agents-make-per-sale-2026.jpg";
 import blogImage5 from "@/assets/real-estate-agent-fees-explained-2026.jpg.asset.json";
+import blogImage6 from "@/assets/how-to-become-real-estate-agent-florida-2026.jpg.asset.json";
 
 const blogImage4 = { url: blogImage4Url };
 
@@ -921,6 +922,156 @@ const CrmArticle = () => (
   </>
 );
 
+const FLORIDA_FAQ: FaqItem[] = [
+  {
+    question: "How long does it take to become a real estate agent in Florida?",
+    answer:
+      "It takes an average of 10 weeks. Roughly 45 days to complete the 63-hour pre-license course, 7 days to schedule and complete fingerprinting, and about 10 days for DBPR application review. Candidates who submit their DBPR application during the course rather than after eliminate the processing wait time and can reach the state exam faster.",
+  },
+  {
+    question: "How to make $100,000 your first year in real estate?",
+    answer:
+      "Roughly one in four agents earn more than $100,000 annually within their first three years according to the 2026 Colibri Real Estate Salary Guide. Reaching six figures in year one requires closing about 10 to 12 transactions at average Florida commission levels, plus a structured follow-up system, daily prospecting, and a brokerage with low fixed costs so each deal contributes to income rather than overhead.",
+  },
+  {
+    question: "Is it worth becoming a realtor in Florida?",
+    answer:
+      "Yes, for agents who enter with realistic expectations and strong systems. Florida's migration-driven demand remains structurally robust, and markets like Tampa, Jacksonville, and greater Orlando offer strong inventory turnover for new agents building pipelines. The low barrier to entry combined with consistent population growth makes Florida one of the most accessible and active markets in the country.",
+  },
+  {
+    question: "Is the Florida real estate exam hard?",
+    answer:
+      "The Florida state exam is known to trip up unprepared students. Real estate math and Florida-specific law catch most candidates off guard. First-time pass rates vary by pre-licensing provider, and candidates who use exam prep courses alongside their coursework consistently outperform those who study from course materials alone. With focused preparation and practice exams, most candidates pass on their first or second attempt.",
+  },
+  {
+    question: "Can I take my Florida real estate exam online?",
+    answer:
+      "No. The Florida real estate exam must be taken in person at a Pearson VUE testing center. The exam is offered daily at testing centers throughout the United States, so Florida residency is not required to sit for it. The 63-hour pre-licensing course can be completed fully online through any FREC-approved provider.",
+  },
+];
+
+const FloridaLicenseArticle = () => (
+  <>
+    <P>Florida is one of the fastest states to get licensed in and one of the most active real estate markets in the country.</P>
+    <P>
+      Florida added over 400,000 new residents in 2024, making it the number one destination state for domestic migration. That population growth creates consistent real estate demand regardless of interest rate conditions, making it one of the most stable markets for new agents to enter.
+    </P>
+    <P>
+      While Texas requires 180 hours of pre-licensing education and California mandates 135 hours, Florida only requires 63 hours, roughly half what you would spend in Texas, meaning motivated candidates can complete coursework, pass the state exam and activate their license in as little as 10 weeks.
+    </P>
+    <P>Here is exactly how to do it.</P>
+
+    <figure className="mt-8">
+      <img
+        src={blogImage6.url}
+        alt="New Florida real estate agent holding house keys in front of a sold sign at a modern Florida home with palm trees in 2026"
+        className="w-full rounded-lg"
+        loading="eager"
+        width={1600}
+        height={896}
+      />
+    </figure>
+
+    <H2>Step 1: Meet the Basic Eligibility Requirements</H2>
+    <P>
+      To qualify for a Florida real estate license, you must be at least 18 years old, hold a high school diploma or GED, and have a valid United States Social Security number. Florida has no residency requirement and no college degree requirement.
+    </P>
+    <P>
+      You do not need to be a Florida resident or a US citizen to get licensed. Authorization to work in the US is required, but citizenship is not.
+    </P>
+
+    <H2>Step 2: Complete the 63-Hour Pre-Licensing Course</H2>
+    <P>
+      To qualify for licensure, you must complete a pre-license course approved by the Florida Real Estate Commission consisting of 63 hours of education covering Florida real estate law, brokerage relationships, contracts, property rights, and real estate math.
+    </P>
+    <P>
+      The course is available online or in person through FREC-approved providers. You must pass the end-of-course exam with a score of 70% or higher. Active Florida Bar members and holders of a four-year degree in real estate are exempt from the course but must still pass the state exam. Course completion is valid for two years.
+    </P>
+    <P>
+      Total pre-licensing course costs range from $100 to $400, depending on whether you choose a self-paced online format or a structured classroom program.
+    </P>
+
+    <H2>Step 3: Submit Your DBPR Application and Fingerprints</H2>
+    <P>
+      After completing the 63-hour course, submit your license application through the DBPR online portal at myfloridalicense.com. The application fee is currently $83.75. You must also complete electronic fingerprinting and a background check, which costs approximately $54, depending on the provider.
+    </P>
+    <P>
+      Here is the insight that saves you two to three weeks: submit your DBPR application and fingerprints during your pre-licensing course, not after it. DBPR does not require course completion before accepting your application. The processing runs in the background while you finish your coursework. By the time you complete the course and pass the end-of-course exam, your DBPR application may already be approved, and you can schedule the state exam immediately.
+    </P>
+    <P>A prior criminal record does not automatically disqualify you. FREC reviews applications on a case-by-case basis.</P>
+
+    <H2>Step 4: Pass the Florida State Real Estate Exam</H2>
+    <P>
+      The Florida real estate exam consists of 100 multiple-choice questions and must be completed within 3.5 hours. A score of 75% or higher is required to pass. The exam covers real estate principles and practices, Florida and federal law, and real estate mathematics.
+    </P>
+    <P>
+      The exam fee is $36.75 per attempt. Pearson VUE administers the exam at testing centers throughout the United States. Unlimited retakes are allowed with a 24-hour wait between attempts.
+    </P>
+    <P>
+      If you fail the exam three times, you must retake the 63-hour pre-license course before attempting again. Results are delivered instantly at the testing center.
+    </P>
+    <P>Study tips that actually work:</P>
+    <UL>
+      <li>Master the math. Real estate math questions appear on every exam. Practice calculating commission splits, prorations, and loan-to-value ratios before test day.</li>
+      <li>Review Florida-specific law carefully, as the state portion of the exam heavily tests knowledge of Florida statutes and FREC rules.</li>
+      <li>Use practice exams to identify weak areas before sitting for the real test.</li>
+    </UL>
+
+    <H2>Step 5: Activate Your License Under a Sponsoring Broker</H2>
+    <P>
+      Passing the state exam does not mean you are immediately licensed to practice. A new sales associate license is issued as inactive after the exam. To activate it, you must affiliate with a licensed Florida real estate broker who will sponsor you. Broker activation is completed through the DBPR portal using Form RE 11.
+    </P>
+    <P>This step is where your career actually begins — and it is the most important decision you make after getting licensed.</P>
+    <P>
+      Choosing the right brokerage determines how much of every commission you keep, what tools you have access to, what support you receive, and whether your business survives the first two years. Look for structured mentorship programs if you are a new agent and a commission split that rewards your production as you grow.
+    </P>
+    <P>
+      For agents who want to keep every dollar they earn from day one, <Internal to="/">United Estates Realty</Internal> offers a 100% commission model at a flat $98 monthly fee with a full <Internal to="/software">CRM included</Internal> and zero transaction fees. The license transfer process is fully digital and completed within a few business days.
+    </P>
+
+    <H2>Step 6: Complete Post-Licensing Education</H2>
+    <P>
+      Before your first license renewal, which occurs 18 to 24 months after activation, you must complete 45 hours of post-licensing education. This is not standard continuing education — it is a one-time foundational requirement designed to bridge classroom knowledge with real-world practice. Fail to complete it and your license becomes involuntarily inactive.
+    </P>
+    <P>Most FREC-approved online schools offer post-license courses completable in two to three weeks of focused study.</P>
+
+    <H2>What Does It Cost to Get a Florida Real Estate License?</H2>
+    <P>Here is the complete cost breakdown with 2026 figures:</P>
+    <DataTable>
+      <thead>
+        <tr>
+          <TH>Cost Item</TH>
+          <TH>Amount</TH>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><TD>Pre-licensing course</TD><TD>$100 to $400</TD></tr>
+        <tr><TD>DBPR application fee</TD><TD>$83.75</TD></tr>
+        <tr><TD>Fingerprinting and background check</TD><TD>$50 to $80</TD></tr>
+        <tr><TD>State exam fee</TD><TD>$36.75 per attempt</TD></tr>
+        <tr><TD>Total</TD><TD>$270 to $600</TD></tr>
+      </tbody>
+    </DataTable>
+    <P>
+      To obtain your real estate license in Florida in 2026, expect to spend between $270 and $690 covering the costs of the pre-licensing course, background check, application fee and the state examination.
+    </P>
+
+    <H2>Out-of-State Agents: Florida Reciprocity</H2>
+    <P>
+      Florida has mutual recognition agreements with Alabama, Arkansas, Connecticut, Georgia, Illinois, Indiana, Kentucky, Mississippi, Nebraska and West Virginia. Licensees from these states may waive the 63-hour course but must pass a 40-question Florida law exam with a score of 30 or higher to pass.
+    </P>
+    <P>Florida residents must complete the full licensing process regardless of where they previously held a license.</P>
+
+    <section className="mt-16">
+      <Faq eyebrow="FAQ" heading="Frequently Asked Questions" items={FLORIDA_FAQ} />
+    </section>
+
+    <P>
+      At <Internal to="/">United Estates Realty</Internal>, we make the transition from licensed to earning as simple as possible. A flat $98 monthly fee, 100% commission, zero transaction fees and a full CRM included — with a fully digital license transfer process completed in days. See how it works at <Internal to="/">unitedestatesagent</Internal>.
+    </P>
+  </>
+);
+
 export const blogPosts: BlogPost[] = [
   {
     slug: "100-commission-vs-traditional-split-2026",
@@ -999,6 +1150,22 @@ export const blogPosts: BlogPost[] = [
       "Real estate commission breakdown on a desk with calculator, model house, and commission statement showing agent fees and seller costs in 2026",
     content: <FeesArticle />,
     faq: FEES_FAQ,
+  },
+  {
+    slug: "how-to-become-real-estate-agent-florida-2026",
+    title: "How to Become a Real Estate Agent in Florida: Step-by-Step Guide for 2026",
+    description:
+      "Get your Florida real estate license in 2026. Step-by-step guide covering eligibility, the 63-hour course, DBPR application, state exam, and broker activation.",
+    excerpt:
+      "Florida only requires 63 hours of pre-licensing education, roughly half what Texas demands. Here is exactly how to get licensed and start earning in about 10 weeks.",
+    date: "2026-06-28",
+    readMinutes: 9,
+    author: "United Estates Realty",
+    image: blogImage6.url,
+    imageAlt:
+      "New Florida real estate agent holding house keys in front of a sold sign at a modern Florida home with palm trees in 2026",
+    content: <FloridaLicenseArticle />,
+    faq: FLORIDA_FAQ,
   },
 ];
 
