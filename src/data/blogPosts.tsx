@@ -14,6 +14,7 @@ const blogImage4 = { url: blogImage4Url };
 export interface BlogPost {
   slug: string;
   title: string;
+  metaTitle?: string;
   description: string;
   excerpt: string;
   date: string; // ISO
@@ -1152,10 +1153,11 @@ export const blogPosts: BlogPost[] = [
     faq: FEES_FAQ,
   },
   {
-    slug: "how-to-become-real-estate-agent-florida-2026",
-    title: "How to Become a Real Estate Agent in Florida: Step-by-Step Guide for 2026",
+    slug: "how-to-become-a-real-estate-agent-in-florida-2026",
+    title: "How to Become a Real Estate Agent in Florida",
+    metaTitle: "How to Become a Real Estate Agent in Florida",
     description:
-      "Get your Florida real estate license in 2026. Step-by-step guide covering eligibility, the 63-hour course, DBPR application, state exam, and broker activation.",
+      "Learn the exact steps to get your Florida real estate license in 2026 — from the 63-hour course to passing the state exam and choosing the right brokerage to join.",
     excerpt:
       "Florida only requires 63 hours of pre-licensing education, roughly half what Texas demands. Here is exactly how to get licensed and start earning in about 10 weeks.",
     date: "2026-06-28",
