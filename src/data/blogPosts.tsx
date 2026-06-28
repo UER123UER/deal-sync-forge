@@ -14,6 +14,7 @@ const blogImage4 = { url: blogImage4Url };
 export interface BlogPost {
   slug: string;
   title: string;
+  metaTitle?: string;
   description: string;
   excerpt: string;
   date: string; // ISO
@@ -1154,6 +1155,7 @@ export const blogPosts: BlogPost[] = [
   {
     slug: "how-to-become-a-real-estate-agent-in-florida-2026",
     title: "How to Become a Real Estate Agent in Florida",
+    metaTitle: "How to Become a Real Estate Agent in Florida",
     description:
       "Learn the exact steps to get your Florida real estate license in 2026 — from the 63-hour course to passing the state exam and choosing the right brokerage to join.",
     excerpt:

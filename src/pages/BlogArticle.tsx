@@ -51,7 +51,7 @@ export default function BlogArticle() {
   return (
     <BlogShell>
       <SeoHead
-        title={`${post.title} | United Estates Realty Blog`}
+        title={post.metaTitle ?? `${post.title} | United Estates Realty Blog`}
         description={post.description}
         path={`/blog/${post.slug}`}
         image={post.image}
