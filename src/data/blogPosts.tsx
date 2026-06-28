@@ -1151,6 +1151,22 @@ export const blogPosts: BlogPost[] = [
     content: <FeesArticle />,
     faq: FEES_FAQ,
   },
+  {
+    slug: "how-to-become-real-estate-agent-florida-2026",
+    title: "How to Become a Real Estate Agent in Florida: Step-by-Step Guide for 2026",
+    description:
+      "Get your Florida real estate license in 2026. Step-by-step guide covering eligibility, the 63-hour course, DBPR application, state exam, and broker activation.",
+    excerpt:
+      "Florida only requires 63 hours of pre-licensing education, roughly half what Texas demands. Here is exactly how to get licensed and start earning in about 10 weeks.",
+    date: "2026-06-28",
+    readMinutes: 9,
+    author: "United Estates Realty",
+    image: blogImage6.url,
+    imageAlt:
+      "New Florida real estate agent holding house keys in front of a sold sign at a modern Florida home with palm trees in 2026",
+    content: <FloridaLicenseArticle />,
+    faq: FLORIDA_FAQ,
+  },
 ];
 
 
