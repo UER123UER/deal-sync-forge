@@ -1075,10 +1075,6 @@ const FloridaLicenseArticle = () => (
   </>
 );
 
-export const blogPosts: BlogPost[] = [
-
-];
-
 const REALTOR_FAQ: FaqItem[] = [
   {
     question: "Are all real estate agents Realtors?",
@@ -1235,7 +1231,7 @@ const AgentVsRealtorArticle = () => (
   </>
 );
 
-const _legacyBlogPosts: BlogPost[] = [
+export const blogPosts: BlogPost[] = [
   {
     slug: "100-commission-vs-traditional-split-2026",
     title: "100% Commission vs Traditional Split: 2026 Guide",
