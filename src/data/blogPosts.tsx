@@ -1327,6 +1327,23 @@ export const blogPosts: BlogPost[] = [
     content: <FloridaLicenseArticle />,
     faq: FLORIDA_FAQ,
   },
+  {
+    slug: "real-estate-agent-vs-realtor-difference",
+    title: "Real Estate Agent vs. Realtor: What's the Difference and Which One Do You Need?",
+    metaTitle: "Real Estate Agent vs Realtor: The Real Difference",
+    description:
+      "Real estate agent or Realtor — what's the actual difference in 2026? We break down licensing, NAR dues, ethics rules, and which one fits your situation.",
+    excerpt:
+      "One is a license. The other is a trademarked membership. Here is what actually separates a real estate agent from a Realtor in 2026 and which one fits your situation.",
+    date: "2026-06-30",
+    readMinutes: 8,
+    author: "United Estates Realty",
+    image: blogImage7.url,
+    imageAlt:
+      "Real estate agent holding a state license next to a Realtor wearing an NAR member pin in front of a modern home in 2026",
+    content: <AgentVsRealtorArticle />,
+    faq: REALTOR_FAQ,
+  },
 ];
 
 
