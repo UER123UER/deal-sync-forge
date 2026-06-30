@@ -8,6 +8,7 @@ import blogImage3 from "@/assets/how-to-choose-real-estate-brokerage-2026-checkl
 import blogImage4Url from "@/assets/how-much-real-estate-agents-make-per-sale-2026.jpg";
 import blogImage5 from "@/assets/real-estate-agent-fees-explained-2026.jpg.asset.json";
 import blogImage6 from "@/assets/how-to-become-real-estate-agent-florida-2026.jpg.asset.json";
+import blogImage7 from "@/assets/real-estate-agent-vs-realtor-difference-2026.jpg.asset.json";
 
 const blogImage4 = { url: blogImage4Url };
 
