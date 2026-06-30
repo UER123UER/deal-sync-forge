@@ -1076,6 +1076,166 @@ const FloridaLicenseArticle = () => (
 );
 
 export const blogPosts: BlogPost[] = [
+
+];
+
+const REALTOR_FAQ: FaqItem[] = [
+  {
+    question: "Are all real estate agents Realtors?",
+    answer:
+      "No. Approximately 50 percent of real estate agents in the US are recognized as certified Realtors. The remaining half hold valid state licenses but have not joined NAR.",
+  },
+  {
+    question: "Do Realtors get paid a higher average salary?",
+    answer:
+      "No direct salary premium exists from the title alone. Income depends on transaction volume, commission rate, and brokerage cost structure, which apply equally to Realtors and non-member agents.",
+  },
+  {
+    question: "What does MLS access mean?",
+    answer:
+      "MLS stands for multiple listing service, the database agents use to list and search active properties for sale. Access requirements vary by local market, and some boards require Realtor membership for full access.",
+  },
+  {
+    question: "What is the difference between a Realtor and a real estate agent in 2026?",
+    answer:
+      "A real estate agent holds a state license to practice. A Realtor is an agent who has additionally joined NAR, agreed to the Code of Ethics, and pays annual dues. The bottom line: all Realtors are licensed real estate agents, but not all real estate agents are Realtors.",
+  },
+  {
+    question: "Can you be a real estate agent without being a Realtor?",
+    answer:
+      "Yes. A state real estate license is the only legal requirement to practice. NAR membership is optional and chosen based on business needs like MLS access and professional resources.",
+  },
+  {
+    question: "How do you sign up for NAR?",
+    answer:
+      "Join a local Realtor association in your market first. Membership in a local association automatically extends to state and national NAR membership. Complete the required Code of Ethics training to finalize active status.",
+  },
+  {
+    question: "How much does it cost to join NAR?",
+    answer:
+      "National dues are $156 for 2026 plus a mandatory $45 Consumer Advertising Campaign assessment, totaling $201 at the national level alone. Combined with local and state dues, the total annual cost typically ranges from $400 to $700, depending on the region.",
+  },
+];
+
+const AgentVsRealtorArticle = () => (
+  <>
+    <P>Most people use "real estate agent" and "Realtor" interchangeably. They do not.</P>
+    <P>
+      One is a license. The other is a trademarked membership. Understanding the difference matters whether you are hiring someone to buy or sell a home or deciding whether to pursue the designation yourself as a working agent.
+    </P>
+    <P>This guide breaks down exactly what separates the two, what each one costs, and how to decide which one fits your situation in 2026.</P>
+
+    <figure className="mt-8">
+      <img
+        src={blogImage7.url}
+        alt="Real estate agent holding a state license next to a Realtor wearing an NAR member pin in front of a modern home in 2026"
+        className="w-full rounded-lg"
+        loading="eager"
+        width={1600}
+        height={896}
+      />
+    </figure>
+
+    <H2>What Is a Real Estate Agent?</H2>
+    <P>
+      A real estate agent is a licensed professional who has completed state-mandated coursework, passed a background check, and passed a state licensing exam. All 50 states and Washington, DC, require pre-licensing education, though the required hours range from roughly 40 to 180, depending on the state.
+    </P>
+    <P>
+      Once licensed, an agent can legally represent buyers, sellers, or both in residential, commercial, rental, or industrial transactions. The license itself does not require any further membership or ongoing professional affiliation beyond state continuing education.
+    </P>
+
+    <H2>What Is a Realtor?</H2>
+    <P>
+      A Realtor is a real estate agent or broker who is an active member of the National Association of Realtors. The Realtor title is a registered trademark of NAR. It signals active membership, annual dues, and a binding commitment to the Code of Ethics, which a standard real estate license does not require.
+    </P>
+    <P>
+      The National Association of Realtors is America's largest trade association for real estate professionals. Founded in 1908, NAR now has over 1.5 million members nationwide.
+    </P>
+    <P>
+      The trademark distinction matters legally. Only active NAR members may use the title "Realtor" with the registered trademark symbol. An agent who has never joined NAR cannot legally call themselves a Realtor, regardless of how experienced or successful they are.
+    </P>
+
+    <H2>Are All Real Estate Agents Realtors?</H2>
+    <P>
+      No. All Realtors are licensed real estate agents or brokers, but not all real estate agents are Realtors. This is the fundamental difference: it is about professional membership, not job function.
+    </P>
+    <P>
+      The NAR reports that approximately 50 percent of real estate agents in the US are recognized as certified Realtors. The remaining half practice with a valid state license but have chosen not to join NAR, often to avoid the annual dues or because their local market does not require MLS access through a Realtor-affiliated board.
+    </P>
+
+    <H2>What Is the Difference Between a Realtor and a Real Estate Agent in 2026?</H2>
+    <P>The core distinction comes down to three things: ethics, cost, and resources.</P>
+
+    <H3>Ethics Obligation</H3>
+    <P>
+      Realtors must follow the NAR Code of Ethics, which goes beyond state licensing requirements. The Code of Ethics contains 17 Articles covering different aspects of real estate practice with supporting Standards of Practice that provide specific guidance. Realtors receive training on the Code when they join NAR and must complete ethics training every three years to maintain membership.
+    </P>
+    <P>
+      A non-member agent is still bound by state licensing law and can face disciplinary action through the state licensing board. Clients who have concerns about a Realtor's conduct can file an ethics complaint, which is not an option with non-NAR agents. That additional layer of consumer protection is unique to Realtor membership.
+    </P>
+
+    <H3>Cost</H3>
+    <P>
+      National Association of Realtors dues are $156 per member for 2026, plus a mandatory Consumer Advertising Campaign assessment of $45, billed to all active members and due by January 1. That covers national dues only. Local and state association dues are added on top and vary significantly by region.
+    </P>
+    <P>
+      For comparison, a Massachusetts agent's total 2026 dues across local, state, and national levels run $682 to $707, depending on optional contributions. A New York agent pays $120 at the state level alone in addition to local and national dues. Total combined dues for most agents nationwide typically land between $400 and $700 per year once local, state, and national fees are added together.
+    </P>
+
+    <H3>Resources and MLS Access</H3>
+    <P>
+      Joining NAR gives agents access to professional development, industry data, networking, and policy advocacy, but it comes with annual dues and recurring ethics training requirements.
+    </P>
+    <P>
+      What does MLS access mean in this context? The multiple listing service is the database agents use to list and search active properties. In many markets, local multiple listing services require Realtor membership for full access, while non-members may face limited or no access depending on the local board's rules. This varies by region and is one of the most practical reasons agents choose to join.
+    </P>
+
+    <H2>Can You Be a Real Estate Agent Without Being a Realtor?</H2>
+    <P>
+      Yes. You can succeed as a non-Realtor agent, especially with strong local knowledge and client service. A valid state license is the only legal requirement to practice real estate. NAR membership is entirely optional and is a business decision rather than a licensing requirement.
+    </P>
+    <P>
+      Agents who skip NAR membership avoid the annual dues but lose the ethics enforcement system, certain MLS access depending on their local market, and access to NAR's research, advocacy, and professional development resources.
+    </P>
+
+    <H2>Do Realtors Get Paid a Higher Average Salary?</H2>
+    <P>
+      There is no direct salary premium tied to the Realtor title itself. Income in real estate is driven by transaction volume, commission structure, and brokerage cost, not membership status. A Realtor and a non-member agent earn the same commission percentage on an identical sale.
+    </P>
+    <P>
+      What the Realtor designation can indirectly influence is client trust and MLS access in markets where it matters, both of which can affect an agent's ability to generate transactions. But the title alone does not change how commission is calculated or split.
+    </P>
+
+    <H2>How Do You Sign Up for NAR?</H2>
+    <P>
+      Membership in a local association of Realtors automatically extends your membership to the state association and national association. If you are not yet a member, you must first join a local real estate association in your area.
+    </P>
+    <P>
+      The process in practice: hold an active real estate license, locate your local Realtor association based on your brokerage's location, complete the membership application through that local board, and complete the required Code of Ethics training course. Once approved at the local level, state and national NAR membership activates automatically.
+    </P>
+
+    <H2>Which One Do You Need?</H2>
+    <P>
+      For buyers and sellers hiring representation, the practical answer is that both a licensed agent and a Realtor can legally handle a transaction competently. The Realtor designation adds an ethics enforcement layer and, in some markets, broader MLS visibility for listings.
+    </P>
+    <P>
+      For agents deciding whether to join NAR, the decision depends on the business model. Agents in markets where MLS access requires Realtor membership often have no practical choice. Agents in markets with independent MLS access can evaluate the annual dues against the specific resources they would actually use.
+    </P>
+    <P>
+      At <Internal to="/">United Estates Realty</Internal>, agents focus on what drives income directly. If you are deciding whether to join NAR, the question is not just about a title — it is whether the Code of Ethics, MLS access, and professional development resources justify the annual dues for your specific business model. Whatever you decide on NAR membership, the brokerage structure underneath it determines how much of every commission you actually keep. A flat $98 monthly fee with zero transaction fees and a full <Internal to="/software">CRM</Internal> included gives agents one predictable cost regardless of NAR status.
+    </P>
+
+    <section className="mt-16">
+      <Faq eyebrow="FAQ" heading="Frequently Asked Questions" items={REALTOR_FAQ} />
+    </section>
+
+    <P>
+      At <Internal to="/">United Estates Realty</Internal>, agents keep 100% of their commission with a flat $98 monthly fee and zero transaction fees, regardless of NAR membership status. See the full breakdown at <Internal to="/">unitedestatesagent</Internal>.
+    </P>
+  </>
+);
+
+const _legacyBlogPosts: BlogPost[] = [
   {
     slug: "100-commission-vs-traditional-split-2026",
     title: "100% Commission vs Traditional Split: 2026 Guide",
