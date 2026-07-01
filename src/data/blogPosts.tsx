@@ -10,6 +10,8 @@ import blogImage5 from "@/assets/real-estate-agent-fees-explained-2026.jpg.asset
 import blogImage6 from "@/assets/how-to-become-real-estate-agent-florida-2026.jpg.asset.json";
 import blogImage7Url from "@/assets/real-estate-agent-vs-realtor-difference-2026.jpg";
 const blogImage7 = { url: blogImage7Url };
+import blogImage8Url from "@/assets/how-to-join-a-real-estate-brokerage-2026.jpg";
+const blogImage8 = { url: blogImage8Url };
 
 const blogImage4 = { url: blogImage4Url };
 
@@ -1231,6 +1233,161 @@ const AgentVsRealtorArticle = () => (
   </>
 );
 
+const JOIN_BROKERAGE_FAQ: FaqItem[] = [
+  {
+    question: "Do I have to join a brokerage to practice real estate?",
+    answer:
+      "Yes. Every state requires real estate agents to affiliate their license with a licensed sponsoring broker before they can legally represent clients or close transactions. An unaffiliated license is inactive and cannot be used for any real estate activity.",
+  },
+  {
+    question: "How long does it take to transfer a real estate license to a new brokerage?",
+    answer:
+      "Most states process digital license transfers within 24 hours to 5 business days. Some states require a small transfer fee of $25 to $50 and a signed release from your current broker. Florida transfers through the DBPR portal typically process within a few business days when completed online.",
+  },
+  {
+    question: "Can I switch brokerages while I have active listings or pending deals?",
+    answer:
+      "Yes, but you need to handle active transactions carefully. Review your current ICA before initiating a transfer to understand what happens to pending commissions and active listings. Most states allow listings to follow you to the new brokerage with written seller consent.",
+  },
+  {
+    question: "What is an independent contractor agreement in real estate?",
+    answer:
+      "An ICA is the contract between you and your brokerage that defines your commission split, fees, support obligations, termination terms, and ownership of client relationships. It is the most important document you sign when joining a brokerage and should be reviewed carefully before signing.",
+  },
+  {
+    question: "Is a 100% commission brokerage better than a traditional split?",
+    answer:
+      "For experienced agents who generate their own leads and close consistently, a flat-fee 100% commission model almost always produces higher net income than a traditional split. Agents who need structured mentorship and lead generation support in their first year may benefit more from a traditional brokerage's resources before making the switch.",
+  },
+  {
+    question: "What fees should I expect when joining a brokerage?",
+    answer:
+      "Expect to evaluate the monthly desk fee ranging from $0 to $500, a per-transaction fee of $0 to $800 per closing, a technology fee of $0 to $300 per month, E&O insurance costs, and franchise royalties at traditional brokerages. Flat-fee brokerages like United Estates Realty charge a single $98 monthly fee with zero transaction fees and include a full CRM at no additional cost.",
+  },
+  {
+    question: "How do I know if a brokerage is right for me?",
+    answer:
+      "Interview at least three brokerages across different model types. Calculate your total annual cost at each one using your actual expected production. Ask to speak with a current agent at each brokerage, not just the recruiter. The brokerage that gives you the clearest cost breakdown, the most transparent answers, and the strongest onboarding process is the one most likely to support your long-term success.",
+  },
+];
+
+const JoinBrokerageArticle = () => (
+  <>
+    <P>
+      Joining a brokerage is the single most important business decision a real estate agent makes.
+    </P>
+    <P>
+      Not because of the brand on the door. Not because of the office location. Because the brokerage you choose determines what percentage of every commission you keep, what tools you work with every single day, what support you get when a transaction goes sideways, and whether your business can survive a slow market without bleeding out financially.
+    </P>
+    <P>
+      Most agents make this decision in a hurry. They take the first offer that comes in after passing their exam. Or they switch without doing the math because a recruiter made a compelling pitch.
+    </P>
+    <P>This guide gives you the complete picture before you sign anything.</P>
+
+    <H2>Why You Must Join a Brokerage Before You Can Practice</H2>
+    <P>
+      You must affiliate your real estate license with a licensed broker or brokerage to legally represent clients and close transactions. A brokerage also provides compliance, transaction oversight, and operational support that the state requires to be in place before an agent can conduct business.
+    </P>
+    <P>
+      A new sales associate license is issued as inactive after the state exam. It cannot be activated until it is affiliated with a sponsoring broker. This is not optional. It is a legal requirement in every state.
+    </P>
+    <P>The choice of where to affiliate that license is yours entirely.</P>
+
+    <H2>Step 1: Understand the Four Brokerage Models</H2>
+    <P>
+      Before evaluating any specific brokerage, understand which model they operate under. Most agents join without knowing there are four distinct structures with very different financial implications.
+    </P>
+    <P>
+      National franchise brokerages like Keller Williams and Coldwell Banker offer brand recognition, formal training programs, and structured mentorship. The cost is a franchise royalty fee of 4 to 6 percent taken off the top of every commission, plus the standard split. For new agents who need daily guidance, the support can be worth the cost.
+    </P>
+    <P>
+      Local boutique brokerages are independently owned and typically offer more favorable commission programs without franchise royalty fees. Training is often informal and relationship-based. These work well for agents who already have a client base and prefer a close-knit environment over corporate infrastructure.
+    </P>
+    <P>
+      Cloud-based and virtual brokerages operate without physical offices. They pass the overhead savings to agents through higher splits or flat-fee structures and provide technology, training, and support entirely online. This model suits agents who generate their own leads and prefer flexibility over a physical desk.
+    </P>
+    <P>
+      Flat-fee and 100% commission brokerages let agents keep the full commission in exchange for a predictable monthly fee and sometimes a per-transaction charge. The application process to join this type of brokerage is usually straightforward — you submit your license information, sign an independent contractor agreement, and select your commission structure. This model delivers the highest net income for agents who are already producing consistently.
+    </P>
+
+    <H2>Step 2: Interview at Least Three Brokerages</H2>
+    <P>
+      Do not simply join the first brokerage you speak with. Narrow your options to a handful of brokerages that align with your production goals and interview each one before signing anything.
+    </P>
+    <P>Ask these specific questions in every interview:</P>
+    <UL>
+      <li>What is the total annual cost, including all splits, desk fees, transaction fees, technology fees, and franchise royalties?</li>
+      <li>What does broker support look like on a Tuesday evening when a deal issue comes up?</li>
+      <li>What technology is included and what costs extra?</li>
+      <li>What does the onboarding timeline look like week by week?</li>
+      <li>What happens to active listings if the relationship does not work out?</li>
+    </UL>
+    <P>
+      In addition to asking about mentoring programs, you should meet the person who would actually mentor you before joining the brokerage. Ask how available they will be, what their plan is for helping you, what the expectations are for their service, and what their compensation is for the assistance.
+    </P>
+    <P>
+      The brokerages with sharp, clear answers to all of these questions are the ones taking agent support seriously. The ones that default to selling you confidence rather than explaining their infrastructure are the ones to walk away from.
+    </P>
+
+    <H2>Step 3: Read the Independent Contractor Agreement Before Signing</H2>
+    <P>
+      Every brokerage requires a signed Independent Contractor Agreement before activating your license. This document governs the entire relationship and most agents sign it without reading it carefully.
+    </P>
+    <P>Read every line before you put your name on it. The areas that matter most are:</P>
+    <UL>
+      <li>The commission split structure and all applicable fees.</li>
+      <li>The desk and technology fees charged monthly regardless of production.</li>
+      <li>The transaction fee charged per closing on top of the split.</li>
+      <li>The termination clause and how much notice is required to leave.</li>
+      <li>What happens to active listings and pending commissions if you transfer out.</li>
+      <li>Whether there are non-solicitation clauses affecting your ability to contact past clients after leaving.</li>
+    </UL>
+    <P>A brokerage that is not willing to give you time to review the agreement before signing is not a brokerage worth joining.</P>
+
+    <H2>Step 4: Complete the License Transfer Process</H2>
+    <P>
+      Once you have chosen a brokerage and signed the ICA, the license transfer begins. The process varies by state but follows a consistent pattern across most markets.
+    </P>
+    <P>
+      You will submit your license information, sign an independent contractor agreement, and gain access to the brokerage's internal systems, transaction tools, and support teams. A strong onboarding experience sets the tone for how quickly you can begin producing.
+    </P>
+    <P>
+      For agents switching from an existing brokerage, the transfer requires your current brokerage to release your license through your state's licensing portal. Most states process transfers within 24 hours to 5 business days digitally. Some states require a small transfer fee of $25 to $50.
+    </P>
+    <P>
+      If you need to release your license from your previous brokerage, the new brokerage will wait for you to complete those steps before accepting the license. This can take a few days, depending on your state.
+    </P>
+    <P>
+      At <Internal to="/">United Estates Realty</Internal>, the license transfer is fully digital and completed within a few business days. There are no in-person requirements and the process is guided from start to finish. The full joining process is outlined at <Internal to="/">unitedestatesagent</Internal>.
+    </P>
+
+    <H2>Step 5: Complete Onboarding and Activate Your Account</H2>
+    <P>
+      Once the license transfer is confirmed, you will receive a welcome email with the next steps. Quality onboarding covers how to use the transaction management system, how to access the CRM and marketing tools, how to submit your first listing or buyer transaction, and where to get support when questions come up.
+    </P>
+    <P>
+      Do not skip onboarding even if you are an experienced agent switching brokerages. Every platform has its own workflow and the agents who complete onboarding fully are the ones who close their first deal faster.
+    </P>
+
+    <H2>What to Look for in a Brokerage in 2026, Specifically</H2>
+    <P>Two factors make brokerage selection more consequential in 2026 than in previous years.</P>
+    <P>
+      First, the NAR settlement has changed how buyer agent compensation is handled, meaning brokerages need clear training on buyer presentations and written agreements. Ask specifically how your potential brokerage trains agents on the new buyer agreement requirements before your first showing.
+    </P>
+    <P>
+      Second, the industry is consolidating. The right brokerage is not just about brand recognition. It is about how well the business model supports how you actually work as a real estate professional. Brand names are shifting as major acquisitions reshape national franchises. Focus on the cost structure and the support quality rather than the logo because the logo may change within your first two years.
+    </P>
+
+    <section className="mt-16">
+      <Faq eyebrow="FAQ" heading="Frequently Asked Questions" items={JOIN_BROKERAGE_FAQ} />
+    </section>
+
+    <P>
+      At <Internal to="/">United Estates Realty</Internal>, joining is fully digital with no in-person requirements. A flat $98 monthly fee, 100% commission, zero transaction fees, and a full <Internal to="/software">CRM</Internal> included from day one. See the full details at <Internal to="/">unitedestatesagent</Internal>.
+    </P>
+  </>
+);
+
 export const blogPosts: BlogPost[] = [
   {
     slug: "100-commission-vs-traditional-split-2026",
@@ -1343,6 +1500,23 @@ export const blogPosts: BlogPost[] = [
       "Real estate agent holding a state license next to a Realtor wearing an NAR member pin in front of a modern home in 2026",
     content: <AgentVsRealtorArticle />,
     faq: REALTOR_FAQ,
+  },
+  {
+    slug: "how-to-join-a-real-estate-brokerage-2026",
+    title: "How to Join a Real Estate Brokerage in 2026: The Complete Guide for Agents",
+    metaTitle: "How to Join a Real Estate Brokerage 2026",
+    description:
+      "Ready to join or switch brokerages in 2026? We cover every step from license transfer to signing your agreement so you make the right move the first time around.",
+    excerpt:
+      "Joining a brokerage is the single most important business decision an agent makes. Here is exactly how to evaluate, interview, and transfer without regret in 2026.",
+    date: "2026-07-01",
+    readMinutes: 10,
+    author: "United Estates Realty",
+    image: blogImage8.url,
+    imageAlt:
+      "Real estate agent shaking hands with brokerage manager during onboarding and license transfer at a modern brokerage office in 2026",
+    content: <JoinBrokerageArticle />,
+    faq: JOIN_BROKERAGE_FAQ,
   },
 ];
 
