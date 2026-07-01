@@ -1501,6 +1501,23 @@ export const blogPosts: BlogPost[] = [
     content: <AgentVsRealtorArticle />,
     faq: REALTOR_FAQ,
   },
+  {
+    slug: "how-to-join-a-real-estate-brokerage-2026",
+    title: "How to Join a Real Estate Brokerage in 2026: The Complete Guide for Agents",
+    metaTitle: "How to Join a Real Estate Brokerage 2026",
+    description:
+      "Ready to join or switch brokerages in 2026? We cover every step from license transfer to signing your agreement so you make the right move the first time around.",
+    excerpt:
+      "Joining a brokerage is the single most important business decision an agent makes. Here is exactly how to evaluate, interview, and transfer without regret in 2026.",
+    date: "2026-07-01",
+    readMinutes: 10,
+    author: "United Estates Realty",
+    image: blogImage8.url,
+    imageAlt:
+      "Real estate agent shaking hands with brokerage manager during onboarding and license transfer at a modern brokerage office in 2026",
+    content: <JoinBrokerageArticle />,
+    faq: JOIN_BROKERAGE_FAQ,
+  },
 ];
 
 
