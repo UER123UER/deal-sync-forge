@@ -75,6 +75,15 @@ export default function BlogArticle() {
           <h1 className="mt-3 text-3xl font-bold leading-tight text-foreground sm:text-4xl lg:text-5xl">
             {post.title}
           </h1>
+          {post.image && (
+            <img
+              src={post.image}
+              alt={post.imageAlt || post.title}
+              className="mt-8 w-full rounded-lg object-cover"
+              width={1600}
+              height={896}
+            />
+          )}
           <div className="mt-8">{post.content}</div>
         </div>
       </article>
