@@ -10,6 +10,8 @@ import blogImage5 from "@/assets/real-estate-agent-fees-explained-2026.jpg.asset
 import blogImage6 from "@/assets/how-to-become-real-estate-agent-florida-2026.jpg.asset.json";
 import blogImage7Url from "@/assets/real-estate-agent-vs-realtor-difference-2026.jpg";
 const blogImage7 = { url: blogImage7Url };
+import blogImage8Url from "@/assets/how-to-join-a-real-estate-brokerage-2026.jpg";
+const blogImage8 = { url: blogImage8Url };
 
 const blogImage4 = { url: blogImage4Url };
 
