@@ -1390,6 +1390,134 @@ const JoinBrokerageArticle = () => (
   </>
 );
 
+const FLORIDA_MARKET_FAQ: FaqItem[] = [
+  {
+    question: "Which Florida cities have the most affordable housing in 2026?",
+    answer:
+      "Several Florida metros offer relatively lower home prices compared to the statewide median including Ocala, where lower land costs and slower population growth keep prices among the most attainable in the state; Pensacola, where less tourist-driven demand makes it a more affordable Gulf Coast option; Jacksonville, which offers a wide range of price points with many neighborhoods well below the statewide median; and Palm Bay, which provides a more affordable alternative to nearby beach towns with growing infrastructure. Factor in homeowners' insurance costs when evaluating affordability, as premiums can be high even in inland markets.",
+  },
+  {
+    question: "How does climate risk affect Florida home values?",
+    answer:
+      "Climate risk affects Florida home values through three primary channels: flood zone designation and FEMA flood map updates directly influence insurance availability and cost; hurricane exposure affects how insurers price and offer coverage in coastal markets; and insurer exits from high-risk areas have reduced competition and driven up premiums for remaining carriers. Before closing on any Florida property, agents should advise clients to check flood zone status, request an elevation certificate, and get insurance quotes before removing contingencies.",
+  },
+  {
+    question: "Is Florida real estate still a buyer's or seller's market in 2026?",
+    answer:
+      "Florida is firmly in buyer's market territory as of Q1 2026, with months of supply at 7.47, well above the six-month threshold that defines a balanced market. Buyers have more choices and negotiating leverage than at any point since before the pandemic. However, conditions vary considerably by metro, with some markets like Tampa and the Panhandle remaining more competitive than the statewide average suggests.",
+  },
+  {
+    question: "Are Florida home prices expected to drop in 2026?",
+    answer:
+      "HouseCanary's proprietary Housing Price Index data projects the base case for the next twelve months points to modest price softening with a projected year-over-year decline of around 2.2% through Q1 2027. Prices are not expected to see dramatic shifts and inventory will continue to influence market dynamics. Extending through Q4 2028, the market is likely to remain in gradual softening territory, averaging around -1.5% year over year.",
+  },
+  {
+    question: "Why is Florida housing inventory still low?",
+    answer:
+      "Florida housing inventory remains below a fully balanced level because most homeowners are locked in low mortgage rates and are reluctant to sell and take on higher rates elsewhere. Combined with steady population inflows from domestic migration, this keeps the available supply of homes below the six-month level that defines a truly balanced market, even as inventory has risen significantly from 2022 and 2023 levels.",
+  },
+  {
+    question: "Which Florida market is most affordable right now?",
+    answer:
+      "Compared to South Florida markets, areas like Jacksonville and parts of the Panhandle and Tampa Bay tend to offer relatively lower entry prices, though local conditions shift regularly. Ocala and Palm Bay represent the lowest price points among major Florida metros in 2026, though agents should note that insurance costs in some of these markets add meaningfully to the total cost of homeownership.",
+  },
+];
+
+const FloridaMarketArticle = () => (
+  <>
+    <P>Florida's housing market is doing something it has not done in years: settling down.</P>
+    <P>
+      After a multi-year run of bidding wars and double-digit appreciation, the state is moving toward a more balanced market in 2026. For agents, that shift creates both challenges and genuine opportunities that did not exist twelve months ago. Understanding where the market actually stands, not where headlines say it stands, is the difference between agents who close deals and agents who wait for conditions to improve.
+    </P>
+    <P>Here is exactly where Florida stands right now and what it means for every agent working in this state.</P>
+
+    <figure className="mt-8">
+      <img
+        src={blogImage9.url}
+        alt="Florida real estate agent reviewing 2026 housing market trends and price data on a tablet in front of a modern suburban Florida home with palm trees"
+        className="w-full rounded-lg"
+        loading="eager"
+        width={1600}
+        height={896}
+      />
+    </figure>
+
+    <H2>Florida Housing Market Overview: The Real Numbers</H2>
+    <P>
+      Florida recorded 54,030 closings in Q1 2026 with a statewide inventory of 7.47 months of supply. The statewide median closed price sits at approximately $394,000, down 1.3% year over year.
+    </P>
+    <P>
+      That inventory figure is significant. Real estate economists consider six months of supply to represent a balanced market. At 7.47 months, Florida has crossed firmly into buyer's market territory, a meaningful shift from the extreme seller conditions of 2022 and 2023.
+    </P>
+    <P>
+      For single-family homes specifically, the statewide median sits at $425,000, up roughly 2.4% from the same time last year and just under the state's all-time high of $430,000 recorded in April 2024. Condos and townhomes are moving in the opposite direction, with median prices around $307,000 reflecting a 1% dip year over year.
+    </P>
+    <P>
+      The divergence between single-family and condo performance is one of the most important market signals for agents in 2026. Buyers seeking value are gravitating toward single-family homes in suburban markets, while the condo segment faces additional headwinds from rising HOA fees and insurance costs.
+    </P>
+
+    <H2>Where Prices Are Rising and Where They Are Falling</H2>
+    <P>Florida is not one housing market. It is dozens of distinct markets moving in different directions simultaneously.</P>
+    <P>
+      Markets seeing the most significant year-over-year price declines as of Q1 2026 include Panama City-Panama City Beach at -5.8%, Gainesville at -4.7%, Wildwood-The Villages at -4.0%, Ocala at -2.7% and Cape Coral-Fort Myers at -2.4%.
+    </P>
+    <P>
+      Meanwhile, several Florida metros continue to see price growth: Jacksonville at +1.2%, Pensacola-Ferry Pass-Brent at +2.1%, Tampa-St. Petersburg-Clearwater at +2.5% and Crestview-Fort Walton Beach-Destin leading the state at +7.3%.
+    </P>
+    <P>
+      For agents, the practical implication is clear. Pricing strategy in 2026 requires genuine local market knowledge rather than statewide generalizations. An agent advising a seller in the Panhandle operates in a completely different market reality than one working in Cape Coral or Gainesville.
+    </P>
+    <P>
+      Properties are sitting on the market for a median of 84 days in Q1 2026, up from 68 days in Q1 2025. Sellers who price competitively from the start are better positioned to stand out. Agents who set realistic pricing expectations from the first conversation close faster and generate more referrals than agents who let listings sit while sellers wait for offers that do not come.
+    </P>
+
+    <H2>Why Inventory Is Still Complicated</H2>
+    <P>
+      Two forces are complicating supply dynamics. The rate lock-in effect means most Florida homeowners refinanced or bought when mortgage rates were well below today's levels, and with rates still above 6%, many are choosing to stay put rather than trade a low monthly payment for a much higher one. Florida also remains one of the top relocation destinations in the country, and steady inbound migration keeps buyer demand elevated even as affordability tightens.
+    </P>
+    <P>
+      Florida's housing inventory stands at 118,603 active listings in Q1 2026. While that is slightly below the peak seen in early 2025, supply remains well above levels in 2023 and 2024, keeping conditions favorable for buyers.
+    </P>
+    <P>
+      The result is a split market. Buyers have more choices and negotiating power than they have had in years. But sellers with well-priced properties in strong locations are still finding qualified buyers. Agents who understand how to read both sides of that dynamic will outperform agents who wait for a simpler market to return.
+    </P>
+
+    <H2>Climate Risk: The Factor Reshaping Florida Values</H2>
+    <P>
+      No analysis of Florida real estate in 2026 is complete without addressing insurance and climate risk directly. This is no longer a background concern; it is an active pricing factor in coastal and flood-prone markets.
+    </P>
+    <P>
+      Buyers, sellers and investors are increasingly factoring flood zone designation, hurricane exposure and insurance availability into home prices across Florida. As insurers have pulled back from high-risk areas and FEMA flood maps have been updated, some coastal markets have seen rising costs and softer demand as a result.
+    </P>
+    <P>
+      Agents working in coastal markets need to factor insurance costs into buyer conversations from day one. A home priced attractively at first glance can become unaffordable once flood insurance and homeowners' premiums are added to the monthly payment calculation. Agents who surface these costs early protect their buyers and protect their own transaction completion rates.
+    </P>
+
+    <H2>What This Market Means for Agents in 2026</H2>
+    <P>A transitional market rewards agents with systems over agents who rely on market momentum.</P>
+    <P>
+      When properties sell in days, agents can succeed without great follow-up or organized pipelines. When properties sit for 84 days, the agents closing deals are the ones with consistent communication systems, realistic seller expectations and organized lead tracking through a proper CRM.
+    </P>
+    <P>
+      The agents thriving in Florida's 2026 market are not the ones waiting for conditions to return to 2022 levels. They are the ones who built the infrastructure to work effectively in any market — low fixed costs, strong follow-up systems and the financial stability to operate through slow months without panic.
+    </P>
+    <P>
+      HouseCanary's forecast for Florida through the end of 2026 shows home prices expected to remain largely flat with modest quarter-over-quarter fluctuations. The market is not projected to see a steep decline or a meaningful rebound in the near term.
+    </P>
+    <P>
+      For agents, that means the market conditions of mid-2026 are the conditions to build your business around, not an anomaly to wait out.
+    </P>
+
+    <section className="mt-16">
+      <Faq eyebrow="FAQ" heading="Frequently Asked Questions" items={FLORIDA_MARKET_FAQ} />
+    </section>
+
+    <P>
+      At <Internal to="/">United Estates Realty</Internal>, we support agents across Florida's diverse markets with a flat $98 monthly fee, 100% commission and a full <Internal to="/software">CRM included</Internal> so the only variable in your income is how many deals you close, not how much your brokerage takes. See the full model at <Internal to="/">unitedestatesagent</Internal>.
+    </P>
+  </>
+);
+
 export const blogPosts: BlogPost[] = [
   {
     slug: "100-commission-vs-traditional-split-2026",
