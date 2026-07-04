@@ -1647,6 +1647,23 @@ export const blogPosts: BlogPost[] = [
     content: <JoinBrokerageArticle />,
     faq: JOIN_BROKERAGE_FAQ,
   },
+  {
+    slug: "florida-housing-market-2026-prices-trends",
+    title: "Florida Housing Market 2026: Where Prices Are Rising, Where They Are Falling, and What Agents Should Do Next",
+    metaTitle: "Florida Housing Market 2026: Prices & Trends",
+    description:
+      "Florida housing market update for 2026: inventory, price changes by metro, climate risk, and what agents should do to close deals in a buyer's market.",
+    excerpt:
+      "Florida's market is settling into buyer's territory with 7.47 months of supply. Here is where prices are rising, where they are falling, and what agents should do next.",
+    date: "2026-07-04",
+    readMinutes: 10,
+    author: "United Estates Realty",
+    image: blogImage9.url,
+    imageAlt:
+      "Florida real estate agent reviewing 2026 housing market trends and price data on a tablet in front of a modern suburban Florida home with palm trees",
+    content: <FloridaMarketArticle />,
+    faq: FLORIDA_MARKET_FAQ,
+  },
 ];
 
 
