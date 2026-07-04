@@ -1430,16 +1430,6 @@ const FloridaMarketArticle = () => (
     </P>
     <P>Here is exactly where Florida stands right now and what it means for every agent working in this state.</P>
 
-    <figure className="mt-8">
-      <img
-        src={blogImage9.url}
-        alt="Florida real estate agent reviewing 2026 housing market trends and price data on a tablet in front of a modern suburban Florida home with palm trees"
-        className="w-full rounded-lg"
-        loading="eager"
-        width={1600}
-        height={896}
-      />
-    </figure>
 
     <H2>Florida Housing Market Overview: The Real Numbers</H2>
     <P>
