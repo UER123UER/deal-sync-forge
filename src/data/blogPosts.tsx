@@ -1808,7 +1808,7 @@ export const blogPosts: BlogPost[] = [
     title: "First-Time Home Buyer Programs in Florida 2026: Grants, Down Payment Assistance, and How to Qualify",
     metaTitle: "First-Time Home Buyer Programs Florida 2026",
     description:
-      "Florida first-time home buyer programs in 2026: Hometown Heroes, FL Assist, HFA grants, and county down payment help. Learn who qualifies and how to apply.",
+      "Discover every first-time home buyer program in Florida for 2026 — from $35,000 Hometown Heroes grants to FHA loans. See who qualifies and how to apply today.",
     excerpt:
       "Florida offers over 100 first-time buyer programs in 2026, with up to $35,000 through Hometown Heroes alone. Here is exactly who qualifies and how to access the money.",
     date: "2026-07-05",
