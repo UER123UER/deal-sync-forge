@@ -13,6 +13,7 @@ const blogImage7 = { url: blogImage7Url };
 import blogImage8Url from "@/assets/how-to-join-a-real-estate-brokerage-2026.jpg";
 const blogImage8 = { url: blogImage8Url };
 import blogImage9 from "@/assets/florida-housing-market-2026-prices-trends.jpg.asset.json";
+import blogImage10 from "@/assets/florida-first-time-home-buyer-programs-2026.jpg.asset.json";
 
 const blogImage4 = { url: blogImage4Url };
 
