@@ -1508,6 +1508,154 @@ const FloridaMarketArticle = () => (
   </>
 );
 
+const FIRST_TIME_BUYER_FAQ: FaqItem[] = [
+  {
+    question: "How much down payment assistance can I get in Florida as a first-time buyer?",
+    answer:
+      "Florida buyers can receive anywhere from $7,500 to over $100,000 in combined assistance depending on the programs they qualify for. Hometown Heroes offers up to $35,000, Florida Housing offers up to $10,000, and county SHIP funds can add even more. Many of these programs can be stacked.",
+  },
+  {
+    question: "Do I have to repay Florida first-time buyer grants?",
+    answer:
+      "It depends on the program. Some programs provide cash grants and forgivable loans with 0% interest that are forgiven after the buyer meets occupancy requirements. Others like FL Assist are deferred loans that must be repaid when the home is sold, refinanced, or vacated. Always confirm the repayment terms of each program before applying.",
+  },
+  {
+    question: "What credit score do I need for Florida first-time buyer programs?",
+    answer:
+      "Florida Housing programs require a credit score of at least 640 for most assistance programs including Hometown Heroes, FL Assist, and the HFA grant programs. FHA loans allow scores as low as 550 with a larger down payment and some conventional options start at 620.",
+  },
+  {
+    question: "Can I combine multiple Florida assistance programs?",
+    answer:
+      "Yes. For example a buyer might use a Florida Housing first mortgage with the Hometown Heroes down payment assistance and also receive a local city or county grant — potentially combining tens of thousands of dollars in total assistance.",
+  },
+  {
+    question: "Do Florida first-time buyer programs apply to condos and townhomes?",
+    answer:
+      "Yes. Condos, townhomes, and single-family homes are all eligible. For FHA loans the condo complex must be on the FHA-approved list. Conventional loans are more flexible with condo eligibility.",
+  },
+  {
+    question: "Is there an income limit for Florida first-time buyer programs?",
+    answer:
+      "Yes. Nearly all programs have income limits based on your household size and the county where you are buying. Limits are typically tied to the Area Median Income and vary by program — some cap eligibility at 80% AMI while others go up to 140% AMI. Hometown Heroes uses limits based on 150% of the Area Median Income, making it accessible to a wider range of working households.",
+  },
+];
+
+const FirstTimeBuyerArticle = () => (
+  <>
+    <P>Buying your first home in Florida in 2026 is more achievable than most people realize.</P>
+    <P>
+      Tens of thousands of Florida first-time home buyers will receive $35,000 in assistance for down payments and closing costs this year from just one grant alone. And that is only one of over 100 programs available statewide.
+    </P>
+    <P>
+      The median home sales price in Florida was $416,800 in March 2026, up 1.8% year-over-year. High prices create real barriers for first-time buyers. But Florida's assistance programs exist specifically to lower those barriers and most buyers who qualify never apply simply because they do not know what is available.
+    </P>
+    <P>This guide covers every major program, who qualifies, and exactly how to access the money.</P>
+
+    <H2>What Counts as a First-Time Home Buyer in Florida?</H2>
+    <P>
+      The Florida Housing Finance Corporation defines a first-time home buyer as someone who has not owned and occupied their primary residence for three years before purchase.
+    </P>
+    <P>
+      This means you do not have to be a true first-time buyer. If you owned a home more than three years ago and have been renting since then, you qualify under this definition. Veterans and active military members are exempt from the first-time buyer requirement for certain programs entirely.
+    </P>
+
+    <H2>The Florida Hometown Heroes Program</H2>
+    <P>The Hometown Heroes program is the most generous first-time buyer assistance available in Florida right now.</P>
+    <P>
+      Community workers such as law enforcement officers, firefighters, EMTs, educators, health care professionals, and child care operators can receive up to 5% of the first mortgage amount — up to $35,000 — in down payment and closing cost assistance. Military members and veterans are also eligible and are exempt from the first-time homebuyer requirement.
+    </P>
+    <P>
+      The assistance comes as a 0% interest, 30-year deferred second mortgage with no monthly payments. There is no 1% origination fee charged.
+    </P>
+    <P>
+      The program also offers lower-than-market rates on FHA, VA, USDA, Fannie Mae or Freddie Mac first mortgages with reduced upfront fees.
+    </P>
+    <P>
+      To qualify you need a credit score of at least 640, must meet Florida Housing income and purchase price limits for your county, and must occupy the home as your primary residence.
+    </P>
+
+    <H2>Florida Assist and Florida HLP Programs</H2>
+    <P>For buyers who do not qualify for Hometown Heroes, Florida Housing offers two additional assistance options.</P>
+    <P>
+      FL Assist provides $10,000 as a 0% interest deferred loan. FL HLP offers $12,500 at 3% interest with monthly payments. Both help cover down payment and closing costs.
+    </P>
+    <P>
+      FL Assist is a second mortgage with no monthly payments. Repayment is deferred until the home is sold, the borrower moves, refinances the first mortgage, or no longer occupies the home as their primary residence.
+    </P>
+    <P>
+      Both programs require buyers to use a Florida Housing first mortgage and meet income and purchase price limits for their county.
+    </P>
+
+    <H2>The Florida Housing HFA Grant</H2>
+    <P>
+      Florida Housing also offers a 3 to 5% forgivable grant paired with a Fannie Mae HFA Preferred first mortgage. The grant is forgiven after five years, provided the buyer remains in the home.
+    </P>
+    <P>
+      This is one of the strongest options for buyers who want assistance that disappears entirely rather than a deferred loan that must be repaid eventually. The key requirement is qualifying for a Fannie Mae conventional loan with a credit score of 640 or higher.
+    </P>
+
+    <H2>City and County Programs</H2>
+    <P>
+      Florida's statewide programs are only the beginning. Most major cities and counties operate their own independent assistance programs that can be stacked on top of state-level help.
+    </P>
+    <P>
+      Miami-Dade County offers up to $40,000 through its HOME program for qualifying buyers in the City of North Miami though funding is limited.
+    </P>
+    <P>
+      Miami-Dade's Surtax Program offers up to $30,000 in down payment assistance as a deferred-payment second mortgage at 0% interest for eligible first-time buyers with income limits generally between $100,000 and $125,000 for families of two to four.
+    </P>
+    <P>
+      Tampa's Dare to Own the Dream Program provides a loan with a 0% interest rate and no monthly payments with income limits based on citywide median incomes. Repayment is required when the home stops being the buyer's primary residence or is sold or refinanced.
+    </P>
+    <P>
+      Florida buyers can receive anywhere from $7,500 to over $100,000 in combined assistance depending on the programs they qualify for. Many of these programs can be stacked.
+    </P>
+
+    <H2>Federal Loan Programs Available in Florida</H2>
+    <P>Florida's state programs work alongside federal loan options that reduce the barrier to entry even further.</P>
+    <P>
+      <strong>FHA Loans</strong> — FHA loans require as little as 3.5% down and are widely used by first-time homebuyers with moderate credit. They can be combined with Florida assistance programs to reduce upfront cash needs.
+    </P>
+    <P>
+      <strong>USDA Loans</strong> — Available to low and moderate income borrowers purchasing a home in designated rural areas of Florida. USDA loans have no down payment requirement and no official minimum credit score although many lenders look for a score of 640 or higher.
+    </P>
+    <P>
+      <strong>VA Loans</strong> — Available to veterans, service members, and eligible surviving spouses. VA loans offer competitive rates, limited closing costs, no down payment requirement, and no ongoing mortgage insurance.
+    </P>
+    <P>
+      <strong>Conventional 97</strong> — Allows a down payment as low as 3% for buyers with a credit score of at least 620 and can be paired with Florida Housing assistance programs.
+    </P>
+
+    <H2>General Qualification Requirements</H2>
+    <P>Most Florida first-time buyer programs share a consistent set of baseline requirements.</P>
+    <P>
+      General qualifications include being a first-time home buyer according to the program's definition, completing a home buyer education course, and adhering to specified income and purchase price limits.
+    </P>
+    <P>
+      Most Florida down payment assistance programs require completion of a HUD-approved homebuyer education course. These courses are available online and typically cost between $0 and $100 and can be completed in a few hours. The certificate is valid for 12 months.
+    </P>
+    <P>
+      Credit score requirements are typically 640 or higher for Florida Housing programs. Income limits vary by county and household size. Income limits generally range from $85,000 to $115,000 for families of two to four in most Florida counties. Purchase price limits typically run from $350,000 to $450,000, depending on the county.
+    </P>
+
+    <H2>How to Apply</H2>
+    <P>
+      These programs are not applied for directly. You must work with a participating mortgage lender approved to offer Florida Housing loans. Your lender will guide you through the application and determine your eligibility.
+    </P>
+    <P>
+      The process follows a consistent path. Get pre-qualified with a Florida Housing-approved lender. Complete your HUD-approved homebuyer education course. Identify the programs you qualify for. Include down payment assistance in your loan approval. Then begin your home search knowing exactly how much assistance you have available and how much cash you actually need to close.
+    </P>
+    <P>
+      Working with a knowledgeable real estate agent who understands Florida's assistance programs is one of the most valuable steps a first-time buyer can take. An experienced agent helps you negotiate seller contributions, structure offers that account for assistance timelines, and avoid properties that would not qualify under program guidelines. <Internal to="/">United Estates Realty</Internal> agents work across Florida's diverse markets and understand how to maximize assistance for first-time buyers from the first showing through closing.
+    </P>
+
+    <section className="mt-16">
+      <Faq eyebrow="FAQ" heading="Frequently Asked Questions" items={FIRST_TIME_BUYER_FAQ} />
+    </section>
+  </>
+);
+
 export const blogPosts: BlogPost[] = [
   {
     slug: "100-commission-vs-traditional-split-2026",
