@@ -1655,6 +1655,23 @@ export const blogPosts: BlogPost[] = [
     content: <FloridaMarketArticle />,
     faq: FLORIDA_MARKET_FAQ,
   },
+  {
+    slug: "first-time-home-buyer-programs-florida-2026",
+    title: "First-Time Home Buyer Programs in Florida 2026: Grants, Down Payment Assistance, and How to Qualify",
+    metaTitle: "First-Time Home Buyer Programs Florida 2026",
+    description:
+      "Florida first-time home buyer programs in 2026: Hometown Heroes, FL Assist, HFA grants, and county down payment help. Learn who qualifies and how to apply.",
+    excerpt:
+      "Florida offers over 100 first-time buyer programs in 2026, with up to $35,000 through Hometown Heroes alone. Here is exactly who qualifies and how to access the money.",
+    date: "2026-07-05",
+    readMinutes: 10,
+    author: "United Estates Realty",
+    image: blogImage10.url,
+    imageAlt:
+      "Happy first-time Florida home buyers holding house keys in front of a modern suburban home with palm trees after using a Florida down payment assistance program in 2026",
+    content: <FirstTimeBuyerArticle />,
+    faq: FIRST_TIME_BUYER_FAQ,
+  },
 ];
 
 
