@@ -1971,6 +1971,23 @@ export const blogPosts: BlogPost[] = [
     content: <FirstTimeBuyerArticle />,
     faq: FIRST_TIME_BUYER_FAQ,
   },
+  {
+    slug: "how-to-sell-your-home-in-florida-2026",
+    title: "How to Sell Your Home in Florida in 2026: A Step-by-Step Guide for Sellers",
+    metaTitle: "How to Sell Your Home in Florida in 2026",
+    description:
+      "Selling a home in Florida in 2026? Follow this step-by-step guide to price, prepare, market, and close your sale for the most money in today's market.",
+    excerpt:
+      "Florida's 2026 market rewards prepared sellers. Here is the step-by-step guide to pricing, preparing, marketing, and closing your home sale.",
+    date: "2026-07-08",
+    readMinutes: 10,
+    author: "United Estates Realty",
+    image: blogImage11.url,
+    imageAlt:
+      "Florida home sellers signing closing documents with a real estate agent inside a modern sunny Florida home with palm trees visible through windows",
+    content: <SellHomeArticle />,
+    faq: SELL_HOME_FAQ,
+  },
 ];
 
 
