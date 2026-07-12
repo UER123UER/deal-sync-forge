@@ -1809,6 +1809,124 @@ const SellHomeArticle = () => (
   </>
 );
 
+const COMMISSION_CALCULATOR_FAQ: FaqItem[] = [
+  {
+    question: "What is a free real estate commission calculator?",
+    answer:
+      "A free real estate commission calculator is a tool that helps agents, brokers, and sellers calculate the exact dollar amount of commission based on the sale price and commission rate. It factors in brokerage splits, transaction fees, and franchise royalties to show the agent's true net earnings rather than just the gross commission figure. Most calculators allow agents to model different split scenarios to compare their take-home under different brokerage structures.",
+  },
+  {
+    question: "How is real estate commission calculated?",
+    answer:
+      "Real estate commission is calculated by multiplying the sale price by the commission percentage. For example, on a $500,000 home at a 2.85% buyer agent commission, the gross commission is $14,250. That amount is then split between the brokerage and the agent according to their agreement — typically 70/30 for experienced agents — leaving the agent with approximately $9,975 before transaction fees and taxes. Self-employment tax at 15.3% and federal income tax are then deducted from the remaining amount to determine actual take-home pay.",
+  },
+  {
+    question: "What is the average Realtor commission in 2026?",
+    answer:
+      "The national average total real estate commission is 5.7% of the sale price as of March 2026, based on a survey of 533 active agents across all 50 states. This splits between 2.88% to the listing agent and 2.82% to the buyer's agent. Rates range from 4.5% in Washington DC to 6.2% in Michigan, with higher-priced markets generally seeing lower percentage rates because agents earn more per transaction in dollar terms even at a lower rate.",
+  },
+  {
+    question: "How did the NAR settlement change commissions?",
+    answer:
+      "The August 2024 NAR settlement changed how buyer agent compensation is disclosed and negotiated. Buyer agent fees can no longer be advertised through the MLS and must be agreed to in a written buyer broker agreement before touring homes. Sellers are no longer required to offer buyer agent compensation, though most still do as a strategic choice to attract more buyers. Total commission rates have remained largely stable, with a brief dip in buyer agent fees from 2.6% to 2.5% after the settlement reversed by early 2025, with buyer agent rates actually climbing to 2.82% by Q1 2026.",
+  },
+  {
+    question: "How much does a real estate agent actually take home?",
+    answer:
+      "On a $400,000 sale at average 2026 commission rates, an agent on a traditional 70/30 brokerage split takes home approximately $4,692 after self-employment tax and federal income tax. On a flat-fee brokerage model, the same agent takes home approximately $7,529 on the same transaction — a difference of $2,837 per deal. NAR data shows agents consistently underestimate their true expenses by 40 to 60%, making accurate commission calculation essential before evaluating any brokerage structure or income projection.",
+  },
+];
+
+const CommissionCalculatorArticle = () => (
+  <>
+    <P>
+      Most agents know their commission rate. Very few know their actual take-home number.
+    </P>
+    <P>
+      The gap between those two figures is where careers are made or quietly destroyed. A $15,000 commission check does not put $15,000 in your account. By the time the brokerage split, transaction fees, franchise royalties, self-employment tax, and business expenses are subtracted, the number that reaches your bank is often less than half of what appeared on the closing statement.
+    </P>
+    <P>
+      This guide gives you the complete commission calculator for 2026, every deduction, every scenario, and a direct comparison between traditional split and flat-fee brokerage structures, so you know your real number before you make any career decision.
+    </P>
+
+    <H2>How the Real Estate Commission Works in 2026</H2>
+    <P>
+      The average total real estate commission in the United States is 5.7% of the sale price based on a February 2026 survey of 533 active agents across all 50 states. This splits between 2.88% to the listing agent and 2.82% to the buyer's agent.
+    </P>
+    <P>
+      The median US home price of $405,400 that is $23,108 in total agent fees. Each agent's brokerage receives its respective side first, then splits it with the individual agent according to the terms of their independent contractor agreement.
+    </P>
+    <P>
+      Since the August 2024 NAR settlement, buyer agent compensation is no longer advertised through the MLS and must be negotiated in writing before touring homes. Sellers can still offer buyer agent compensation as a concession and most still do to attract more qualified buyers and maximize offer volume.
+    </P>
+    <P>
+      Total commission rates range from 4.5% in Washington DC to 6.2% in Michigan. Higher-priced markets tend to have lower percentage rates because agents earn more per transaction even at a lower rate.
+    </P>
+
+    <H2>The Step-by-Step Commission Calculator</H2>
+    <P>Here is the exact formula to calculate your real take-home on any transaction.</P>
+
+    <H3>Step 1: Calculate gross commission</H3>
+    <P>Sale price multiplied by your commission percentage equals gross commission.</P>
+    <P>On a $400,000 home at 2.85% the agent's side gross commission is $11,400.</P>
+
+    <H3>Step 2: Subtract the brokerage split</H3>
+    <P>New agents start somewhere between 50/50 and 70/30 with their brokerage. The agent's share improves as they gain experience.</P>
+    <P>On a 70/30 split, the agent keeps 70% of $11,400, which equals $7,980. The brokerage keeps $3,420.</P>
+
+    <H3>Step 3: Subtract the franchise royalty</H3>
+    <P>Major franchise brokerages charge a royalty fee of 4 to 6% of gross commission taken before the split even starts.</P>
+    <P>On a 6% franchise royalty applied to $11,400, that is $684 removed first. The remaining $10,716 is then split 70/30, leaving the agent with $7,501 instead of $7,980. A small royalty percentage creates a significant dollar impact across an entire year of production.</P>
+
+    <H3>Step 4: Subtract transaction fees</H3>
+    <P>Transaction fees range from $200 to $800 per closing, charged on top of the split. On a $400 transaction fee, the agent nets $7,101 after steps one through four.</P>
+
+    <H3>Step 5: Subtract self-employment tax</H3>
+    <P>Real estate agents are independent contractors and pay both the employer and employee portions of Social Security and Medicare, totaling 15.3% of net earnings before income tax is calculated.</P>
+    <P>On $7,101, that is $1,086 in self-employment tax, leaving $6,015.</P>
+
+    <H3>Step 6: Subtract federal income tax</H3>
+    <P>At a 22% federal income tax bracket the remaining $6,015 nets approximately $4,692 after income tax.</P>
+    <P>A $400,000 sale generating $11,400 in gross commission produces approximately $4,692 in actual take-home pay under a traditional brokerage structure.</P>
+
+    <H2>Commission Calculations by Sale Price</H2>
+    <P>Here is what the same calculation looks like across common Florida sale prices at current average rates using a 70/30 split, a $400 transaction fee, and standard tax rates:</P>
+    <P><strong>$250,000 sale at 2.85%:</strong> Gross commission $7,125. After a 70/30 split, $4,988. After a $400 transaction fee, $4,588. After self-employment tax, $3,886. After income tax, approximately $3,030.</P>
+    <P><strong>$400,000 sale at 2.85%:</strong> Gross commission $11,400. After a 70/30 split, $7,980. After a $400 transaction fee, $7,580. After self-employment tax, $6,420. After income tax, approximately $5,008.</P>
+    <P><strong>$600,000 sale at 2.85%:</strong> Gross commission $17,100. After a 70/30 split, $11,970. After a $400 transaction fee, $11,570. After self-employment tax, $9,800. After income tax, approximately $7,644.</P>
+    <P><strong>$800,000 sale at 2.85%:</strong> Gross commission $22,800. After a 70/30 split, $15,960. After a $400 transaction fee, $15,560. After self-employment tax, $13,179. After income tax, approximately $10,280.</P>
+
+    <H2>How the Flat-Fee Model Changes Every Calculation</H2>
+    <P>The same transactions look completely different under a flat-fee brokerage structure with zero transaction fees and a $98 monthly cost.</P>
+    <P><strong>$400,000 sale at 2.85% flat-fee model:</strong> Gross commission $11,400. No brokerage split — agent keeps 100%. No transaction fee. After self-employment tax, $9,653. After income tax, approximately $7,529.</P>
+    <P>The difference on a single $400,000 transaction is $2,521 in additional take-home pay. On twelve transactions per year, that difference exceeds $30,000 from identical production.</P>
+    <P>In 2026, agents on traditional splits often take home only about 22% to 30% of the gross commission check on each deal once all fees and taxes are factored in. Agents on flat-fee structures with zero transaction fees retain 60% to 70% of gross commission after taxes on the same transactions.</P>
+
+    <H2>Calculating Your Annual Income</H2>
+    <P>To calculate your projected annual income, multiply your average per-deal take-home by your expected transaction count.</P>
+    <P>An agent closing 12 transactions at an average commission of $10,000 gross generates $120,000 in gross commission income.</P>
+    <P>Under a traditional 70/30 split with standard fees that agent nets approximately $68,000 before taxes. After self-employment tax and income tax, the true net income lands around $44,000.</P>
+    <P>The same agent under a flat-fee model, paying <Internal to="/pricing">$98 monthly</Internal>, retains approximately $118,000 before taxes. After self-employment tax and income tax, the net income is around $77,000.</P>
+    <P>The annual income difference on identical production is approximately $33,000. Across a five-year career, that difference totals $165,000 in additional take-home pay from the same closings.</P>
+    <P>A flat-fee brokerage structure is not just a commission decision. It is a five-year income decision made at the moment you choose where to hang your license.</P>
+
+    <H2>Additional Deductions Agents Often Forget</H2>
+    <P>Beyond brokerage splits and taxes, several costs reduce net income that most agents underestimate.</P>
+    <P>Transaction coordinator fees run from $200 to $500 per transaction for agents who use TC services. E&O insurance costs $500 to $2,000 annually, depending on coverage level and carrier. Technology fees at traditional brokerages average $100 to $300 per month, totaling $1,200 to $3,600 per year. Marketing costs, including photography, signage, and advertising, vary widely but average $500 to $2,000 per transaction for active listing agents.</P>
+    <P>NAR data shows agents underestimate their true business expenses by 40 to 60%, which is the primary reason income expectations so rarely match actual take-home results.</P>
+    <P>Running a complete annual expense audit, adding every brokerage fee, tax obligation, and business cost, is the most important financial exercise any agent can do before comparing brokerage options.</P>
+    <P>At <Internal to="/">United Estates Realty</Internal>, the monthly cost is $98 with zero transaction fees and a full CRM included. Agents calculate their annual brokerage cost in seconds rather than deciphering a layered fee schedule across multiple line items.</P>
+
+    <section className="mt-16">
+      <Faq eyebrow="FAQ" heading="Frequently Asked Questions" items={COMMISSION_CALCULATOR_FAQ} />
+    </section>
+
+    <P>
+      At <Internal to="/">United Estates Realty</Internal>, we give agents 100% commission with a flat $98 monthly fee and zero transaction fees, so the commission calculator math always works in your favor. See the full breakdown at <Internal to="/">unitedestatesagent</Internal>.
+    </P>
+  </>
+);
+
 export const blogPosts: BlogPost[] = [
   {
     slug: "100-commission-vs-traditional-split-2026",
