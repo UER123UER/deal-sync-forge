@@ -1990,6 +1990,23 @@ export const blogPosts: BlogPost[] = [
     content: <SellHomeArticle />,
     faq: SELL_HOME_FAQ,
   },
+  {
+    slug: "real-estate-agent-commission-calculator-2026",
+    title: "Real Estate Agent Commission Calculator: How Much Will You Actually Make Per Deal in 2026?",
+    metaTitle: "Real Estate Commission Calculator 2026",
+    description:
+      "Use our real estate commission calculator to see exactly what you keep per deal in 2026. We break down splits, fees, taxes, and flat fee vs traditional brokerage math.",
+    excerpt:
+      "A $15,000 commission check does not put $15,000 in your account. Here is the complete 2026 calculator with every deduction, split, fee, and tax.",
+    date: "2026-07-12",
+    readMinutes: 10,
+    author: "United Estates Realty",
+    image: blogImage12.url,
+    imageAlt:
+      "Real estate agent using a calculator to determine commission take-home pay next to a laptop with a CRM dashboard and commission calculation worksheet in 2026",
+    content: <CommissionCalculatorArticle />,
+    faq: COMMISSION_CALCULATOR_FAQ,
+  },
 ];
 
 
