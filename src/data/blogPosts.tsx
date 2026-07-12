@@ -16,6 +16,8 @@ import blogImage9 from "@/assets/florida-housing-market-2026-prices-trends.jpg.a
 import blogImage10 from "@/assets/florida-first-time-home-buyer-programs-2026.jpg.asset.json";
 import blogImage11Url from "@/assets/how-to-sell-your-home-florida-2026.jpg";
 const blogImage11 = { url: blogImage11Url };
+import blogImage12Url from "@/assets/real-estate-agent-commission-calculator-2026.jpg";
+const blogImage12 = { url: blogImage12Url };
 
 const blogImage4 = { url: blogImage4Url };
 
