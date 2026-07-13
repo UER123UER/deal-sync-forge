@@ -59,14 +59,41 @@ serve(async (req) => {
         ? new Date(validSub.current_period_end * 1000).toISOString()
         : null;
 
-      await supabaseClient
+      // First-activation transition: only rows where subscription_activated_at
+      // is still null will be updated here. `.select()` returns those rows so
+      // we can detect the very first activation and fire the signup emails.
+      const { data: firstActivationRows } = await supabaseClient
         .from("profiles")
         .update({
           subscription_status: "active",
           subscription_activated_at: new Date().toISOString(),
         })
         .eq("id", user.id)
-        .is("subscription_activated_at", null);
+        .is("subscription_activated_at", null)
+        .select("id, first_name, last_name, license_number, referred_by_code");
+
+      if (firstActivationRows && firstActivationRows.length > 0) {
+        const profile = firstActivationRows[0] as {
+          first_name: string | null;
+          last_name: string | null;
+          license_number: string | null;
+          referred_by_code: string | null;
+        };
+        try {
+          await supabaseClient.functions.invoke("notify-signup", {
+            headers: { Authorization: authHeader },
+            body: {
+              firstName: profile.first_name ?? "",
+              lastName: profile.last_name ?? "",
+              email: user.email,
+              licenseNumber: profile.license_number ?? undefined,
+              referredByCode: profile.referred_by_code ?? undefined,
+            },
+          });
+        } catch (notifyErr) {
+          console.error("notify-signup failed", notifyErr);
+        }
+      }
 
       await supabaseClient
         .from("profiles")
