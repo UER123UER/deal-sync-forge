@@ -126,13 +126,9 @@ export default function Signup() {
         .eq('id', signInData.user.id);
     }
 
-    // Notify the office of the new signup (fire-and-forget)
-    if (signInData.session?.access_token) {
-      supabase.functions.invoke('notify-signup', {
-        headers: { Authorization: `Bearer ${signInData.session.access_token}` },
-        body: { firstName, lastName, email, licenseNumber: fullLicense, referredByCode: refCode || undefined },
-      }).catch(() => { /* non-blocking */ });
-    }
+    // Note: the office notification + welcome email are now sent only after the
+    // agent completes the full sign-up flow (Stripe subscription active). See
+    // supabase/functions/check-subscription/index.ts.
 
     setLoading(false);
     navigate('/onboarding/agreement');
