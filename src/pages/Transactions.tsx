@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Download, Plus, Trash2, ArrowUpDown, Home } from 'lucide-react';
+import { Search, Download, Plus, Trash2, ArrowUpDown, Home, TrendingUp, DollarSign, CheckCircle2, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useDeals, useDeleteDeal, DealRow } from '@/hooks/useDeals';
+import { useTasks } from '@/hooks/useTasks';
 import { cn } from '@/lib/utils';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
@@ -48,7 +49,40 @@ export default function Transactions() {
   const [sortAsc, setSortAsc] = useState(true);
   const navigate = useNavigate();
   const { data: deals = [], isLoading } = useDeals();
+  const { data: tasks = [] } = useTasks();
   const deleteDeal = useDeleteDeal();
+
+  const dashboard = useMemo(() => {
+    const parsePrice = (p: string | null) => {
+      if (!p) return 0;
+      const n = Number(String(p).replace(/[^0-9.]/g, ''));
+      return Number.isFinite(n) ? n : 0;
+    };
+    const active = deals.filter((d) => d.status === 'active');
+    const pipeline = active.reduce((s, d) => s + parsePrice(d.price), 0);
+    const now = new Date();
+    const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    const closedThisMonth = deals.filter(
+      (d) => d.status === 'archive' && (d.created_at || '').startsWith(monthKey),
+    ).length;
+    const todayStr = now.toISOString().split('T')[0];
+    const tasksDueToday = tasks.filter(
+      (t) => !t.completed && t.due_date && t.due_date.startsWith(todayStr),
+    ).length;
+    return {
+      activeCount: active.length,
+      pipeline,
+      closedThisMonth,
+      tasksDueToday,
+    };
+  }, [deals, tasks]);
+
+  const fmtCurrency = (n: number) =>
+    n >= 1_000_000
+      ? `$${(n / 1_000_000).toFixed(1)}M`
+      : n >= 1_000
+        ? `$${Math.round(n / 1_000)}K`
+        : `$${n.toLocaleString()}`;
 
   const filtered = deals
     .filter((d) => {
@@ -157,6 +191,25 @@ export default function Transactions() {
 
       <PageContent className="py-4">
         <PageStack className="max-w-none gap-4">
+          <section className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {[
+              { label: 'Active Deals', value: dashboard.activeCount.toLocaleString(), icon: TrendingUp, color: 'text-emerald-600' },
+              { label: 'Pipeline Value', value: fmtCurrency(dashboard.pipeline), icon: DollarSign, color: 'text-blue-600' },
+              { label: 'Closed This Month', value: dashboard.closedThisMonth.toLocaleString(), icon: CheckCircle2, color: 'text-violet-600' },
+              { label: 'Tasks Due Today', value: dashboard.tasksDueToday.toLocaleString(), icon: Clock, color: 'text-amber-600' },
+            ].map((s) => (
+              <div key={s.label} className="app-surface p-4 flex items-center gap-3">
+                <div className={cn('h-10 w-10 rounded-lg bg-muted flex items-center justify-center', s.color)}>
+                  <s.icon className="h-5 w-5" />
+                </div>
+                <div className="min-w-0">
+                  <div className="text-xs font-medium text-muted-foreground truncate">{s.label}</div>
+                  <div className="text-lg font-semibold text-foreground truncate">{s.value}</div>
+                </div>
+              </div>
+            ))}
+          </section>
+
           <section className="app-surface overflow-hidden">
             {isLoading ? (
               <div className="divide-y">

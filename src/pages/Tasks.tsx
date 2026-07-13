@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   Calendar,
@@ -11,6 +11,8 @@ import {
   Trash2,
   Users,
   X,
+  AlertCircle,
+  Clock,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
@@ -66,6 +68,20 @@ export default function Tasks() {
   const [newTaskDueDate, setNewTaskDueDate] = useState<Date | undefined>();
   const [optimisticCompleted, setOptimisticCompleted] = useState<Record<string, boolean>>({});
   const [filterType, setFilterType] = useState<string>('all');
+
+  const summary = useMemo(() => {
+    const now = new Date();
+    const todayStr = now.toISOString().split('T')[0];
+    let overdue = 0;
+    let dueToday = 0;
+    for (const t of tasks) {
+      if (t.completed || !t.due_date) continue;
+      const d = t.due_date.split('T')[0];
+      if (d === todayStr) dueToday++;
+      else if (d < todayStr) overdue++;
+    }
+    return { overdue, dueToday };
+  }, [tasks]);
 
   const filtered = tasks.filter((task) => {
     if (filterType !== 'all' && task.type !== filterType) return false;
@@ -203,6 +219,32 @@ export default function Tasks() {
 
       <PageContent className="py-4">
         <PageStack className="max-w-none gap-4">
+          {(summary.overdue > 0 || summary.dueToday > 0) && (
+            <section className="grid grid-cols-2 gap-3">
+              <div className={cn(
+                'app-surface p-4 flex items-center gap-3',
+                summary.overdue > 0 && 'border-destructive/40 bg-destructive/5',
+              )}>
+                <div className="h-10 w-10 rounded-lg bg-destructive/10 text-destructive flex items-center justify-center">
+                  <AlertCircle className="h-5 w-5" />
+                </div>
+                <div>
+                  <div className="text-xs font-medium text-muted-foreground">Overdue</div>
+                  <div className="text-lg font-semibold text-foreground">{summary.overdue}</div>
+                </div>
+              </div>
+              <div className="app-surface p-4 flex items-center gap-3">
+                <div className="h-10 w-10 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center">
+                  <Clock className="h-5 w-5" />
+                </div>
+                <div>
+                  <div className="text-xs font-medium text-muted-foreground">Due today</div>
+                  <div className="text-lg font-semibold text-foreground">{summary.dueToday}</div>
+                </div>
+              </div>
+            </section>
+          )}
+
           <section className="app-surface overflow-hidden">
             {isLoading ? (
               <div className="divide-y">
