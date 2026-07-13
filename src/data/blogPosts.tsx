@@ -18,6 +18,8 @@ import blogImage11Url from "@/assets/how-to-sell-your-home-florida-2026.jpg";
 const blogImage11 = { url: blogImage11Url };
 import blogImage12Url from "@/assets/real-estate-agent-commission-calculator-2026.jpg";
 const blogImage12 = { url: blogImage12Url };
+import blogImage13Url from "@/assets/best-places-to-live-in-florida-2026.jpg";
+const blogImage13 = { url: blogImage13Url };
 
 const blogImage4 = { url: blogImage4Url };
 
