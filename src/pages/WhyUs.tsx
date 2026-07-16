@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, Check, Shield, Users, Zap, BarChart3, Award, Clock, Facebook, Linkedin, Instagram, Menu, User, ArrowUpRight } from "lucide-react";
-import tevelFounder from "@/assets/tevel-founder.webp";
+import tevelFounder from "@/assets/tevel-founder.jpeg.asset.json";
 import { Faq, type FaqItem } from "@/components/Faq";
 
 import { caseStudies } from "@/data/caseStudies";
