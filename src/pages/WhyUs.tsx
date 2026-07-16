@@ -292,7 +292,7 @@ export default function WhyUs() {
               <div className="flex flex-col items-center md:items-start">
                 <div className="h-64 w-64 overflow-hidden border bg-muted/30 sm:h-72 sm:w-72">
                   <img
-                    src={tevelFounder}
+                    src={tevelFounder.url}
                     alt="Tevel Herbstman, Founder & Managing Broker of United Estates Realty"
                     className="h-full w-full object-cover"
                     loading="lazy"
