@@ -2050,6 +2050,7 @@ export const blogPosts: BlogPost[] = [
 
   {
     slug: "100-commission-vs-traditional-split-2026",
+    // marker
     title: "100% Commission vs Traditional Split: 2026 Guide",
     description:
       "See what agents actually take home in 2026 after splits and fees. We compare 100% commission vs traditional brokerage models with real numbers and clear math.",
