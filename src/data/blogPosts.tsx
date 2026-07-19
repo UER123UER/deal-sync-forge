@@ -2048,10 +2048,6 @@ const FloridaCitiesArticle = () => (
 export const blogPosts: BlogPost[] = [
 
 
-
-  // placeholder marker
-
-
   {
     slug: "100-commission-vs-traditional-split-2026",
     title: "100% Commission vs Traditional Split: 2026 Guide",
