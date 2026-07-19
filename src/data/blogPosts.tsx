@@ -2382,6 +2382,23 @@ export const blogPosts: BlogPost[] = [
     content: <FloridaCitiesArticle />,
     faq: FLORIDA_CITIES_FAQ,
   },
+  {
+    slug: "how-to-generate-real-estate-leads-florida-2026",
+    title: "How to Generate Real Estate Leads in 2026: The Complete Guide for Florida Agents",
+    metaTitle: "How to Generate Real Estate Leads in Florida",
+    description:
+      "Struggling to build a consistent pipeline as a Florida agent in 2026? We break down the best lead generation strategies and tools top producers actually use today.",
+    excerpt:
+      "Florida agents who respond in five minutes and follow up five or more times convert leads 40% better. Here is the complete 2026 lead generation guide.",
+    date: "2026-07-19",
+    readMinutes: 10,
+    author: "United Estates Realty",
+    image: blogImage14.url,
+    imageAlt:
+      "Florida real estate agent following up on new leads inside a CRM dashboard on a laptop while holding a phone at a modern workspace with palm trees outside",
+    content: <LeadGenArticle />,
+    faq: LEAD_GEN_FAQ,
+  },
 ];
 
 
