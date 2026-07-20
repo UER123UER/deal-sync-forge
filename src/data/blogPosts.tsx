@@ -2510,6 +2510,23 @@ export const blogPosts: BlogPost[] = [
     content: <LeadGenArticle />,
     faq: LEAD_GEN_FAQ,
   },
+  {
+    slug: "best-100-commission-real-estate-brokerages-florida",
+    title: "Best 100% Commission Real Estate Brokerages in Florida",
+    metaTitle: "Best 100% Commission Real Estate Brokerages in Florida (2026)",
+    description:
+      "Compare Florida's top 100% commission real estate brokerages by fees, splits, and support to find the best fit for your production in 2026.",
+    excerpt:
+      "Not every 100% commission brokerage in Florida pays 100% from day one. Here's how the major players compare on fees, splits, and support.",
+    date: "2026-07-20",
+    readMinutes: 8,
+    author: "United Estates Realty",
+    image: blogImage15.url,
+    imageAlt:
+      "Florida real estate agent workspace with a laptop showing a brokerage comparison dashboard, calculator, and small model house with palm trees in the window",
+    content: <Best100Article />,
+    faq: BEST_100_FAQ,
+  },
 ];
 
 
