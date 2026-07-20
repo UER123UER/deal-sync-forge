@@ -2166,7 +2166,117 @@ const LeadGenArticle = () => (
   </>
 );
 
+const BEST_100_FAQ: FaqItem[] = [
+  {
+    question: 'What does "100% commission" actually mean at a Florida brokerage?',
+    answer:
+      "The agent keeps the entire commission earned on a closing instead of splitting it with the broker, and pays a flat fee instead of a percentage cut.",
+  },
+  {
+    question: "Are 100% commission brokerages legitimate in Florida?",
+    answer:
+      "Yes. Many established Florida brokerages, along with national brands like eXp Realty and Real Broker, use this model and are fully licensed through the Florida DBPR.",
+  },
+  {
+    question: "Is a 100% commission brokerage good for new agents?",
+    answer:
+      "It can work, but new agents should confirm how much training and mentor support is included, since many of these brokerages run virtually and expect agents to be self-directed.",
+  },
+  {
+    question: "How do you analyze a commercial real estate deal?",
+    answer:
+      "Start with net operating income, then factor in cap rate, financing terms, vacancy risk, and comparable sales before estimating return.",
+  },
+  {
+    question: "What is a good cap rate for commercial real estate?",
+    answer:
+      "It depends on property type and market, but many investors treat 5% to 8% as a reasonable range, with lower rates in stronger markets and higher rates reflecting higher risk.",
+  },
+];
+
+const Best100Article = () => (
+  <>
+    <P>
+      Florida has more licensed real estate agents per capita than almost any other state. That competition has pushed brokerages to rethink how they pay agents. The traditional 50/50 or 70/30 split is losing ground to a simpler model where agents keep the full commission and pay a flat fee instead. This guide breaks down what "100% commission" really means in Florida and how the major players compare.
+    </P>
+
+    <H2>What "100% Commission" Actually Means at a Florida Brokerage</H2>
+    <P>
+      A 100% commission brokerage allows an agent to keep the entire commission from a closing rather than splitting it with the broker. The agent pays a flat fee instead. On a $15,000 commission, a traditional 70/30 split leaves an agent with $10,500. At a true 100% brokerage, the agent keeps the full $15,000 and only pays a small flat fee on top.
+    </P>
+    <P>
+      Not every brand that markets itself this way pays 100% from day one. Some use a capped split where agents pay 80/20 or 85/15 until they hit an annual cap, then keep 100% for the rest of the year. Others run a hybrid model where agents choose between a flat fee plan and a split plan. Reading the fee schedule matters more than the marketing headline.
+    </P>
+
+    <H2>How to Evaluate a 100% Commission Brokerage in Florida</H2>
+    <P>Before signing with any brokerage, agents should look past the headline number and check a few things.</P>
+    <UL>
+      <li><strong>Fee structure.</strong> Ask for the full list of charges: monthly fee, transaction fee, E&amp;O fee, and startup cost. A brokerage that hesitates to put this in writing is a warning sign.</li>
+      <li><strong>Cap and reset terms.</strong> If the model is a capped split, confirm the cap amount and reset date. Low volume agents may never reach 100%.</li>
+      <li><strong>Software.</strong> A modern brokerage should include a CRM, transaction management, and marketing tools as part of the fee, not as costly add-ons.</li>
+      <li><strong>Support.</strong> Most brokerages run virtually, so ask how quickly agents can reach a broker for contract questions.</li>
+      <li><strong>License transfer.</strong> Switching brokerages in Florida is straightforward through DBPR, and a good brokerage should walk new agents through the paperwork.</li>
+    </UL>
+
+    <H2>Best 100% Commission Real Estate Brokerages in Florida</H2>
+    <div className="mt-6 overflow-x-auto">
+      <table className="w-full border-collapse text-sm">
+        <thead>
+          <tr className="border-b bg-muted/40 text-left text-foreground">
+            <th className="p-3 font-semibold">Brokerage</th>
+            <th className="p-3 font-semibold">Fee Structure</th>
+            <th className="p-3 font-semibold">Commission Model</th>
+            <th className="p-3 font-semibold">Best For</th>
+          </tr>
+        </thead>
+        <tbody className="text-muted-foreground">
+          <tr className="border-b"><td className="p-3 font-medium text-foreground">United Estates Realty</td><td className="p-3">$98 per month, $0 transaction fees</td><td className="p-3">True 100% from day one</td><td className="p-3">Any volume, one predictable fee</td></tr>
+          <tr className="border-b"><td className="p-3 font-medium text-foreground">Realnet Florida</td><td className="p-3">No monthly fee, flat closing fee</td><td className="p-3">True 100% from day one</td><td className="p-3">Tampa Bay, infrequent closers</td></tr>
+          <tr className="border-b"><td className="p-3 font-medium text-foreground">LoKation Real Estate</td><td className="p-3">Monthly plus transaction fee</td><td className="p-3">True 100% from day one</td><td className="p-3">Large statewide agent network</td></tr>
+          <tr className="border-b"><td className="p-3 font-medium text-foreground">Star Bay Realty</td><td className="p-3">Flat fee, varies by market</td><td className="p-3">True 100% from day one</td><td className="p-3">Miami, Tampa, Orlando metros</td></tr>
+          <tr className="border-b"><td className="p-3 font-medium text-foreground">Luxury Real Estate Group</td><td className="p-3">Flat transaction fee</td><td className="p-3">True 100% with optional add on</td><td className="p-3">Established, agent-first structure</td></tr>
+          <tr><td className="p-3 font-medium text-foreground">eXp Realty</td><td className="p-3">$85 monthly, capped split</td><td className="p-3">80/20 until $16,000 cap</td><td className="p-3">High volume, national brand</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <P>Fees change often, so agents should confirm current numbers with each brokerage before signing anything.</P>
+    <P>
+      <Internal to="/">United Estates Realty</Internal> sits apart from this list because the fee never changes with deal size, deal count, or season. Agents pay $98 a month and keep the full commission on every closing with no per-transaction charge on top. That structure works equally well for an agent closing two deals a year and one closing twenty.
+    </P>
+
+    <H2>Which Model Fits Your Business</H2>
+    <P>
+      High volume agents often do fine under a capped split brand since the cap stops mattering. Agents who close fewer deals, or want predictable overhead, tend to do better with a true flat fee model like <Internal to="/">United Estates Realty</Internal>, where there is no cap to chase and no per-transaction fee eating into a smaller check.
+    </P>
+    <P>
+      Newer agents should also weigh how much mentorship they need. Some brokerages offer strong training and mentor programs. Others expect agents to be self-sufficient. Ask about training before joining rather than assuming it exists.
+    </P>
+
+    <H2>How to Join a Florida 100% Commission Brokerage</H2>
+    <UL>
+      <li>Confirm the brokerage is actively licensed with the Florida DBPR.</li>
+      <li>Request the complete written fee schedule.</li>
+      <li>Ask about the software and CRM included with membership.</li>
+      <li>Complete license transfer paperwork with your current broker's release.</li>
+      <li>Set up your agent profile and start working deals under the new brokerage.</li>
+    </UL>
+
+    <section className="mt-16">
+      <Faq eyebrow="FAQ" heading="Frequently Asked Questions" items={BEST_100_FAQ} />
+    </section>
+
+    <H2>Final Thoughts</H2>
+    <P>
+      The 100% commission model is now the norm rather than the exception across Florida. The real difference between brokerages comes down to fee structure, not the headline percentage. Agents who compare the full fee schedule instead of the marketing claim keep more of what they earn.
+    </P>
+    <P>
+      <Internal to="/">United Estates Realty</Internal> offers one flat monthly fee, zero transaction fees, and full brokerage software from day one. See <Internal to="/pricing">pricing</Internal> or explore the <Internal to="/software">included software</Internal>.
+    </P>
+  </>
+);
+
 export const blogPosts: BlogPost[] = [
+
 
 
   {
