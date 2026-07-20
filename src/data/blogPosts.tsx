@@ -21,6 +21,7 @@ const blogImage12 = { url: blogImage12Url };
 import blogImage13Url from "@/assets/best-places-to-live-in-florida-2026.jpg";
 const blogImage13 = { url: blogImage13Url };
 import blogImage14 from "@/assets/how-to-generate-real-estate-leads-florida-2026.jpg.asset.json";
+import blogImage15 from "@/assets/best-100-commission-brokerages-florida-2026.jpg.asset.json";
 
 const blogImage4 = { url: blogImage4Url };
 
