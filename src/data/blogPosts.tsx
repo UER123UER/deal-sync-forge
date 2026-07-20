@@ -2167,8 +2167,6 @@ const LeadGenArticle = () => (
 );
 
 export const blogPosts: BlogPost[] = [
-const BEST_100_FAQ: FaqItem[] = [];
-export {};
 
 
   {
