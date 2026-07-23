@@ -2277,6 +2277,108 @@ const Best100Article = () => (
   </>
 );
 
+const SWITCH_BROKERAGE_FAQ: FaqItem[] = [
+  {
+    question: "What's a good commission split for a real estate agent in Florida?",
+    answer:
+      "Newer agents often start around 70/30 or 80/20 in exchange for support and mentorship. Experienced, high-volume agents typically move toward 90/10 or a true 100% commission model with a flat monthly fee, since a fixed split starts limiting income once production increases.",
+  },
+  {
+    question: "How do I switch real estate brokerages in Florida?",
+    answer:
+      "Review the current contract, choose a new brokerage, get released by the current broker, transfer the license through the DBPR, and update marketing and MLS profiles. Most digital license transfers complete within a few days.",
+  },
+  {
+    question: "Is there a penalty for switching brokerages in Florida?",
+    answer:
+      "The state does not penalize agents for switching. Any cost or notice requirement comes from the individual independent contractor agreement, so reading it beforehand matters more than any state rule.",
+  },
+  {
+    question: "Do agents lose their active listings when they switch brokerages?",
+    answer:
+      "Listings belong to the brokerage. A written release from the current broker and consent from the seller are both required to move an active listing to the new firm.",
+  },
+  {
+    question: "What happens to commissions on pending deals during a switch?",
+    answer:
+      "Pending transactions usually close through the original brokerage, with commission paid according to the agreement that was active when the contract was signed.",
+  },
+  {
+    question: "Can agents take their client database when they leave?",
+    answer:
+      "Contacts personally built by the agent generally stay with the agent. Leads generated through the brokerage's own systems or paid campaigns may be subject to the brokerage's ownership policy, so this should be confirmed in writing before the move.",
+  },
+];
+
+const SwitchBrokerageArticle = () => (
+  <>
+    <P>
+      Switching brokerages sounds bigger than it actually is. In Florida, the process comes down to a license transfer through the DBPR plus a plan for handling active listings and pending deals. Agents keep their clients and most of their listings when the move is handled correctly.
+    </P>
+    <P>This guide walks through the full process and what to expect at each step.</P>
+
+    <H2>How Do You Switch Real Estate Brokerages in Florida?</H2>
+    <P>
+      The move happens in five parts: reviewing the current contract, choosing a new brokerage, getting released by the current broker, transferring the license through the DBPR, and updating marketing and MLS profiles.
+    </P>
+    <P>
+      <strong>Step one: review the current agreement.</strong> Before anything else, agents should read their independent contractor agreement, active listing agreements, and any policy on fees owed or pending transactions. This shows what obligations exist and helps time the move around closings instead of during them.
+    </P>
+    <P>
+      <strong>Step two: choose the new brokerage.</strong> Compare commission structure, monthly and transaction fees, who covers E&amp;O insurance, and what software and support come included. Get the fee schedule in writing so the comparison reflects actual take-home pay, not a headline split.
+    </P>
+    <P>
+      <strong>Step three: get released by the current broker.</strong> The current broker deactivates the agent's license in the state system. Giving notice, settling anything owed, and confirming how pending files will be handled all happen here.
+    </P>
+    <P>
+      <strong>Step four: transfer the license through the DBPR.</strong> In Florida, a change in sponsoring broker runs through the Department of Business and Professional Regulation at myfloridalicense.com. Most digital transfers process within a few days once the new broker accepts the license. The new brokerage typically walks agents through this step.
+    </P>
+    <P>
+      <strong>Step five: update marketing and MLS profiles.</strong> Business cards, yard signs, email signatures, website listings, and the MLS office code all need updating so everything points to the new brokerage and stays compliant with Florida advertising rules.
+    </P>
+
+    <H2>Do Agents Lose Their Listings When Switching Brokerages?</H2>
+    <P>
+      Listings legally belong to the brokerage, not the individual agent. Moving an active listing requires written release from the current broker and written consent from the seller. Some brokers release listings without issue. Others require compensation or decline the transfer entirely, so agents should confirm the policy before giving notice.
+    </P>
+    <P>
+      If a listing does not transfer, another agent at the original brokerage may take over the marketing and sale. Discussing this possibility with sellers ahead of time avoids confusion later.
+    </P>
+
+    <H2>What Happens to Pending Deals and Commissions?</H2>
+    <P>
+      Transactions already under contract usually close through the brokerage where they originated. The commission is paid according to the agreement in place when the contract was signed, even if the closing happens after the move. Both brokerages should confirm this arrangement in writing to avoid any disputes at closing.
+    </P>
+
+    <H2>Is There a Penalty for Switching Brokerages in Florida?</H2>
+    <P>
+      Florida law does not penalize agents for switching brokerages. All costs come from the independent contractor agreement itself, not from the state. Some agreements include a notice period, a fee for early departure, or a clause about how commissions on pending deals are split. Reading the agreement before giving notice is the only way to avoid a surprise.
+    </P>
+
+    <H2>What Agents Should Look For in a New Brokerage</H2>
+    <P>
+      Beyond the commission split, agents should weigh monthly fees, transaction fees, included software, and how quickly a broker responds to questions. A detailed comparison of Florida's leading 100% commission brokerages, including fee structures side by side, is covered in our related guide on the <Internal to="/blog/best-100-commission-real-estate-brokerages-florida">best 100% commission brokerages in Florida</Internal>.
+    </P>
+
+    <H2>Common Mistakes Agents Make When Switching</H2>
+    <P>
+      Agents often give notice mid-transaction instead of waiting for a lull between closings. Others skip reading the fee schedule closely and get surprised by transaction fees on top of the monthly rate. A few forget to confirm E&amp;O coverage during the transition, leaving an insurance gap. Reviewing the checklist above before starting avoids all three.
+    </P>
+
+    <section className="mt-16">
+      <Faq eyebrow="FAQ" heading="Frequently Asked Questions" items={SWITCH_BROKERAGE_FAQ} />
+    </section>
+
+    <H2>Final Thoughts</H2>
+    <P>
+      Switching brokerages in Florida is mostly a paperwork and timing exercise, not a legal risk. Agents who review their contract, plan around their pipeline, and confirm the new fee schedule in writing protect their listings, their clients, and their income through the transition.
+    </P>
+    <P>
+      <Internal to="/">United Estates Realty</Internal> offers a straightforward switch, with a flat $98 monthly fee, zero transaction fees, and a team that handles the license transfer paperwork from day one.
+    </P>
+  </>
+);
+
 export const blogPosts: BlogPost[] = [
 
 
