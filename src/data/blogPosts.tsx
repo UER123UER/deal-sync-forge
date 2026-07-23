@@ -2632,6 +2632,23 @@ export const blogPosts: BlogPost[] = [
     content: <Best100Article />,
     faq: BEST_100_FAQ,
   },
+  {
+    slug: "how-to-switch-real-estate-brokerages-florida-2026",
+    title: "How to Switch Real Estate Brokerages in Florida Without Losing Your Listings or Clients",
+    metaTitle: "How to Switch Real Estate Brokerages in Florida (2026)",
+    description:
+      "Switching brokerages in Florida in 2026? Learn how to transfer your license, keep your listings and clients, and avoid pending-deal and fee surprises.",
+    excerpt:
+      "Switching brokerages in Florida is a paperwork and timing exercise, not a legal risk. Here's how to transfer your license and keep your listings and clients.",
+    date: "2026-07-22",
+    readMinutes: 8,
+    author: "United Estates Realty",
+    image: blogImage16.url,
+    imageAlt:
+      "Florida real estate agent transferring their license through the DBPR portal with a signed broker release, house keys, and a small model home on a bright workspace with palm trees in the window",
+    content: <SwitchBrokerageArticle />,
+    faq: SWITCH_BROKERAGE_FAQ,
+  },
 ];
 
 
