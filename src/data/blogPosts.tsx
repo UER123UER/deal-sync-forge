@@ -2278,7 +2278,6 @@ const Best100Article = () => (
 );
 
 export const blogPosts: BlogPost[] = [
-// SWITCH_BROKERAGES_MARKER
 
 
 
