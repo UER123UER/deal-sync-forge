@@ -2902,6 +2902,23 @@ export const blogPosts: BlogPost[] = [
     content: <TampaBrokeragesArticle />,
     faq: TAMPA_BROKERAGES_FAQ,
   },
+  {
+    slug: "best-100-commission-real-estate-brokerages-miami-2026",
+    title: "Best 100% Commission Real Estate Brokerages in Miami, FL in 2026",
+    metaTitle: "Best 100% Commission Brokerages in Miami FL 2026",
+    description:
+      "Compare Miami's top 100% commission real estate brokerages in 2026 by flat fees, per-deal costs, MLS coverage, and support to see what you actually keep.",
+    excerpt:
+      "Miami's average home value is $581,864 and commissions run 5.57%. Here's how the top 100% commission brokerages compare on fees, coverage, and support.",
+    date: "2026-07-28",
+    readMinutes: 8,
+    author: "United Estates Realty",
+    image: blogImage18.url,
+    imageAlt:
+      "Miami real estate agent workspace with a laptop showing a commission comparison dashboard, calculator, and notepad with the Brickell skyline and palm trees through the window",
+    content: <MiamiBrokeragesArticle />,
+    faq: MIAMI_BROKERAGES_FAQ,
+  },
 ];
 
 
