@@ -2496,6 +2496,125 @@ const TampaBrokeragesArticle = () => (
   </>
 );
 
+const MIAMI_BROKERAGES_FAQ: FaqItem[] = [
+  {
+    question: "Who is the best real estate broker in Miami?",
+    answer:
+      "There is no single best broker for every agent. Experienced high-volume agents tend to prefer a true flat fee model like United Estates Realty, while newer agents sometimes prioritize brokerages offering in-person mentorship such as Florida Realty of Miami.",
+  },
+  {
+    question: "Do these brokerages cover Fort Lauderdale and Broward too, or just Miami-Dade?",
+    answer:
+      "Most do. Florida real estate licenses are not limited to one county, so agents can typically work Fort Lauderdale, Broward, and Palm Beach under the same brokerage license used in Miami as long as MLS access is confirmed for each area.",
+  },
+  {
+    question: "What does a 100% commission brokerage cost in Miami?",
+    answer:
+      "Costs vary by brokerage, ranging from a flat monthly fee with no per-deal charge to a low monthly fee plus a few hundred dollars per closing. Compliance and MLS fees are often billed separately from the base brokerage fee.",
+  },
+  {
+    question: "Is a 100% commission brokerage good for new agents in Miami?",
+    answer:
+      "It can work, but new agents should confirm how much training and mentorship is actually included since Miami's market moves fast and some 100% commission brokerages expect agents to be fully self-directed.",
+  },
+  {
+    question: "How much do Miami agents actually keep per sale?",
+    answer:
+      "On Miami's average commission of 5.57% on a $581,864 home, an agent working one side of the deal keeps roughly $11,000 to $16,000 depending on the split, with a flat fee model keeping the higher end of that range.",
+  },
+];
+
+const MiamiBrokeragesArticle = () => (
+  <>
+    <P>
+      Miami's average home value sits at $581,864, and the average real estate commission across the metro runs 5.57%. On a single closing, that works out to roughly $32,411 in total commission before any split. That gap between a traditional split and a flat fee model is bigger in Miami than almost anywhere else in Florida and makes choosing the right brokerage worth real money here.
+    </P>
+    <P>This guide compares Miami's leading 100% commission brokerages on fees, coverage, and support.</P>
+
+    <H2>Why Miami Changes the Math on 100% Commission</H2>
+    <P>
+      A 100% commission brokerage charges a flat fee instead of taking a percentage of the deal. In a lower-priced market, the dollar savings are modest. In Miami, where a single commission check often exceeds $30,000, a flat monthly fee becomes a much smaller share of what an agent earns. A traditional 70/30 split on that same $32,411 commission costs an agent almost $9,700 per closing. A flat fee brokerage charges the same amount whether the check is $5,000 or $50,000.
+    </P>
+    <P>
+      Miami's market also behaves differently than the rest of Florida. International buyers make up a large share of transactions in the metro, many purchasing in cash, which shortens closing timelines but raises the stakes on getting paperwork right the first time. Luxury condo sales in Brickell, Edgewater, and Sunny Isles regularly push individual commissions well past the metro average, so the fee structure an agent chooses compounds faster here than in a market with more uniform pricing.
+    </P>
+    <P>
+      For a full breakdown of how the model works statewide, see our related guide on the{" "}
+      <Internal to="/blog/best-100-commission-real-estate-brokerages-florida">
+        best 100% commission brokerages in Florida
+      </Internal>
+      .
+    </P>
+
+    <H2>Best 100% Commission Brokerages in Miami</H2>
+    <P>
+      Several brokerages market themselves as 100% commission in South Florida, but the fee structure behind that claim varies widely. Some charge a low monthly rate plus a fee per closing. Others charge one flat monthly rate with nothing owed at the closing table. The table below breaks down how the leading options actually compare.
+    </P>
+    <div className="mt-6 overflow-x-auto">
+      <table className="w-full border-collapse text-sm">
+        <thead>
+          <tr className="border-b bg-muted/40 text-left text-foreground">
+            <th className="p-3 font-semibold">Brokerage</th>
+            <th className="p-3 font-semibold">Fee Structure</th>
+            <th className="p-3 font-semibold">Coverage Area</th>
+            <th className="p-3 font-semibold">Best For</th>
+          </tr>
+        </thead>
+        <tbody className="text-muted-foreground">
+          <tr className="border-b"><td className="p-3 font-medium text-foreground">United Estates Realty</td><td className="p-3">$98 flat per month, $0 transaction fees</td><td className="p-3">Statewide, including Miami-Dade</td><td className="p-3">Agents who want one predictable fee regardless of deal size</td></tr>
+          <tr className="border-b"><td className="p-3 font-medium text-foreground">Luxury Real Estate Group</td><td className="p-3">$25 per month, $149 per sale, $99 per rental</td><td className="p-3">Miami-Dade, Broward, Palm Beach, Orlando</td><td className="p-3">Experienced agents comfortable with a small per-deal fee</td></tr>
+          <tr className="border-b"><td className="p-3 font-medium text-foreground">Florida Realty of Miami</td><td className="p-3">Monthly fee plus training program</td><td className="p-3">Miami-Dade and South Florida</td><td className="p-3">Agents who want in-person mentorship and live classes</td></tr>
+          <tr><td className="p-3 font-medium text-foreground">LoKation Real Estate</td><td className="p-3">$99 monthly plus $99 per side, or $0 monthly with $499 per side</td><td className="p-3">Miami, Fort Lauderdale, statewide network</td><td className="p-3">Agents who want a large statewide brand with local offices</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <P>
+      Fees and terms change often, so agents should confirm current numbers directly with each brokerage before signing anything. Agents closing only one or two deals a year may find a pay-per-closing model like LoKation's Silver Plan cheaper overall. Agents closing several deals a month typically save more with a flat monthly fee that never grows alongside their production.
+    </P>
+
+    <H2>What Miami Agents Actually Keep Per Sale</H2>
+    <P>
+      On a $581,864 home at 5.57% total commission, the full commission is close to $32,411, typically split between listing and buyer side agents. Under a traditional 70/30 split, an agent working one side of that deal keeps about $11,344 after the broker's cut. Under a true 100% commission model with a flat monthly fee, that same agent keeps the full $16,205 on their side minus only the flat fee for that month. The higher the sale price, the more that difference compounds across a year of closings.
+    </P>
+    <P>
+      The gap grows quickly across multiple transactions. An agent closing eight deals a year at Miami's average price gives up roughly $39,000 in commission under a 70/30 split compared to a flat fee model charging a predictable <Internal to="/pricing">$98 a month</Internal>. That figure only grows in higher-priced segments like Miami Beach or Coconut Grove, where individual commissions can run two or three times the metro average.
+    </P>
+
+    <H2>Does Coverage Extend Beyond Miami-Dade?</H2>
+    <P>
+      Most 100% commission brokerages operating in Miami also serve Broward and Palm Beach counties since Florida license holders are not restricted to one county. Agents working in South Florida can typically list and close in Fort Lauderdale or West Palm Beach under the same brokerage license used in Miami. Confirm each brokerage's MLS access, since Miami-Dade, Broward, and Palm Beach run separate MLS systems even though membership can often be bundled together.
+    </P>
+
+    <H2>MLS Membership and Local Requirements</H2>
+    <P>
+      Agents working in Miami typically join the Miami Association of Realtors for MLS access, which also covers Broward, Palm Beach, Martin, and St. Lucie counties. Brokerages differ in whether this fee is included or billed separately, so this is worth confirming alongside the base commission structure before joining.
+    </P>
+    <P>
+      Some brokerages fold MLS dues into a single membership charge, while others pass the association fee through directly at cost. The difference can shift the real monthly cost by fifty dollars or more, so agents comparing brokerages should ask for the fully loaded number rather than the advertised headline fee alone.
+    </P>
+
+    <H2>What to Look For Beyond the Commission Split</H2>
+    <P>
+      Monthly fees and per transaction charges only tell part of the story. Agents should also weigh how quickly a broker responds to contract questions, what CRM and transaction software is included, and whether training is available for agents newer to the Miami market. A brokerage with a lower headline fee but slow support can cost more time than a flat fee brokerage saves in dollars.
+    </P>
+    <P>
+      It also helps to ask each brokerage directly about referral programs, E&O insurance handling, and whether <Internal to="/software">software access</Internal> continues at no extra cost as an agent's production grows. Some brokerages advertise a low base rate but add charges for CRM access, e-signature tools, or transaction coordination that push the real monthly cost well above the number on the pricing page.
+    </P>
+
+    <section className="mt-16">
+      <Faq eyebrow="FAQ" heading="Frequently Asked Questions" items={MIAMI_BROKERAGES_FAQ} />
+    </section>
+
+    <H2>Final Thoughts</H2>
+    <P>
+      Miami's higher average home price makes the 100% commission model more valuable per closing than almost anywhere else in Florida. Agents who compare the full fee schedule, confirm MLS coverage across South Florida, and check what support comes included end up keeping significantly more of what they earn.
+    </P>
+    <P>
+      <Internal to="/">United Estates Realty</Internal> offers a flat $98 monthly fee statewide, including Miami-Dade, with zero transaction fees on every closing.
+    </P>
+  </>
+);
+
 export const blogPosts: BlogPost[] = [
 
 
