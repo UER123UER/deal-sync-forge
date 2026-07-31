@@ -27,6 +27,7 @@ const blogImage16 = { url: blogImage16Url };
 import blogImage17Url from "@/assets/best-real-estate-brokerages-tampa-florida-2026.jpg";
 const blogImage17 = { url: blogImage17Url };
 import blogImage18 from "@/assets/best-100-commission-brokerages-miami-2026.jpg.asset.json";
+import blogImage19 from "@/assets/100-commission-part-time-agents-florida-2026.jpg.asset.json";
 
 const blogImage4 = { url: blogImage4Url };
 
@@ -2615,6 +2616,111 @@ const MiamiBrokeragesArticle = () => (
   </>
 );
 
+const PART_TIME_FAQ: FaqItem[] = [
+  {
+    question: "Is it legal to be a part-time real estate agent in Florida?",
+    answer:
+      "Yes. Florida does not require a minimum number of deals, hours, or income to keep a license active. Continuing education and an active brokerage affiliation are the only ongoing requirements.",
+  },
+  {
+    question: "Do 100% commission brokerages require minimum deals or hours?",
+    answer:
+      "Most do not set a formal minimum, but the fee structure often favors one volume level over another. Flat monthly fees suit high-volume agents better, while pay-per-deal fees suit low-volume agents better.",
+  },
+  {
+    question: "Are fees lower for part-time or low-volume agents?",
+    answer:
+      "They can be, depending on the plan. Pay-per-deal plans charge nothing until a closing happens, which usually costs less than a flat monthly fee for agents closing only one or two deals a year.",
+  },
+  {
+    question: "What is the break-even point between a monthly fee and a pay-per-deal plan?",
+    answer:
+      "It varies by brokerage, but many pay-per-deal plans are built for agents closing one or two deals a year, while flat monthly plans become cheaper once an agent closes three or more.",
+  },
+  {
+    question: "Do part-time agents get less support at a 100% commission brokerage?",
+    answer:
+      "Support level usually depends on the brokerage rather than how many hours an agent works. Part-time agents should ask specifically about mentorship and response times before joining.",
+  },
+  {
+    question: "Can a part-time agent still get full MLS and E&O coverage?",
+    answer:
+      "Yes. MLS access and E&O insurance apply the same way regardless of transaction volume, and part-time agents pay the same compliance fees as full-time agents at the same brokerage.",
+  },
+];
+
+const PartTimeAgentsArticle = () => (
+  <>
+    <P>
+      Florida does not require agents to work full time. A license stays active whether an agent closes twenty deals a year or two, as long as continuing education is completed on schedule. That reality changes the question part-time agents should ask before joining a brokerage. It is not whether 100% commission is a good model. It is whether it is the right fee structure at a low deal volume.
+    </P>
+    <P>
+      Part-time agents are a real and growing share of Florida's licensed workforce. Many hold a full-time job in another field, family care, or are testing real estate as a second career before committing fully. None of that changes what the state requires to keep a license active, but it does change which brokerage fee structure actually makes financial sense.
+    </P>
+    <P>This guide breaks down the real math behind that decision.</P>
+
+    <H2>Is It Legal to Be a Part-Time Real Estate Agent in Florida?</H2>
+    <P>
+      Yes. Florida's DBPR does not set a minimum number of transactions, hours worked, or income level to keep a license active. The only ongoing requirements are completing continuing education before renewal and maintaining an active brokerage affiliation. Many licensed agents in Florida work real estate alongside another job, and nothing in state law treats that differently from full-time practice.
+    </P>
+    <P>
+      This is different from some other states, where certain brokerage agreements or franchise rules push agents toward a minimum production level to stay affiliated. Florida leaves that decision entirely to the brokerage rather than the state, which means the fee structure an agent chooses matters more here than the license itself.
+    </P>
+
+    <H2>Do 100% Commission Brokerages Require Minimum Deals or Hours?</H2>
+    <P>
+      Most do not require a minimum, but the fee structure often assumes a certain volume. A flat monthly fee brokerage charges the same amount whether an agent closes one deal or twenty, which favors high-volume agents. A pay-per-deal brokerage charges nothing until a transaction closes, which favors low-volume agents. Reading the fee schedule closely reveals which model a brokerage is actually built around, even when no formal minimum is stated.
+    </P>
+
+    <H2>Are Fees Lower for Part-Time or Low-Volume Agents?</H2>
+    <P>
+      Not automatically, but the right plan can make the difference. LoKation Real Estate, for example, offers a pay-as-you-close Silver Plan built for agents closing one or two deals a year, charging $0 a month plus $499 per transaction side and a small annual fee. Its Blue Plan charges $99 a month plus $99 per side, and is built for agents closing three or more deals annually. Below that volume, the flat monthly fee costs more overall than paying per closing.
+    </P>
+    <P>
+      Brokerages design these tiers deliberately, since a part-time agent paying a flat fee every month regardless of activity is more likely to fall behind on payments during a slow stretch, then leave the brokerage altogether. A pay-per-deal structure keeps a part-time agent's costs tied directly to income, which tends to keep them active on the roster longer even during months with no closings at all.
+    </P>
+
+    <H2>The Break-Even Math Part-Time Agents Should Run</H2>
+    <P>
+      Compare a $0 monthly plan charging roughly $500 per deal against a flat monthly plan charging under $100 a month with a much smaller per-deal fee. At two closings a year, the pay-per-deal plan usually costs less overall, since there is no monthly charge accumulating during months with no activity. At three or more closings a year, the flat monthly plan often becomes cheaper, since the savings on the smaller per-deal fee outweigh the fixed monthly cost.
+    </P>
+    <P>
+      Running the actual numbers makes this concrete. A pay-per-deal plan at roughly $500 per side plus a small annual fee costs about $1,100 a year for two closings. A flat monthly plan at under $100 a month plus a small per-deal fee runs closer to $1,400 a year at that same volume, since the monthly charge accumulates whether or not a deal closes that month. Add a third closing and the totals begin to flip, since the monthly plan's smaller per-deal fee starts outweighing its fixed cost.
+    </P>
+    <P>
+      The exact crossover point depends on each brokerage's numbers, but the pattern holds across most 100% commission brokerages. Agents should ask directly how many deals they need to close before a flat monthly plan beats a pay-per-deal plan, rather than assuming one model is always cheaper. Running the numbers through a <Internal to="/commission-calculator">commission calculator</Internal> before signing makes the comparison concrete.
+    </P>
+
+    <H2>What Part-Time Agents Give Up and Gain</H2>
+    <P>
+      A 100% commission brokerage still expects agents to generate their own leads and manage their own transactions, regardless of how many hours they work. Part-time agents who need hands-on mentorship for their first few deals may find more structured support at a traditional brokerage instead. In exchange, part-time agents avoid paying a broker for split time they are not using, which matters more the fewer deals they close.
+    </P>
+    <P>
+      This tradeoff is worth naming clearly. A part-time agent balancing real estate against a full-time job or family responsibilities often has less time to chase down training on their own, which makes brokerage support more valuable per hour, not less. A brokerage that offers recorded training and on-demand resources instead of only live sessions tends to fit a part-time schedule better than one that requires attendance at set meeting times.
+    </P>
+    <P>
+      E&O insurance and MLS access do not change based on how many hours an agent works. Part-time agents pay the same compliance and MLS fees as full-time agents at the same brokerage, so those costs should be included in any comparison between plans.
+    </P>
+
+    <H2>What to Ask Before Choosing a Plan</H2>
+    <P>
+      Part-time agents evaluating a 100% commission brokerage should ask for the complete fee schedule in writing, confirm whether a pay-per-deal option exists, and calculate their own break-even point based on realistic yearly production. A brokerage that only offers a flat monthly plan may still be worth it if the fee is low enough, but the math should be run before signing rather than after the first slow year.
+    </P>
+
+    <section className="mt-16">
+      <Faq eyebrow="FAQ" heading="Frequently Asked Questions" items={PART_TIME_FAQ} />
+    </section>
+
+    <H2>Final Thoughts</H2>
+    <P>
+      A 100% commission brokerage can work well for a part-time Florida agent, but the fee structure matters more than the label. Agents who run the break-even math between a flat monthly plan and a pay-per-deal plan before signing avoid overpaying during their slowest months.
+    </P>
+    <P>
+      <Internal to="/">United Estates Realty</Internal> charges a flat <Internal to="/pricing">$98 monthly fee</Internal> with zero transaction fees, which works well for agents closing deals steadily throughout the year regardless of whether real estate is their full-time career.
+    </P>
+  </>
+);
+
 export const blogPosts: BlogPost[] = [
 
 
@@ -2918,6 +3024,23 @@ export const blogPosts: BlogPost[] = [
       "Miami real estate agent workspace with a laptop showing a commission comparison dashboard, calculator, and notepad with the Brickell skyline and palm trees through the window",
     content: <MiamiBrokeragesArticle />,
     faq: MIAMI_BROKERAGES_FAQ,
+  },
+  {
+    slug: "100-commission-brokerage-part-time-agents-florida-2026",
+    title: "Is a 100% Commission Brokerage Right for Part-Time Real Estate Agents in Florida?",
+    metaTitle: "100% Commission for Part-Time Florida Agents 2026",
+    description:
+      "Part-time Florida agent? See whether a 100% commission brokerage pays off at low deal volume, with break-even math on flat monthly vs pay-per-deal fee plans.",
+    excerpt:
+      "Florida sets no minimum deals to keep a license active. Here's the break-even math on flat monthly vs pay-per-deal fees at one, two, and three closings a year.",
+    date: "2026-07-31",
+    readMinutes: 7,
+    author: "United Estates Realty",
+    image: blogImage19.url,
+    imageAlt:
+      "Part-time Florida real estate agent's home workspace with a laptop showing a brokerage fee break-even chart, calculator, house keys, and palm trees outside the window",
+    content: <PartTimeAgentsArticle />,
+    faq: PART_TIME_FAQ,
   },
 ];
 
