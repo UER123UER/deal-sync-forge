@@ -27,6 +27,7 @@ const blogImage16 = { url: blogImage16Url };
 import blogImage17Url from "@/assets/best-real-estate-brokerages-tampa-florida-2026.jpg";
 const blogImage17 = { url: blogImage17Url };
 import blogImage18 from "@/assets/best-100-commission-brokerages-miami-2026.jpg.asset.json";
+import blogImage19 from "@/assets/100-commission-part-time-agents-florida-2026.jpg.asset.json";
 
 const blogImage4 = { url: blogImage4Url };
 
