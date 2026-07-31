@@ -3025,6 +3025,23 @@ export const blogPosts: BlogPost[] = [
     content: <MiamiBrokeragesArticle />,
     faq: MIAMI_BROKERAGES_FAQ,
   },
+  {
+    slug: "100-commission-brokerage-part-time-agents-florida-2026",
+    title: "Is a 100% Commission Brokerage Right for Part-Time Real Estate Agents in Florida?",
+    metaTitle: "100% Commission for Part-Time Florida Agents 2026",
+    description:
+      "Part-time Florida agent? See whether a 100% commission brokerage pays off at low deal volume, with break-even math on flat monthly vs pay-per-deal fee plans.",
+    excerpt:
+      "Florida sets no minimum deals to keep a license active. Here's the break-even math on flat monthly vs pay-per-deal fees at one, two, and three closings a year.",
+    date: "2026-07-31",
+    readMinutes: 7,
+    author: "United Estates Realty",
+    image: blogImage19.url,
+    imageAlt:
+      "Part-time Florida real estate agent's home workspace with a laptop showing a brokerage fee break-even chart, calculator, house keys, and palm trees outside the window",
+    content: <PartTimeAgentsArticle />,
+    faq: PART_TIME_FAQ,
+  },
 ];
 
 
