@@ -3026,7 +3026,7 @@ export const blogPosts: BlogPost[] = [
     faq: MIAMI_BROKERAGES_FAQ,
   },
   {
-    slug: "100-commission-brokerage-part-time-agents-florida-2026",
+    slug: "part-time-agents-100-commission-florida",
     title: "Is a 100% Commission Brokerage Right for Part-Time Real Estate Agents in Florida?",
     metaTitle: "100% Commission for Part-Time Florida Agents 2026",
     description:
