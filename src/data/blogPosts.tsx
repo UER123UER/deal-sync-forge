@@ -3167,6 +3167,23 @@ export const blogPosts: BlogPost[] = [
     content: <PartTimeAgentsArticle />,
     faq: PART_TIME_FAQ,
   },
+  {
+    slug: "moving-to-florida-real-estate-license-reciprocity",
+    title: "Moving to Florida as a Real Estate Agent: License Reciprocity and How to Join a Brokerage in 2026",
+    metaTitle: "Florida Real Estate License Reciprocity Guide (2026)",
+    description:
+      "Learn which states qualify for Florida real estate license reciprocity in 2026 and how to join a brokerage after moving.",
+    excerpt:
+      "Florida uses mutual recognition, not full reciprocity. See which ten states qualify, the nonresident rule that disqualifies agents, and how to pick a brokerage after the move.",
+    date: "2026-08-03",
+    readMinutes: 7,
+    author: "United Estates Realty",
+    image: blogImage20.url,
+    imageAlt:
+      "Moving boxes, a US map, house keys, and a real estate license document on a desk with palm trees outside a sunlit Florida window",
+    content: <FloridaReciprocityArticle />,
+    faq: FLORIDA_RECIPROCITY_FAQ,
+  },
 ];
 
 
