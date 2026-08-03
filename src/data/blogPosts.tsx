@@ -28,6 +28,8 @@ import blogImage17Url from "@/assets/best-real-estate-brokerages-tampa-florida-2
 const blogImage17 = { url: blogImage17Url };
 import blogImage18 from "@/assets/best-100-commission-brokerages-miami-2026.jpg.asset.json";
 import blogImage19 from "@/assets/100-commission-part-time-agents-florida-2026.jpg.asset.json";
+import blogImage20Url from "@/assets/moving-to-florida-real-estate-license-reciprocity.jpg";
+const blogImage20 = { url: blogImage20Url };
 
 const blogImage4 = { url: blogImage4Url };
 
@@ -2721,7 +2723,130 @@ const PartTimeAgentsArticle = () => (
   </>
 );
 
+const FLORIDA_RECIPROCITY_FAQ: FaqItem[] = [
+  {
+    question: "Does Florida have reciprocity with Georgia?",
+    answer:
+      "Yes. Georgia is one of the ten states with a current mutual recognition agreement, so a Georgia licensee who is not yet a Florida resident may qualify to skip the 63-hour course and take the Florida law exam instead.",
+  },
+  {
+    question: "Does Florida have reciprocity with California, Texas, or New York?",
+    answer:
+      "No. None of these states are on Florida's current mutual recognition list. Agents from these states should check endorsement eligibility or plan for the standard 63-hour licensing path.",
+  },
+  {
+    question: "How long does it take to transfer a real estate license to Florida?",
+    answer:
+      "A complete mutual recognition application typically takes four to six weeks to process, not counting the time needed to schedule and pass the Florida law exam.",
+  },
+  {
+    question: "What is the highest level of real estate?",
+    answer:
+      "Within a single brokerage, a broker is generally the highest license level, sitting above sales associate, since brokers can operate independently and supervise other agents.",
+  },
+  {
+    question: "How do I get a real estate license in the U.S.?",
+    answer:
+      "Requirements vary by state, but the general path includes completing state-approved pre-licensing education, passing a state exam, submitting an application and background check, and activating the license under a sponsoring broker.",
+  },
+  {
+    question: "Can a foreigner be a real estate agent in the U.S.?",
+    answer:
+      "Yes, in most states. U.S. citizenship is generally not required to hold a real estate license, though applicants typically need a valid Social Security number or taxpayer identification number and must meet the same education and exam requirements as any other applicant.",
+  },
+];
+
+const FloridaReciprocityArticle = () => (
+  <>
+    <P>
+      Florida gains hundreds of new residents every day, and a share of them are licensed agents hoping to keep working after the move. A Florida license does not simply transfer on request. The state uses a narrower process called mutual recognition, and it only applies to agents licensed in a specific list of states.
+    </P>
+    <P>
+      Agents relocating from a non-qualifying state still have options, but the process looks different and takes longer. Understanding which category applies before making moving plans saves time and money, since the wrong assumption can mean months of delay or a costlier licensing path.
+    </P>
+    <P>This guide covers who qualifies, what the process looks like, and what changes about choosing a brokerage after a move.</P>
+
+    <H2>Does Florida Offer License Reciprocity?</H2>
+    <P>
+      Florida does not offer full reciprocity in the traditional sense. Instead, it offers mutual recognition agreements with ten states. Agents licensed in one of those states can often skip Florida's 63-hour pre-licensing course and take a shorter Florida-specific law exam instead.
+    </P>
+    <P>
+      The ten mutual recognition states are Alabama, Arkansas, Connecticut, Georgia, Illinois, Kentucky, Mississippi, Nebraska, Rhode Island, and West Virginia. States like California, New York, Texas, and North Carolina are not on this list, so agents from those states cannot use this shortcut.
+    </P>
+    <P>
+      Qualifying for mutual recognition takes more than simply holding a license from one of these ten states. The license must have been earned through that state's own education and exam requirements, not through that state's own reciprocity process with a third state. An agent must also hold a valid, active license in good standing, and be at least 18 years old with a high school diploma or equivalent.
+    </P>
+    <P>
+      Some states that once had agreements no longer do. Colorado, Indiana, Oklahoma, and Tennessee all had mutual recognition with Florida in the past, and all four agreements have since ended. Any older article listing these four as current is outdated and should not be relied on.
+    </P>
+
+    <H2>The Nonresident Rule That Trips Up Many Agents</H2>
+    <P>
+      Mutual recognition only applies to agents who are not yet Florida residents at the time they apply. This single rule causes more delays than any other part of the process.
+    </P>
+    <P>
+      Agents who move first, get a Florida driver's license, and register to vote before applying often lose eligibility for the shortcut entirely. The safer order is to confirm eligibility and start the application while still living in and holding an active license from the qualifying state, then complete the move afterward.
+    </P>
+
+    <H2>The Florida Law Exam for Mutual Recognition</H2>
+    <P>
+      Agents who qualify for mutual recognition still need to pass a Florida-specific law exam covering state statutes, brokerage relationships, and FREC rules. The exam has 40 questions, and a score of 30 or higher, roughly 75%, is required to pass.
+    </P>
+    <P>
+      This exam is not a formality. Florida law differs from many other states on brokerage relationships, escrow handling, and disclosure rules, so agents should not assume their home state's rules will carry over directly. A short, focused prep course built around Florida statutes is usually enough, since the exam only covers Florida-specific material rather than general real estate concepts already tested in the original state.
+    </P>
+
+    <H2>What Happens If Your State Is Not on the List</H2>
+    <P>
+      Agents from non-qualifying states are not automatically stuck with the full 63-hour course. Two other paths exist first.
+    </P>
+    <P>
+      Endorsement is available to agents who have held an active sales associate or broker license in another state for at least five years, with that license active currently or within the last two years. Broker out-of-state experience allows agents with enough recent active experience to apply that history toward a Florida broker license. Agents who do not qualify for either of these fall back to the standard path: the 63-hour course, a background check, and the full sales associate exam. Our guide to{" "}
+      <Internal to="/blog/how-to-become-a-real-estate-agent-in-florida-2026">becoming a real estate agent in Florida</Internal>{" "}
+      walks through that standard path step by step.
+    </P>
+
+    <H2>Typical Costs and Timeline</H2>
+    <P>
+      Mutual recognition applicants should budget for an application fee, a fingerprinting fee, and the law exam fee, which together typically run under $200 combined, though exact amounts vary and should always be confirmed directly with the DBPR before applying. Processing a complete application generally takes four to six weeks, with the exam scheduling and pass timeline adding to that depending on how quickly an agent prepares.
+    </P>
+
+    <H2>Choosing a Brokerage After Moving to Florida</H2>
+    <P>
+      Relocating agents are effectively rebuilding a book of business in a new state, which changes what matters most in a brokerage. Local market knowledge, lead generation support, and flexible geographic coverage tend to matter more here than for an agent who already has an established local network.
+    </P>
+    <P>
+      A flat fee, 100% commission brokerage often suits relocating agents well, since income in the first several months after a move can be unpredictable. A brokerage that charges the same low monthly rate regardless of deal volume avoids adding pressure during a rebuilding period, unlike a percentage split that only pays off once production is already high.
+    </P>
+    <P>
+      Support and onboarding also carry more weight for a relocating agent than one already established locally. A newcomer benefits from a brokerage that explains local contract norms, disclosure requirements, and MLS setup clearly, rather than assuming every agent already knows the market.
+    </P>
+    <P>
+      Coverage also matters more for agents who are still deciding where in Florida to settle. A brokerage licensed to operate statewide gives a relocating agent room to work in Miami, Tampa, Orlando, or any other market without needing to switch brokerages again once a decision is made.
+    </P>
+
+    <H2>Common Mistakes Agents Make During the Move</H2>
+    <P>
+      The most common mistake is relying on an outdated reciprocity list that still includes a dissolved state like Tennessee or Indiana. Another is becoming a Florida resident before the application is filed, which can disqualify an otherwise eligible agent from mutual recognition. A third is assuming a license earned through another state's own reciprocity process qualifies, when Florida generally requires the license to have been earned through that state's original education and exam requirements.
+    </P>
+
+    <section className="mt-16">
+      <Faq eyebrow="FAQ" heading="Frequently Asked Questions" items={FLORIDA_RECIPROCITY_FAQ} />
+    </section>
+
+    <H2>Final Thoughts</H2>
+    <P>
+      Moving to Florida as a licensed agent does not have to mean starting over, but it does require checking the right path before assuming any shortcut applies. Agents who confirm their state's status, avoid becoming a Florida resident too early, and choose a brokerage built for flexibility set themselves up for a smoother transition.
+    </P>
+    <P>
+      <Internal to="/">United Estates Realty</Internal> offers a flat{" "}
+      <Internal to="/pricing">$98 monthly fee</Internal> with statewide coverage, giving relocating agents room to work anywhere in Florida while rebuilding their business.
+    </P>
+  </>
+);
+
 export const blogPosts: BlogPost[] = [
+
 
 
 
@@ -3041,6 +3166,23 @@ export const blogPosts: BlogPost[] = [
       "Part-time Florida real estate agent's home workspace with a laptop showing a brokerage fee break-even chart, calculator, house keys, and palm trees outside the window",
     content: <PartTimeAgentsArticle />,
     faq: PART_TIME_FAQ,
+  },
+  {
+    slug: "moving-to-florida-real-estate-license-reciprocity",
+    title: "Moving to Florida as a Real Estate Agent: License Reciprocity and How to Join a Brokerage in 2026",
+    metaTitle: "Florida Real Estate License Reciprocity Guide (2026)",
+    description:
+      "Learn which states qualify for Florida real estate license reciprocity in 2026 and how to join a brokerage after moving.",
+    excerpt:
+      "Florida uses mutual recognition, not full reciprocity. See which ten states qualify, the nonresident rule that disqualifies agents, and how to pick a brokerage after the move.",
+    date: "2026-08-03",
+    readMinutes: 7,
+    author: "United Estates Realty",
+    image: blogImage20.url,
+    imageAlt:
+      "Moving boxes, a US map, house keys, and a real estate license document on a desk with palm trees outside a sunlit Florida window",
+    content: <FloridaReciprocityArticle />,
+    faq: FLORIDA_RECIPROCITY_FAQ,
   },
 ];
 
