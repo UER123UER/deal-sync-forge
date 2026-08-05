@@ -3306,6 +3306,23 @@ export const blogPosts: BlogPost[] = [
     content: <FloridaReciprocityArticle />,
     faq: FLORIDA_RECIPROCITY_FAQ,
   },
+  {
+    slug: "best-real-estate-brokerage-florida-new-agents",
+    title: "Best Real Estate Brokerage in Florida for New Agents (2026)",
+    metaTitle: "Best Real Estate Brokerage in Florida for New Agents",
+    description:
+      "Compare training, mentorship, splits, and flat fees to find the best Florida real estate brokerage for new agents in 2026.",
+    excerpt:
+      "New agents need training and mentorship more than a headline split. Here's what actually separates a strong first Florida brokerage from a weak one in 2026.",
+    date: "2026-08-05",
+    readMinutes: 7,
+    author: "United Estates Realty",
+    image: blogImage21.url,
+    imageAlt:
+      "New real estate agent working at a bright Florida brokerage office with a CRM dashboard on a laptop and palm trees outside the window",
+    content: <NewAgentsBrokerageArticle />,
+    faq: NEW_AGENTS_FAQ,
+  },
 ];
 
 
