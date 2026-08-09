@@ -32,6 +32,8 @@ import blogImage20Url from "@/assets/moving-to-florida-real-estate-license-recip
 const blogImage20 = { url: blogImage20Url };
 import blogImage21Url from "@/assets/best-real-estate-brokerage-florida-new-agents-2026.jpg";
 const blogImage21 = { url: blogImage21Url };
+import blogImage22Url from "@/assets/best-100-commission-brokerage-florida-experienced-agents-2026.jpg";
+const blogImage22 = { url: blogImage22Url };
 
 const blogImage4 = { url: blogImage4Url };
 
