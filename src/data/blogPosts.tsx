@@ -34,6 +34,8 @@ import blogImage21Url from "@/assets/best-real-estate-brokerage-florida-new-agen
 const blogImage21 = { url: blogImage21Url };
 import blogImage22Url from "@/assets/best-100-commission-brokerage-florida-experienced-agents-2026.jpg";
 const blogImage22 = { url: blogImage22Url };
+import blogImage23Url from "@/assets/florida-real-estate-referral-agent-license-2026.jpg";
+const blogImage23 = { url: blogImage23Url };
 
 const blogImage4 = { url: blogImage4Url };
 
