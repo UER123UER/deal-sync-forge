@@ -3580,6 +3580,23 @@ export const blogPosts: BlogPost[] = [
     content: <HighProducerBrokerageArticle />,
     faq: HIGH_PRODUCER_FAQ,
   },
+  {
+    slug: "florida-real-estate-referral-agent-license-2026",
+    title: "Keeping Your Florida Real Estate License Active as a Referral Agent (2026)",
+    metaTitle: "Keep Your FL Real Estate License as a Referral Agent",
+    description:
+      "Learn how Florida agents keep their license active and earn referral income in 2026 without full-time sales.",
+    excerpt:
+      "Florida agents can keep an active license and earn referral income without listing or showing homes. Here's how the referral brokerage model works in 2026.",
+    date: "2026-08-13",
+    readMinutes: 8,
+    author: "United Estates Realty",
+    image: blogImage23.url,
+    imageAlt:
+      "Florida real estate agent's home workspace with a referral CRM dashboard, real estate license, house keys, and palm trees outside",
+    content: <ReferralAgentArticle />,
+    faq: REFERRAL_FAQ,
+  },
 ];
 
 
