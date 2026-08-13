@@ -3091,6 +3091,122 @@ const HighProducerBrokerageArticle = () => (
   </>
 );
 
+const REFERRAL_FAQ: FaqItem[] = [
+  {
+    question: "How do I earn a referral fee?",
+    answer:
+      "Place your license with a referral brokerage, introduce a buyer or seller from your network to an active agent, and receive a percentage of the commission, typically 20% to 35%, once the transaction closes.",
+  },
+  {
+    question: "What happens if I leave to sell real estate full-time?",
+    answer:
+      "Nothing prevents a return to full-time selling. Transfer the license to a traditional or flat-fee brokerage through the standard DBPR process, keeping the license active throughout the switch.",
+  },
+  {
+    question: "What is a referral brokerage?",
+    answer:
+      "A referral brokerage is a licensed Florida brokerage that lets agents keep their license active for the sole purpose of earning referral income, without listing property or handling transactions directly.",
+  },
+  {
+    question: "Why can't a referral go directly from one agent to another?",
+    answer:
+      "Florida law requires referral payments to flow through a licensed broker. This is why referral brokerages exist, providing the compliant structure and paperwork Florida law requires for a referral fee to be paid legally.",
+  },
+  {
+    question: "Do referral agents need MLS access or Realtor association membership?",
+    answer:
+      "No. Referral agents connect clients to a working agent rather than listing or showing property themselves, so MLS access and Realtor association membership are not required to place a referral.",
+  },
+  {
+    question: "How much does it cost to keep a license active as a referral agent?",
+    answer:
+      "Costs vary by brokerage, but referral-focused brokerages typically charge $100 to $300 a year, compared to $1,000 or more annually for Board and MLS dues at a traditional brokerage.",
+  },
+];
+
+const ReferralAgentArticle = () => (
+  <>
+    <P>
+      A real estate license does not stop having value the moment an agent stops listing and showing homes. Florida law simply requires that license to stay active and affiliated with a broker before any commission or referral fee can be paid. That single rule is what makes the referral agent model possible for agents stepping back from full production.
+    </P>
+    <P>
+      Agents let a license go inactive for plenty of reasons that have nothing to do with the value of their network. A demanding job outside real estate, a move out of state, retirement, or simply a season of life without time for showings and negotiations all lead to the same outcome without a referral option in place: a license sitting unused while dues and renewal deadlines keep coming.
+    </P>
+    <P>
+      This guide covers how referral income actually works, what it costs to stay active, and who the model fits best in 2026.
+    </P>
+
+    <H2>What Is a Referral Brokerage?</H2>
+    <P>
+      A referral brokerage is a licensed Florida brokerage built for agents who want to keep their license active without listing property, showing homes, or writing contracts. Instead, an agent introduces a buyer or seller from their network to a full-time agent in the right market, and collects a percentage of the commission once that transaction closes. No showings, no negotiations, and no ongoing client management are required after the introduction is made.
+    </P>
+    <P>
+      This differs from a traditional brokerage mainly in what the agent is expected to do day-to-day. A traditional brokerage assumes an agent is actively producing. A referral brokerage assumes an agent is contributing a network and a license, and nothing more.
+    </P>
+
+    <H2>Why Florida Requires an Active License for This</H2>
+    <P>
+      Florida sales associates must be registered under a licensed broker with the DBPR to legally receive a commission or referral fee. An inactive license cannot be compensated, regardless of who sent the lead or how informal the arrangement feels. This surprises agents who assume a referral to a friend or former client is simply a favor rather than compensated activity under state law.
+    </P>
+    <P>
+      Florida law also requires that referral payments flow through a licensed broker rather than agent to agent directly. This is why referral brokerages exist in the first place. They provide the compliant structure Florida law requires, along with paperwork handling and payment processing, in exchange for a portion of the referral fee.
+    </P>
+
+    <H2>How Do You Earn a Referral Fee?</H2>
+    <P>
+      The process is short. An agent places their license with a referral brokerage, identifies someone in their network who is buying, selling, or investing, and connects that person with an active agent through the brokerage's referral system. The working agent handles the entire transaction. Once it closes, the brokerage collects the commission, deducts its portion, and pays the referring agent their share.
+    </P>
+    <P>
+      Referral fees typically range from 20% to 35% of the working agent's commission, depending on the brokerage and how transaction-ready the lead is. On a $500,000 home sale with a 3% commission, that commission totals $15,000. At a 25% referral rate, the referring agent earns $3,750 before the brokerage's cut, which commonly runs another 20% of the referral itself, sometimes capped at a set dollar amount regardless of deal size. A single well-placed introduction can produce a four-figure payout with no further work involved.
+    </P>
+    <P>
+      The math tends to surprise agents who have been sitting on an inactive license out of habit. A handful of solid introductions across a year can outperform what a part-time agent nets after board dues, commission splits, and marketing spend, without the liability of representing a client directly or the pressure of weekend showings.
+    </P>
+
+    <H2>What Referral Agents Stop Paying For</H2>
+    <P>
+      Local Board of Realtors membership combined with MLS access commonly runs $1,000 to $1,500 or more a year in Florida, and those costs apply whether or not an agent closes a single deal. Referral-only brokerages remove both expenses, since referral agents do not need MLS access or Realtor association membership to place a referral.
+    </P>
+    <P>
+      Annual costs at a referral-focused brokerage typically run closer to $100 to $300, sometimes with no annual fee at all, which is a meaningful difference for an agent doing zero personal transactions in a given year.
+    </P>
+
+    <H2>Who the Referral Model Fits</H2>
+    <P>The referral model tends to work well for a specific set of agents rather than everyone with a license. Common examples include:</P>
+    <UL>
+      <li>Agents who are retired or semi-retired but still get asked for recommendations.</li>
+      <li>Licensees with a demanding career outside real estate.</li>
+      <li>Agents who relocated out of Florida but built their network there.</li>
+      <li>Newer agents who are not ready to commit to full-time selling yet.</li>
+      <li>Anyone paying Board and MLS dues year after year with little or nothing closing.</li>
+    </UL>
+    <P>
+      Geography matters less than most agents expect. A referral agent's license stays registered in Florida, but the agent can live anywhere in the country and still refer Florida-based clients, since the referral relationship runs through the brokerage rather than requiring physical presence in the state.
+    </P>
+
+    <H2>What Happens If an Agent Wants to Return to Full-Time Selling</H2>
+    <P>
+      Nothing about the referral model is permanent. An agent can move their license from a referral brokerage to a traditional or flat fee brokerage at any point, following the same DBPR license transfer process used for any brokerage change. The only requirement is maintaining an active license throughout the transition, since a lapsed or inactive license has to be reactivated before any commission, including a referral fee already in progress, can be paid out.
+    </P>
+    <P>
+      Agents who expect to return to active selling within a year or two should weigh this against a low-cost, full-service flat fee brokerage instead of a referral-only one. A brokerage that includes MLS access and transaction software alongside a flat fee gives the option to take an occasional listing personally, rather than referring every opportunity away while stepping back.
+    </P>
+
+    <section className="mt-16">
+      <Faq eyebrow="FAQ" heading="Frequently Asked Questions" items={REFERRAL_FAQ} />
+    </section>
+
+    <H2>Final Thoughts</H2>
+    <P>
+      A Florida real estate license does not have to sit inactive once an agent steps back from full production. A referral brokerage keeps the license active and compliant while turning an existing network into income, without the ongoing costs of Board membership or MLS access.
+    </P>
+    <P>
+      <Internal to="/">United Estates Realty</Internal> offers a flat{" "}
+      <Internal to="/pricing">$98 monthly fee</Internal> with full MLS and transaction software included, which works well for agents who want the option to take an occasional listing personally alongside referring the rest of their network elsewhere.
+    </P>
+  </>
+);
+
 export const blogPosts: BlogPost[] = [
 
 
