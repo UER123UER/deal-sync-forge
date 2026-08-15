@@ -36,6 +36,8 @@ import blogImage22Url from "@/assets/best-100-commission-brokerage-florida-exper
 const blogImage22 = { url: blogImage22Url };
 import blogImage23Url from "@/assets/florida-real-estate-referral-agent-license-2026.jpg";
 const blogImage23 = { url: blogImage23Url };
+import blogImage24Url from "@/assets/how-do-100-commission-brokerages-make-money-2026.jpg";
+const blogImage24 = { url: blogImage24Url };
 
 const blogImage4 = { url: blogImage4Url };
 
