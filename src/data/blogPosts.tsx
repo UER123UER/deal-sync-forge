@@ -3204,7 +3204,109 @@ const ReferralAgentArticle = () => (
     </P>
     <P>
       <Internal to="/">United Estates Realty</Internal> offers a flat{" "}
-      <Internal to="/pricing">$98 monthly fee</Internal> with full MLS and transaction software included, which works well for agents who want the option to take an occasional listing personally alongside referring the rest of their network elsewhere.
+      <Internal to="/pricing">$98 monthly fee</Internal> with zero transaction fees, funded the same way, through steady membership revenue rather than a cut of any single commission.
+    </P>
+  </>
+);
+
+const MAKE_MONEY_FAQ: FaqItem[] = [
+  {
+    question: "How do 100% commission brokerages make money if agents keep everything?",
+    answer:
+      "They charge a flat monthly fee, a flat fee per transaction, or both, instead of taking a percentage of every commission. That fixed revenue, collected across many agents, funds compliance, insurance, and support.",
+  },
+  {
+    question: "Do they also charge a monthly or annual fee on top of the transaction fee?",
+    answer:
+      "Some do. Fee structures vary by brokerage, with some charging only a flat monthly rate, others charging a per-transaction fee, and some combining both along with a small annual cap.",
+  },
+  {
+    question: "Why can 100% commission brokerages charge so little per deal?",
+    answer:
+      "Lower overhead is the main reason. Brokerages without physical offices, large administrative staff, or printed marketing materials can cover compliance and support costs at a lower price point than a traditional office-based brokerage.",
+  },
+  {
+    question: "Is a 100% commission brokerage less profitable for the broker than a split brokerage?",
+    answer:
+      "Not necessarily. The model trades a percentage of a few deals for a fixed fee across many agents, which can generate steady, predictable revenue at scale even though each individual transaction earns the brokerage less.",
+  },
+  {
+    question: "Do 100% commission brokerages still provide E&O insurance and compliance support?",
+    answer:
+      "Yes, at established brokerages. Errors and omissions coverage, often with limits around $1 million per claim, along with compliance oversight, is typically included as part of the flat fee rather than billed separately.",
+  },
+  {
+    question: "What happens if a flat fee brokerage does not have enough agents to cover its costs?",
+    answer:
+      "A brokerage without enough agent volume may start cutting support, adding new fees, or slowing down compliance response times. This is why checking a brokerage's stability and agent count before joining matters as much as comparing the fee itself.",
+  },
+];
+
+const BrokerageRevenueArticle = () => (
+  <>
+    <P>
+      Agents who keep every dollar of commission naturally wonder how the brokerage pays its own bills. It sounds too simple to work: a business giving away its main revenue source and staying open. The answer is straightforward once the model is broken down: the brokerage was never earning most of its money from the commission split in the first place.
+    </P>
+    <P>
+      This question comes up constantly during brokerage interviews, and for good reason. An agent who does not understand where the revenue comes from has no way to judge whether a brokerage's low fee is sustainable or a short-term pricing strategy that will change once enough agents have signed on. Understanding the actual business model removes the guesswork.
+    </P>
+    <P>
+      This guide explains exactly where the revenue comes from, what the fee actually pays for, and how to tell a sustainable flat fee brokerage from one quietly cutting corners.
+    </P>
+
+    <H2>Why the Split Was Never the Only Option</H2>
+    <P>
+      Roughly 75% of Realtors still work under a traditional commission split with their broker, according to National Association of Realtors data. That split, often 70/30 or 80/20, is how most brokerages fund training, office space, and staff. A 100% commission brokerage simply swaps that revenue source for something else entirely: a flat transaction fee, a flat monthly fee, or both, charged directly to the agent instead of taken out of the commission.
+    </P>
+    <P>
+      Both models exist for the same reason. The brokerage needs revenue to operate. The difference is whether that revenue comes as a percentage of every deal or as a fixed charge that does not move regardless of how large the sale is.
+    </P>
+
+    <H2>The Volume Math Behind the Model</H2>
+    <P>
+      A flat fee brokerage earns a smaller amount from each individual agent, but the model is built to work at scale. A brokerage charging under $100 a month per agent does not need many deals from any single agent to stay profitable, since the fee is due whether or not that agent closes a transaction that month. Spread across hundreds or thousands of licensed agents, that steady, predictable monthly revenue can outperform a smaller pool of agents on a percentage split, especially once the split brokerage's higher overhead is factored in.
+    </P>
+    <P>
+      A simple comparison shows why this holds up. A traditional brokerage with 50 agents on an 80/20 split depends heavily on those agents closing deals consistently, since the brokerage only gets paid when a sale happens. A flat fee brokerage with 500 agents at $98 a month collects roughly $49,000 in monthly revenue regardless of how many of those agents close a deal that month. The larger, more predictable base is the actual engine behind the model, not any single transaction.
+    </P>
+    <P>
+      This is also why flat fee brokerages tend to run leaner operations. Fewer physical offices, smaller administrative teams, and cloud-based systems all reduce the overhead a percentage split would otherwise need to cover.
+    </P>
+
+    <H2>What the Flat Fee Actually Pays For</H2>
+    <P>
+      The fee is not simply profit sitting untouched. It typically covers errors and omissions insurance, often with coverage limits in the range of $1 million per claim, along with compliance oversight, transaction management software, and support staff who answer contract and disclosure questions. These are not optional costs. Florida law requires active oversight of every agent's transactions, and that oversight has to be funded from somewhere.
+    </P>
+    <P>
+      E&O coverage alone illustrates the point well. A single claim without adequate coverage could cost an agent or brokerage far more than years of flat fees combined, which is why this line item exists regardless of how low the headline monthly rate looks. Brokerages that keep this fee low generally do so by eliminating costs a traditional office carries, such as physical desk space, in-person staff for every function, and printed marketing materials, rather than by cutting the support agents actually need.
+    </P>
+
+    <H2>Why Some Brokerages Charge So Little Per Deal</H2>
+    <P>
+      A brokerage operating with a smaller staff and no physical office has meaningfully lower costs to cover than one running multiple branch locations. Once that overhead is removed, the per-agent cost of providing compliance oversight and basic support drops significantly, which is what allows some flat fee brokerages to charge a lower monthly rate or per-transaction fee than others in the same market. Scale plays a role too, since a brokerage supporting a large number of agents can spread fixed costs, like software licensing and legal review, across a bigger base.
+    </P>
+
+    <H2>Do These Brokerages Charge Extra Fees Beyond the Basic Rate</H2>
+    <P>
+      Some do, some do not, and this is where agents should read the fee schedule closely before joining. A handful of brokerages combine a flat monthly fee with a separate per-transaction charge, an annual cap, or additional costs for services like e-signatures or extra MLS access. Others charge one flat monthly rate that covers everything with nothing added at closing. Neither structure is wrong, but agents should know exactly which one they are joining, since a low headline number can still add up once every line item is included.
+    </P>
+
+    <H2>Signs a Flat Fee Brokerage May Not Be Financially Stable</H2>
+    <P>
+      A brokerage that keeps adding new fees after an agent joins, one that is slow or unreachable when compliance questions come up, or one that cannot clearly explain its own fee structure during an interview are all signs worth taking seriously. A financially healthy flat fee brokerage should be able to explain simply where its revenue comes from, since the model itself is not complicated once laid out clearly.
+    </P>
+
+    <section className="mt-16">
+      <Faq eyebrow="FAQ" heading="Frequently Asked Questions" items={MAKE_MONEY_FAQ} />
+    </section>
+
+    <H2>Final Thoughts</H2>
+    <P>
+      A 100% commission brokerage is not giving anything away for free. It is simply collecting revenue differently, through a predictable fixed fee spread across many agents rather than a percentage taken from each deal. Understanding this makes the model easier to evaluate honestly, rather than assuming a hidden catch that does not actually exist.
+    </P>
+    <P>
+      <Internal to="/">United Estates Realty</Internal> charges a flat{" "}
+      <Internal to="/pricing">$98 monthly fee</Internal> with zero transaction fees, funded the same way, through steady membership revenue rather than a cut of any single commission.
     </P>
   </>
 );
