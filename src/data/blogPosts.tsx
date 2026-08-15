@@ -3701,6 +3701,23 @@ export const blogPosts: BlogPost[] = [
     content: <ReferralAgentArticle />,
     faq: REFERRAL_FAQ,
   },
+  {
+    slug: "how-do-100-commission-brokerages-make-money",
+    title: "How Do 100% Commission Brokerages Make Money If Agents Keep Everything?",
+    metaTitle: "How Do 100% Commission Brokerages Make Money?",
+    description:
+      "Learn how 100% commission real estate brokerages make money in 2026 through flat monthly fees, transaction fees, and volume-based revenue models.",
+    excerpt:
+      "Agents who keep every commission wonder how the brokerage stays open. Here's the actual revenue model behind 100% commission brokerages in 2026.",
+    date: "2026-08-15",
+    readMinutes: 8,
+    author: "United Estates Realty",
+    image: blogImage24.url,
+    imageAlt:
+      "Real estate business model comparison on a laptop screen showing flat monthly fee versus commission split, with a model house, calculator, and closing documents on a Florida office desk with palm trees outside",
+    content: <BrokerageRevenueArticle />,
+    faq: MAKE_MONEY_FAQ,
+  },
 ];
 
 
