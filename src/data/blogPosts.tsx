@@ -3831,6 +3831,23 @@ export const blogPosts: BlogPost[] = [
     content: <BrokerageRevenueArticle />,
     faq: MAKE_MONEY_FAQ,
   },
+  {
+    slug: "build-real-estate-team-100-commission-florida",
+    title: "How to Build a Real Estate Team Under a 100% Commission Brokerage in Florida",
+    metaTitle: "Build a Real Estate Team Under 100% Commission in FL",
+    description:
+      "Learn how to legally build a Florida real estate team under a 100% commission brokerage, from agreements to commission splits.",
+    excerpt:
+      "Florida real estate teams need two agreements and a clear commission structure. Here's how to build one under a 100% commission brokerage in 2026.",
+    date: "2026-08-18",
+    readMinutes: 9,
+    author: "United Estates Realty",
+    image: blogImage25.url,
+    imageAlt:
+      "Florida real estate team meeting around a conference table with a team commission structure chart, CRM dashboards, and palm trees outside the office windows",
+    content: <TeamBuildingArticle />,
+    faq: TEAM_BUILD_FAQ,
+  },
 ];
 
 
