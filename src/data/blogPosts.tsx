@@ -38,6 +38,8 @@ import blogImage23Url from "@/assets/florida-real-estate-referral-agent-license-
 const blogImage23 = { url: blogImage23Url };
 import blogImage24Url from "@/assets/how-do-100-commission-brokerages-make-money-2026.jpg";
 const blogImage24 = { url: blogImage24Url };
+import blogImage25Url from "@/assets/build-real-estate-team-100-commission-florida-2026.jpg";
+const blogImage25 = { url: blogImage25Url };
 
 const blogImage4 = { url: blogImage4Url };
 
@@ -3311,6 +3313,117 @@ const BrokerageRevenueArticle = () => (
   </>
 );
 
+const TEAM_BUILD_FAQ: FaqItem[] = [
+  {
+    question: "Can I legally own my own team without becoming a broker myself?",
+    answer:
+      "Yes. A sales associate can lead a team without holding a broker license, since Florida law keeps formal supervisory authority with the broker. Team leadership itself is a business and marketing role, not a licensing requirement.",
+  },
+  {
+    question: "Do I need an LLC to run a real estate team in Florida?",
+    answer:
+      "Not strictly, but many team leaders form an LLC or professional association for liability protection, branding, and tax purposes. Commission payments still must flow through the licensed broker regardless of any LLC structure in place.",
+  },
+  {
+    question: "Can I offer my team members 100% commission too, or just myself?",
+    answer:
+      "Each licensed agent, including team members, can hold their own individual membership with a 100% commission brokerage. Any commission sharing within the team is a separate agreement negotiated directly between the team leader and team members.",
+  },
+  {
+    question: "How many transactions do you need before starting a real estate team?",
+    answer:
+      "There is no legal minimum, but a common benchmark is around 40 transactions a year, since that volume often exceeds what a solo agent can comfortably manage alone.",
+  },
+  {
+    question: "What agreements are legally required to document a Florida real estate team?",
+    answer:
+      "Two agreements are typically used: one between the team leader and team members covering commission splits and roles, and a three-party agreement with the broker documenting supervisory authority and the team's commission structure.",
+  },
+  {
+    question: "Who supervises a real estate team in Florida, the team leader or the broker?",
+    answer:
+      "The broker. Florida Real Estate Commission rules only allow a licensed broker to formally supervise agents, regardless of how a team is structured or branded internally.",
+  },
+];
+
+const TeamBuildingArticle = () => (
+  <>
+    <P>
+      Building a real estate team looks straightforward from the outside: a top producer recruits a few agents, splits the leads, and everyone closes more deals together. The legal structure behind it is more specific than that, and Florida's rules shape exactly how a team can operate, regardless of which brokerage an agent belongs to.
+    </P>
+    <P>
+      Interest in team structures has grown alongside the rise of flat-fee brokerages, since agents keeping their full commission often have more room to reinvest in building something larger than a solo practice. That growth makes it worth understanding the legal framework clearly before recruiting a single team member.
+    </P>
+    <P>
+      This guide covers what Florida law actually requires, when a team makes sense, and how team building works alongside a flat fee, 100% commission brokerage.
+    </P>
+
+    <H2>The Florida Legal Reality Behind Team Structures</H2>
+    <P>
+      Florida Real Estate Commission rules only allow a licensed broker to supervise agents. A sales associate, no matter how experienced or how many agents work under their brand, cannot legally supervise another sales associate the way a broker does. This means a real estate team is a business and marketing structure layered on top of the brokerage relationship, not a separate supervisory arrangement.
+    </P>
+    <P>
+      In practice, this changes very little about how teams actually operate day-to-day. A team leader still manages leads, sets goals, and coaches team members. What stays with the broker is the formal compliance and supervisory authority required under Florida law.
+    </P>
+
+    <H2>The Two Agreements Every Florida Team Needs</H2>
+    <P>
+      Florida real estate teams are typically documented with two separate agreements, and skipping either one creates real risk.
+    </P>
+    <P>
+      <strong>The team member agreement.</strong> This is between the team leader and each team member. It covers commission splits within the team, each person's role, and often includes noncompete or nondisclosure terms to protect the team's systems and client relationships. This agreement is where most day-to-day expectations get set, including how leads are distributed and what happens if a team member leaves.
+    </P>
+    <P>
+      <strong>The broker agreement.</strong> This is a three-party agreement between the broker, the team leader, and the team members. It documents that the broker retains supervisory authority over every transaction, and it addresses how the team's commission arrangement fits within the brokerage's own structure. Without this second agreement in place, the team's internal commission split has no formal recognition at the brokerage level, which can create confusion at closing.
+    </P>
+    <P>
+      Both agreements should be drafted or reviewed by an attorney familiar with Florida real estate law. A poorly written noncompete or commission clause can become unenforceable exactly when it matters most, since Florida courts interpret these provisions strictly.
+    </P>
+
+    <H2>When Building a Team Actually Makes Sense</H2>
+    <P>
+      A common benchmark is around 40 transactions a year, since most solo agents reach a practical ceiling somewhere between 50 and 60 closings before quality and client service start to suffer. An agent approaching that volume, and turning away leads simply due to lack of time, is often a stronger candidate for a team than one still building toward consistent production.
+    </P>
+    <P>
+      Team leadership is also a different job than solo production. A team leader spends more time on lead generation, systems, and coaching, and less time personally handling every showing and negotiation. Agents who enjoy that shift tend to build stronger teams than those who take on a team mainly to boost their own closing count.
+    </P>
+
+    <H2>Systems a Florida Team Needs From Day One</H2>
+    <P>
+      A functioning team needs more than a shared name and a split sheet. Core systems typically include a CRM for tracking leads and clients, a transaction management system for keeping every file compliant, a marketing and branding plan, and financial reporting to track team profitability separately from any individual agent's production. Smaller two- or three-person teams do not need every system fully built out immediately, but growth quickly exposes any gaps left unaddressed early on.
+    </P>
+
+    <H2>How 100% Commission Fits Into a Team Structure</H2>
+    <P>
+      A flat fee brokerage membership and a team commission agreement operate on two separate levels. Each licensed agent, whether a team leader or a team member, typically holds their own individual membership with the brokerage, paying the same flat monthly fee and keeping the full commission the brokerage itself would otherwise take a percentage of. What the team leader and team members negotiate separately is how commission gets shared within the team itself, based on lead source, role in the transaction, and the terms in the team member agreement.
+    </P>
+    <P>
+      This means a 100% commission brokerage does not automatically extend to every dollar a team member earns. A team member may still share a portion of their commission with the team leader under the team agreement, even while both remain on a 100% commission plan with the brokerage itself. The two arrangements are independent of each other, which is a distinction that surprises agents joining their first team.
+    </P>
+    <P>
+      Understanding this separation up front avoids a common source of confusion. A team member should not assume that joining a 100% commission brokerage means keeping every dollar personally, since the team's internal split still applies on top of whatever the brokerage itself charges or does not charge.
+    </P>
+
+    <H2>What to Ask a Brokerage Before Building a Team There</H2>
+    <P>
+      Not every 100% commission brokerage is built with team growth in mind. Before committing, ask whether the brokerage supports shared branding, team-specific reporting, and multiple agents operating under one recognizable name. Confirm how the brokerage's own fee structure applies to each team member individually, since some flat fee models charge per agent regardless of team affiliation, while others offer adjusted terms for larger teams.
+    </P>
+
+    <section className="mt-16">
+      <Faq eyebrow="FAQ" heading="Frequently Asked Questions" items={TEAM_BUILD_FAQ} />
+    </section>
+
+    <H2>Final Thoughts</H2>
+    <P>
+      Building a real estate team in Florida is a business decision layered on top of a legal structure that never changes: the broker remains the supervisory authority, no matter how a team brands or organizes itself. Agents who document their team agreements properly and understand how team commission splits work alongside their individual brokerage membership avoid the disputes that undo poorly structured teams.
+    </P>
+    <P>
+      <Internal to="/">United Estates Realty</Internal> offers a flat{" "}
+      <Internal to="/pricing">$98 monthly fee per agent</Internal>, giving team leaders and team members alike a predictable, individual cost while they build their own commission structure within the team.
+    </P>
+  </>
+);
+
 export const blogPosts: BlogPost[] = [
 
 
@@ -3717,6 +3830,23 @@ export const blogPosts: BlogPost[] = [
       "Real estate business model comparison on a laptop screen showing flat monthly fee versus commission split, with a model house, calculator, and closing documents on a Florida office desk with palm trees outside",
     content: <BrokerageRevenueArticle />,
     faq: MAKE_MONEY_FAQ,
+  },
+  {
+    slug: "build-real-estate-team-100-commission-florida",
+    title: "How to Build a Real Estate Team Under a 100% Commission Brokerage in Florida",
+    metaTitle: "Build a Real Estate Team Under 100% Commission in FL",
+    description:
+      "Learn how to legally build a Florida real estate team under a 100% commission brokerage, from agreements to commission splits.",
+    excerpt:
+      "Florida real estate teams need two agreements and a clear commission structure. Here's how to build one under a 100% commission brokerage in 2026.",
+    date: "2026-08-18",
+    readMinutes: 9,
+    author: "United Estates Realty",
+    image: blogImage25.url,
+    imageAlt:
+      "Florida real estate team meeting around a conference table with a team commission structure chart, CRM dashboards, and palm trees outside the office windows",
+    content: <TeamBuildingArticle />,
+    faq: TEAM_BUILD_FAQ,
   },
 ];
 
