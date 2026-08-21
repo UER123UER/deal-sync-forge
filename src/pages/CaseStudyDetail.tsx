@@ -47,6 +47,7 @@ export default function CaseStudyDetail() {
         title={`${study.headlineResult} — ${study.agentName}, ${study.city} | United Estates Realty`}
         description={study.summary.slice(0, 160)}
         path={`/case-studies/${study.slug}`}
+        ogType="article"
         structuredData={articleSchema}
       />
 

@@ -55,6 +55,7 @@ export default function BlogArticle() {
         description={post.description}
         path={`/blog/${post.slug}`}
         image={post.image}
+        ogType="article"
         structuredData={articleSchema}
       />
 
