@@ -4096,6 +4096,23 @@ export const blogPosts: BlogPost[] = [
     content: <BrokerageProvideArticle />,
     faq: BROKERAGE_PROVIDE_FAQ,
   },
+  {
+    slug: "florida-only-vs-multi-state-brokerages-2026",
+    title: "Florida-Only vs. Multi-State Real Estate Brokerages: What Agents Should Know in 2026",
+    metaTitle: "Florida-Only vs Multi-State Brokerages: 2026 Guide",
+    description:
+      "Learn how state-by-state licensing works and whether a Florida-only or multi-state brokerage fits your business in 2026.",
+    excerpt:
+      "Real estate licensing is state by state, not national. Here's what Florida agents should know when comparing Florida-only brokerages to multi-state brands in 2026.",
+    date: "2026-08-26",
+    readMinutes: 9,
+    author: "United Estates Realty",
+    image: blogImage27.url,
+    imageAlt:
+      "Florida map highlighted in gold next to a laptop showing multi-state real estate licensing websites on a modern desk with palm tree shadows",
+    content: <FloridaMultiStateArticle />,
+    faq: FLORIDA_MULTI_STATE_FAQ,
+  },
 ];
 
 
