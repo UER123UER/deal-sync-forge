@@ -42,6 +42,8 @@ import blogImage25Url from "@/assets/build-real-estate-team-100-commission-flori
 const blogImage25 = { url: blogImage25Url };
 import blogImage26Url from "@/assets/what-should-brokerage-provide-agents-2026.jpg";
 const blogImage26 = { url: blogImage26Url };
+import blogImage27Url from "@/assets/florida-only-vs-multi-state-brokerages-2026.jpg";
+const blogImage27 = { url: blogImage27Url };
 
 const blogImage4 = { url: blogImage4Url };
 
