@@ -4230,7 +4230,25 @@ export const blogPosts: BlogPost[] = [
     content: <FloridaMultiStateArticle />,
     faq: FLORIDA_MULTI_STATE_FAQ,
   },
+  {
+    slug: "how-to-become-real-estate-broker-florida-2026",
+    title: "How to Become a Real Estate Broker in Florida: The Path From Agent to Broker",
+    metaTitle: "How to Become a Real Estate Broker in Florida (2026)",
+    description:
+      "A step-by-step 2026 guide to Florida broker licensing, from the 24-month rule to the exam and total cost.",
+    excerpt:
+      "Florida brokers start as sales associates. Here's the complete 2026 path from the 24-month experience rule through the 72-hour course, exam, and license activation.",
+    date: "2026-08-29",
+    readMinutes: 10,
+    author: "United Estates Realty",
+    image: blogImage28.url,
+    imageAlt:
+      "Professional Florida real estate broker holding a broker license certificate next to a laptop showing the Florida DBPR website and a 72-hour course completion document",
+    content: <FloridaBrokerArticle />,
+    faq: FLORIDA_BROKER_FAQ,
+  },
 ];
+
 
 
 export function getBlogPost(slug: string): BlogPost | undefined {
