@@ -3658,7 +3658,121 @@ const FloridaMultiStateArticle = () => (
   </>
 );
 
+const FLORIDA_BROKER_FAQ: FaqItem[] = [
+  {
+    question: "How long do I need to be a licensed agent before becoming a broker in Florida?",
+    answer:
+      "At least 24 months of active sales associate licensure within the five years before applying. The 24 months do not need to be continuous or recent, only within that five-year window.",
+  },
+  {
+    question: "Does experience in another state count toward the 24-month requirement?",
+    answer:
+      "Often, yes, if the out-of-state license is considered equivalent. This is evaluated on a case-by-case basis, so confirming directly with the DBPR before applying is worthwhile.",
+  },
+  {
+    question: "Does Florida offer mutual recognition for out-of-state broker licenses?",
+    answer:
+      "Yes. Qualifying applicants from mutual recognition states can have broker education and experience requirements waived, but still must pass Florida's broker-level law exam.",
+  },
+  {
+    question: "How much does it cost to become a broker in Florida?",
+    answer:
+      "Most candidates spend $350 to $600 total, covering the pre-licensing course, application fee, fingerprinting, and post-licensing coursework.",
+  },
+  {
+    question: "How long does the process take from start to finish?",
+    answer:
+      "Excluding the required 24 months of prior experience, most candidates complete the remaining steps in two to six months.",
+  },
+  {
+    question: "What score is needed to pass the Florida broker exam?",
+    answer:
+      "A score of 75% or higher on the 100-question exam, which must be completed within a 3.5-hour time limit.",
+  },
+];
+
+const FloridaBrokerArticle = () => (
+  <>
+    <P>
+      Every Florida real estate broker started out as a licensed sales associate. Becoming a broker is not a separate career; it is the next license tier available to any agent who meets the experience requirement and completes the additional coursework. It opens the door to hiring agents, running an independent firm, or simply gaining more control without a sponsoring broker involved.
+    </P>
+    <P>
+      Florida keeps this path more accessible than many other states, with no advanced degree requirement and no residency requirement standing in the way. What it does require is real, verifiable experience as a licensed sales associate first, since the state expects a new broker to already understand the business before supervising anyone else in it.
+    </P>
+    <P>
+      This guide covers exactly what Florida requires, how long the process takes, and what changes once the license is active.
+    </P>
+
+    <H2>Who Is Eligible to Become a Florida Broker</H2>
+    <P>
+      Florida keeps its broker requirements simpler than most states. An applicant must be at least 18 years old, hold a high school diploma or equivalent, and have held an active real estate sales associate license for at least 24 months within the preceding five years. Florida residency is not required, and there is no cap on how long an agent can wait before applying once that 24-month threshold is met.
+    </P>
+
+    <H2>The Six Steps to a Florida Broker License</H2>
+    <P>
+      <strong>Step one: confirm the experience requirement.</strong> The 24 months of active licensure does not need to be continuous, and does not need to be recent, as long as it falls within the five years before applying.
+    </P>
+    <P>
+      <strong>Step two: complete the 72-hour broker pre-licensing course.</strong> This is more than double the 63-hour course required for the original sales associate license. It covers real estate law, office and agent management, real estate math, and investment and property analysis, all at a level built for someone about to supervise others rather than work under supervision. FREC maintains a list of approved course providers, and the course remains valid for up to two years after completion, so timing it close to the application matters.
+    </P>
+    <P>
+      <strong>Step three: submit the application to FREC.</strong> This includes proof of experience, proof of completed coursework, a criminal background check, and electronic fingerprints through an approved Live Scan vendor. The application fee runs close to $92. Applicants with a bachelor's degree or higher specifically in real estate may qualify for an exemption from the pre-licensing education requirement, provided a certified transcript is submitted with the application.
+    </P>
+    <P>
+      <strong>Step four: pass the Florida broker exam.</strong> The exam is administered through Pearson VUE and consists of 100 multiple-choice questions with a 3.5-hour time limit. A score of 75% or higher is required to pass, and study guides built specifically around the broker-level curriculum tend to outperform general real estate prep material, since the broker exam tests management and investment concepts the sales associate exam does not cover.
+    </P>
+    <P>
+      <strong>Step five: activate the license.</strong> Passing the exam results in an inactive broker license. Submitting the DBPR's activation request moves it to active status, allowing the new broker to begin operating.
+    </P>
+    <P>
+      <strong>Step six: complete post-licensing education.</strong> Newly licensed brokers must complete 60 hours of post-licensing coursework during their first renewal cycle, covering brokerage management and investment topics in more depth than the pre-licensing course.
+    </P>
+
+    <H2>How Much Does It Cost</H2>
+    <P>
+      Most candidates spend between $350 and $600 total. The broker pre-licensing course typically runs $250 to $350, the application fee is close to $92, fingerprinting runs around $50, and the post-licensing course adds roughly $150 more. Exam prep materials and any retake fees are additional if needed.
+    </P>
+
+    <H2>How Long the Process Actually Takes</H2>
+    <P>
+      Excluding the 24 months of required experience, most candidates complete the remaining steps in two to six months. The 72-hour course typically takes one to two months depending on pace; fingerprinting and application processing take two to three weeks, and exam scheduling and preparation add another two to four weeks. Choosing a self-paced online course and scheduling the exam as soon as eligible is the fastest path through this timeline.
+    </P>
+
+    <H2>Does Out-of-State Experience Count Toward the 24 Months</H2>
+    <P>
+      Often, yes. Active sales experience earned under an equivalent license in another state can count toward Florida's 24-month requirement, though this should be confirmed directly with the DBPR based on the specific state and license type involved, since equivalency is evaluated case by case.
+    </P>
+
+    <H2>Mutual Recognition for Out-of-State Brokers</H2>
+    <P>
+      Florida's mutual recognition agreements, the same ones that apply to sales associate licensing, extend to broker licensing as well. Qualifying applicants from states with an active agreement can have Florida's broker education and experience requirements waived, but they still must pass the same Florida-specific law exam required of any mutual recognition applicant. This does not exempt an out-of-state broker from Florida's exam standards entirely, only from repeating coursework already completed elsewhere.
+    </P>
+
+    <H2>What Actually Changes Once the License Is Active</H2>
+    <P>
+      A broker license removes the requirement to work under a sponsoring broker. A new broker can open an independent firm, hire and supervise sales associates, and operate without another broker's oversight. Many brokers, however, choose to remain affiliated with an existing brokerage as a broker associate rather than opening their own firm immediately, since running a brokerage brings its own overhead, office requirements, and compliance responsibilities beyond the license itself.
+    </P>
+    <P>
+      This distinction matters more than the license upgrade itself for many agents. Earning a broker license and opening an independent firm are two separate decisions, made at two different points in time. Plenty of licensed brokers spend years working as a broker associate under someone else's brokerage, gaining the added authority and earning potential of the license without taking on the operational responsibility of running the business.
+    </P>
+
+    <section className="mt-16">
+      <Faq eyebrow="FAQ" heading="Frequently Asked Questions" items={FLORIDA_BROKER_FAQ} />
+    </section>
+
+    <H2>Final Thoughts</H2>
+    <P>
+      Becoming a Florida broker is a defined, achievable process once the 24-month experience requirement is met, not a separate career path requiring years of additional schooling. Agents who plan the timeline around the coursework, exam, and post-licensing requirement can realistically move from sales associate to licensed broker within a matter of months.
+    </P>
+    <P>
+      <Internal to="/">United Estates Realty</Internal> supports agents at every stage of that path, including broker associates who choose to stay affiliated rather than open an independent firm, with a flat{" "}
+      <Internal to="/pricing">$98 monthly fee</Internal> and full compliance support either way.
+    </P>
+  </>
+);
+
 export const blogPosts: BlogPost[] = [
+
 
 
 
