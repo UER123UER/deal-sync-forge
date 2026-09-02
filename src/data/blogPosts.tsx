@@ -46,6 +46,9 @@ import blogImage27Url from "@/assets/florida-only-vs-multi-state-brokerages-2026
 const blogImage27 = { url: blogImage27Url };
 import blogImage28Url from "@/assets/how-to-become-real-estate-broker-florida-2026.jpg";
 const blogImage28 = { url: blogImage28Url };
+import blogImage29Url from "@/assets/florida-real-estate-noncompete-brokerage-agreement-2026.jpg";
+const blogImage29 = { url: blogImage29Url };
+
 
 
 const blogImage4 = { url: blogImage4Url };
@@ -3769,9 +3772,123 @@ const FloridaBrokerArticle = () => (
       <Internal to="/pricing">$98 monthly fee</Internal> and full compliance support either way.
     </P>
   </>
+  );
+
+const FLORIDA_NONCOMPETE_FAQ: FaqItem[] = [
+  {
+    question: "Are non-compete clauses enforceable for Florida real estate agents?",
+    answer:
+      "Yes, if the clause meets Florida Statute 542.335's three-part test: a legitimate business interest, reasonable time and geographic scope, and clear language. Overly broad or vague clauses risk being struck down.",
+  },
+  {
+    question: "Does telling clients I'm leaving count as solicitation?",
+    answer:
+      "Generally no. Florida courts have found that simply disclosing a move to a new brokerage is passive, not active solicitation. Actively inviting a client to follow or offering continued representation elsewhere can cross that line.",
+  },
+  {
+    question: "What should I check before signing a brokerage agreement?",
+    answer:
+      "Review the duration and geographic scope of any restrictive covenant, how solicitation is defined, whether the brokerage claims ownership of a personally built client list, and how pending transactions are handled if an agent leaves.",
+  },
+  {
+    question: "Can a non-compete stop a former client from choosing to hire me anyway?",
+    answer:
+      "No. Florida courts have held that a client's voluntary decision to work with a former agent again is protected, as long as the agent did not actively solicit that client in violation of the agreement.",
+  },
+  {
+    question: "Does being an independent contractor protect real estate agents from non-competes?",
+    answer:
+      "No. Florida courts enforce restrictive covenants against independent contractors under the same standards applied to employees, provided the agreement meets the statutory requirements.",
+  },
+  {
+    question: "How long can a Florida non-compete last?",
+    answer:
+      "There is no fixed statutory limit, but Florida courts generally treat durations up to two years as reasonable. Longer restrictions face more scrutiny and are more likely to be challenged successfully.",
+  },
+];
+
+const FloridaNoncompeteArticle = () => (
+  <>
+    <P>
+      Most agents skim the compensation section of a brokerage agreement and skip straight past the restrictive covenants. That section is exactly where a future brokerage change can get complicated. Florida law does allow non-compete and non-solicitation clauses in real estate agreements, and understanding what they actually restrict, and what they cannot, matters before signing anything.
+    </P>
+    <P>
+      This distinction matters more in real estate than in many other industries, since an agent's client relationships are personal and often built over years, long before any particular brokerage affiliation began. A clause written broadly enough could, on paper, reach further than the law actually allows, which is exactly why understanding the underlying statute matters more than trusting the wording on the page alone.
+    </P>
+    <P>
+      This guide covers how Florida law treats these clauses, what counts as solicitation, and what to check before agreeing to one.
+    </P>
+
+    <H2>The Law Behind These Clauses</H2>
+    <P>
+      Florida non-compete and non-solicitation provisions are governed by Florida Statute 542.335. To be enforceable, a clause generally needs to satisfy three requirements. First, the brokerage must have a legitimate business interest to protect, such as client relationships, trade secrets, or confidential business information. Second, the clause must be reasonable in time and geographic scope, with courts generally treating durations up to two years as reasonable, though no fixed statutory limit exists. Third, the language must be clear and free of ambiguity, since vague or overly broad restrictions are the ones most likely to be struck down.
+    </P>
+    <P>
+      An agreement that fails any of these three tests risks being ruled unenforceable if it is ever challenged in court.
+    </P>
+
+    <H2>What Actually Counts as Solicitation</H2>
+    <P>
+      Florida courts have drawn a real line here, and it matters more than most agents realize. Simply telling former clients that a move to a new brokerage is happening does not, on its own, count as solicitation under Florida case law. Courts have found that solicitation requires active, proactive conduct, not a passive mention of a career change.
+    </P>
+    <P>
+      What crosses the line is inviting a client to follow along, offering continued representation at the new brokerage, or actively encouraging someone to end their relationship with the former brokerage. Courts have treated even softly worded invitations, phrases suggesting future collaboration, as solicitation when the underlying intent was clear. One case involved an agent who mentioned wanting to work with a client behind the scenes and offered to help if needed, language a court still found crossed into active solicitation despite its casual tone.
+    </P>
+    <P>
+      The distinction comes down to whether the agent initiated an active pitch or simply disclosed a fact about their own career. A social media post announcing a new brokerage affiliation, without directly inviting specific clients to follow, sits closer to disclosure than solicitation, though this remains a fact-specific question courts evaluate case by case.
+    </P>
+
+    <H2>What a Client Can Always Choose to Do</H2>
+    <P>
+      One protection favors the agent regardless of what the agreement says. Florida courts have held that a non-solicitation clause cannot prevent a former client from voluntarily choosing to work with that agent again at their new brokerage. If a past client independently decides to reach out and request that agent's services, without the agent having actively solicited them, that relationship is generally protected. A restrictive covenant can limit an agent's outreach. It cannot force a client to stay with a brokerage they no longer want to work with.
+    </P>
+
+    <H2>Does Independent Contractor Status Offer Any Protection</H2>
+    <P>
+      No. Real estate agents in Florida operate as independent contractors rather than employees, and some assume this status exempts them from non-compete and non-solicitation obligations. Florida courts have enforced restrictive covenants against independent contractors just as they would against employees, provided the same three-part test is satisfied. The contractor classification affects taxes and benefits. It does not change how enforceable a properly drafted restrictive covenant can be.
+    </P>
+
+    <H2>What to Check Before Signing</H2>
+    <P>
+      A few specific details in the agreement matter more than the general existence of a non-compete clause.
+    </P>
+    <P>
+      <strong>Duration and geography.</strong> Confirm exactly how long the restriction lasts and what geographic area it covers. A statewide restriction lasting several years is far more burdensome than a narrow, local one lasting several months.
+    </P>
+    <P>
+      <strong>How solicitation is defined.</strong> Some agreements define solicitation broadly enough to include almost any client contact. Others limit it specifically to active outreach. This definition determines how much room exists to maintain personal relationships after leaving.
+    </P>
+    <P>
+      <strong>Client list ownership.</strong> Confirm whether the brokerage claims ownership over the client list an agent personally built, since this affects what information can legally be used after a departure.
+    </P>
+    <P>
+      <strong>What happens to pending transactions.</strong> A well-drafted agreement addresses how commission on deals already in progress gets handled if an agent leaves mid-transaction, rather than leaving that question unresolved.
+    </P>
+
+    <H2>What Happens If a Brokerage Tries to Enforce One</H2>
+    <P>
+      A brokerage seeking to stop a departing agent from violating a restrictive covenant typically has to pursue an injunction in court, not simply send a warning letter. To succeed, the brokerage generally must show a likelihood of irreparable harm, that no adequate remedy exists outside of an injunction, a substantial likelihood of winning the underlying case, and that an injunction serves the public interest. This is a real legal process with a real burden of proof, not an automatic outcome simply because a clause exists in a signed agreement.
+    </P>
+    <P>
+      Courts have sided with brokerages in cases where an agent continued actively working with clients gained through the brokerage despite a valid restrictive covenant, and have sided with agents in cases where the alleged solicitation either fell outside the agreement's time limit or never rose to the level of active conduct in the first place. The outcome depends heavily on the specific facts, the exact wording of the agreement, and the evidence each side brings to court.
+    </P>
+
+    <section className="mt-16">
+      <Faq eyebrow="FAQ" heading="Frequently Asked Questions" items={FLORIDA_NONCOMPETE_FAQ} />
+    </section>
+
+    <H2>Final Thoughts</H2>
+    <P>
+      A restrictive covenant is not automatically enforceable simply because it appears in a signed brokerage agreement, but it is not automatically toothless either. Reading the specific language around duration, scope, and the definition of solicitation before signing avoids confusion later, particularly for agents who expect to build a long-term book of business.
+    </P>
+    <P>
+      <Internal to="/">United Estates Realty</Internal> keeps its agreement terms straightforward, so agents know exactly what they are agreeing to from the day they join.
+    </P>
+  </>
 );
 
 export const blogPosts: BlogPost[] = [
+
 
 
 
@@ -4247,7 +4364,25 @@ export const blogPosts: BlogPost[] = [
     content: <FloridaBrokerArticle />,
     faq: FLORIDA_BROKER_FAQ,
   },
+  {
+    slug: "florida-real-estate-noncompete-brokerage-agreement",
+    title: "Florida Real Estate Non-Compete and Non-Solicitation Clauses: What to Check Before You Sign",
+    metaTitle: "FL Non-Compete Clauses for Real Estate Agents (2026)",
+    description:
+      "Understand how Florida non-compete and non-solicitation clauses work for real estate agents before signing in 2026.",
+    excerpt:
+      "Florida allows non-compete and non-solicitation clauses in real estate agreements. Here's what they restrict, what they cannot, and what to check before signing.",
+    date: "2026-09-02",
+    readMinutes: 9,
+    author: "United Estates Realty",
+    image: blogImage29.url,
+    imageAlt:
+      "United Estates Realty brokerage agreement with a magnifying glass highlighting the non-compete clause next to a Florida real estate license and gold pen",
+    content: <FloridaNoncompeteArticle />,
+    faq: FLORIDA_NONCOMPETE_FAQ,
+  },
 ];
+
 
 
 
