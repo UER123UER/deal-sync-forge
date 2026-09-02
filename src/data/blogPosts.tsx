@@ -46,6 +46,9 @@ import blogImage27Url from "@/assets/florida-only-vs-multi-state-brokerages-2026
 const blogImage27 = { url: blogImage27Url };
 import blogImage28Url from "@/assets/how-to-become-real-estate-broker-florida-2026.jpg";
 const blogImage28 = { url: blogImage28Url };
+import blogImage29Url from "@/assets/florida-real-estate-noncompete-brokerage-agreement-2026.jpg";
+const blogImage29 = { url: blogImage29Url };
+
 
 
 const blogImage4 = { url: blogImage4Url };
