@@ -4364,7 +4364,25 @@ export const blogPosts: BlogPost[] = [
     content: <FloridaBrokerArticle />,
     faq: FLORIDA_BROKER_FAQ,
   },
+  {
+    slug: "florida-real-estate-noncompete-brokerage-agreement",
+    title: "Florida Real Estate Non-Compete and Non-Solicitation Clauses: What to Check Before You Sign",
+    metaTitle: "FL Non-Compete Clauses for Real Estate Agents (2026)",
+    description:
+      "Understand how Florida non-compete and non-solicitation clauses work for real estate agents before signing in 2026.",
+    excerpt:
+      "Florida allows non-compete and non-solicitation clauses in real estate agreements. Here's what they restrict, what they cannot, and what to check before signing.",
+    date: "2026-09-02",
+    readMinutes: 9,
+    author: "United Estates Realty",
+    image: blogImage29.url,
+    imageAlt:
+      "United Estates Realty brokerage agreement with a magnifying glass highlighting the non-compete clause next to a Florida real estate license and gold pen",
+    content: <FloridaNoncompeteArticle />,
+    faq: FLORIDA_NONCOMPETE_FAQ,
+  },
 ];
+
 
 
 
