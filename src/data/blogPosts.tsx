@@ -3902,6 +3902,7 @@ const FRANCHISE_VS_INDEPENDENT_FAQ: FaqItem[] = [
   },
   {
     question: "Can an independent brokerage build the same trust as a franchise?",
+    answer:
       "Trust looks different rather than being unequal. A franchise carries built-in name recognition, while a respected independent earns trust through local reputation, which can matter just as much to local buyers and sellers.",
   },
   {
