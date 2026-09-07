@@ -48,6 +48,8 @@ import blogImage28Url from "@/assets/how-to-become-real-estate-broker-florida-20
 const blogImage28 = { url: blogImage28Url };
 import blogImage29Url from "@/assets/florida-real-estate-noncompete-brokerage-agreement-2026.jpg";
 const blogImage29 = { url: blogImage29Url };
+import blogImage30Url from "@/assets/franchise-vs-independent-brokerage-florida-2026.jpg";
+const blogImage30 = { url: blogImage30Url };
 
 
 
