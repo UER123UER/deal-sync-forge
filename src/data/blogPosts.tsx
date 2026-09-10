@@ -50,6 +50,8 @@ import blogImage29Url from "@/assets/florida-real-estate-noncompete-brokerage-ag
 const blogImage29 = { url: blogImage29Url };
 import blogImage30Url from "@/assets/franchise-vs-independent-brokerage-florida-2026.jpg";
 const blogImage30 = { url: blogImage30Url };
+import blogImage31Url from "@/assets/real-estate-agent-tax-deductions-florida-2026.jpg";
+const blogImage31 = { url: blogImage31Url };
 
 
 
@@ -4000,6 +4002,126 @@ const FranchiseVsIndependentArticle = () => (
   </>
 );
 
+const TAX_DEDUCTIONS_FAQ: FaqItem[] = [
+  {
+    question: "Can I deduct mileage, and what's the 2026 rate?",
+    answer:
+      "Yes. The 2026 IRS standard mileage rate is 72.5 cents per business mile, covering showings, inspections, closings, and other business-related driving, provided a mileage log is kept.",
+  },
+  {
+    question: "Are client gifts deductible, and is there a limit?",
+    answer:
+      "Yes, but the deduction is capped at $25 per recipient per year, regardless of the gift's actual cost.",
+  },
+  {
+    question: "Am I self-employed or an employee for tax purposes?",
+    answer:
+      "Self-employed. Real estate agents are classified as statutory non-employees, receive a 1099-NEC rather than a W-2, and report income on Schedule C with self-employment tax calculated on Schedule SE.",
+  },
+  {
+    question: "What is the self-employment tax rate, and can any of it be deducted?",
+    answer:
+      "The combined rate is roughly 15.3% of net self-employment income. Half of this amount can be deducted as an adjustment to income, lowering federal taxable income.",
+  },
+  {
+    question: "Can real estate agents deduct home office expenses?",
+    answer:
+      "Yes, if the space is used regularly and exclusively for business. The simplified method allows up to $1,500 using a per-square-foot rate, while the actual expense method calculates a business-use percentage applied to real housing costs.",
+  },
+  {
+    question: "What is the average vehicle deduction for real estate agents?",
+    answer:
+      "According to NAR data, agents average around 3,300 business miles a year, with typical annual vehicle-related deductions landing near $1,650, though this varies significantly by market and production level.",
+  },
+];
+
+const TaxDeductionsArticle = () => (
+  <>
+    <P>
+      Florida real estate agents work as independent contractors, and that status comes with one real advantage: access to far more deductible expenses than a traditional W-2 employee ever sees. Florida also has no state income tax, which means the entire deduction strategy centers on lowering federal taxable income rather than juggling a separate state return.
+    </P>
+    <P>
+      Many agents leave real money on the table simply because deductions get treated as an afterthought handled once a year in March rather than tracked as expenses happen. The categories below cover the ones that actually move the needle on a typical agent's tax bill, not a long list of minor items that add complexity without meaningful savings.
+    </P>
+    <P>
+      This guide covers what agents can actually deduct in 2026, with real figures rather than vague categories.
+    </P>
+
+    <H2>Self-Employed, Not an Employee</H2>
+    <P>
+      Real estate agents are classified as statutory non-employees under federal tax law, provided the license, commission-based pay, and a written contract exempting employee treatment are all in place. Brokerages issue a 1099-NEC rather than a W-2, and agents report income and expenses on Schedule C, with self-employment tax calculated on Schedule SE. No taxes get withheld automatically, so quarterly estimated payments become the agent's own responsibility throughout the year.
+    </P>
+
+    <H2>Vehicle Expenses and Mileage</H2>
+    <P>
+      For most agents, vehicle costs represent the single largest deduction available. The 2026 IRS standard mileage rate is 72.5 cents per business mile, covering showings, listing appointments, inspections, closings, and trips to the brokerage or title company. According to National Association of Realtors data, agents average roughly 3,300 business miles a year, with average annual vehicle-related deductions landing around $1,650.
+    </P>
+    <P>
+      That average understates what a busy agent can actually claim. An agent driving 10,000 business miles in a year at the 2026 rate would reach a deduction near $7,250, which shows how quickly this single category can outpace most other write-offs combined for a full-time producer.
+    </P>
+    <P>
+      Two methods exist for calculating this deduction. The standard mileage method multiplies total business miles by the current rate. The actual expense method totals real costs including gas, insurance, repairs, and depreciation, then applies the percentage of business use. Both require a contemporaneous mileage log since recreating one from memory at tax time rarely holds up if questioned.
+    </P>
+
+    <H2>Home Office Deduction</H2>
+    <P>
+      Agents who use part of their home regularly and exclusively for business, whether for admin work, client calls, or file management, can claim a home office deduction. The simplified method allows $5 per square foot up to 300 square feet, capping the deduction at $1,500. The actual expense method instead calculates the business-use percentage of the home and applies it to rent or mortgage interest, property taxes, insurance, and utilities, which often produces a larger deduction in higher-cost housing markets.
+    </P>
+    <P>
+      Claiming both a home office and a brokerage desk fee is possible, but the documentation should clearly show where the agent primarily handles administrative work.
+    </P>
+
+    <H2>Marketing and Advertising</H2>
+    <P>
+      Nearly all marketing spend qualifies as a deductible business expense. This includes online ad campaigns, listing photography and video, yard signs, postcards and mailers, website hosting, and branded promotional materials. Professional staging costs and virtual tour production fall into this category as well since they directly support generating and closing business.
+    </P>
+    <P>
+      Agents often underestimate how much smaller recurring marketing costs add up across a year. A monthly boosted social post, a quarterly farming mailer, and an annual website renewal individually look minor, but tracked together they can represent one of the larger deduction categories for an agent building consistent visibility in a specific neighborhood or price point.
+    </P>
+
+    <H2>Licensing, Dues, and Brokerage Fees</H2>
+    <P>
+      Real estate license fees, MLS access fees, association dues, and brokerage desk or membership fees are all deductible when tied directly to active practice. Errors and omissions insurance paid personally, along with other business insurance policies, also qualifies. These recurring costs are easy to overlook individually but add up meaningfully across a full year.
+    </P>
+
+    <H2>Client Gifts and Business Meals</H2>
+    <P>
+      Client relationships drive referral business, and the tax code allows deductions here, within limits. Business gifts to clients are capped at $25 per recipient per year, regardless of what the gift actually cost. A $150 closing gift only yields a $25 deduction. Business meals, where real estate is actually discussed with a client or referral partner, are generally 50% deductible, with the date, attendees, and business purpose documented alongside the receipt.
+    </P>
+
+    <H2>The Self-Employment Tax Deduction</H2>
+    <P>
+      Independent contractors pay both the employee and employer share of Social Security and Medicare, a combined self-employment tax rate of roughly 15.3% on net income. Half of that self-employment tax can be deducted as an adjustment to income on Schedule 1, which lowers the income taxed at the federal level even though it does not reduce the self-employment tax bill itself.
+    </P>
+    <P>
+      On $14,000 of self-employment tax, this typically produces a $7,000 deduction against taxable income. Tax software usually applies this automatically once Schedule SE is completed, which is exactly why so many agents never notice it happening or understand why it matters. Recognizing this deduction helps explain why net self-employment income, not gross commission, is the number that actually determines a tax bill.
+    </P>
+
+    <H2>Continuing Education and Professional Development</H2>
+    <P>
+      Costs tied to maintaining or improving existing real estate skills are deductible, including continuing education for license renewal, advanced designations, coaching programs, and industry conferences. Technology subscriptions supporting the business, such as a CRM, transaction management software, or e-signature tools, are deductible as well.
+    </P>
+
+    <H2>Keeping Records That Hold Up</H2>
+    <P>
+      None of these deductions matter without documentation. Separating business and personal bank accounts, tracking mileage as it happens rather than reconstructing it later, and saving receipts with a brief note on business purpose are the habits that make a deduction defensible if it is ever reviewed.
+    </P>
+
+    <section className="mt-16">
+      <Faq eyebrow="FAQ" heading="Frequently Asked Questions" items={TAX_DEDUCTIONS_FAQ} />
+    </section>
+
+    <H2>Final Thoughts</H2>
+    <P>
+      Florida's lack of a state income tax simplifies the picture, but the federal deductions available to a self-employed agent still require real tracking to capture fully. Mileage, home office costs, marketing spend, and the self-employment tax adjustment are the categories with the biggest impact, and consistent record-keeping throughout the year determines whether they actually get claimed.
+    </P>
+    <P>
+      <Internal to="/">United Estates Realty</Internal> supports agents with transaction and compliance tools built into a flat{" "}
+      <Internal to="/pricing">$98 monthly fee</Internal>, making it easier to keep business expenses organized and separate from the start.
+    </P>
+  </>
+);
+
 export const blogPosts: BlogPost[] = [
 
 
@@ -4510,6 +4632,23 @@ export const blogPosts: BlogPost[] = [
       "Florida real estate office desk with franchise versus independent brokerage comparison folder, calculator, house keys, and United Estates Realty logo on the wall with palm trees outside",
     content: <FranchiseVsIndependentArticle />,
     faq: FRANCHISE_VS_INDEPENDENT_FAQ,
+  },
+  {
+    slug: "real-estate-agent-tax-deductions-florida-2026",
+    title: "Real Estate Agent Tax Deductions in Florida: What You Can Actually Write Off in 2026",
+    metaTitle: "Real Estate Agent Tax Deductions in Florida 2026",
+    description:
+      "A 2026 guide to real tax write-offs for Florida real estate agents, from mileage to home office deductions.",
+    excerpt:
+      "Florida agents are self-employed, which unlocks deductions most W-2 employees never see. Here are the write-offs that actually move the needle in 2026, with real figures.",
+    date: "2026-09-10",
+    readMinutes: 9,
+    author: "United Estates Realty",
+    image: blogImage31.url,
+    imageAlt:
+      "Calculator, Schedule C tax forms, mileage log, receipts, car keys, and pen arranged on a real estate agent's desk for tax deduction planning",
+    content: <TaxDeductionsArticle />,
+    faq: TAX_DEDUCTIONS_FAQ,
   },
 ];
 
