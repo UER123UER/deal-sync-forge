@@ -53,6 +53,9 @@ const blogImage30 = { url: blogImage30Url };
 import blogImage31Url from "@/assets/real-estate-agent-tax-deductions-florida-2026.jpg";
 const blogImage31 = { url: blogImage31Url };
 
+import blogImage32Url from "@/assets/errors-omissions-insurance-florida-real-estate-agents.jpg";
+const blogImage32 = { url: blogImage32Url };
+
 
 
 const blogImage4 = { url: blogImage4Url };
