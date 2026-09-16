@@ -4125,6 +4125,104 @@ const TaxDeductionsArticle = () => (
   </>
 );
 
+const EO_INSURANCE_FAQ: FaqItem[] = [
+  {
+    question: "Does Florida require E&O insurance to keep a real estate license active?",
+    answer:
+      "No. Florida's DBPR does not require errors and omissions insurance as a condition of keeping your real estate license active. That said, most brokerages require it as a condition of affiliation, and the practical exposure of working without it is significant.",
+  },
+  {
+    question: "Does E&O cover licensing board investigations?",
+    answer:
+      "Yes — comprehensive policies include licensing board defense coverage for regulatory proceedings, including licensing board or disciplinary complaint coverage up to $50,000 per coverage period. This is a feature worth confirming with any provider before purchasing since coverage limits and terms vary by policy.",
+  },
+  {
+    question: "Is E&O insurance expensive for solo Florida agents?",
+    answer:
+      "Individual E&O for real estate agents starts at around $530 per year. For most solo agents in Florida, the annual cost falls between $500 and $1,500 depending on transaction volume and coverage level. Given that a single undefended claim can generate five or six figures in legal costs, the annual premium represents minimal risk management expense.",
+  },
+  {
+    question: "What happens if my brokerage's E&O policy lapses?",
+    answer:
+      "One lawsuit, even one based on a small misstep or a misunderstanding, can lead to five or six figures in legal defense costs. Without coverage, both the agent and the brokerage are financially at risk. If a brokerage policy lapses or the brokerage closes, agents without their own individual coverage lose protection for all prior transactions — including ones closed years earlier that may still generate claims.",
+  },
+  {
+    question: "Can a claim be made after a transaction closes?",
+    answer:
+      "Yes. These policies only cover damage claims made during the policy period. This is why continuous uninterrupted coverage matters. A client can file a claim months or years after a transaction closes if they discover a problem they believe the agent failed to disclose or address. Gaps in coverage, especially when switching brokerages, leave past work unprotected.",
+  },
+];
+
+const EoInsuranceArticle = () => (
+  <>
+    <P>
+      Every Florida real estate agent operates in an environment where a single overlooked disclosure or a contract misread can spiral into a lawsuit that costs tens of thousands of dollars before a verdict is even reached. Errors and omissions insurance exists precisely for that moment. Understanding what it covers and why serious agents treat it as non-negotiable is not just a compliance question. It is a business survival question.
+    </P>
+
+    <H2>What Errors and Omissions Insurance Actually Is</H2>
+    <P>
+      Errors and omissions insurance, commonly called E&O, is professional liability coverage that protects licensed real estate agents and brokers against financial claims arising from mistakes made in the course of their professional duties. It functions similarly to malpractice insurance for doctors and lawyers. When a client alleges that an agent's negligence or oversight caused them financial harm, E&O insurance steps in to cover legal defense costs and any resulting settlements or judgments up to the policy's stated limits.
+    </P>
+    <P>
+      The key word in that definition is negligence. E&O policies cover negligent acts, those mistakes made without dishonest or malicious intent. Intentional fraud, criminal conduct, and personal injury claims fall outside standard E&O coverage. The policy is not a shield for misconduct. It is protection against honest mistakes in a profession where honest mistakes carry serious financial consequences.
+    </P>
+
+    <H2>Is E&O Insurance Required in Florida?</H2>
+    <P>
+      Florida does not legally require real estate agents to carry E&O insurance as a condition of licensure. It is not a DBPR requirement. However, the practical reality is that most brokerages require agents under their license to maintain some form of E&O coverage, and Florida law allows real estate brokers to be held liable for the mistakes of their agents, which essentially means that most real estate professionals in Florida are covered by some form of E&O insurance.
+    </P>
+    <P>
+      For agents at flat-fee brokerages like United Estates Realty, understanding the distinction between brokerage-level coverage and individual portable coverage becomes especially important. If your office stops making payments, is sold, or goes out of business, you will be unprotected for current and prior transactions. With individual E&O, you have control to ensure there are no gaps in coverage.
+    </P>
+
+    <H2>What E&O Actually Covers for Florida Agents</H2>
+    <P>
+      The scope of a strong E&O policy in Florida goes well beyond simple contract errors. Here is what agents should expect from comprehensive coverage.
+    </P>
+    <P>
+      Professional negligence claims form the core of any E&O policy. This includes missed disclosures on property defects, misrepresentation of a home's condition or value, errors in listing details, contract mistakes that cost a client money, and failures in transaction coordination that result in financial harm.
+    </P>
+    <P>
+      Disciplinary proceedings coverage is a component many agents overlook until they need it. In some cases, a client complaint does not just trigger a lawsuit; it triggers an investigation by your state's licensing board. Good E&O policies may also cover legal representation costs in these hearings, which can be just as stressful and expensive as civil litigation. Broad form policies from providers like CRES offer up to $20,000 per disciplinary proceeding and $30,000 per subpoena.
+    </P>
+    <P>
+      Open house and lockbox coverage protects agents against bodily injury or property damage claims that arise during showings and open houses, an exposure often overlooked until something goes wrong on-site.
+    </P>
+    <P>
+      Fair housing and discrimination defense covers both legal defense costs and damages in cases where an agent faces a discrimination claim under fair housing law.
+    </P>
+    <P>
+      Cyber liability has become a standard inclusion in modern E&O policies. Policies now offer up to $50,000 for cyber liability to hire experts and notify clients due to a data breach, a coverage category that was rarely discussed a decade ago but is now considered essential given how much sensitive client data flows through agent systems.
+    </P>
+    <P>
+      Pollution and mold disclosure coverage addresses failure-to-disclose claims related to environmental hazards, a common source of post-closing disputes in Florida's humid climate.
+    </P>
+
+    <H2>How Much Does E&O Cost for Solo Agents?</H2>
+    <P>
+      E&O insurance for real estate agents and brokers starts at just $530 per year from some providers. For individual agents in Florida, the annual cost typically ranges from $500 to $1,500 depending on coverage limits, annual transaction volume, and the specific activities covered by the policy. Agents who carry higher transaction volumes or work in higher-risk property segments will generally pay more.
+    </P>
+    <P>
+      We find that most agents, when they actually calculate what a single uninsured claim would cost them in legal fees alone, recognize immediately that the annual premium is not a meaningful expense. One lawsuit with no coverage can consume years of income. The math is not complicated.
+    </P>
+
+    <H2>Individual Coverage vs Brokerage Coverage</H2>
+    <P>
+      One of the most important decisions Florida agents face is whether to rely on their brokerage's group policy or carry their own individual portable policy. Both have merit but serve different needs.
+    </P>
+    <P>
+      Brokerage E&O covers agents operating under that brokerage's license while the policy is active. Some brokerage E&O policies extend to all agents under their license. Others may have limitations. The right move is to ask your broker directly and get a clear answer rather than assuming either way.
+    </P>
+    <P>
+      Individual E&O travels with the agent regardless of which brokerage they are with. You need continuous real estate errors and omissions insurance with no gaps in coverage to cover you for prior transactions. The only way to ensure that is with your own individual and portable real estate agent E&O plan. This matters most when an agent switches brokerages; a gap in coverage during that transition leaves past transactions exposed.
+    </P>
+
+    <section className="mt-16">
+      <Faq eyebrow="FAQ" heading="Frequently Asked Questions" items={EO_INSURANCE_FAQ} />
+    </section>
+  </>
+);
+
 export const blogPosts: BlogPost[] = [
 
 
