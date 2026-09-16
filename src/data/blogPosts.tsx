@@ -4751,6 +4751,23 @@ export const blogPosts: BlogPost[] = [
     content: <TaxDeductionsArticle />,
     faq: TAX_DEDUCTIONS_FAQ,
   },
+  {
+    slug: "errors-omissions-insurance-florida-real-estate-agents",
+    title: "Errors and Omissions Insurance for Florida Real Estate Agents: What It Covers and Why It Matters",
+    metaTitle: "E&O Insurance for Florida Real Estate Agents: What It Covers",
+    description:
+      "Florida E&O insurance protects agents from missed disclosures, contract errors, and licensing board investigations. Learn what it covers and what solo agents pay in 2026.",
+    excerpt:
+      "E&O insurance is the safety net for honest mistakes in real estate. Here's what it covers in Florida, what solo agents pay, and when your own portable policy matters most.",
+    date: "2026-09-16",
+    readMinutes: 8,
+    author: "United Estates Realty",
+    image: blogImage32.url,
+    imageAlt:
+      "E&O professional liability insurance policy folder under an umbrella next to a model house, contract, and United Estates Realty branding in a Florida office",
+    content: <EoInsuranceArticle />,
+    faq: EO_INSURANCE_FAQ,
+  },
 ];
 
 
