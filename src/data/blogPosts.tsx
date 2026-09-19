@@ -56,6 +56,9 @@ const blogImage31 = { url: blogImage31Url };
 import blogImage32Url from "@/assets/errors-omissions-insurance-florida-real-estate-agents.jpg";
 const blogImage32 = { url: blogImage32Url };
 
+import blogImage33Url from "@/assets/florida-real-estate-escrow-trust-account-rules.jpg";
+const blogImage33 = { url: blogImage33Url };
+
 
 
 const blogImage4 = { url: blogImage4Url };
@@ -4223,6 +4226,110 @@ const EoInsuranceArticle = () => (
   </>
 );
 
+const ESCROW_FAQ: FaqItem[] = [
+  {
+    question: "How fast must an agent deliver a deposit to the broker?",
+    answer:
+      "By the end of the next business day after receiving the funds. The broker then has three business days to deposit those funds into the escrow account. Weekends and legal holidays are not counted.",
+  },
+  {
+    question: "How often must the escrow account be reconciled?",
+    answer:
+      "Monthly. The broker must personally review, sign, and date every reconciliation statement even if an accountant prepares it.",
+  },
+  {
+    question: "Who is ultimately responsible for the escrow account?",
+    answer:
+      "The broker. This cannot be transferred to an associate, accountant, or office manager regardless of who handles daily bookkeeping.",
+  },
+  {
+    question: "Can a broker hold escrow in an interest-bearing account?",
+    answer:
+      "Yes, but only with written permission from both buyer and seller specifying who receives the interest and when it is paid out.",
+  },
+  {
+    question: "What happens if an escrow dispute exceeds $50,000?",
+    answer:
+      "FREC will not issue an Escrow Disbursement Order. The broker must interplead the funds with the local clerk of courts or submit the dispute to mediation or arbitration with both parties' written consent.",
+  },
+];
+
+const EscrowRulesArticle = () => (
+  <>
+    <P>
+      Escrow is one of the most regulated areas of Florida real estate practice. For agents and brokers, the rules governing how funds are received, held, reconciled, and disbursed are specific, time-sensitive, and carry serious consequences when violated. Understanding these rules is not optional; it is a fundamental part of operating professionally and protecting every party in a transaction. Many license violations filed with FREC each year stem directly from escrow mismanagement that could have been avoided with a clearer understanding of the requirements.
+    </P>
+
+    <H2>What a Florida Escrow Account Actually Is</H2>
+    <P>
+      When a buyer makes a deposit on a property in Florida, that money does not belong to the seller until the transaction closes. It must be held in a separate account, an escrow or trust account, controlled by the broker, a title company, or an attorney. The account exists to ensure funds are protected and available for proper disbursement when the transaction concludes.
+    </P>
+    <P>
+      A real estate brokerage in Florida is not legally required to maintain an escrow account if the brokerage holds no escrow funds. However, the moment a broker receives funds belonging to someone else in connection with a real estate transaction, those funds must go into escrow until the broker receives proper authorization for release. This applies even to situations where a seller leaves funds for home maintenance while out of town; any third-party funds received by a broker in connection with real estate must be treated as escrow funds.
+    </P>
+    <P>
+      A broker may keep up to $1,000 of personal or brokerage funds in a sales escrow account. Exceeding that limit creates a commingling violation that can trigger disciplinary action by the Florida Real Estate Commission (FREC).
+    </P>
+
+    <H2>The Deposit Timeline Florida Agents Must Know</H2>
+    <P>
+      Florida law establishes a strict two-step timeline for getting funds into escrow.
+    </P>
+    <P>
+      An associate or broker-associate must deliver the escrow deposit to the broker by the end of the next business day after receiving it. This begins the moment the agent receives the deposit, not when the contract is executed. Agents who allow deposits to sit uncollected or undelivered are already in violation before the broker touches the funds.
+    </P>
+    <P>
+      The broker must then deposit the funds immediately, which Florida law defines as within three business days. Saturdays, Sundays, and legal holidays do not count as business days.
+    </P>
+    <P>
+      The account must be held at a bank, savings and loan association, trust company, credit union, or title company with trust powers. At least one broker must be a signatory on all escrow accounts under Rule 61J2-14.010 of the Florida Administrative Code.
+    </P>
+    <P>
+      Missing either deadline is a regulatory violation that can trigger a FREC investigation.
+    </P>
+
+    <H2>Monthly Reconciliation Is Mandatory</H2>
+    <P>
+      If a brokerage maintains an escrow account, the broker must complete a monthly reconciliation statement. An accountant can prepare it, but the broker must personally review, sign, and date it. The broker is ultimately responsible for escrow funds; that responsibility cannot be delegated.
+    </P>
+    <P>
+      The monthly statement must include the date of reconciliation, name and account number of every bank account, balances with dates, deposits in transit, outstanding checks identified by date and check number, an itemized list of the broker's trust liability, and any details needed to reconcile the bank balance with the broker's records.
+    </P>
+    <P>
+      These statements do not go to FREC but must be accessible in the event of an audit. Florida Realtors provides approved forms for preparing these statements correctly. We recommend using those forms consistently rather than creating internal templates that may omit required elements and create compliance gaps during audits.
+    </P>
+
+    <H2>Escrow Disputes and FREC Notification</H2>
+    <P>
+      Escrow disputes are more common than agents expect, and Florida law creates a specific notification requirement. A broker must notify FREC within 15 business days after receiving conflicting demands on trust funds in the broker's account. This applies only to funds the broker holds directly, not funds held by a title company or attorney.
+    </P>
+    <P>
+      When a title company holds the deposit, it will typically require clear written instructions from both parties before releasing any funds. If those instructions cannot be agreed upon, the title company will interplead the funds with the local clerk of courts, and either party may pursue legal action.
+    </P>
+    <P>
+      A disputed escrow does not prevent a seller from advertising or relisting the property. This is a widely misunderstood point that causes unnecessary delays in transactions where the parties assume the property is frozen until the deposit dispute is resolved.
+    </P>
+    <P>
+      If the disputed amount exceeds $50,000, FREC will not issue an Escrow Disbursement Order. The funds must be interpleaded or the matter submitted to mediation or arbitration with both parties' consent.
+    </P>
+    <P>
+      If a broker requests an Escrow Disbursement Order and the matter settles or goes to court before the order is issued, the broker must notify FREC in writing within 10 business days.
+    </P>
+
+    <H2>Interest-Bearing Accounts and Escrow Theft</H2>
+    <P>
+      A broker can place escrow funds in an interest-bearing account only with written permission from both parties specifying who receives the interest and when it is disbursed. The account must be at a Florida banking institution.
+    </P>
+    <P>
+      If anyone suspects a broker is stealing from an escrow account, they should report it immediately to the DBPR. Under Section 475.5017 of Florida Statutes, the DBPR can seek immediate injunctive relief through circuit court, and the court can appoint a receiver to protect funds and records. Escrow theft is treated as one of the most serious violations in Florida real estate, and the enforcement process reflects that with swift legal action available to regulators.
+    </P>
+
+    <section className="mt-16">
+      <Faq eyebrow="FAQ" heading="Frequently Asked Questions" items={ESCROW_FAQ} />
+    </section>
+  </>
+);
+
 export const blogPosts: BlogPost[] = [
 
 
@@ -4767,6 +4874,23 @@ export const blogPosts: BlogPost[] = [
       "E&O professional liability insurance policy folder under an umbrella next to a model house, contract, and United Estates Realty branding in a Florida office",
     content: <EoInsuranceArticle />,
     faq: EO_INSURANCE_FAQ,
+  },
+  {
+    slug: "florida-real-estate-escrow-trust-account-rules",
+    title: "Florida Real Estate Escrow and Trust Account Rules Every Agent Should Understand",
+    metaTitle: "Florida Real Estate Escrow Rules Every Agent Must Know",
+    description:
+      "Learn Florida escrow account rules for agents, deposit timelines, monthly reconciliation requirements, dispute procedures and who is legally responsible for trust funds.",
+    excerpt:
+      "Florida escrow rules are strict and time-sensitive. Here are the deposit deadlines, reconciliation requirements, and dispute procedures every agent should know.",
+    date: "2026-09-19",
+    readMinutes: 8,
+    author: "United Estates Realty",
+    image: blogImage33.url,
+    imageAlt:
+      "Broker's desk with an escrow reconciliation ledger, deposit checks, bank building model, balance scale, and Florida state outline overlooking a Florida waterfront skyline",
+    content: <EscrowRulesArticle />,
+    faq: ESCROW_FAQ,
   },
 ];
 
