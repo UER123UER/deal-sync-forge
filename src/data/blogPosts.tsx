@@ -4953,6 +4953,23 @@ export const blogPosts: BlogPost[] = [
     content: <EscrowRulesArticle />,
     faq: ESCROW_FAQ,
   },
+  {
+    slug: "what-florida-agents-keep-100-commission-brokerage",
+    title: "What Florida Agents Actually Keep After Joining a 100% Commission Brokerage",
+    metaTitle: "What Florida Agents Actually Keep at a 100% Commission Brokerage",
+    description:
+      "See the real net income Florida agents keep at 100% commission brokerages across 6, 12 and 20 deals a year, with the full fee math laid out clearly.",
+    excerpt:
+      "100% commission doesn't mean 100% net. Here's what Florida agents actually keep after splits, transaction fees, and monthly fees at three production levels.",
+    date: "2026-09-24",
+    readMinutes: 7,
+    author: "United Estates Realty",
+    image: blogImage34.url,
+    imageAlt:
+      "Chart comparing what Florida agents take home at 100% commission brokerages across 6, 12, and 20 deals per year, with a calculator showing net income after brokerage fees and United Estates Realty branding",
+    content: <AgentsKeepArticle />,
+    faq: AGENTS_KEEP_FAQ,
+  },
 ];
 
 
