@@ -4333,6 +4333,64 @@ const EscrowRulesArticle = () => (
   </>
 );
 
+const AGENTS_KEEP_FAQ: FaqItem[] = [
+  {
+    question: "How much does a Florida real estate agent actually keep with a 100% commission brokerage?",
+    answer: "It depends entirely on the fee structure. At a genuine flat-fee brokerage with no transaction fees, an agent closing 12 deals at Florida's median commission of $10,500 per deal keeps approximately $124,824 of $126,000 in gross commission income. At a traditional 70/30 split brokerage with transaction fees, the same agent keeps around $83,460. The difference is over $41,000 annually on identical production.",
+  },
+  {
+    question: "Does 100% commission mean agents keep the entire commission?",
+    answer: "Not exactly. Every brokerage has operating costs, and those costs are passed to agents through fees. What 100% commission means is that the brokerage does not take a percentage split of each commission. Instead, agents pay flat fees which may include monthly membership fees, per-transaction charges, E&O insurance fees, and technology fees. A genuinely clean 100% commission model has one flat monthly fee and zero transaction fees.",
+  },
+  {
+    question: "Do 100% commission brokerages charge monthly or annual fees?",
+    answer: "Most do charge some form of recurring fee. Options vary across the Florida market. Some charge monthly fees ranging from $39 to $200 with no transaction fees. Others charge no monthly fee but charge $250 to $500 per closing. Hybrid models charge both a lower monthly fee and a reduced per-transaction fee. The model that produces the highest net income depends on the agent's annual deal volume.",
+  },
+  {
+    question: "Is a 100% commission brokerage worth it for part-time Florida agents?",
+    answer: "For part-time agents closing fewer than four deals per year, a zero-monthly-fee per-transaction model may cost less than a flat monthly fee brokerage. However, agents should calculate their total annual brokerage cost, including transaction fees, at their expected production level before making a decision. A flat $98 monthly fee breaks even against a $250 per-transaction fee at approximately five deals per year.",
+  },
+  {
+    question: "What should Florida agents ask before joining a 100% commission brokerage?",
+    answer: "Ask for the complete written fee schedule including monthly fees, per-transaction fees, E&O coverage, and any technology or desk fees. Ask whether E&O insurance is included or charged separately. Ask what support, software, and compliance tools are included in the fee. Ask whether fees change based on production volume or deal size. Get every answer in writing before transferring your license.",
+  },
+];
+
+const AgentsKeepArticle = () => (
+  <>
+    <P>The phrase "100% commission" sounds like a complete answer. Keep everything you earn. No splits. No cuts. Done. But Florida agents who have switched brokerages know the real question is not whether a 100% commission brokerage exists; it is what they actually net after every fee is accounted for across a full year of closings.</P>
+    <P>Most articles stop at the headline. We are going further.</P>
+    <H2>The Problem With How This Gets Marketed</H2>
+    <P>Every 100% commission brokerage in Florida leads with the same pitch: you keep your full commission. What gets buried in the fine print is the difference between gross commission and what actually lands in your account. The number depends entirely on the fee structure your brokerage uses and how many deals you close in a year.</P>
+    <P>Some Florida brokerages charging zero monthly fees make up the revenue through per-transaction fees of $250 to $500 per closing. Others charge a low monthly fee and add transaction fees on top. A handful charge a flat monthly fee with zero transaction fees. These three structures produce dramatically different outcomes depending on your production level, and most agents sign without running the numbers across all three.</P>
+    <H2>The Real Net Income at Three Production Levels</H2>
+    <P>We are using Florida's median commission as the baseline. Florida's average home price in 2026 sits around $420,000. At a standard 2.5% buyer agent commission, that generates $10,500 per closing. Here is what an agent actually keeps across three different production levels at a flat $98 monthly brokerage versus a traditional 70/30 split with a $395 transaction fee.</P>
+    <H3>Agent closing 6 deals per year, $63,000 gross commission income</H3>
+    <P>At a traditional 70/30 split with a $395 transaction fee per deal, the agent pays $18,900 in splits plus $2,370 in transaction fees. Total brokerage cost: $21,270. Net income: $41,730.</P>
+    <P>At United Estates Realty, paying $98 flat monthly, the agent pays $1,176 in brokerage fees for the entire year. Zero transaction fees. Net income: $61,824. Annual difference: $20,094.</P>
+    <H3>Agent closing 12 deals per year, $126,000 gross commission income</H3>
+    <P>At a traditional 70/30 split with $395 transaction fees, the agent pays $37,800 in splits plus $4,740 in transaction fees. Total brokerage cost: $42,540. Net income: $83,460.</P>
+    <P>At $98 flat monthly, the agent pays $1,176 total for the year. Net income: $124,824. Annual difference: $41,364.</P>
+    <H3>Agent closing 20 deals per year, $210,000 gross commission income</H3>
+    <P>At a traditional 70/30 split with $395 transaction fees, the agent pays $63,000 in splits plus $7,900 in transaction fees. Total brokerage cost: $70,900. Net income: $139,100.</P>
+    <P>At $98 flat monthly, the agent pays $1,176 total for the year. Net income: $208,824. Annual difference: $69,724.</P>
+    <P>The math accelerates with production. An agent doing 20 deals a year under a traditional split structure hands over the equivalent of more than five years of flat-fee brokerage costs in a single calendar year.</P>
+    <H2>What Florida Agents Often Miss When Switching</H2>
+    <P>The first thing most agents underestimate when evaluating a 100% commission brokerage is the monthly fee burden at low production. An agent closing two deals in a year at a $200 monthly fee brokerage pays $2,400 annually in fixed costs before closing a single deal. At that production level, a per-transaction brokerage with no monthly fee and a $350 per closing charge costs only $700. The flat fee only wins when production is high enough to offset the monthly cost.</P>
+    <P>The second thing agents miss is the transaction fee stacking that happens at some brokerages marketing themselves as 100% commission. A brokerage charging a $45 E&O fee, a $25 technology recovery fee, and a $350 transaction fee on every closing is charging $420 per deal in addition to any monthly costs. On 12 closings, that totals $5,040 annually, nearly five years of a genuinely flat monthly fee brokerage.</P>
+    <P>The third thing is portability of E&O coverage. Some Florida brokerages include errors and omissions insurance in their flat fee. Others charge it separately per transaction. Agents who switch mid-year sometimes find themselves with a gap in coverage for transactions already underway. Always confirm in writing whether E&O is included before transferring your license.</P>
+    <H2>What Genuinely Flat-Fee Looks Like in Florida</H2>
+    <P>The model that produces the cleanest net income math for Florida agents is a single predictable monthly cost with zero transaction fees, and E&O included. One number. No per-deal charges that vary with production. No annual caps that reset. No escalating fees tied to how much the agent earns.</P>
+    <P>At United Estates Realty, that number is $98 per month. No transaction fees. No commission splits. No desk fees. No add-ons. On 12 closings at Florida's median commission, that leaves the agent with $124,824 of their $126,000 gross commission income. The $1,176 they pay the brokerage for the year is the entire cost of operating under a licensed Florida brokerage with full compliance support, transaction management software, CRM, and marketing tools included.</P>
+    <P>That is what 100% commission actually looks like when the fee structure is built around the agent instead of around the brokerage's revenue model.</P>
+    <H2>Why This Matters More Post-NAR Settlement</H2>
+    <P>The August 2024 NAR settlement changed how buyer agent compensation is structured. Buyers and sellers are now negotiating commission more explicitly, and agents are being asked to justify their fees more directly than before. An agent giving up 30% of every commission to a brokerage has less room to negotiate and still generate meaningful income from each deal. An agent keeping 99% of every commission has significantly more flexibility in how they structure their fees without compromising their earnings.</P>
+    <section className="mt-16">
+      <Faq eyebrow="FAQ" heading="Frequently Asked Questions" items={AGENTS_KEEP_FAQ} />
+    </section>
+  </>
+);
+
 export const blogPosts: BlogPost[] = [
 
 
