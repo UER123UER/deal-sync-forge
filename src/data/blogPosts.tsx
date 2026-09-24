@@ -59,6 +59,9 @@ const blogImage32 = { url: blogImage32Url };
 import blogImage33Url from "@/assets/florida-real-estate-escrow-trust-account-rules.jpg";
 const blogImage33 = { url: blogImage33Url };
 
+import blogImage34Url from "@/assets/what-florida-agents-keep-100-commission-brokerage.jpg";
+const blogImage34 = { url: blogImage34Url };
+
 
 
 const blogImage4 = { url: blogImage4Url };
