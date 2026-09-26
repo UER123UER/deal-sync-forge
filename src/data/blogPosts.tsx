@@ -62,6 +62,9 @@ const blogImage33 = { url: blogImage33Url };
 import blogImage34Url from "@/assets/what-florida-agents-keep-100-commission-brokerage.jpg";
 const blogImage34 = { url: blogImage34Url };
 
+import blogImage35Url from "@/assets/why-florida-100-commission-brokerage-model-growing-2026.jpg";
+const blogImage35 = { url: blogImage35Url };
+
 
 
 const blogImage4 = { url: blogImage4Url };
@@ -4391,6 +4394,44 @@ const AgentsKeepArticle = () => (
   </>
 );
 
+const GROWING_FAST_FAQ: FaqItem[] = [
+  { question: "Why are more Florida real estate agents switching to 100% commission brokerages?", answer: "The primary driver is the annual cost audit. When Florida agents calculate every fee their traditional brokerage charges- the split, desk fees, transaction fees, and add-ons- the total typically exceeds $30,000 to $45,000 annually for agents doing moderate production. Flat-fee brokerages delivering equivalent infrastructure for under $1,200 per year make the financial case for switching impossible to ignore at any production level." },
+  { question: "Is the 100% commission brokerage model becoming more popular in Florida?", answer: "Yes, and the growth is measurable. Worth Clark Realty surpassed 100 agents in Central Florida alone in 2026 and projected 60 percent year-over-year transaction growth driven by agents switching from split structures. Multiple 100% commission brokerages across Miami, Tampa, Orlando, and Fort Lauderdale are reporting similar growth patterns as agents respond to the post-NAR settlement environment." },
+  { question: "What is driving the growth of 100% commission brokerages in Florida?", answer: "Three forces are converging simultaneously. The NAR settlement made commission transparency mandatory, which exposed the cost of traditional splits in every client conversation. Technology maturity eliminated the infrastructure overhead that once justified the split. And agent financial literacy has improved to the point where more agents are running full annual brokerage cost audits and making data-driven switching decisions rather than staying out of habit." },
+  { question: "How does the NAR settlement affect Florida agents at traditional brokerages?", answer: "The settlement requires written buyer representation agreements before showings and decouples buyer agent compensation from MLS listings. This means agents negotiate their fees directly with clients in writing before the transaction begins. Agents keeping 100% of a negotiated commission have more flexibility to compete on price without sacrificing income than agents giving away 30% of every deal to their brokerage." },
+  { question: "What should a Florida agent look for in a genuine 100% commission brokerage?", answer: "Look for a single flat monthly fee with zero transaction fees per closing. Confirm that compliance support, transaction management software, and E&O insurance details are clearly stated in writing before signing. Ask specifically whether any fees change based on deal size or production volume. A genuine flat-fee brokerage has one number and no exceptions." },
+];
+
+const GrowingFastArticle = () => (
+  <>
+    <P>Florida's real estate industry is in the middle of a structural shift. The 100% commission brokerage model has moved from a niche option to the fastest-growing brokerage structure in the state. Understanding why this is happening now, and what is driving it, matters for every licensed Florida agent evaluating their brokerage relationship in 2026.</P>
+    <H2>The Problem That Has Been Building for Years</H2>
+    <P>The traditional brokerage commission split was designed for a different era. When agents relied on physical office space, printed marketing support, telephone systems, and in-house broker oversight to operate their business, splitting 30 to 40 percent of every commission with a brokerage made practical sense. The brokerage covered infrastructure costs and the agent paid for access through their production.</P>
+    <P>That logic no longer holds. Cloud-based transaction management, digital marketing tools, e-signature platforms, and virtual compliance support have eliminated most of the infrastructure costs that once justified the split. Yet the traditional commission split structure survived, not because it still reflects the value exchange accurately but because agents had no compelling alternative to switch to and little visibility into what the arrangement was actually costing them annually.</P>
+    <H2>What the Numbers Actually Show</H2>
+    <P>The U.S. average real estate commission rate in 2026 has risen to 5.70 percent according to industry surveys, up from 5.50 percent in 2021. Florida agents operating in markets with home prices averaging $420,000 and above are generating meaningful commission income on every closing. The problem is how much of that income leaves before the agent touches it.</P>
+    <P>A Florida agent closing 12 deals a year under a traditional 70/30 split at an average commission of $10,500 per deal pays their brokerage $37,800 in splits. Add a $150 monthly desk fee and $395 transaction fees per closing, and the annual brokerage cost exceeds $46,000. That is money paid to an organization that made none of those sales calls, drove none of those clients to showings, and signed none of those contracts.</P>
+    <P>Worth Clark Realty reported in June 2026 that it had surpassed 100 agents in Central Florida alone and projected a 60 percent increase in transaction volume year over year, growth driven entirely by agents switching from traditional split structures. That is one brokerage in one Florida market. The pattern is repeating across Miami, Orlando, Tampa, Fort Lauderdale, and Jacksonville simultaneously.</P>
+    <P>At the same time, 100 commission brokerages are creating a more competitive business landscape and driving down commission fees in the market as buyers and sellers gain negotiating power. Florida agents who keep more of their commission have more flexibility to negotiate their fees with clients while still protecting their income, a competitive advantage that agents at traditional split brokerages simply do not have in the same way.</P>
+    <H2>What Is Accelerating the Shift Right Now</H2>
+    <P>Three forces combined in 2024 and 2025 to accelerate what had been a gradual trend into something much faster.</P>
+    <P>The first is the NAR settlement. The August 2024 changes mandated buyer representation agreements before showings and decoupled buyer agent compensation from MLS listings. These NAR settlement rules now mandate buyer representation agreements and commission transparency.</P>
+    <P>Agents are now asked to justify their fees to clients in writing before the transaction begins. An agent giving away 30 percent of a negotiated commission to a brokerage has significantly less negotiating room than an agent who keeps the full amount. The settlement made the cost of the traditional split structure visible in every client conversation.</P>
+    <P>The second force is technology maturity. Digital transaction platforms, cloud-based compliance tools, and virtual broker support have reached a level of reliability and accessibility that removes the last practical argument for in-person brokerage infrastructure. The overhead that once required a commission split to sustain can now be delivered at a flat monthly cost of under $100.</P>
+    <P>The third force is agent financial literacy. More Florida agents are doing a full annual cost audit of their brokerage relationship, calculating not just the percentage split but every desk fee, transaction fee, E&O charge, and technology add-on stacked on top. When agents see the full number in one place, many of them are switching within weeks of completing the calculation.</P>
+    <H2>The Agent Profile Driving Growth</H2>
+    <P>The agents switching to 100% commission brokerages in Florida in 2026 are not a homogeneous group. New agents are attracted by the lower fixed costs. Experienced agents with established pipelines are attracted by the income recovery at their production level. Part-time agents benefit from a predictable monthly cost rather than losing a percentage of every deal they close.</P>
+    <P>What they share is a recognition that the value equation of the traditional brokerage no longer adds up. Technology has changed what agents need. The NAR settlement changed how agents get paid. And the availability of genuine flat-fee brokerage infrastructure in Florida has changed what agents can access at $98 per month.</P>
+    <P>Strategic guidance and effective leadership empower agents to perform at their highest potential and significantly enhance growth and long-term success. The difference in 2026 is that agents no longer have to choose between professional support and keeping what they earn. The best flat-fee brokerages in Florida now deliver both.</P>
+    <H2>The Model That Is Winning</H2>
+    <P>The 100% commission brokerages gaining agents fastest in Florida share a common structure. They charge one predictable flat monthly fee. They include transaction management software, compliance support, and CRM tools in that fee. They charge nothing per closing. And they make the fee structure visible in a single written document before any agent transfers their license.</P>
+    <P>That transparency is itself a competitive advantage. In a market where buyers and sellers are more informed than ever, and agents are being asked to justify their fees, agents who know exactly what their brokerage costs them, down to the dollar, operate with a confidence and clarity that agents in traditional split structures rarely have.</P>
+    <section className="mt-16">
+      <Faq eyebrow="FAQ" heading="Frequently Asked Questions" items={GROWING_FAST_FAQ} />
+    </section>
+  </>
+);
+
 export const blogPosts: BlogPost[] = [
 
 
@@ -4969,6 +5010,23 @@ export const blogPosts: BlogPost[] = [
       "Chart comparing what Florida agents take home at 100% commission brokerages across 6, 12, and 20 deals per year, with a calculator showing net income after brokerage fees and United Estates Realty branding",
     content: <AgentsKeepArticle />,
     faq: AGENTS_KEEP_FAQ,
+  },
+  {
+    slug: "why-florida-100-commission-brokerage-model-growing-2026",
+    title: "Why Florida's 100% Commission Brokerage Model Is the Fastest Growing in the State Right Now",
+    metaTitle: "Why Florida's 100% Commission Brokerage Model Is Growing Fast in 2026",
+    description:
+      "Florida agents are switching to 100% commission brokerages faster than ever in 2026. Here is what is driving the growth and what it means for your income.",
+    excerpt:
+      "The 100% commission model is now Florida's fastest-growing brokerage structure. Here is what is driving the shift and what it means for your income.",
+    date: "2026-09-26",
+    readMinutes: 7,
+    author: "United Estates Realty",
+    image: blogImage35.url,
+    imageAlt:
+      "Florida agents walking along a rising gold arrow from a traditional brokerage office toward a modern cloud-based brokerage hub over a Florida map, with United Estates Realty branding",
+    content: <GrowingFastArticle />,
+    faq: GROWING_FAST_FAQ,
   },
 ];
 
