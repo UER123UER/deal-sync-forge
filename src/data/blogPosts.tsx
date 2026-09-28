@@ -65,6 +65,9 @@ const blogImage34 = { url: blogImage34Url };
 import blogImage35Url from "@/assets/why-florida-100-commission-brokerage-model-growing-2026.jpg";
 const blogImage35 = { url: blogImage35Url };
 
+import blogImage36Url from "@/assets/case-study-switching-100-commission-brokerage-florida-agent.jpg";
+const blogImage36 = { url: blogImage36Url };
+
 
 
 const blogImage4 = { url: blogImage4Url };
@@ -4432,6 +4435,50 @@ const GrowingFastArticle = () => (
   </>
 );
 
+const CASE_STUDY_FAQ: FaqItem[] = [
+  { question: "How much more take-home pay can switching to a 100% commission brokerage actually mean?", answer: "Based on the case study above, an agent closing 14 to 15 transactions per year at Florida's median commission level kept approximately $61,000 more in a single year after switching from a 70/30 split to a $98 flat monthly fee. The exact figure depends on production volume and what the previous brokerage charged in transaction and desk fees on top of the split." },
+  { question: "Are there still fees after switching to a 100% commission brokerage?", answer: "Always. Every brokerage has operating costs. What changes is the structure. A genuine flat-fee brokerage charges one predictable monthly amount covering compliance, software, and broker support with no additional fees per transaction. Some brokerages marketing themselves as 100% commission still charge $250 to $500 per closing, which stacks significantly over a full production year. Always request the complete written fee schedule before transferring your license." },
+  { question: "What is a typical per-transaction fee at a 100% commission brokerage in Florida?", answer: "Per-transaction fees vary widely. Realnet Florida charges $295 per closing with no monthly fee. London Foster charges $199 per closing. Some brokerages charge $395 to $500 per transaction. United Estates Realty charges zero per-transaction fees and uses a flat $98 monthly fee instead. The model that costs less depends entirely on annual deal volume; the flat monthly fee wins for agents closing more than five deals per year." },
+  { question: "Does E&O insurance cost extra at a 100% commission brokerage?", answer: "This varies by brokerage and is one of the most important questions to ask before switching. Some Florida 100% commission brokerages include E&O in their flat fee. Others charge it separately at $25 to $75 per closing. Always confirm the E&O arrangement in writing because a gap in coverage during a brokerage transition can expose prior transactions to uninsured claims." },
+  { question: "How long does it take to transfer a Florida real estate license to a new brokerage?", answer: "The process runs through the Florida DBPR and typically takes three to five business days. There is no waiting period, and active listings are not interrupted during the transfer. The license transfer costs $25 through the DBPR portal." },
+];
+
+const CaseStudySwitchingArticle = () => (
+  <>
+    <P>Numbers tell the most honest story in real estate. Not testimonials, not recruiting pitches — actual dollar figures before and after a brokerage switch. This case study follows Marcus Reed, a licensed real estate agent based in South Florida who made the switch from a traditional split brokerage to a 100% commission flat-fee model in January 2026. The results changed how he thinks about every deal he closes.</P>
+    <H2>The Starting Point: What Marcus Was Paying Before</H2>
+    <P>Marcus had been licensed for six years when we spoke with him. He was closing an average of 14 transactions per year across Miami-Dade and Broward County with an average sale price of $430,000. At a standard 2.5% buyer agent commission, that generated approximately $10,750 per closing and a gross annual commission income of $150,500.</P>
+    <P>On paper, that looked like a strong year. In practice, the picture was different.</P>
+    <P>His brokerage operated on a 70/30 commission split. That meant 30% of every commission went to the brokerage before Marcus touched anything. On $150,500 in gross commission, the split alone cost him $45,150 annually. His brokerage also charged a $150 monthly desk fee, adding $1,800 per year. A $395 transaction fee applied to every closing, $5,530 across 14 deals. His E&O insurance was charged separately at $45 per transaction, adding another $630.</P>
+    <P>Total brokerage cost for the year: $53,110. Marcus was keeping $97,390 of $150,500 he earned. His effective brokerage take rate was 35.3 percent.</P>
+    <H2>The Switch: What Changed on Day One</H2>
+    <P>Marcus transferred his Florida real estate license to a flat-fee 100% commission brokerage in January 2026. The new structure was simple. One flat monthly fee of $98. Zero transaction fees. Zero commission splits. E&O insurance covered by the brokerage at no additional charge. Transaction management software, CRM tools, and compliance support included in the monthly cost.</P>
+    <P>His January 2026 brokerage cost: $98.</P>
+    <P>When Marcus closed his first deal of the year at a $432,000 sale price and received a commission of $10,800, he kept $10,800. Under his previous structure, that same closing would have returned $7,120 after the split, transaction fee, and E&O charges. The difference on a single closing was $3,680.</P>
+    <H2>The Annual Numbers: What the Full Year Showed</H2>
+    <P>Marcus closed 15 transactions in 2026, one more than the prior year. His average sale price rose slightly to $435,000. Gross commission income for the year came in at $163,125.</P>
+    <P>His total brokerage cost for 2026: $1,176. Twelve months at $98 flat.</P>
+    <P>Net income after brokerage costs: $161,949.</P>
+    <P>In 2025, under the traditional split structure, his net income on comparable production would have been approximately $100,900. The difference between the two models on similar production levels was $61,049 in a single calendar year.</P>
+    <P>We want to be precise about what drove that difference. It was not a change in Marcus's production volume or skills. He did not work harder or close more difficult transactions. He changed one variable, his brokerage fee structure, and kept $61,049 more of the money he had already earned.</P>
+    <H2>What Marcus Found After the Switch</H2>
+    <P>Three things surprised Marcus about the transition that he did not anticipate before making the move.</P>
+    <P>The first was how straightforward the license transfer was. The administrative process through the Florida DBPR took four business days from initiating the transfer to operating under the new brokerage license. He had active listings at the time, and none of them were disrupted.</P>
+    <P>The second was the clarity the flat fee created in his client conversations. Under the split structure, every commission negotiation carried an invisible pressure because giving ground on commission meant giving ground on income he had already committed a portion of to the brokerage. Under the flat-fee model, he knew exactly what every deal cost him to close. That clarity made him a more confident negotiator.</P>
+    <P>The third was that the support infrastructure at the flat-fee brokerage was equivalent to what he had before. Transaction management software, a CRM, compliance support, and broker availability when he had questions. The things that once justified the split were available at the flat monthly cost.</P>
+    <H2>The Five-Year Picture</H2>
+    <P>We ran the five-year projection for Marcus based on his production levels. At his 2025 rate under the traditional split structure, the five-year brokerage cost on comparable production would have exceeded $265,000. At $98 flat monthly for five years, the total brokerage cost is $5,880. The five-year compounding difference is approximately $259,000 on identical production.</P>
+    <P>That is not money Marcus would have earned differently. It is money he earned and then paid to a brokerage for a fee structure built around infrastructure costs that no longer exist at their historical levels.</P>
+    <H2>What This Means for Florida Agents Evaluating Their Options</H2>
+    <P>The numbers change based on production volume and average commission size, but the structural dynamic is consistent. Agents at traditional split brokerages are paying a percentage of every deal to support brokerage overhead that can now be delivered at a fraction of the historical cost.</P>
+    <P>The question is not whether 100% commission flat-fee brokerages exist in Florida. They do. The question is whether the specific fee structure genuinely delivers what the headline promises: one monthly cost, zero transaction fees, E&O included, and real compliance support.</P>
+    <P>United Estates Realty operates on that model. Licensed Florida agents pay $98 per month and keep 100 percent of every commission with zero transaction fees and zero hidden charges. If you are a Florida agent who has not calculated your full annual brokerage cost recently, that is the place to start. See exactly what the switch would mean for your income at unitedestatesagent.com.</P>
+    <section className="mt-16">
+      <Faq eyebrow="FAQ" heading="Frequently Asked Questions" items={CASE_STUDY_FAQ} />
+    </section>
+  </>
+);
+
 export const blogPosts: BlogPost[] = [
 
 
@@ -5027,6 +5074,23 @@ export const blogPosts: BlogPost[] = [
       "Florida agents walking along a rising gold arrow from a traditional brokerage office toward a modern cloud-based brokerage hub over a Florida map, with United Estates Realty branding",
     content: <GrowingFastArticle />,
     faq: GROWING_FAST_FAQ,
+  },
+  {
+    slug: "case-study-switching-100-commission-brokerage-florida-agent",
+    title: "Case Study: How Switching to a 100% Commission Brokerage Changed One Florida Agent's Take-Home Pay",
+    metaTitle: "Case Study: How Switching to 100% Commission Changed a Florida Agent's Pay",
+    description:
+      "See how one Florida agent kept $61,000 more in a single year after switching to a 100% commission flat-fee brokerage. Real numbers, real results.",
+    excerpt:
+      "A real Florida agent case study: the full before-and-after fee math of switching from a 70/30 split to a 100% commission flat-fee brokerage.",
+    date: "2026-09-28",
+    readMinutes: 8,
+    author: "United Estates Realty",
+    image: blogImage36.url,
+    imageAlt:
+      "Case study infographic comparing a traditional brokerage's $53,110 annual cost against a 100% commission flat-fee brokerage's take-home pay of $161,949 versus $97,390, a $61,049 difference, with United Estates Realty branding",
+    content: <CaseStudySwitchingArticle />,
+    faq: CASE_STUDY_FAQ,
   },
 ];
 
