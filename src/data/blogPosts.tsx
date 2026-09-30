@@ -68,6 +68,10 @@ const blogImage35 = { url: blogImage35Url };
 import blogImage36Url from "@/assets/case-study-switching-100-commission-brokerage-florida-agent.jpg";
 const blogImage36 = { url: blogImage36Url };
 
+import blogImage37Url from "@/assets/why-high-volume-florida-agents-save-most-100-commission-2026.jpg";
+const blogImage37 = { url: blogImage37Url };
+
+
 
 
 const blogImage4 = { url: blogImage4Url };
