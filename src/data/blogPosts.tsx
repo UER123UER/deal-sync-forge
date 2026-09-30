@@ -4439,6 +4439,47 @@ const GrowingFastArticle = () => (
   </>
 );
 
+const HIGH_VOLUME_FAQ: FaqItem[] = [
+  { question: "How much can a high-volume Florida agent save with a 100% commission model?", answer: "At 25 closings per year at Florida's median commission, the savings versus a traditional 70/30 split with desk and transaction fees exceed $92,000 annually. At 40 closings per year, the annual savings exceed $146,000. The savings compound directly with production because the split scales with every deal while the flat monthly fee stays fixed." },
+  { question: "At what number of transactions does a 100% commission brokerage become more cost-effective?", answer: "Against a traditional 70/30 split brokerage, the flat-fee model at $98 monthly is more cost-effective from the first closing of the year. Against a no-monthly-fee per-transaction brokerage charging $395 per closing, the flat-fee model breaks even at approximately three closings per year." },
+  { question: "How do transaction fees affect the savings of high-volume agents?", answer: "Transaction fees scale with production. A $395 per closing fee costs a six-deal agent $2,370 annually but costs a 40-deal agent $15,800 annually. Eliminating per-transaction fees has the most financial impact on agents with the highest production volume." },
+  { question: "Why do some high-volume agents stay at traditional brokerages despite the math?", answer: "The two most common reasons are brand loyalty and inertia. Most high-volume agents have not run a full annual cost audit combining the split, desk fees, transaction fees, and technology charges into one number. Once that total is calculated, the case for switching becomes significantly clearer." },
+];
+
+const HighVolumeSavingsArticle = () => (
+  <>
+    <P>The math behind brokerage fee structures is not equally painful for all agents. A part-time agent closing four deals a year feels the cost of a commission split differently than a high-volume agent closing 25 or 40 transactions annually. What most agents never calculate is how dramatically the savings compound as production increases, and why Florida's highest-earning agents have the most to gain by switching to a 100% commission flat-fee model in 2026.</P>
+    <H2>Why Volume Changes Everything in the Fee Math</H2>
+    <P>The commission split is a variable cost. It scales with every deal you close. That is the core structural problem for high-volume agents at traditional brokerages. A desk fee costs the same whether you close two deals or 30. But a 30% commission split on 30 closings costs 15 times more than the same split on two closings.</P>
+    <P>This asymmetry is what makes the 100% commission model disproportionately valuable as production increases. A flat monthly fee stays fixed regardless of how many transactions you close. The brokerage cost per deal at a $98 flat-fee model drops from $98 at one closing to $4.90 at 20 closings. At a traditional split brokerage, the cost per deal is identical on every transaction all year regardless of production level.</P>
+    <H2>The Numbers Across Three Production Tiers</H2>
+    <P>We are using Florida's average home price in 2026 at approximately $435,000 and a standard 2.5% buyer agent commission of $10,875 per closing. Traditional brokerage is modeled on a 70/30 split with a $150 monthly desk fee and a $395 transaction fee per closing.</P>
+    <H3>Agent closing 15 deals per year: $163,125 gross commission income</H3>
+    <P>Traditional brokerage cost: splits $48,937, desk fees $1,800, transaction fees $5,925. Total: $56,662. Net income: $106,463. Flat fee at $98 monthly: Total cost $1,176. Net income: $161,949. Annual savings: $55,486.</P>
+    <H3>Agent closing 25 deals per year: $271,875 gross commission income</H3>
+    <P>Traditional brokerage cost: splits $81,562, desk fees $1,800, transaction fees $9,875. Total: $93,237. Net income: $178,638. Flat fee at $98 monthly: Total cost $1,176. Net income: $270,699. Annual savings: $92,061.</P>
+    <H3>Agent closing 40 deals per year: $435,000 gross commission income</H3>
+    <P>Traditional brokerage cost: splits $130,500, desk fees $1,800, transaction fees $15,800. Total: $148,100. Net income: $286,900. Flat-fee at $98 monthly: Total cost $1,176. Net income: $433,824. Annual savings: $146,924.</P>
+    <P>The pattern is clear. Doubling production at a flat-fee brokerage roughly doubles your income. At a traditional split brokerage, doubling production also doubles what you pay the brokerage. The flat-fee model rewards production in a way the split model structurally cannot.</P>
+    <H2>How Transaction Fees Compound Against High-Volume Agents</H2>
+    <P>Transaction fees are the hidden multiplier most agents underestimate. A $395 transaction fee feels insignificant on one closing. Multiplied across 40 closings, it becomes $15,800 per year. High-volume agents are disproportionately damaged by transaction fees precisely because they close more deals. A low-volume agent on six deals pays $2,370 annually. A high-volume agent on 40 deals pays $15,800 annually at the same fee. Same brokerage, dramatically different financial impact.</P>
+    <P>The break-even calculation consistently favors flat-fee models earlier than most agents expect. Against a split-plus-transaction-fee structure, the flat-fee model wins on the very first closing of the year.</P>
+    <H2>The Real Brokerage's Florida Evidence</H2>
+    <P>In 2026, the evidence that high-volume Florida agents are moving toward lower-split and 100% commission structures is no longer anecdotal. The Sandra Rathe Team ranked 15th in Florida and 159th nationally by RealTrends Verified for sales volume moved to Real Brokerage, bringing $135 million in annual sales volume across 20 agents from Miami-Dade, Broward, and Palm Beach counties.</P>
+    <P>This is the profile of the agent making the switch in 2026. Not someone struggling. Not someone looking for a cheaper option because production is low. A top 15 Florida team that ran the numbers and decided the traditional split model cost too much relative to what it delivered.</P>
+    <H2>What Blocks High-Volume Agents From Switching Sooner</H2>
+    <P>The most common reason high-volume Florida agents delay the switch despite knowing the math is the belief that brokerage brand recognition drives their business. Consumers do not choose an agent based primarily on the brokerage name. At the volume level where flat-fee savings become most significant, the agent's own brand drives 80 percent or more of their business. The brokerage name is not what makes the phone ring at 25 or 40 deals per year.</P>
+    <P>The second reason is inertia. Agents who have operated inside the same brokerage fee structure for years often have not calculated what that structure has cost them over five years. An agent closing 25 deals per year for five years under a traditional split structure pays approximately $466,185 in brokerage costs over that period. The same agent at $98 flat monthly pays $5,880. The five-year compounding difference is over $460,000.</P>
+    <P>Running that calculation once is usually enough to end the delay.</P>
+    <H2>A Model Built for Production in Florida</H2>
+    <P>United Estates Realty operates on the flat-fee model that high-volume Florida agents benefit from most. Licensed Florida agents pay $98 per month and keep 100% of every commission regardless of production volume. There is no point at which a high-volume agent's success triggers additional brokerage fees. The model rewards production rather than taxing it.</P>
+    <P>If you are a licensed Florida agent whose production has grown beyond the point where your brokerage fee structure makes financial sense, the calculation starts at unitedestatesagent.com.</P>
+    <section className="mt-16">
+      <Faq eyebrow="FAQ" heading="Frequently Asked Questions" items={HIGH_VOLUME_FAQ} />
+    </section>
+  </>
+);
+
 const CASE_STUDY_FAQ: FaqItem[] = [
   { question: "How much more take-home pay can switching to a 100% commission brokerage actually mean?", answer: "Based on the case study above, an agent closing 14 to 15 transactions per year at Florida's median commission level kept approximately $61,000 more in a single year after switching from a 70/30 split to a $98 flat monthly fee. The exact figure depends on production volume and what the previous brokerage charged in transaction and desk fees on top of the split." },
   { question: "Are there still fees after switching to a 100% commission brokerage?", answer: "Always. Every brokerage has operating costs. What changes is the structure. A genuine flat-fee brokerage charges one predictable monthly amount covering compliance, software, and broker support with no additional fees per transaction. Some brokerages marketing themselves as 100% commission still charge $250 to $500 per closing, which stacks significantly over a full production year. Always request the complete written fee schedule before transferring your license." },
