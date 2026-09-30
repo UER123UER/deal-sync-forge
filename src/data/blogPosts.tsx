@@ -5137,6 +5137,23 @@ export const blogPosts: BlogPost[] = [
     content: <CaseStudySwitchingArticle />,
     faq: CASE_STUDY_FAQ,
   },
+  {
+    slug: "why-high-volume-florida-agents-save-most-100-commission-2026",
+    title: "Why High-Volume Florida Agents Save the Most by Switching to 100% Commission in 2026",
+    metaTitle: "Why High-Volume Florida Agents Save Most Switching to 100% Commission in 2026",
+    description:
+      "High-volume Florida agents save the most when switching to 100% commission. See the real savings at 15, 25 and 40 deals per year with the full fee math.",
+    excerpt:
+      "The more you close, the more you save. See the real annual savings at 15, 25 and 40 deals per year with the full fee math laid out clearly.",
+    date: "2026-09-30",
+    readMinutes: 8,
+    author: "United Estates Realty",
+    image: blogImage37.url,
+    imageAlt:
+      "Infographic showing why high-volume agents save the most, with annual savings of $55,486 at 15 deals, $92,061 at 25 deals and $146,924 at 40 deals versus a traditional 70/30 split brokerage, with United Estates Realty branding",
+    content: <HighVolumeSavingsArticle />,
+    faq: HIGH_VOLUME_FAQ,
+  },
 ];
 
 
