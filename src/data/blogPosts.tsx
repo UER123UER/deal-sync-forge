@@ -71,6 +71,9 @@ const blogImage36 = { url: blogImage36Url };
 import blogImage37Url from "@/assets/why-high-volume-florida-agents-save-most-100-commission-2026.jpg";
 const blogImage37 = { url: blogImage37Url };
 
+import blogImage38Url from "@/assets/best-florida-brokerage-by-production-level.jpg";
+const blogImage38 = { url: blogImage38Url };
+
 
 
 
@@ -4524,6 +4527,60 @@ const CaseStudySwitchingArticle = () => (
   </>
 );
 
+const PRODUCTION_LEVEL_FAQ: FaqItem[] = [
+  { question: "What is the best brokerage in Florida for new agents?", answer: "For new agents in Florida a capped-split brokerage like Keller Williams offers the best balance of support and income. You give up a portion of commissions early on but gain access to structured training and mentorship that helps you build a durable business. Once you are consistently closing 12 or more deals per year the math begins to favor a flat-fee or 100% commission model instead." },
+  { question: "When should a Florida real estate agent switch to a 100% commission brokerage?", answer: "The right time to switch is when your brokerage costs more than it provides. For most Florida agents that tipping point arrives around 15 to 20 closed transactions per year. At that volume you have a proven pipeline and no longer need the structured onboarding a traditional split model provides. Switching to a flat-fee model at that stage converts overhead into income, often tens of thousands of dollars per year." },
+  { question: "How much do Florida real estate agents actually make?", answer: "According to the 2026 Florida Realtors Member Profile the median gross commission income for a Florida agent was $41,000 in 2025 with a net income of approximately $27,000 after expenses. Agents with 16 or more years of experience in Florida regularly earn over $100,000. Brokerage structure plays a significant role in how much of that gross income an agent actually keeps." },
+  { question: "Does your commission split matter more as you close more deals?", answer: "Yes, and the difference grows significantly at high production levels. An agent closing five deals per year splitting 30% loses a manageable amount. An agent closing 25 deals on the same split loses five times more. At high volume the split is no longer a fee. It is a structural drain on business income. This is why top producers in Florida increasingly choose flat-fee models where the monthly cost is fixed regardless of how many deals close." },
+  { question: "What makes United Estates Realty different from other Florida brokerages?", answer: "United Estates Realty operates on a $98 per month flat-fee model with zero transaction fees and 100% commission retention. The model is built specifically for Florida agents who have established their own pipelines and no longer need the training infrastructure of a franchise brokerage. There are no splits and no per-deal charges, just a flat monthly fee covering the full state of Florida. For high-volume agents the annual cost of $1,176 compares favorably against tens of thousands of dollars in split losses under traditional or capped models." },
+];
+
+const ProductionLevelArticle = () => (
+  <>
+    <P>Most Florida agents pick a brokerage and stay. The ones who build real wealth pick the right brokerage for where they are, and move when the math changes.</P>
+    <P>Choosing a brokerage in Florida is one of the most consequential career decisions a real estate agent makes. Yet most agents make that decision by asking the wrong question. Instead of asking "Which brokerage is best?" the real question is "Which brokerage is best for where I am right now?"</P>
+    <P>The answer changes at every production level. A model that protects and supports a brand-new agent can quietly cost a high-volume producer tens of thousands of dollars per year. And a model built for top producers can leave a newer agent without the structure to grow. Florida's market makes this distinction sharper than most states.</P>
+    <P>Here is what the data shows and how to match your brokerage to your production stage.</P>
+    <H2>Florida's Agent Landscape Is Different From the National Average</H2>
+    <P>The 2026 Florida Realtors Member Profile reveals a market where most agents produce far less volume than the national picture suggests.</P>
+    <P>The median Florida agent closed five residential transactions in 2025. The national median was nine. Nearly one in four agents with two years or fewer of experience earned under $10,000. Those numbers are not a failure of effort. They reflect a high-cost entry market where most agents are still building their pipelines. This is the baseline reality every brokerage decision must account for.</P>
+    <H2>New and Low-Volume Agents: Structure Comes First</H2>
+    <P>For agents closing fewer than six transactions per year, the priority is not maximizing commission retention. It is building skill and staying in business long enough to develop a pipeline.</P>
+    <P>At this stage, a capped split brokerage earns its value. Keller Williams begins most agents at a 70/30 split and allows them to reach 100% commission after hitting the annual cap, typically between $18,000 and $24,000 depending on the market center. Until you hit it the brokerage takes a portion of each check. In return, you receive structured training programs and a built-in culture of coaching that a flat-fee model does not provide.</P>
+    <P>At this production level, paying $200 to $1,000 per month in desk and technology fees at a virtual brokerage while also paying $200 to $800 per transaction makes little financial sense. You would be paying full cost for infrastructure you have not yet learned to use at full capacity. The 70/30 split on a $6,000 commission check costs $1,800, a defined and manageable cost tied directly to production.</P>
+    <H2>Mid-Volume Agents: Where the Split Starts to Hurt</H2>
+    <P>Once an agent reaches 10 to 15 transactions per year, the math shifts. At this production level, a traditional split model begins eroding income in ways that feel invisible until you run the numbers.</P>
+    <P>An agent earning $8,000 per deal and closing 12 transactions generates $96,000 in gross commission. At a 70/30 split, the agent keeps $67,200. Under an 80/20 model with an $18,000 annual cap, the agent hits the cap early in the year and earns 100% for the remainder. The cap model wins in most scenarios at this volume.</P>
+    <P>eXp Realty operates at an 80/20 split with a $16,000 annual cap and has built a following among mid-volume agents who want flexibility without giving up too much. After the cap, the agent earns 100% for the rest of the year. This production range is also where agents should begin stress-testing their next move. If you are consistently closing more than 10 deals per year, you are no longer a volume risk; you are a business, and the brokerage model that fits a business looks very different from one that fits a student.</P>
+    <H2>High-Volume Agents: Every Dollar You Split Is a Dollar You Earned</H2>
+    <P>For agents closing 20 or more transactions per year, traditional splits and cap models both impose a ceiling on income that is not justified by what the agent actually receives in return.</P>
+    <DataTable>
+      <thead>
+        <tr>
+          <TH>Scenario</TH>
+          <TH>Gross Commission</TH>
+          <TH>Brokerage Cost</TH>
+          <TH>Agent Keeps</TH>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><TD>70/30 Split — 24 deals</TD><TD>$480,000</TD><TD>$144,000</TD><TD>$336,000</TD></tr>
+        <tr><TD>eXp 80/20 + $16K cap</TD><TD>$480,000</TD><TD>~$20,000</TD><TD>~$460,000</TD></tr>
+        <tr><TD>100% Flat Fee — $98/mo</TD><TD>$480,000</TD><TD>$1,176/yr</TD><TD>$478,824</TD></tr>
+      </tbody>
+    </DataTable>
+    <P>This is the production level where models like United Estates Realty become the most financially rational choice. At $98 per month with zero transaction fees and 100% commission retention, an agent closing 24 deals pays $1,176 per year in brokerage overhead.</P>
+    <P>The 2026 T3 Sixty research on virtual brokerage economics confirms this pattern: at high production volumes, the per-transaction cost of a flat-fee model approaches zero relative to gross earnings. Low-volume agents pay a higher relative cost per deal under any fixed-fee model. High-volume agents pay a fraction.</P>
+    <H2>The Right Brokerage Fits the Agent You Are Today</H2>
+    <P>Florida's market is not forgiving of misalignment. Forty percent of Florida agents are affiliated with franchise brokerages. Fifty-three percent work with independent companies. No single category wins for every agent at every stage.</P>
+    <P>The agents who build lasting careers recognize that brokerage selection is not a permanent identity. It is a strategic decision that should be revisited as production climbs. New agents benefit from structure. Mid-volume agents benefit from capped models with lower overhead. High-volume agents who have built their own lead flow and brand should be paying a flat fee and keeping every commission dollar their work generates.</P>
+    <P>At United Estates Realty we built our model specifically for the agent who has crossed that threshold. Our $98 monthly flat fee covers the entire state of Florida with no transaction fees and no splits. If you are producing at a level where your brokerage costs more than it gives back we should talk.</P>
+    <section className="mt-16">
+      <Faq eyebrow="FAQ" heading="Frequently Asked Questions" items={PRODUCTION_LEVEL_FAQ} />
+    </section>
+  </>
+);
+
 export const blogPosts: BlogPost[] = [
 
 
@@ -5153,6 +5210,23 @@ export const blogPosts: BlogPost[] = [
       "Infographic showing why high-volume agents save the most, with annual savings of $55,486 at 15 deals, $92,061 at 25 deals and $146,924 at 40 deals versus a traditional 70/30 split brokerage, with United Estates Realty branding",
     content: <HighVolumeSavingsArticle />,
     faq: HIGH_VOLUME_FAQ,
+  },
+  {
+    slug: "best-florida-brokerage-by-production-level",
+    title: "Why the Best Florida Brokerage for Your Career Is Not the Same at Every Production Level",
+    metaTitle: "Best Florida Brokerage by Production Level | United Estates Realty",
+    description:
+      "Not every Florida brokerage fits every agent. Discover which brokerage model matches your production level and how to keep more of what you earn.",
+    excerpt:
+      "New agents need structure, mid-volume agents need a cap, and high-volume agents need a flat fee. Match your Florida brokerage to your production level.",
+    date: "2026-10-03",
+    readMinutes: 7,
+    author: "United Estates Realty",
+    image: blogImage38.url,
+    imageAlt:
+      "Infographic showing the best Florida brokerage by production level: new agents benefiting from a capped split with structure and training, mid-volume agents on an 80/20 cap, and high-volume agents keeping every dollar on a 100% flat fee, with United Estates Realty branding",
+    content: <ProductionLevelArticle />,
+    faq: PRODUCTION_LEVEL_FAQ,
   },
 ];
 
