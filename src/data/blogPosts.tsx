@@ -74,6 +74,10 @@ const blogImage37 = { url: blogImage37Url };
 import blogImage38Url from "@/assets/best-florida-brokerage-by-production-level.jpg";
 const blogImage38 = { url: blogImage38Url };
 
+import blogImage39Url from "@/assets/fair-housing-law-florida-real-estate-agents.jpg";
+const blogImage39 = { url: blogImage39Url };
+
+
 
 
 
@@ -4581,7 +4585,50 @@ const ProductionLevelArticle = () => (
   </>
 );
 
+const FAIR_HOUSING_FAQ: FaqItem[] = [
+  { question: "Can I say a neighborhood has \"people like you\"?", answer: "No. This is a direct example of steering, recommending or avoiding an area based on a client's race, religion, or national origin, and it violates both Florida and federal fair housing law regardless of intent." },
+  { question: "Are there listing words to avoid?", answer: "There is no current official HUD list of banned words, despite what many offices circulate. The real test is whether language describes the property or implies a preferred occupant. Phrases like \"perfect for a young family\" or \"adults only\" describe a buyer type and are prohibited." },
+  { question: "Can local law be stricter than state and federal rules?", answer: "Yes. Some Florida counties and cities have local human rights ordinances that add protections beyond the state and federal baseline, commonly including sexual orientation and gender identity, so local rules should always be checked as well." },
+  { question: "Can an agent discuss school quality or crime rates with a buyer?", answer: "No, not with a personal opinion. Agents should redirect buyers to objective public sources like school ratings sites and local crime data rather than characterizing a school or area directly." },
+  { question: "What is \"steering\" under fair housing law?", answer: "Steering is guiding a buyer toward or away from a neighborhood, property, or community based on a protected characteristic, whether through direct recommendation or a seemingly neutral comment that carries the same effect." },
+  { question: "What is the deadline to file a fair housing complaint?", answer: "One year to file a complaint with HUD, and two years to pursue a private civil lawsuit. Both deadlines run from the date of the violation, not from when a client decides to act." },
+];
+
+const FairHousingArticle = () => (
+  <>
+    <P>Most fair housing violations are not acts of deliberate bigotry. They happen in a casual answer to a buyer's question, a word choice in a listing description, or a well-meaning recommendation that steers a client without anyone intending harm. Florida agents work under overlapping federal, state, and sometimes local protections, and understanding where the actual lines sit matters more than relying on instinct.</P>
+    <P>A license can be suspended or revoked over language that felt harmless in the moment, which is exactly why so many violations catch experienced agents by surprise. Good intent has never been a legal defense under fair housing law, and the agents who stay out of trouble are the ones who understand the actual test rather than trusting their own sense of what sounds reasonable.</P>
+    <P>This guide covers what the law actually prohibits, the most common accidental violation agents make, and how listing language gets evaluated when a complaint is filed.</P>
+    <H2>The Legal Baseline: Seven Protected Classes</H2>
+    <P>The federal Fair Housing Act prohibits discrimination in the sale, rental, or financing of housing based on race, color, religion, sex, national origin, familial status, and disability. Florida's own Fair Housing Act, found at Florida Statutes sections 760.20 through 760.60, mirrors this same list at the state level.</P>
+    <P>These protections apply to every part of a transaction, not just the final sale. Refusing to show a property, misrepresenting availability, offering different terms, or steering a client toward or away from an area based on any of these seven characteristics all qualify as violations, regardless of whether the agent intended harm.</P>
+    <P>Lending carries its own overlapping layer as well. The Equal Credit Opportunity Act prohibits lenders from discriminating based on similar characteristics, along with marital status and age, which matters whenever an agent refers a client to a specific lender or loan officer as part of the transaction.</P>
+    <H2>Can Local Law Be Stricter Than State or Federal Rules?</H2>
+    <P>Yes. Federal and state law set the baseline, but some Florida counties and cities have adopted local human rights ordinances that extend protections further, commonly adding sexual orientation and gender identity to the protected categories recognized within that specific jurisdiction. These local protections do not appear in the statewide statute itself, which is why checking local ordinances in addition to state and federal law matters, particularly for agents working across multiple counties with different local rules.</P>
+    <H2>Steering Is the Most Common Accidental Violation</H2>
+    <P>Steering means guiding a client toward or away from a neighborhood based on a protected characteristic, and it is often the easiest violation to commit without realizing it. Recommending a particular community to a client because it has "people like you," based on their race, religion, or national origin, is a textbook example, even when the agent believes they are being helpful.</P>
+    <P>The same principle applies in the opposite direction. Suggesting a client would be more comfortable avoiding a certain area, or assuming a property only suits a certain type of buyer based on a protected characteristic, is steering regardless of the agent's intent. The safest standard is treating every client's search the same way, driven by their stated criteria rather than assumptions about who they are.</P>
+    <H2>What Agents Cannot Discuss Directly?</H2>
+    <P>Buyers frequently ask agents to weigh in on neighborhood safety, school quality, or who lives in a given area. Answering these questions directly, even with a seemingly neutral opinion, risks functioning as coded steering. Characterizing a school as "good" or "bad," commenting on crime levels, or describing the demographic makeup of a neighborhood are all areas where agents should redirect rather than answer personally.</P>
+    <P>The better approach points clients toward objective, third-party sources: public crime data from local law enforcement agencies, school ratings sites, and U.S. Census data for demographic information. This gives buyers the same access to information without the agent's personal framing shaping the decision.</P>
+    <H2>What Agents Can Discuss Freely</H2>
+    <P>Plenty of genuinely useful guidance falls outside these restrictions. Agents can speak confidently about home values, recent comparable sales, and market trends. Property condition, zoning, flood zone status, HOA rules, and construction type are all fair game, since they describe the property itself rather than the people who might live there. Community features like parks, public transit access, and nearby shopping are also appropriate, as long as the framing stays about the place rather than who belongs there.</P>
+    <H2>Listing Language: The Myth of the Official Word List</H2>
+    <P>Many offices circulate a list of supposedly banned listing words, phrases like "walking distance to church" or "perfect for a young family." That list traces back to a 1989 HUD memorandum that was withdrawn in the 1990s and never officially replaced. No current HUD register of forbidden words exists.</P>
+    <P>The actual legal test under the Fair Housing Act is simpler than any word list: does the language describe the property, or does it describe a preferred occupant? "Quiet street" and "desirable neighborhood" describe the property and are generally fine. "Perfect for a young family," "ideal for a single professional," or marketing proximity to a specific church as a selling point all describe a preferred type of buyer instead, which is exactly what the law prohibits. Explicit phrases like "no children," "adults only," or any mention of a specific religion attached to a property remain clear violations under any reading.</P>
+    <H2>If a Violation Occurs</H2>
+    <P>Agents who suspect a fair housing violation, whether committed by themselves, a colleague, or another party in a transaction, should document the exact language, date, and witnesses the same day it happens. Clients have one year to file a complaint with HUD and two years to pursue a private civil lawsuit, and reporting through brokerage internal protocols protects both the agent's license and their errors and omissions coverage. Agents who report a violation and face professional retaliation for doing so are themselves protected under federal and state law.</P>
+    <section className="mt-16">
+      <Faq eyebrow="FAQ" heading="Frequently Asked Questions" items={FAIR_HOUSING_FAQ} />
+    </section>
+    <H2>Final Thoughts</H2>
+    <P>Fair housing compliance comes down to describing properties rather than people, and redirecting personal opinions toward objective, public sources whenever a client asks a question that edges toward a protected characteristic. Most violations happen through careless habit rather than intent, which is exactly why understanding the real legal test matters more than memorizing an outdated word list.</P>
+    <P>United Estates Realty builds compliance guidance directly into its flat $98 monthly fee, helping agents navigate fair housing questions with confidence from their first transaction.</P>
+  </>
+);
+
 export const blogPosts: BlogPost[] = [
+
 
 
 
@@ -5228,7 +5275,25 @@ export const blogPosts: BlogPost[] = [
     content: <ProductionLevelArticle />,
     faq: PRODUCTION_LEVEL_FAQ,
   },
+  {
+    slug: "fair-housing-law-florida-real-estate-agents",
+    title: "Fair Housing Law for Florida Real Estate Agents: What You Can and Can't Say",
+    metaTitle: "Fair Housing Law for Florida Real Estate Agents",
+    description:
+      "A clear 2026 guide to what Florida real estate agents can and cannot say under federal, state, and local fair housing law.",
+    excerpt:
+      "Most fair housing violations are accidental. Learn what Florida agents can and cannot say under federal, state, and local fair housing law in 2026.",
+    date: "2026-10-08",
+    readMinutes: 7,
+    author: "United Estates Realty",
+    image: blogImage39.url,
+    imageAlt:
+      "Florida real estate agent beside a balance scale weighing equal home buyer groups, with a model house, diverse buyers, and United Estates Realty branding",
+    content: <FairHousingArticle />,
+    faq: FAIR_HOUSING_FAQ,
+  },
 ];
+
 
 
 
