@@ -77,6 +77,9 @@ const blogImage38 = { url: blogImage38Url };
 import blogImage39Url from "@/assets/fair-housing-law-florida-real-estate-agents.jpg";
 const blogImage39 = { url: blogImage39Url };
 
+import blogImage40Url from "@/assets/united-estates-realty-referral-program-earn-per-agent.jpg";
+const blogImage40 = { url: blogImage40Url };
+
 
 
 
@@ -4627,6 +4630,43 @@ const FairHousingArticle = () => (
   </>
 );
 
+const REFERRAL_PROGRAM_FAQ: FaqItem[] = [
+  { question: "Who can I refer to the United Estates Realty referral program?", answer: "Any licensed real estate agent looking for a better brokerage with an active Florida real estate license." },
+  { question: "How much do I earn per agent I refer?", answer: "$20 per month for as long as that agent keeps their license active at United Estates Realty. No cap and no expiration." },
+  { question: "Is there a limit to how many agents I can refer?", answer: "No. Every agent you refer adds $20 to your monthly recurring income. Ten agents means $200 per month. Twenty means $400." },
+  { question: "Do I need to be a United Estates Realty agent to participate?", answer: "Contact United Estates Realty directly to confirm eligibility. The program is built to reward anyone who introduces qualified licensed agents to the brokerage." },
+  { question: "When do referral payments start?", answer: "Once the agent you referred joins and their license is active at United Estates Realty. No minimum threshold to unlock your first payment." },
+];
+
+const ReferralProgramArticle = () => (
+  <>
+    <P>Most referral programs in real estate pay you once. A flat bonus hits your account, and that is the end of it. The United Estates Realty referral program works differently; it pays you every month for as long as the agent you referred stays active with us.</P>
+    <P>That distinction matters more than it looks.</P>
+    <H2>A Simple Premise With Real Compounding Power</H2>
+    <P>The structure is straightforward. Refer a licensed real estate agent to United Estates Realty, and we pay you $20 per month for the entire time they remain with us. No cap on referrals. No expiration on the income. Every agent you bring in adds another $20 to your monthly total indefinitely.</P>
+    <P>Run the numbers on even a modest effort. Refer five agents and keep them active; that is $100 per month or $1,200 per year with no additional work required. Ten agents bring $200 per month. Twenty agents bring $400 per month. Fifty agents bring $1,000 per month. The earning potential scales directly with your network, and it compounds over time because each referral keeps generating income month after month without you lifting a finger after that first conversation.</P>
+    <P>This is passive income in the truest sense. After one conversation introducing someone to our model, there is nothing more required from you. No follow-up paperwork. No ongoing management. No performance reviews. The income simply continues as long as your referred agent does.</P>
+    <H2>Who Can You Refer?</H2>
+    <P>Any licensed agent looking for a better brokerage. That covers agents tired of watching a traditional split eat into every commission check they earn, mid-volume producers frustrated with capped models, and high-volume agents who have done the math and realized their current brokerage costs more than it gives back.</P>
+    <P>Florida has over 200,000 licensed real estate agents. A significant portion are actively evaluating whether their current brokerage still makes sense. The 2026 Florida Realtors Member Profile showed median net income for Florida agents at just $27,000 after expenses. Brokerage structure is a critical conversation for anyone trying to build real wealth in this market. Agents at every production level, new licensees who feel underserved, and seasoned producers who are simply done splitting commissions are the right people to have this conversation with.</P>
+    <P>When you tell another agent they can keep 100% of every commission they earn for $98 per month with zero transaction fees, the reaction is rarely confusion. It is usually: why am I not already doing this?</P>
+    <H2>Why Recurring Beats a One-Time Bonus</H2>
+    <P>The industry standard for referral programs is a single payment. Some brokerages pay a few hundred dollars when a referred agent closes their first deal. That model benefits the brokerage far more than the referrer because a productive agent generates years of value and you only get paid once at the start.</P>
+    <P>The recurring model at United Estates Realty is built on a different philosophy. Your network has value that extends well beyond the moment of introduction. If an agent you referred closes 30 deals over three years, we think you should be earning something through that entire period, not just on day one. This mirrors what the best property management referral programs have done: paying referrers ongoing income tied to the long-term relationship rather than a single upfront bonus that disappears the moment the ink dries.</P>
+    <P>The difference in total earnings over a two- to three-year period between a one-time bonus and a $20 monthly recurring payment is not marginal. On a single referred agent alone, the recurring model pays out $480 over two years versus a typical one-time bonus of $100 to $200. Scale that across five or ten referrals and the gap becomes very significant very quickly.</P>
+    <H2>No Tiers. No Thresholds. No Complexity.</H2>
+    <P>Some referral programs require hitting a minimum before payouts begin or place your earnings behind qualification gates. We do not operate that way. Your first referral starts generating $20 per month from day one. No tiers to unlock and no production requirements attached to your referral income.</P>
+    <P>The simplicity is deliberate. Real estate agents deal with enough complexity in their daily work. A referral program should be easy to explain in one sentence and easy to benefit from immediately.</P>
+    <H2>How to Start</H2>
+    <P>If you are already a United Estates Realty agent, the process starts with a conversation. Think about agents in your network paying more than they should for a brokerage that gives them less than they deserve. Point them toward our <Internal to="/pricing">$98 flat-fee model</Internal> and let the structure speak for itself. The value proposition is clear enough that a five-minute conversation is often all it takes.</P>
+    <P>If you are not yet with United Estates Realty but the referral program caught your attention, it is worth looking at whether joining makes sense for your own production level first. Agents who genuinely believe in the model they are referring people to are far more persuasive than those simply passing along a link.</P>
+    <P>Either way, the math on recurring referral income is worth taking seriously. In a market where Florida agents net $27,000 after expenses, an extra $200 to $400 per month from referrals alone is a meaningful and consistent improvement to the bottom line, and unlike commission income, it does not require another showing or another signed contract.</P>
+    <section className="mt-16">
+      <Faq eyebrow="FAQ" heading="Frequently Asked Questions" items={REFERRAL_PROGRAM_FAQ} />
+    </section>
+  </>
+);
+
 export const blogPosts: BlogPost[] = [
 
 
@@ -5291,6 +5331,23 @@ export const blogPosts: BlogPost[] = [
       "Florida real estate agent beside a balance scale weighing equal home buyer groups, with a model house, diverse buyers, and United Estates Realty branding",
     content: <FairHousingArticle />,
     faq: FAIR_HOUSING_FAQ,
+  },
+  {
+    slug: "united-estates-realty-referral-program-earn-per-agent",
+    title: "How the United Estates Realty Referral Program Works: Earn $20 a Month Per Agent You Refer",
+    metaTitle: "United Estates Realty Referral Program: Earn $20/Month Per Agent",
+    description:
+      "Refer a licensed Florida agent to United Estates Realty and earn $20 every month they stay. No caps. No expiration. Just recurring income for a single conversation.",
+    excerpt:
+      "Earn $20 every month for each agent you refer to United Estates Realty. No caps, no expiration — recurring income from a single conversation.",
+    date: "2026-10-10",
+    readMinutes: 6,
+    author: "United Estates Realty",
+    image: blogImage40.url,
+    imageAlt:
+      "Two real estate agents exchanging a referral business card with recurring $20 monthly payment coins flowing between them, a cloud-based brokerage hub and Florida map behind, with United Estates Realty branding",
+    content: <ReferralProgramArticle />,
+    faq: REFERRAL_PROGRAM_FAQ,
   },
 ];
 
