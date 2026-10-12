@@ -80,6 +80,9 @@ const blogImage39 = { url: blogImage39Url };
 import blogImage40Url from "@/assets/united-estates-realty-referral-program-earn-per-agent.jpg";
 const blogImage40 = { url: blogImage40Url };
 
+import blogImage41Url from "@/assets/what-florida-agents-wish-they-knew-before-choosing-first-brokerage.jpg";
+const blogImage41 = { url: blogImage41Url };
+
 
 
 
@@ -4667,6 +4670,62 @@ const ReferralProgramArticle = () => (
   </>
 );
 
+const FIRST_BROKERAGE_FAQ: FaqItem[] = [
+  {
+    "question": "What should new real estate agents in Florida know before choosing their first brokerage?",
+    "answer": "New agents should look beyond the commission split and understand the full cost structure, including desk fees, transaction fees, and E&O insurance charges. They should also evaluate what training actually looks like day to day and whether the brokerage has a documented mentorship process. Florida’s competitive entry market means early support matters more here than in most states. The brokerage that gets you started is not necessarily the one that should earn a percentage of your commissions three years later."
+  },
+  {
+    "question": "How important is training and mentorship when choosing a first real estate brokerage?",
+    "answer": "It is the most important factor at the start. Research from NAR consistently shows that new agents who receive hands-on mentorship and contract support in their first 18 months have significantly higher retention rates. The issue is that “mentorship” means something different at every brokerage. Agents should ask whether mentors actively shadow deals and review contracts or simply make themselves available by phone. The quality of that early guidance directly shapes how quickly an agent becomes self-sufficient."
+  },
+  {
+    "question": "What fees should Florida real estate agents expect when joining a brokerage?",
+    "answer": "Beyond the commission split, agents typically pay a monthly brokerage fee between $50 and $200, desk fees up to $500 per month if they use office space, E&O insurance averaging $30 to $70 per month, and per-transaction fees ranging from $200 to $800 per closed deal. Some brokerages also charge a compliance or coordination fee on top of that. An agent closing six transactions in their first year can easily pay $3,000 to $7,000 in non-split fees alone. Asking for a full written fee schedule before signing is not optional; it is essential."
+  },
+  {
+    "question": "How do you know when it is time to switch brokerages in Florida?",
+    "answer": "The clearest signal is when the cost of your brokerage exceeds the value it provides. If you have built your own pipeline, no longer use the training infrastructure, and are still paying a split on every deal you close, that gap is costing you real money. Most experienced Florida agents say they should have switched sooner. The process itself is straightforward: notify your current broker in writing, transfer your license with the Florida DBPR, and ensure your pending transactions are handled per the terms of your existing agreement."
+  },
+  {
+    "question": "Is a 100% commission flat-fee brokerage a good fit for new Florida agents?",
+    "answer": "Not typically in the first year or two. Flat-fee models are designed for agents who have already built their client base and no longer need structured onboarding or mentorship. For a new agent, the cost of a monthly flat fee on top of zero transaction support is harder to justify than a split model that includes training. The right time to move to a flat-fee brokerage like United Estates Realty is when your brokerage costs more than it gives back, usually around 15 to 20 closed transactions per year."
+  }
+];
+
+const FirstBrokerageLessonsArticle = () => (
+  <>
+    <P>{"Most Florida agents pick their first brokerage the same way: someone reaches out after licensing, the office looks professional, and the broker seems supportive. They sign. They start. And within 12 months, many of them wish they had asked more questions before putting pen to paper."}</P>
+    <P>{"This is not a story about bad brokerages. It is a story about agents who were not yet equipped to evaluate what they were getting into. Florida’s real estate market rewards the agents who build smart from the start. And brokerage selection is where that foundation either holds or cracks."}</P>
+    <P>{"Here is what experienced Florida agents consistently say they wish they had known."}</P>
+    <H2>{"The Split Is Not the Story, The Full Cost Is"}</H2>
+    <P>{"Every agent hears about the commission split before joining. Almost no one hears about every other fee until the checks start coming in."}</P>
+    <P>{"The Luxury Presence 2026 Agent Expense Guide puts the full picture in numbers. Monthly brokerage fees typically run $50 to $200. Desk fees add another $0 to $500 per month depending on the office setup. Errors and omissions insurance averages $30 to $70 per month. Transaction fees range from $200 to $800 per closed deal. Add a compliance or coordination fee on top of that, and an agent closing six deals in their first year could easily lose $3,000 to $7,000 in fees beyond the split itself."}</P>
+    <P>{"New agents almost never model this out before signing. They see the split number and stop reading. The agents who have been through it say the first question they would ask today is not “what is your split”; it is “can you give me a line-by-line breakdown of every fee I will pay in my first year.”"}</P>
+    <H2>{"Training Sounds Good on Paper. Ask What It Looks Like in Practice."}</H2>
+    <P>{"Every brokerage markets its training. The word “mentorship” appears in almost every recruiting conversation. What agents discover after joining is that training programs vary dramatically in what they actually deliver."}</P>
+    <P>{"The 2025 Inman piece by Bernice Ross identified this as one of the sharpest pain points for new agents: the difference between a brokerage that assigns a mentor and one that provides real shadowing, contract review support, and after-hours guidance. Those are not the same thing."}</P>
+    <P>{"Before signing with any Florida brokerage, new agents should ask specific questions. Who reviews my contracts before submission? Is there an assigned mentor or just general office access? How many transactions have the top three agents in this office closed in the past 12 months? A brokerage with productive agents in the room teaches through proximity. One with low transaction volume cannot."}</P>
+    <P>{"The NAR research on why new sales associates fail points to the same root cause repeatedly: agents who lacked proper support in their first 18 months did not fail because of the market. They failed because they were left to figure things out alone."}</P>
+    <H2>{"The Brokerage That Fits a New Agent Will Cost You Later"}</H2>
+    <P>{"This is the insight most agents only reach after they have already outgrown their first brokerage."}</P>
+    <P>{"Franchise and traditional brokerages are built for onboarding. That is genuinely useful in year one. The structure helps. The name recognition helps. The problem is that those same models take a consistent percentage of every commission check regardless of how experienced or self-sufficient the agent becomes."}</P>
+    <P>{"An agent closing 15 transactions per year under a 70/30 split is handing over a substantial portion of income in exchange for infrastructure they no longer need. That agent has their own pipeline. Their own process. Their own client base. They are paying for a support system they graduated out of."}</P>
+    <P>{"Florida’s 2026 Realtors Member Profile data makes this visible. The median Florida agent closes five transactions per year. But agents with 16 or more years of experience earn more than double the state median income. The brokerage model that served those agents in year two should not be the same one they are still paying for in year twelve."}</P>
+    <P>{"The experienced agents who have made the switch to a flat-fee model say the same thing: they waited too long. The moment you stop using what the brokerage is charging you for is the moment the model stops making financial sense."}</P>
+    <H2>{"Read the Agreement Before You Sign It"}</H2>
+    <P>{"This sounds obvious. Almost no first-year agent does it thoroughly."}</P>
+    <P>{"Brokerage agreements contain clauses that matter enormously when things change: what happens to your pending commissions if you leave, whether you can take your client database with you, non-solicitation terms that restrict who you can contact after departure and how exit procedures are handled. These clauses are not buried in the fine print out of deception. They are standard legal protections for the brokerage. But they can significantly affect your options if you outgrow the model and want to move."}</P>
+    <P>{"Florida agents who have switched brokerages mid-career consistently flag the independent contractor agreement as the document they read too quickly the first time."}</P>
+    <H2>{"The Right Brokerage Is the One That Fits Where You Are Right Now"}</H2>
+    <P>{"There is no universal answer to which brokerage is best. A structured franchise model serves a brand-new agent who needs guidance. A capped model serves an agent who has found their footing. A flat-fee model serves an agent who has built their own pipeline and does not need to share revenue with a brokerage in exchange for support they no longer use."}</P>
+    <P>{"At United Estates Realty, we built our model for that third agent. Florida-licensed and producing independently. Ready to stop paying a percentage of every deal they close. Our $98 monthly flat fee covers the full state with zero transaction fees and 100% commission retention."}</P>
+    <section className="mt-16">
+      <Faq eyebrow="FAQ" heading="Frequently Asked Questions" items={FIRST_BROKERAGE_FAQ} />
+    </section>
+  </>
+);
+
 export const blogPosts: BlogPost[] = [
 
 
@@ -5349,6 +5408,21 @@ export const blogPosts: BlogPost[] = [
     content: <ReferralProgramArticle />,
     faq: REFERRAL_PROGRAM_FAQ,
   },
+  {
+    slug: "what-florida-agents-wish-they-knew-before-choosing-first-brokerage",
+    title: "What Florida Agents Say They Wish They Knew Before Picking Their First Brokerage",
+    metaTitle: "What Florida Agents Wish They Knew Before Choosing Their First Brokerage",
+    description: "Florida agents often pick the wrong first brokerage. Here is what experienced agents say they wish they had known before signing that first agreement.",
+    excerpt: "From hidden fees to hands-on mentorship and exit clauses, here is what experienced Florida agents wish they had asked before joining their first brokerage.",
+    date: "2026-10-12",
+    readMinutes: 7,
+    author: "United Estates Realty",
+    image: blogImage41.url,
+    imageAlt: "A Florida real estate agent reviewing a brokerage agreement and fee sheet with an experienced mentor at United Estates Realty",
+    content: <FirstBrokerageLessonsArticle />,
+    faq: FIRST_BROKERAGE_FAQ,
+  },
+
 ];
 
 
